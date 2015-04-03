@@ -1,14 +1,13 @@
-*, *:before, *:after {
-    box-sizing: inherit;
-}
+@charset "utf-8";
+
+$default-font-family : "Source Code Pro", monospace;
+$default-line-height : 1.5em;
+
+@import "sanitize.css/sanitize";
 
 html {
-    box-sizing: border-box;
     width: 100%;
     height: 100%;
-    font-family: 'Source Code Pro', monospace;
-    line-height: 1.5;
-    font-size: 100%;
 }
 
 body {
