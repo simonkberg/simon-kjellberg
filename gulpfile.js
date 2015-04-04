@@ -1,6 +1,5 @@
 var gulp    = require('gulp');
 var del     = require('del');
-var path    = require('path');
 var jade    = require('gulp-jade');
 var sass    = require('gulp-sass');
 var inline  = require('gulp-inline-source');
@@ -26,7 +25,8 @@ gulp.task('jade:build', ['clean'], jadeTask);
 
 var sassTask = function() {
   var opt = {
-    includePaths: ['node_modules']
+    includePaths: ['node_modules'],
+    outputStyle: 'compressed'
   };
 
   var stream = gulp.src('src/scss/*.scss')
