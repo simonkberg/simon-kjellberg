@@ -1,52 +1,76 @@
 var gulp    = require('gulp');
-var haml    = require('gulp-haml');
+var del     = require('del');
+var path    = require('path');
+var jade    = require('gulp-jade');
 var sass    = require('gulp-sass');
-var inline  = require('gulp-inline');
+var inline  = require('gulp-inline-source');
 var uglify  = require('gulp-uglify');
-var cssmin  = require('gulp-cssmin');
 var htmlmin = require('gulp-htmlmin');
 
-var hamlTask = function() {
-  return gulp.src('./src/*.haml')
-    .pipe(haml())
-    .pipe(gulp.dest('./public'));
+var cleanTask = function(cb) {
+  del(['public/**/*', '!**/.git**'], cb);
 };
 
-gulp.task('haml', hamlTask);
+gulp.task('clean', cleanTask);
+
+var jadeTask = function() {
+  var stream = gulp.src('src/*.jade')
+    .pipe(jade())
+    .pipe(gulp.dest('public'));
+
+  return stream;
+};
+
+gulp.task('jade', jadeTask);
+gulp.task('jade:build', ['clean'], jadeTask);
 
 var sassTask = function() {
-  return gulp.src('./src/scss/*.scss')
-    .pipe(sass({
-      includePaths: ['./node_modules']
-    }))
-    .pipe(gulp.dest('./public/css'));
+  var opt = {
+    includePaths: ['node_modules']
+  };
+
+  var stream = gulp.src('src/scss/*.scss')
+    .pipe(sass(opt))
+    .pipe(gulp.dest('public/css'));
+
+  return stream;
 };
 
 gulp.task('sass', sassTask);
+gulp.task('sass:build', ['clean'], sassTask);
 
 var htmlTask = function() {
-  return gulp.src('./public/*.html')
-    .pipe(htmlmin())
-    .pipe(gulp.dest('./public'));
+  var opt = {
+    minify: {
+      collapseWhitespace: true,
+      collapseBooleanAttributes: true,
+      removeAttributeQuotes: false
+    },
+    inline: {
+      compress: true
+    }
+  };
+
+  var stream = gulp.src('public/*.html')
+    .pipe(inline(opt.inline))
+    .pipe(htmlmin(opt.minify))
+    .pipe(gulp.dest('public'));
+
+  return stream;
 };
 
-gulp.task('html', ['sass', 'haml'], htmlTask);
+gulp.task('html', ['clean', 'sass:build', 'jade:build'], htmlTask);
 
-var buildTask = function() {
-  sassTask();
-  hamlTask();
-  htmlTask();
-};
-
-gulp.task('build', buildTask);
+gulp.task('build', ['clean', 'sass:build', 'jade:build', 'html']);
 
 var watchTask = function() {
-  buildTask();
+  sassTask();
+  jadeTask();
 
-  gulp.watch('./src/scss/*.scss', ['sass']);
-  gulp.watch('./src/*.haml', ['haml']);
+  gulp.watch('src/scss/*.scss', ['sass']);
+  gulp.watch('src/*.jade', ['jade']);
 };
 
-gulp.task('watch', watchTask);
+gulp.task('watch', ['clean'], watchTask);
 
-gulp.task('default', buildTask);
+gulp.task('default', ['build']);
