@@ -1,27 +1,39 @@
-var gulp    = require('gulp');
-var del     = require('del');
-var jade    = require('gulp-jade');
-var sass    = require('gulp-sass');
-var inline  = require('gulp-inline-source');
-var uglify  = require('gulp-uglify');
-var htmlmin = require('gulp-htmlmin');
+var gulp     = require('gulp'),
+    del      = require('del'),
+    sequence = require('run-sequence').use(gulp),
+    jade     = require('gulp-jade'),
+    sass     = require('gulp-sass'),
+    inline   = require('gulp-inline-source'),
+    uglify   = require('gulp-uglify'),
+    htmlmin  = require('gulp-htmlmin');
+
+var dir = {
+  dist: './public',
+  src: './src'
+};
+
+var path = {
+  jade: dir.src + '/*.jade',
+  sass: dir.src + '/scss/*.scss',
+  html: dir.dist + '/*.html',
+  css: dir.dist + '/css'
+};
 
 var cleanTask = function(cb) {
-  del(['public/**/*', '!**/.git**'], cb);
+  del([dir.dist + '/**/*', '!**/.git**'], cb);
 };
 
 gulp.task('clean', cleanTask);
 
 var jadeTask = function() {
-  var stream = gulp.src('src/*.jade')
+  var stream = gulp.src(path.jade)
     .pipe(jade())
-    .pipe(gulp.dest('public'));
+    .pipe(gulp.dest(dir.dist));
 
   return stream;
 };
 
 gulp.task('jade', jadeTask);
-gulp.task('jade:build', ['clean'], jadeTask);
 
 var sassTask = function() {
   var opt = {
@@ -29,15 +41,14 @@ var sassTask = function() {
     outputStyle: 'compressed'
   };
 
-  var stream = gulp.src('src/scss/*.scss')
+  var stream = gulp.src(path.sass)
     .pipe(sass(opt))
-    .pipe(gulp.dest('public/css'));
+    .pipe(gulp.dest(path.css));
 
   return stream;
 };
 
 gulp.task('sass', sassTask);
-gulp.task('sass:build', ['clean'], sassTask);
 
 var htmlTask = function() {
   var opt = {
@@ -51,7 +62,7 @@ var htmlTask = function() {
     }
   };
 
-  var stream = gulp.src('public/*.html')
+  var stream = gulp.src(path.html)
     .pipe(inline(opt.inline))
     .pipe(htmlmin(opt.minify))
     .pipe(gulp.dest('public'));
@@ -59,16 +70,19 @@ var htmlTask = function() {
   return stream;
 };
 
-gulp.task('html', ['clean', 'sass:build', 'jade:build'], htmlTask);
+gulp.task('html', ['sass', 'jade'], htmlTask);
 
-gulp.task('build', ['clean', 'sass:build', 'jade:build', 'html']);
+gulp.task('build', ['clean'], function(cb) {
+  // TODO: fix once gulp4 is released
+  sequence('html', cb);
+});
 
 var watchTask = function() {
-  sassTask();
-  jadeTask();
+  // TODO: fix once gulp4 is released
+  sequence(['sass', 'jade']);
 
-  gulp.watch('src/scss/*.scss', ['sass']);
-  gulp.watch('src/*.jade', ['jade']);
+  gulp.watch(path.sass, ['sass']);
+  gulp.watch(path.jade, ['jade']);
 };
 
 gulp.task('watch', ['clean'], watchTask);
