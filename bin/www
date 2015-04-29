@@ -7,30 +7,45 @@
 var app = require('../app');
 var debug = require('debug')('SK:server');
 var http = require('http');
-var fs = require('fs');
-var net = require('net');
-var path = require('path');
+var cluster = require('cluster');
 
-/**
- * Get port from environment and store in Express.
- */
+if(cluster.isMaster) {
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+  // Count the machine's CPUs
+  var threads = require('os').cpus().length;
 
-/**
- * Create HTTP server.
- */
+  // Create a worker for each CPU
+  for (var i = 0; i < threads; i += 1) {
+    cluster.fork();
+  }
 
-var server = http.createServer(app);
+  // Listen for dying workers
+  cluster.on('exit', onExit);
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+} else {
 
-server.listen(app.get('port'));
-server.on('error', onError);
-server.on('listening', onListening);
+  /**
+   * Get port from environment and store in Express.
+   */
+
+  var port = normalizePort(process.env.PORT || '3000');
+  app.set('port', port);
+
+  /**
+   * Create HTTP server.
+   */
+
+  var server = http.createServer(app);
+
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
+
+  server.listen(app.get('port'));
+  server.on('error', onError);
+  server.on('listening', onListening);
+
+}
 
 /**
  * Normalize a port into a number, string, or false.
@@ -50,6 +65,15 @@ function normalizePort(val) {
   }
 
   return false;
+}
+
+/**
+ * Event listener for cluster "exit" event.
+ */
+
+function onExit(worker) {
+  debug('Worker ' + worker.id + ' exited. Respawning...');
+  cluster.fork();
 }
 
 /**
@@ -86,8 +110,9 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
+  var id = cluster.worker.id;
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  debug('Worker ' + id + ' listening on ' + bind);
 }
