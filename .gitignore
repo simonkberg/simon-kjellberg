@@ -1,1 +1,5 @@
-/node_modules
+*.sublime-workspace
+*.pid
+*.log
+node_modules
+.sass-cache

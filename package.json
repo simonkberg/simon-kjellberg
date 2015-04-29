@@ -1,27 +1,29 @@
 {
-  "name": "simonkjellberg",
-  "version": "1.0.0",
-  "description": "",
-  "main": "gulpfile.js",
+  "name": "SimonKjellberg",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SimonKberg/simonkjellberg.git"
+    "url": "https://github.com/SimonKberg/SimonKjellberg.git"
   },
   "author": "Simon Kjellberg",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SimonKberg/simonkjellberg/issues"
+    "url": "https://github.com/SimonKberg/SimonKjellberg/issues"
   },
-  "homepage": "https://github.com/SimonKberg/simonkjellberg",
-  "devDependencies": {
-    "del": "^1.1.1",
-    "gulp": "^3.8.11",
-    "gulp-htmlmin": "^1.1.1",
-    "gulp-inline-source": "^1.2.0",
-    "gulp-jade": "^1.0.0",
-    "gulp-sass": "^1.3.3",
-    "gulp-uglify": "^1.1.0",
-    "run-sequence": "^1.0.2",
-    "sanitize.css": "^1.1.0"
+  "homepage": "https://github.com/SimonKberg/SimonKjellberg",
+  "dependencies": {
+    "body-parser": "~1.12.0",
+    "cookie-parser": "~1.3.4",
+    "debug": "~2.1.1",
+    "express": "~4.12.2",
+    "jade": "~1.9.2",
+    "morgan": "~1.5.1",
+    "node-sass-middleware": "^0.5.0",
+    "sanitize.css": "^1.1.0",
+    "serve-favicon": "~2.2.0"
   }
 }
