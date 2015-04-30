@@ -35,7 +35,7 @@ app.use(
     dest: path.join(__dirname, 'public/css'),
     prefix: '/css',
     includePaths: ['node_modules'],
-    outputStyle: 'compressed',
+    outputStyle: debug.enabled ? 'expanded' : 'compressed',
     debug: debug.enabled,
   })
 );
