@@ -9,9 +9,10 @@ var bodyParser = require('body-parser');
 var compression = require('compression');
 var sassMiddleware = require('node-sass-middleware');
 
+// routers
 var routes = require('./routes/index');
-var users = require('./routes/users');
 
+// main app
 var app = express();
 
 // view engine setup
@@ -42,7 +43,6 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
-app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
