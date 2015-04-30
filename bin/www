@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
 /**
+ * Load New Relic performance monitoring
+ */
+
+require('newrelic');
+
+/**
  * Module dependencies.
  */
 
