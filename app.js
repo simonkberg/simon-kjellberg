@@ -1,3 +1,4 @@
+var newrelic = require('newrelic');
 var express = require('express');
 var debug = require('debug')('SK:app');
 var path = require('path');
@@ -15,6 +16,9 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+// locals setup
+app.locals.newrelic = newrelic;
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
