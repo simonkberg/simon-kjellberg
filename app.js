@@ -10,7 +10,10 @@ var compression = require('compression');
 var sassMiddleware = require('node-sass-middleware');
 
 // routers
-var routes = require('./routes/index');
+var routes = {
+    '/': require('./routes/index'),
+    '/exp': require('./routes/exp')
+};
 
 // main app
 var app = express();
@@ -34,7 +37,7 @@ app.use(
     src: path.join(__dirname, 'src/sass'),
     dest: path.join(__dirname, 'public/css'),
     prefix: '/css',
-    includePaths: ['node_modules'],
+    includePaths: ['bower_components'],
     outputStyle: debug.enabled ? 'expanded' : 'compressed',
     debug: debug.enabled,
   })
@@ -42,7 +45,11 @@ app.use(
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+for(var key in routes) {
+    if (routes.hasOwnProperty(key)) {
+        app.use(key, routes[key]);
+    }
+}
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

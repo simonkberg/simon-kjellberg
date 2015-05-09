@@ -1,0 +1,39 @@
+@import "sanitize-css/sanitize";
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: inherit;
+    height: inherit;
+    margin: 0;
+    padding: 2em;
+}
+
+p {
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+pre {
+    overflow: auto;
+    margin-right: -0.1em;
+}
+
+code {
+    display: inline-block;
+    background: #efefef;
+
+    &::before,
+    &::after {
+        content: "`";
+    }
+}
+
+section {
+    max-width: 35rem;
+    margin-left: auto;
+    margin-right: auto;
+}
