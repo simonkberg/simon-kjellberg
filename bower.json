@@ -1,0 +1,22 @@
+{
+  "name": "SimonKjellberg",
+  "version": "0.1.0",
+  "homepage": "https://github.com/SimonKberg/SimonKjellberg",
+  "authors": [
+    "Simon Kjellberg <simon.kjellberg@gmail.com>"
+  ],
+  "main": "main.js",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "lodash": "~3.8.0",
+    "domready": "~1.0.8",
+    "sanitize-css": "~1.1.0"
+  }
+}
