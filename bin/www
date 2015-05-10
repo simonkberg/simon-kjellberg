@@ -120,5 +120,5 @@ function onListening() {
  */
 
 function isStr(attr) {
-  return (typeof addr === 'string');
+  return (typeof attr === 'string');
 }
