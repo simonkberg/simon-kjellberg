@@ -46,6 +46,11 @@ app.use(
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(function(req, res, next) {
+  res.header('X-UA-Compatible', 'IE=edge');
+  next();
+});
+
 lodash.forEach(routes, function(route, path) {
   this.use(path, route);
 }, app);
