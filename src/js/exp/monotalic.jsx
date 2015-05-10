@@ -1,5 +1,7 @@
-(function(domready, document) {
-  var Arr = [];
+'use strict';
+
+((domready, document) => {
+  const Arr = [];
 
   function onReady() {
     Arr.forEach.call(
@@ -9,19 +11,17 @@
   }
 
   function monotalic($el) {
-    var text = $el.innerText || $el.textContent;
+    let text = $el.innerText || $el.textContent;
 
     $el.innerHTML = '';
 
-    text.split("\n").forEach(function(row) {
-      row.split('').forEach(function(char) {
-        var $span = document.createElement('SPAN');
+    text.split('\n').forEach(row => {
+      row.split('').forEach(char => {
+        let $span = document.createElement('SPAN'),
+            transform = 'skewX(-15deg)';
 
         $span.innerHTML = char;
         $span.style.display = 'inline-block';
-
-        var transform = 'skewX(-15deg)';
-
         $span.style.webkitTransform = transform;
         $span.style.msTransform = transform;
         $span.style.transform = transform;
@@ -35,7 +35,7 @@
 
   try {
     domready(onReady);
-  } catch(e) {
+  } catch (e) {
     alert('Your browser does not support this experiment');
   }
 

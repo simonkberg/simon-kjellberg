@@ -12,12 +12,15 @@ body {
     padding: 2em;
 }
 
-p {
+p,
+pre {
     margin-top: 1.5em;
     margin-bottom: 1.5em;
 }
 
 pre {
+    max-width: 100%;
+    max-height: 15em;
     overflow: auto;
     margin-right: -0.1em;
 }

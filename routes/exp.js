@@ -10,7 +10,7 @@ router.get('/', function(req, res, next) {
 
 /* GET monotalic. */
 router.get('/monotalic.js', function(req, res, next) {
-  var script = './public/js/exp/monotalic.js';
+  var script = './src/js/exp/monotalic.jsx';
   fs.readFile(script, {encoding: 'utf-8'}, function(err, data) {
     res.render('exp/monotalic', {
       title: '~/exp/monotalic.js',

@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var sass = require('node-sass-middleware');
+var babel = require("babel-connect");
 var lodash = require('lodash');
 
 // routers
@@ -41,6 +42,17 @@ app.use(
     includePaths: ['bower_components'],
     outputStyle: debug.enabled ? 'expanded' : 'compressed',
     debug: debug.enabled,
+  })
+);
+
+app.use(
+  babel({
+    options: {
+      // options to use when transforming files
+    },
+    src: path.join(__dirname, 'src'),
+    dest: path.join(__dirname, 'public'),
+    ignore: /node_modules/
   })
 );
 
