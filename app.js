@@ -7,7 +7,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var compression = require('compression');
-var sassMiddleware = require('node-sass-middleware');
+var sass = require('node-sass-middleware');
 var lodash = require('lodash');
 
 // routers
@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(compression());
 
 app.use(
-  sassMiddleware({
+  sass({
     src: path.join(__dirname, 'src/sass'),
     dest: path.join(__dirname, 'public/css'),
     prefix: '/css',
