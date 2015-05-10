@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var sassMiddleware = require('node-sass-middleware');
+var lodash = require('lodash');
 
 // routers
 var routes = {
@@ -45,11 +46,9 @@ app.use(
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-for(var key in routes) {
-    if (routes.hasOwnProperty(key)) {
-        app.use(key, routes[key]);
-    }
-}
+lodash.forEach(routes, function(route, path) {
+  this.use(path, route);
+}, app);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
