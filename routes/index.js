@@ -7,6 +7,10 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Simon Kjellberg' });
 });
 
+router.get('/ping', function(req, res, next) {
+  res.send('pong');
+});
+
 router.get('/vendor/:path*', function(req, res) {
   var path = req.params.path + req.params[0];
   res.sendFile(path, {root: './bower_components'});
