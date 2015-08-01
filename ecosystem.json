@@ -2,6 +2,9 @@
   "apps": [{
     "name": "APP",
     "script": "bin/www",
+    "instances": 2,
+    "exec_mode": "cluster",
+    "autorestart": true,
     "env": {
       "PORT": 3000
     }
