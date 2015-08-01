@@ -13,7 +13,7 @@
       ref  : "origin/master",
       repo : "git@github.com:simonkberg/simon-kjellberg.git",
       path : "/var/www/production",
-      "post-deploy" : "npmupdate && pm2 startOrRestart ecosystem.json5 --env production",
+      "post-deploy" : "npm update && pm2 startOrRestart ecosystem.json5 --env production",
       env  : {
         NODE_ENV: "production"
       }
