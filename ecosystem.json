@@ -1,7 +1,10 @@
 {
   "apps": [{
     "name": "APP",
-    "script": "bin/www"
+    "script": "bin/www",
+    "env": {
+      "PORT": 3000
+    }
   }],
 
   "deploy": {
@@ -13,8 +16,7 @@
       "path": "/var/www/production",
       "post-deploy": "npm update && bower update && pm2 startOrRestart ecosystem.json --env production",
       "env": {
-        "NODE_ENV": "production",
-        "PORT": 3000
+        "NODE_ENV": "production"
       }
     },
     "development": {
@@ -26,8 +28,7 @@
       "post-deploy": "npm update && bower update && pm2 startOrRestart ecosystem.json --env development",
       "env": {
         "NODE_ENV": "development",
-        "DEBUG": "SK:*",
-        "PORT": 3001
+        "DEBUG": "SK:*"
       }
     }
   }
