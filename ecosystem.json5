@@ -15,7 +15,8 @@
       path : "/var/www/production",
       "post-deploy" : "npm update && bower update && pm2 startOrRestart ecosystem.json5 --env production",
       env  : {
-        NODE_ENV: "production"
+        NODE_ENV: "production",
+        PORT: 3000
       }
     },
     development : {
@@ -27,7 +28,8 @@
       "post-deploy" : "npm update && bower update && pm2 startOrRestart ecosystem.json5 --env development",
       env  : {
         NODE_ENV: "development",
-        DEBUG: "SK:*"
+        DEBUG: "SK:*",
+        PORT: 3001
       }
     }
   }
