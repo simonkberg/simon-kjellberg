@@ -1,5 +1,5 @@
 {
-  "name": "SimonKjellberg",
+  "name": "simon-kjellberg",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SimonKberg/SimonKjellberg.git"
+    "url": "https://github.com/simonkberg/simon-kjellberg.git"
   },
   "author": "Simon Kjellberg",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SimonKberg/SimonKjellberg/issues"
+    "url": "https://github.com/simonkberg/simon-kjellberg/issues"
   },
-  "homepage": "https://github.com/SimonKberg/SimonKjellberg",
+  "homepage": "https://github.com/simonkberg/simon-kjellberg",
   "dependencies": {
     "babel-connect": "https://github.com/babel/babel-connect/archive/v6.0.1.tar.gz",
     "body-parser": "~1.12.0",
