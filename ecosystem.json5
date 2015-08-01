@@ -13,18 +13,18 @@
       ref  : "origin/master",
       repo : "git@github.com:simonkberg/simon-kjellberg.git",
       path : "/var/www/production",
-      "post-deploy" : "pm2 startOrRestart ecosystem.json5 --env production",
+      "post-deploy" : "npmupdate && pm2 startOrRestart ecosystem.json5 --env production",
       env  : {
         NODE_ENV: "production"
       }
     },
-    dev : {
+    development : {
       user : "node",
       host : "188.166.5.14",
       ref  : "origin/master",
       repo : "git@github.com:simonkberg/simon-kjellberg.git",
       path : "/var/www/development",
-      "post-deploy" : "pm2 startOrRestart ecosystem.json5 --env development",
+      "post-deploy" : "npm update && pm2 startOrRestart ecosystem.json5 --env development",
       env  : {
         NODE_ENV: "development",
         DEBUG: "SK:*"
