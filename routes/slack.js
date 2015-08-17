@@ -18,7 +18,6 @@ router.post('/slap', function(req, res) {
       channel: channel
     }
   }, function(error, response, body) {
-    console.log(error, response, body);
     res.end();
   });
 });
