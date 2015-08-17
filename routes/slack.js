@@ -5,7 +5,8 @@ var router = express.Router();
 
 router.post('/slap', function(req, res) {
   var user = req.body.user_name;
-  var target = req.body.text ? req.body.text : 'themselves';
+  var target = req.body.text ? req.body.text : user;
+  if (target.charAt(0) !== '@') {target = '@' + target; }
   var channel = req.body.channel_id;
 
   request({
@@ -13,7 +14,7 @@ router.post('/slap', function(req, res) {
     url: process.env.SLAPBOT_URL,
     json: true,
     body: {
-      text: user + ' slaps ' + target + ' around a bit with a large trout',
+      text: '<@' + user + '> slaps <' + target + '> around a bit with a large trout',
       channel: channel
     }
   }, function(error, response, body) {
