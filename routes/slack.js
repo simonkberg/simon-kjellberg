@@ -13,10 +13,8 @@ router.post('/slap', function(req, res) {
     url: process.env.SLAPBOT_URL,
     json: true,
     body: {
-      payload: {
-        text: user + ' slaps ' + target + ' around a bit with a large trout',
-        channel: channel
-      }
+      text: user + ' slaps ' + target + ' around a bit with a large trout',
+      channel: channel
     }
   }, function(error, response, body) {
     console.log(error, response, body);
