@@ -13,8 +13,9 @@ var lodash = require('lodash');
 
 // routers
 var routes = {
-    '/': require('./routes/index'),
-    '/exp': require('./routes/exp')
+  '/': require('./routes/index'),
+  '/exp': require('./routes/exp'),
+  '/slack': require('./routes/slack'),
 };
 
 // main app

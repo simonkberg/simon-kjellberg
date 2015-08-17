@@ -28,6 +28,7 @@
     "morgan": "~1.6.1",
     "newrelic": "~1.21.1",
     "node-sass-middleware": "~0.9.0",
+    "request": "^2.60.0",
     "serve-favicon": "~2.3.0"
   }
 }
