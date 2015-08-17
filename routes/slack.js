@@ -6,7 +6,7 @@ var router = express.Router();
 router.post('/slap', function(req, res) {
   var user = req.body.user_name;
   var target = req.body.text ? req.body.text : 'themselves';
-  var channel = rew.body.channel_id;
+  var channel = req.body.channel_id;
 
   request({
     method: 'post',
@@ -18,8 +18,9 @@ router.post('/slap', function(req, res) {
         channel: channel
       }
     }
-  }, function() {
-    res.send();
+  }, function(error, response, body) {
+    console.log(error, response, body);
+    res.end();
   });
 });
 
