@@ -42,6 +42,7 @@ router.post('/eta', function(req, res) {
     body: {
       text: '<@' + user + '>·\'s ETA is ' + time +
         (reason ? ' because "' + reason + '"' : ''),
+      channel: channel,
       username: 'etabot',
       icon_emoji: ':soon:'
     }
