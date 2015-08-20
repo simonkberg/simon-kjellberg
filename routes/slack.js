@@ -28,6 +28,7 @@ router.post('/eta', function(req, res) {
   var date = new Date();
   var user = req.body.user_name;
   var text = (req.body.text || '').split(' ');
+  var channel = req.body.channel_id;
   var time = text.shift();
   var reason = text.join(' ');
 
