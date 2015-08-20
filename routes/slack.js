@@ -3,6 +3,8 @@ var debug = require('debug')('SK:router');
 var request = require('request');
 var router = express.Router();
 
+var parseTime = require('../lib/parseTime');
+
 router.post('/slap', function(req, res) {
   var user = req.body.user_name;
   var target = req.body.text ? req.body.text : user;
@@ -16,6 +18,32 @@ router.post('/slap', function(req, res) {
     body: {
       text: '<@' + user + '> slaps <' + target + '> around a bit with a large trout',
       channel: channel
+    }
+  }, function(error, response, body) {
+    res.end();
+  });
+});
+
+router.post('/eta', function(req, res) {
+  var date = new Date();
+  var user = req.body.user_name;
+  var text = (req.body.text || '').split(' ');
+  var time = text.shift();
+  var reason = text.join(' ');
+
+  if (!time) {
+    res.end("You didn't say when...");
+  }
+
+  request({
+    method: 'post',
+    url: process.env.SLAPBOT_URL,
+    json: true,
+    body: {
+      text: '<@' + user + '>·\'s ETA is ' + time +
+        (reason ? ' because "' + reason + '"' : ''),
+      username: 'etabot',
+      icon_emoji: ':soon:'
     }
   }, function(error, response, body) {
     res.end();
