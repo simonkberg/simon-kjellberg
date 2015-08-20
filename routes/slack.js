@@ -4,6 +4,7 @@ var request = require('request');
 var router = express.Router();
 
 var parseTime = require('../lib/parseTime');
+var clockEmoji = require('../lib/clockEmoji');
 
 router.post('/slap', function(req, res) {
   var user = req.body.user_name;
@@ -28,7 +29,6 @@ router.post('/eta', function(req, res) {
   var date = new Date();
   var user = req.body.user_name;
   var text = (req.body.text || '').split(' ');
-  var channel = req.body.channel_id;
   var time = parseTime(text.shift(), 'G:i');
   var reason = text.join(' ');
 
@@ -42,9 +42,8 @@ router.post('/eta', function(req, res) {
       body: {
         text: '<@' + user + '>\'s ETA is *' + time + '*' +
           (reason ? '\n>>> _' + reason + '_' : ''),
-        channel: channel,
         username: 'etabot',
-        icon_emoji: ':soon:'
+        icon_emoji: clockEmoji(time)
       }
     }, function(error, response, body) {
       res.end();
