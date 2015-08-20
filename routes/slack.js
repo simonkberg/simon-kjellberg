@@ -29,7 +29,7 @@ router.post('/eta', function(req, res) {
   var user = req.body.user_name;
   var text = (req.body.text || '').split(' ');
   var channel = req.body.channel_id;
-  var time = text.shift();
+  var time = parseTime(text.shift());
   var reason = text.join(' ');
 
   if (!time) {
@@ -41,7 +41,7 @@ router.post('/eta', function(req, res) {
     url: process.env.SLAPBOT_URL,
     json: true,
     body: {
-      text: '<@' + user + '>·\'s ETA is ' + time +
+      text: '<@' + user + '>\'s ETA is ' + time +
         (reason ? ' because "' + reason + '"' : ''),
       channel: channel,
       username: 'etabot',
