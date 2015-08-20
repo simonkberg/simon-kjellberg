@@ -34,22 +34,22 @@ router.post('/eta', function(req, res) {
 
   if (!time) {
     res.end("You didn't say when...");
+  } else {
+    request({
+      method: 'post',
+      url: process.env.SLAPBOT_URL,
+      json: true,
+      body: {
+        text: '<@' + user + '>\'s ETA is *' + time + '*' +
+          (reason ? '\n>>> _' + reason + '_' : ''),
+        channel: channel,
+        username: 'etabot',
+        icon_emoji: ':soon:'
+      }
+    }, function(error, response, body) {
+      res.end();
+    });
   }
-
-  request({
-    method: 'post',
-    url: process.env.SLAPBOT_URL,
-    json: true,
-    body: {
-      text: '<@' + user + '>\'s ETA is ' + time +
-        (reason ? '\n>>> _' + reason + '_' : ''),
-      channel: channel,
-      username: 'etabot',
-      icon_emoji: ':soon:'
-    }
-  }, function(error, response, body) {
-    res.end();
-  });
 });
 
 module.exports = router;
