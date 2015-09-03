@@ -32,24 +32,24 @@ router.post('/eta', function(req, res) {
   var user = req.body.user_name;
   var text = (req.body.text || '').split(' ');
   var time = parseTime(text.shift(), 'G:i');
-  var diff = timeDiff(time);
   var reason = text.join(' ');
-  var channel = req.body.channel_id;
 
   if (!time) {
     res.end("You didn't say when...");
   } else {
+    var diff = timeDiff(time);
+
     request({
       method: 'post',
       url: process.env.SLAPBOT_URL,
       json: true,
       body: {
-        text: '<@' + user + '>\'s ETA is *' + time + '*' +
+        text: '<@' + user + '>\'s ETA is *' + time + '* ' +
           '(in ' + timeDiffFormat(diff) + ')' +
           (reason ? '\n>>> _' + reason + '_' : ''),
         username: 'etabot',
         icon_emoji: clockEmoji(time),
-        channel: channel
+        channel: req.body.channel_id
       }
     }, function(error, response, body) {
       res.end();
