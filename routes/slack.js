@@ -48,8 +48,7 @@ router.post('/eta', function(req, res) {
           '(in ' + timeDiffFormat(diff) + ')' +
           (reason ? '\n>>> _' + reason + '_' : ''),
         username: 'etabot',
-        icon_emoji: clockEmoji(time),
-        channel: req.body.channel_id
+        icon_emoji: clockEmoji(time)
       }
     }, function(error, response, body) {
       res.end();
