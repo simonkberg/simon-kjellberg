@@ -34,6 +34,7 @@ router.post('/eta', function(req, res) {
   var time = parseTime(text.shift(), 'G:i');
   var diff = timeDiff(time);
   var reason = text.join(' ');
+  var channel = req.body.channel_id;
 
   if (!time) {
     res.end("You didn't say when...");
@@ -47,7 +48,8 @@ router.post('/eta', function(req, res) {
           '(in ' + timeDiffFormat(diff) + ')' +
           (reason ? '\n>>> _' + reason + '_' : ''),
         username: 'etabot',
-        icon_emoji: clockEmoji(time)
+        icon_emoji: clockEmoji(time),
+        channel: channel
       }
     }, function(error, response, body) {
       res.end();
