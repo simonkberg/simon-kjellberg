@@ -4,6 +4,8 @@ var request = require('request');
 var router = express.Router();
 
 var parseTime = require('../lib/parseTime');
+var timeDiff = require('../lib/timeDiff');
+var timeDiffFormat = require('../lib/timeDiffFormat');
 var clockEmoji = require('../lib/clockEmoji');
 
 router.post('/slap', function(req, res) {
@@ -30,6 +32,7 @@ router.post('/eta', function(req, res) {
   var user = req.body.user_name;
   var text = (req.body.text || '').split(' ');
   var time = parseTime(text.shift(), 'G:i');
+  var diff = timeDiff(time);
   var reason = text.join(' ');
 
   if (!time) {
@@ -41,6 +44,7 @@ router.post('/eta', function(req, res) {
       json: true,
       body: {
         text: '<@' + user + '>\'s ETA is *' + time + '*' +
+          '(in ' + timeDiffFormat(diff) + ')' +
           (reason ? '\n>>> _' + reason + '_' : ''),
         username: 'etabot',
         icon_emoji: clockEmoji(time)
