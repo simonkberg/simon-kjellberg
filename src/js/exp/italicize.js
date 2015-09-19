@@ -1,6 +1,6 @@
 import domready from 'domready'
 
-class Monotalic {
+class Italicize {
   constructor (selector = '.monotalic') {
     this.selector = selector
 
@@ -38,4 +38,4 @@ class Monotalic {
   }
 }
 
-global.Monotalic = Monotalic
+export default global.Italicize = Italicize
