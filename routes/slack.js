@@ -1,18 +1,22 @@
-var express = require('express');
-var debug = require('debug')('SK:router');
-var request = require('request');
-var router = express.Router();
+import express from 'express'
+import request from 'request'
 
-var parseTime = require('../lib/parseTime');
-var timeDiff = require('../lib/timeDiff');
-var timeDiffFormat = require('../lib/timeDiffFormat');
-var clockEmoji = require('../lib/clockEmoji');
+import parseTime from '../lib/parseTime'
+import timeDiff from '../lib/timeDiff'
+import timeDiffFormat from '../lib/timeDiffFormat'
+import clockEmoji from '../lib/clockEmoji'
 
-router.post('/slap', function(req, res) {
-  var user = req.body.user_name;
-  var target = req.body.text ? req.body.text : user;
-  if (target.charAt(0) !== '@') {target = '@' + target; }
-  var channel = req.body.channel_id;
+const router = express.Router()
+
+router.post('/slap', (req, res) => {
+  let user = req.body.user_name
+  let target = req.body.text ? req.body.text : user
+
+  if (target.charAt(0) !== '@') {
+    target = '@' + target
+  }
+
+  let channel = req.body.channel_id
 
   request({
     method: 'post',
@@ -22,38 +26,37 @@ router.post('/slap', function(req, res) {
       text: '<@' + user + '> slaps <' + target + '> around a bit with a large trout',
       channel: channel
     }
-  }, function(error, response, body) {
-    res.end();
-  });
-});
+  }, (error, response, body) => {
+    res.end(error)
+  })
+})
 
-router.post('/eta', function(req, res) {
-  var date = new Date();
-  var user = req.body.user_name;
-  var text = (req.body.text || '').split(' ');
-  var time = parseTime(text.shift(), 'G:i');
-  var reason = text.join(' ');
+router.post('/eta', (req, res) => {
+  let user = req.body.user_name
+  let text = (req.body.text || '').split(' ')
+  let time = parseTime(text.shift(), 'G:i')
+  let reason = text.join(' ')
 
   if (!time) {
-    res.end("You didn't say when...");
+    res.end("You didn't say when...")
   } else {
-    var diff = timeDiff(time);
+    let diff = timeDiff(time)
 
     request({
       method: 'post',
       url: process.env.SLAPBOT_URL,
       json: true,
       body: {
-        text: '<@' + user + '>\'s ETA is *' + time + '* ' +
+        text: '<@' + user + ">'s ETA is *" + time + '* ' +
           '(in ' + timeDiffFormat(diff) + ')' +
           (reason ? '\n>>> _' + reason + '_' : ''),
         username: 'etabot',
         icon_emoji: clockEmoji(time)
       }
-    }, function(error, response, body) {
-      res.end();
-    });
+    }, (error, response, body) => {
+      res.end(error)
+    })
   }
-});
+})
 
-module.exports = router;
+module.exports = router

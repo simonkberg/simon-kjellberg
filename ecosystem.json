@@ -17,21 +17,9 @@
       "ref": "origin/master",
       "repo": "git@github.com:simonkberg/simon-kjellberg.git",
       "path": "/var/www/production",
-      "post-deploy": "npm update && bower update && pm2 startOrRestart ecosystem.json --env production",
+      "post-deploy": "npm update && pm2 startOrRestart ecosystem.json --env production",
       "env": {
         "NODE_ENV": "production"
-      }
-    },
-    "development": {
-      "user": "node",
-      "host": "188.166.5.14",
-      "ref": "origin/master",
-      "repo": "git@github.com:simonkberg/simon-kjellberg.git",
-      "path": "/var/www/development",
-      "post-deploy": "npm update && bower update && pm2 startOrRestart ecosystem.json --env development",
-      "env": {
-        "NODE_ENV": "development",
-        "DEBUG": "SK:*"
       }
     }
   }

@@ -1,19 +1,18 @@
-var express = require('express');
-var debug = require('debug')('SK:router');
-var router = express.Router();
+import express from 'express'
+const router = express.Router()
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Simon Kjellberg' });
-});
+router.get('/', (req, res, next) => {
+  res.render('index', { title: 'Simon Kjellberg' })
+})
 
-router.get('/ping', function(req, res, next) {
-  res.send('pong');
-});
+router.get('/ping', (req, res, next) => {
+  res.send('pong')
+})
 
-router.get('/vendor/:path*', function(req, res) {
-  var path = req.params.path + req.params[0];
-  res.sendFile(path, {root: './bower_components'});
-});
+router.get('/vendor/:path*', (req, res) => {
+  let path = req.params.path + req.params[0]
+  res.sendFile(path, {root: './bower_components'})
+})
 
-module.exports = router;
+export default router

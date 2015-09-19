@@ -1,105 +1,93 @@
-var newrelic = require('newrelic');
-var express = require('express');
-var debug = require('debug')('SK:app');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var compression = require('compression');
-var sass = require('node-sass-middleware');
-var babel = require("babel-connect");
-var lodash = require('lodash');
+import newrelic from 'newrelic'
+import express from 'express'
+import debug from 'debug'
+import path from 'path'
+import favicon from 'serve-favicon'
+import logger from 'morgan'
+import cookieParser from 'cookie-parser'
+import bodyParser from 'body-parser'
+import compression from 'compression'
+import sass from 'node-sass-middleware'
+import babelify from 'express-babelify-middleware'
 
 // routers
-var routes = {
-  '/': require('./routes/index'),
-  '/exp': require('./routes/exp'),
-  '/slack': require('./routes/slack'),
-};
+import routes from './routes'
 
 // main app
-var app = express();
+const log = debug('SK:app')
+const app = express()
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'jade')
 
 // locals setup
-app.locals.newrelic = newrelic;
+app.locals.newrelic = newrelic
 
-app.use(favicon(__dirname + '/public/favicon.ico'));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(compression());
+app.use(favicon(__dirname + '/public/favicon.ico'))
+app.use(logger('dev'))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cookieParser())
+app.use(compression())
 
 app.use(
   sass({
     src: path.join(__dirname, 'src/sass'),
     dest: path.join(__dirname, 'public/css'),
     prefix: '/css',
-    includePaths: ['bower_components'],
-    outputStyle: debug.enabled ? 'expanded' : 'compressed',
-    debug: debug.enabled,
+    includePaths: ['node_modules'],
+    outputStyle: log.enabled ? 'expanded' : 'compressed',
+    debug: log.enabled
   })
-);
+)
 
 app.use(
-  babel({
-    options: {
-      // options to use when transforming files
-    },
-    src: path.join(__dirname, 'src'),
-    dest: path.join(__dirname, 'public'),
-    ignore: /node_modules/
-  })
-);
+  babelify(path.join(__dirname, 'src'))
+)
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')))
 
-app.use(function(req, res, next) {
-  res.header('X-UA-Compatible', 'IE=edge');
-  next();
-});
+app.use(function (req, res, next) {
+  res.header('X-UA-Compatible', 'IE=edge')
+  next()
+})
 
-lodash.forEach(routes, function(route, path) {
-  this.use(path, route);
-}, app);
+Object.keys(routes).forEach((path) => {
+  app.use(path, routes[path])
+})
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+app.use((req, res, next) => {
+  let err = new Error('Not Found')
+  err.status = 404
+  next(err)
+})
 
 // error handlers
 
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500)
     res.render('error', {
       message: err.message,
       error: err
-    });
-  });
+    })
+  })
 }
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
+app.use((err, req, res, next) => {
+  res.status(err.status || 500)
   res.render('error', {
     message: err.message,
     error: {
       status: err.status
     }
-  });
-});
+  })
+})
 
-
-module.exports = app;
+export default app

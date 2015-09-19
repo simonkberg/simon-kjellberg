@@ -1,4 +1,7 @@
 
-$default-font-family: "Source Code Pro", monospace;
-$default-line-height: 1.5em;
-$default-monospace-font-family: $default-font-family;
+// sanitize.css
+$root-font-family: 'Source Code Pro', monospace;
+$monospace-font-family: $root-font-family;
+
+// colors
+$color-light-gray: #efefef;

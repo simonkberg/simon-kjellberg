@@ -1,27 +1,29 @@
-var express = require('express');
-var fs = require('fs');
-var debug = require('debug')('SK:router');
-var router = express.Router();
+import express from 'express'
+import fs from 'fs'
 
-/* GET index. */
-router.get('/', function(req, res, next) {
-  res.render('exp/index', { title: 'Experiments' });
-});
+const router = express.Router()
 
-/* GET monotalic. */
-router.get('/monotalic.js', function(req, res, next) {
-  var script = './src/js/exp/monotalic.jsx';
-  fs.readFile(script, {encoding: 'utf-8'}, function(err, data) {
-    res.render('exp/monotalic', {
-      title: '~/exp/monotalic.js',
+// GET index.
+router.get('/', (req, res, next) => {
+  res.render('exp/index', { title: '~/exp' })
+})
+
+// GET monotalic.
+router.get('/italicize.js', (req, res, next) => {
+  let script = './src/js/exp/italicize.js'
+  fs.readFile(script, {encoding: 'utf-8'}, (err, data) => {
+    if (err) next(err)
+
+    res.render('exp/italicize', {
+      title: '~/exp/italicize.js',
       code: data
-    });
-  });
-});
+    })
+  })
+})
 
-router.get('/vendor/:path*', function(req, res) {
-  var path = req.params.path + req.params[0];
-  res.sendFile(path, {root: './bower_components'});
-});
+router.get('/vendor/:path*', (req, res) => {
+  let path = req.params.path + req.params[0]
+  res.sendFile(path, {root: './bower_components'})
+})
 
-module.exports = router;
+export default router

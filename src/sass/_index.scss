@@ -1,18 +1,17 @@
-
 .index-section {
-    display: table;
-    width: 100%;
-    height: 100%;
+  display: table;
+  height: 100%;
+  width: 100%;
 }
 
 .index-quote {
-    display: table-cell;
-    vertical-align: middle;
-    text-align: center;
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
 
-    > cite {
-        display: block;
-        font-size: .75em;
-        font-style: normal;
-    }
+  > cite {
+    display: block;
+    font-size: .75em;
+    font-style: normal;
+  }
 }

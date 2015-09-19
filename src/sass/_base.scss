@@ -1,42 +1,42 @@
-@import "sanitize-css/sanitize";
+@import 'sanitize.css/sanitize';
 
 html {
-    width: 100%;
-    height: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 body {
-    width: inherit;
-    height: inherit;
-    margin: 0;
-    padding: 2em;
+  height: inherit;
+  margin: 0;
+  padding: 2em;
+  width: inherit;
 }
 
 p,
 pre {
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
+  margin-bottom: 1.5em;
+  margin-top: 1.5em;
 }
 
 pre {
-    max-width: 100%;
-    max-height: 15em;
-    overflow: auto;
-    margin-right: -0.1em;
+  margin-right: -.1em;
+  max-height: 15em;
+  max-width: 100%;
+  overflow: auto;
 }
 
 code {
-    display: inline-block;
-    background: #efefef;
+  background: $color-light-gray;
+  display: inline-block;
 
-    &::before,
-    &::after {
-        content: "`";
-    }
+  &::before,
+  &::after {
+    content: '`';
+  }
 }
 
 section {
-    max-width: 35rem;
-    margin-left: auto;
-    margin-right: auto;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 35rem;
 }
