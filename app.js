@@ -47,6 +47,7 @@ app.use(
 )
 
 app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'static')))
 
 app.use(function (req, res, next) {
   res.header('X-UA-Compatible', 'IE=edge')

@@ -1,9 +1,12 @@
+import path from 'path'
 import express from 'express'
+
 const router = express.Router()
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-  res.render('index', { title: 'Simon Kjellberg' })
+  // res.render('index', { title: 'Simon Kjellberg' })
+  res.sendFile(path.join(__dirname, '..', 'views', 'april.html'))
 })
 
 router.get('/ping', (req, res, next) => {
