@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
+import fs from 'fs'
 import path from 'path'
 import del from 'del'
 import le from 'letiny'
 
-const __static = path.join(__dirname, '..', 'static')
+const paths = {}
+paths.static = path.join(__dirname, '..', 'static')
+paths.certs = path.normalize('/etc/ssl/private/simonkjellberg.com')
+paths.chain = path.join(paths.certs, 'chain.pem')
 
-le.getCert({
+const options ={
   email: 'admin@simonkjellberg.com',
   domains: [
     'simonkjellberg.com',
@@ -14,14 +18,19 @@ le.getCert({
     'simonkjellberg.se',
     'www.simonkjellberg.se',
   ],
-  webroot: __static,
-  certFile:'/etc/ssl/private/simonkjellberg.com/cert.pem',
-  caFile:'/etc/ssl/private/simonkjellberg.com/ca.pem',
-  privateKey:'/etc/ssl/private/simonkjellberg.com/key.pem',
-  accountKey:'/etc/ssl/private/simonkjellberg.com/account.pem',
+  webroot: paths.static,
+  certFile: path.join(paths.certs, 'cert.pem'),
+  caFile: path.join(paths.certs, 'ca.pem'),
+  privateKey: path.join(paths.certs, 'key.pem'),
+  accountKey: path.join(paths.certs, 'account.pem'),
   agreeTerms: true
-}, (err) => {
+}
+
+le.getCert(options, (err, cert, privateKey, ca, accountKey) => {
   if (err) throw err
 
-  del(path.join(__static, '.well-known'))
+  fs.writeFileSync(paths.chain, cert)
+  fs.appendFileSync(paths.chain, ca)
+
+  del(path.join(paths.static, '.well-known'))
 })
