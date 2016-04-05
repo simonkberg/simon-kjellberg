@@ -29,8 +29,7 @@ const options ={
 le.getCert(options, (err, cert, privateKey, ca, accountKey) => {
   if (err) throw err
 
-  fs.writeFileSync(paths.chain, cert)
-  fs.appendFileSync(paths.chain, ca)
+  fs.writeFileSync(paths.chain, `${cert}\n${ca}`)
 
   del(path.join(paths.static, '.well-known'))
 })
