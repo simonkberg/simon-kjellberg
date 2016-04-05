@@ -5,8 +5,11 @@ const router = express.Router()
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-  // res.render('index', { title: 'Simon Kjellberg' })
-  res.sendFile(path.join(__dirname, '..', 'views', 'april.html'))
+  res.render('index', { title: 'Simon Kjellberg' })
+})
+
+router.get('/2016-04-01', (req, res, next) => {
+  res.sendFile(path.join(__dirname, '..', 'views', '2016-04-01', 'index.html'))
 })
 
 router.get('/ping', (req, res, next) => {
