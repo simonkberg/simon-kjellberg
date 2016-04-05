@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+import path from 'path'
+import del from 'del'
+import le from 'letiny'
+
+const __static = path.join(__dirname, '..', 'static')
+
+le.getCert({
+  email: 'admin@simonkjellberg.com',
+  domains: [
+    'simonkjellberg.com',
+    'www.simonkjellberg.com',
+    'simonkjellberg.se',
+    'www.simonkjellberg.se',
+  ],
+  webroot: __static,
+  certFile:'/etc/ssl/private/simonkjellberg.com/cert.pem',
+  caFile:'/etc/ssl/private/simonkjellberg.com/ca.pem',
+  privateKey:'/etc/ssl/private/simonkjellberg.com/key.pem',
+  accountKey:'/etc/ssl/private/simonkjellberg.com/account.pem',
+  agreeTerms: true
+}, (err) => {
+  if (err) throw err
+
+  del(path.join(__static, '.well-known'))
+})
