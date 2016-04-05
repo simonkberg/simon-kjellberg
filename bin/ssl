@@ -3,6 +3,7 @@
 import fs from 'fs'
 import path from 'path'
 import del from 'del'
+import { exec } from 'child_process'
 import le from 'letiny'
 
 const paths = {}
@@ -32,4 +33,6 @@ le.getCert(options, (err, cert, privateKey, ca, accountKey) => {
   fs.writeFileSync(paths.chain, `${cert}\n${ca}`)
 
   del(path.join(paths.static, '.well-known'))
+
+  exec('service nginx reload')
 })
