@@ -9,7 +9,7 @@ router.get('/', (req, res, next) => {
 })
 
 router.get('/2016-04-01', (req, res, next) => {
-  res.sendFile(path.join(__dirname, '..', 'views', '2016-04-01', 'index.html'))
+  res.sendFile(path.join(__dirname, '..', 'static', '2016-04-01', 'index.html'))
 })
 
 router.get('/ping', (req, res, next) => {
