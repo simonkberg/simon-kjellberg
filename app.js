@@ -1,94 +1,70 @@
-import newrelic from 'newrelic'
-import express from 'express'
-import debug from 'debug'
 import path from 'path'
-import favicon from 'serve-favicon'
 import logger from 'morgan'
+import express from 'express'
+import favicon from 'serve-favicon'
 import cookieParser from 'cookie-parser'
 import bodyParser from 'body-parser'
 import compression from 'compression'
-import sass from 'node-sass-middleware'
-import babelify from 'express-babelify-middleware'
+import expressWebpackAssets from 'express-webpack-assets'
+import webpackConfig from './webpack/config.client'
+import reactServer from './build/server'
+import api from './api'
 
-// routers
-import routes from './routes'
-
-// main app
-const log = debug('SK:app')
 const app = express()
+const dev = app.get('env') !== 'production'
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'jade')
-
-// locals setup
-app.locals.newrelic = newrelic
-
-app.use(favicon(__dirname + '/public/favicon.ico'))
+// middleware setup
+app.use(favicon(path.join(__dirname, 'static/favicon.ico')))
 app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(compression())
+app.use(express.static(path.join(__dirname, 'static')))
+app.use(express.static(path.join(__dirname, 'build')))
 
-app.use(
-  sass({
-    src: path.join(__dirname, 'src/sass'),
-    dest: path.join(__dirname, 'public/css'),
-    prefix: '/css',
-    includePaths: ['node_modules'],
-    outputStyle: log.enabled ? 'expanded' : 'compressed',
-    debug: log.enabled
-  })
-)
+// api
+app.use('/api', api)
 
-app.use(
-  babelify(path.join(__dirname, 'src'))
-)
-
-app.use(express.static(path.join(__dirname, 'public')))
-app.use(express.static(path.join(__dirname, 'static'), { dotfiles: 'allow' }))
-
+// edgy
 app.use(function (req, res, next) {
   res.header('X-UA-Compatible', 'IE=edge')
   next()
 })
 
-Object.keys(routes).forEach((path) => {
-  app.use(path, routes[path])
-})
-
-// catch 404 and forward to error handler
+// set server store
 app.use((req, res, next) => {
-  let err = new Error('Not Found')
-  err.status = 404
-  next(err)
+  res.locals.data = {
+    AppStore: {
+      baseUrl: `${req.protocol}://${req.get('host')}`
+    }
+  }
+
+  next()
 })
 
-// error handlers
+const manifest = path.join(__dirname, 'build/manifest.json')
 
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-  app.use((err, req, res, next) => {
-    res.status(err.status || 500)
-    res.render('error', {
-      message: err.message,
-      error: err
-    })
-  })
+app.use(expressWebpackAssets(manifest, { devMode: dev }))
+
+if (dev) {
+  const webpack = require('webpack')
+  const webpackDevMiddleware = require('webpack-dev-middleware')
+  const webpackHotMiddleware = require('webpack-hot-middleware')
+  const config = webpackConfig()
+  const compiler = webpack(config)
+
+  app.use(webpackDevMiddleware(compiler, {
+    noInfo: true,
+    publicPath: config.output.publicPath,
+    stats: {
+      colors: true
+    }
+  }))
+
+  app.use(webpackHotMiddleware(compiler))
 }
 
-// production error handler
-// no stacktraces leaked to user
-app.use((err, req, res, next) => {
-  res.status(err.status || 500)
-  res.render('error', {
-    message: err.message,
-    error: {
-      status: err.status
-    }
-  })
-})
+app.use(reactServer())
 
-export default app
+module.exports = app

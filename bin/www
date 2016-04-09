@@ -1,53 +1,71 @@
 #!/usr/bin/env node
 
-import '../env.js'
+'use strict'
 
-/**
- * Load New Relic performance monitoring
- */
+require('dotenv').load({ silent: true })
+require('babel-register')
+require('babel-polyfill')
 
-import 'newrelic'
+var app = require('../app')
+var debug = require('debug')
+var http = require('http')
 
-/**
- * Module dependencies.
- */
-
-import app from '../app'
-import http from 'http'
-import debug from 'debug'
-
-// debug
-const log = debug('SK:app')
+var log = debug('sk:server')
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '3000')
+var port = normalizePort(process.env.PORT || '3000')
+
 app.set('port', port)
 
 /**
  * Create HTTP server.
  */
 
-const server = http.createServer(app)
+var server = http.createServer(app)
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(app.get('port'))
+server.listen(port)
+server.on('error', onError)
+server.on('listening', onListening)
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort (val) {
+  var port = parseInt(val, 10)
+
+  if (isNaN(port)) {
+    // named pipe
+    return val
+  }
+
+  if (port >= 0) {
+    // port number
+    return port
+  }
+
+  return false
+}
 
 /**
  * Event listener for HTTP server "error" event.
  */
 
-server.on('error', (error) => {
+function onError (error) {
   if (error.syscall !== 'listen') {
     throw error
   }
 
-  let bind = isStr(port) ? ('Pipe ' + port) : ('Port ' + port)
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -62,39 +80,16 @@ server.on('error', (error) => {
     default:
       throw error
   }
-})
+}
 
 /**
  * Event listener for HTTP server "listening" event.
  */
 
-server.on('listening', () => {
-  let addr = server.address()
-  let bind = isStr(addr) ? ('pipe ' + addr) : ('port ' + addr.port)
-
+function onListening () {
+  var addr = server.address()
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port
   log('Listening on ' + bind)
-})
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort (val) {
-  let port = parseInt(val, 10)
-
-  // named pipe
-  if (isNaN(port)) return val
-
-  // port number
-  if (port >= 0) return port
-
-  return false
-}
-
-/**
- * Check if provided attribute is a string
- */
-
-function isStr (attr) {
-  return (typeof attr === 'string')
 }

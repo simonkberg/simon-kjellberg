@@ -1,7 +1,5 @@
-*.sublime-*
 *.pid
 *.log
 node_modules
-bower_components
-.sass-cache
+build
 .env

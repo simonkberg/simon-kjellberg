@@ -1,0 +1,40 @@
+
+@import url("sanitize.css/lib/sanitize.css");
+
+:root {
+  --root-color: #000;
+  --root-font-family: "Fira Mono", monospace;
+  --monospace-font-family: var(--root-font-family);
+}
+
+h1,
+h2,
+h3 {
+  position: relative;
+  font-size: 1em;
+
+  &::before {
+    position: absolute;
+    color: color(var(--root-color) alpha(-75%));
+  }
+
+  & small {
+    font-weight: normal;
+    color: color(var(--root-color) lightness(50%));
+  }
+}
+
+h1::before {
+  content: "#";
+  left: -1.5ch;
+}
+
+h2::before {
+  content: "##";
+  left: -2.5ch;
+}
+
+h3::before {
+  content: "###";
+  left: -3.5ch;
+}
