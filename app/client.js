@@ -14,7 +14,8 @@ match({ history, routes }, (err, redirectLocation, renderProps) => {
     alt.bootstrap(state)
 
     const context = {
-      insertCss: (styles) => styles._insertCss()
+      insertCss: (styles) => styles._insertCss(),
+      setStatus: () => {}
     }
 
     renderProps.createElement = function createElement (Component, props) {

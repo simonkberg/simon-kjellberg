@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "build": "node ./bin/compile",
+    "dev": "NODE_ENV=development npm run build && npm start",
     "ssl": "babel-node ./bin/ssl"
   },
   "repository": {

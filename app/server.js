@@ -24,17 +24,20 @@ export default () => {
       }
 
       if (props) {
+        const { status } = props.routes.find((route) => route.status) || {
+          status: 200
+        }
+
         const createElement = (Component, props) => {
           return <Component context={context} {...props} />
         }
 
         const html = htmlHelper(<RouterContext createElement={createElement} {...props} />, locals)
 
-        return res.status(200).send(html)
+        return res.status(status).send(html)
       }
 
-      // TODO: Handle in router
-      res.status(404).send('404 Not Found')
+      res.status(500).send('How the fuck?')
     })
   }
 }

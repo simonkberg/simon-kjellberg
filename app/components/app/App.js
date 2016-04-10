@@ -9,7 +9,7 @@ const { shape, node, func } = PropTypes
 class App extends Component {
   static propTypes = {
     context: shape({
-      insertCss: func
+      insertCss: func.isRequired
     }),
     children: node
   }
@@ -29,11 +29,11 @@ class App extends Component {
   componentWillMount () {
     const { insertCss } = this.props.context
 
-    this.removeCss = insertCss(styles, { replace: true })
+    this._removeCss = insertCss(styles, { replace: true })
   }
 
   componentWillUnmount () {
-    this.removeCss()
+    this._removeCss()
   }
 
   render () {
