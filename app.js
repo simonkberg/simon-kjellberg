@@ -25,6 +25,10 @@ app.use(express.static(path.join(__dirname, 'build')))
 
 // api
 app.use('/api', api)
+// redirect old slack hooks
+app.use('/slack/:method', (req, res, next) => {
+  res.redirect(301, `/api/slack/${req.params.method}`)
+})
 
 // edgy
 app.use(function (req, res, next) {
