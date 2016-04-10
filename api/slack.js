@@ -1,17 +1,10 @@
-import request from 'request'
 import express from 'express'
+import moment from 'moment'
 
-import parseTime from '../lib/parseTime'
-import timeDiff from '../lib/timeDiff'
-import timeDiffFormat from '../lib/timeDiffFormat'
-import clockEmoji from '../lib/clockEmoji'
+import slackHook from './lib/slackHook'
+import clockEmoji from './lib/clockEmoji'
 
 const router = express.Router()
-
-const slack = request.defaults({
-  url: process.env.SLACK_WEBHOOK,
-  json: true
-})
 
 router.post('/slap', (req, res) => {
   let { user_name: user, text, channel_id } = req.body
@@ -22,12 +15,16 @@ router.post('/slap', (req, res) => {
     target = '@' + target
   }
 
-  slack.post({
-    body: {
-      text: `<@${user}> slaps <${target}> around a bit with a large trout`,
-      channel: channel_id
-    }
-  }, (err) => res.end(err))
+  const payload = {
+    text: `<@${user}> slaps <${target}> around a bit with a large trout`,
+    channel: channel_id,
+    username: 'slapbot',
+    icon_emoji: ':fish:'
+  }
+
+  slackHook(payload)
+    .then(() => res.end())
+    .catch((err) => res.end(err))
 })
 
 router.post('/eta', (req, res) => {
@@ -35,23 +32,23 @@ router.post('/eta', (req, res) => {
 
   text = (text || '').split(' ')
 
-  let time = parseTime(text.shift(), 'G:i')
+  let time = moment(text.shift(), ['HHmma'])
+  let reason = text.join(' ')
 
-  if (!time) {
-    return res.end('You didn\'t say when...')
+  if (!time.isValid()) {
+    return res.end('Couldn\'t parse the time. Sorry!')
   }
 
-  let reason = text.join(' ')
-  let diff = timeDiffFormat(timeDiff(time))
+  const payload = {
+    text: `<@${user}>'s ETA is *${time.format('H:mm')}* (${time.fromNow()})` +
+      (reason ? `\n>>> _${reason}_` : ''),
+    username: 'etabot',
+    icon_emoji: clockEmoji(time)
+  }
 
-  request.post({
-    body: {
-      text: `<@${user}>'s ETA is *${time}* (in ${diff})` +
-        (reason ? `\n>>> _${reason}_` : ''),
-      username: 'etabot',
-      icon_emoji: clockEmoji(time)
-    }
-  }, (err) => res.end(err))
+  slackHook(payload)
+    .then(() => res.end())
+    .catch((err) => res.end(err))
 })
 
 export default router
