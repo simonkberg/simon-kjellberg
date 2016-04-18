@@ -7,6 +7,21 @@
   --monospace-font-family: var(--root-font-family);
 }
 
+a {
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:link,
+a:visited {
+  color: color(var(--root-color) lightness(25%));
+}
+
+a:hover,
+a:active {
+  color: color(var(--root-color) lightness(50%));
+}
+
 h1,
 h2,
 h3 {
@@ -45,6 +60,7 @@ p {
 
 ul {
   list-style-type: none;
+  margin-bottom: 1.5em;
 
   & li {
     position: relative;
