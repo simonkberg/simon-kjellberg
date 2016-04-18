@@ -44,9 +44,13 @@ class Stats extends Component {
   }
 
   render () {
+    const wakaTimeUrl = 'https://wakatime.com/@simonkberg'
+
     return (
       <div>
-        <h2>currently coding in</h2>
+        <h2>
+          currently coding in <small>(<a href={wakaTimeUrl}>wakatime.com</a>)</small>
+        </h2>
         {this.renderStats()}
       </div>
     )

@@ -5,6 +5,9 @@ import Stats from '../stats'
 
 class Landing extends Component {
   render () {
+    const githubUrl = 'https://github.com/simonkberg'
+    const emailUrl = 'mailto:simon.kjellberg@gmail.com'
+
     return (
       <div className={styles.landing}>
         <h1>Simon Kjellberg<small>, Full Stack Developer</small></h1>
@@ -14,7 +17,12 @@ class Landing extends Component {
           well as full server configurations and deployment procedures.
         </p>
         <Stats />
-      </div>
+        <h2>links</h2>
+        <p>
+          [github](<a href={githubUrl}>{githubUrl}</a>)<br/>
+          [email](<a href={emailUrl}>{emailUrl}</a>)
+        </p>
+        </div>
     )
   }
 }
