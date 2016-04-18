@@ -6,7 +6,11 @@ require('dotenv').load({ silent: true })
 require('babel-register')
 require('babel-polyfill')
 
-var app = require('../app')
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+  var nr = require('newrelic')
+}
+
+var app = require('../app')(nr)
 var debug = require('debug')
 var http = require('http')
 

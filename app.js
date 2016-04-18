@@ -10,65 +10,75 @@ import webpackConfig from './webpack/config.client'
 import reactServer from './build/server'
 import api from './api'
 
-const app = express()
-const dev = app.get('env') !== 'production'
+module.exports = (nr = null) => {
+  const app = express()
+  const dev = app.get('env') !== 'production'
 
-// middleware setup
-app.use(favicon(path.join(__dirname, 'static/favicon.ico')))
-app.use(logger('dev'))
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(cookieParser())
-app.use(compression())
-app.use(express.static(path.join(__dirname, 'static')))
-app.use(express.static(path.join(__dirname, 'build')))
+  // middleware setup
+  app.use(favicon(path.join(__dirname, 'static/favicon.ico')))
+  app.use(logger('dev'))
+  app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({ extended: false }))
+  app.use(cookieParser())
+  app.use(compression())
+  app.use(express.static(path.join(__dirname, 'static')))
+  app.use(express.static(path.join(__dirname, 'build')))
 
-// api
-app.use('/api', api)
-// redirect old slack hooks
-app.use('/slack/:method', (req, res) => {
-  return res.redirect(307, `/api/slack/${req.params.method}`)
-})
+  // api
+  app.use('/api', api)
+  // redirect old slack hooks
+  app.use('/slack/:method', (req, res) => {
+    return res.redirect(307, `/api/slack/${req.params.method}`)
+  })
 
-// edgy
-app.use(function (req, res, next) {
-  res.header('X-UA-Compatible', 'IE=edge')
-  next()
-})
+  // edgy
+  app.use((req, res, next) => {
+    res.header('X-UA-Compatible', 'IE=edge')
 
-// set server store
-app.use((req, res, next) => {
-  res.locals.data = {
-    AppStore: {
-      baseUrl: `${req.protocol}://${req.get('host')}`
+    next()
+  })
+
+  // set newrelic local
+  app.use((req, res, next) => {
+    res.locals.newrelic = nr
+
+    next()
+  })
+
+  // set server store
+  app.use((req, res, next) => {
+    res.locals.data = {
+      AppStore: {
+        baseUrl: `${req.protocol}://${req.get('host')}`
+      }
     }
+
+    next()
+  })
+
+  const manifest = path.join(__dirname, 'build/manifest.json')
+
+  app.use(expressWebpackAssets(manifest, { devMode: dev }))
+
+  if (dev) {
+    const webpack = require('webpack')
+    const webpackDevMiddleware = require('webpack-dev-middleware')
+    const webpackHotMiddleware = require('webpack-hot-middleware')
+    const config = webpackConfig()
+    const compiler = webpack(config)
+
+    app.use(webpackDevMiddleware(compiler, {
+      noInfo: true,
+      publicPath: config.output.publicPath,
+      stats: {
+        colors: true
+      }
+    }))
+
+    app.use(webpackHotMiddleware(compiler))
   }
 
-  next()
-})
+  app.use(reactServer())
 
-const manifest = path.join(__dirname, 'build/manifest.json')
-
-app.use(expressWebpackAssets(manifest, { devMode: dev }))
-
-if (dev) {
-  const webpack = require('webpack')
-  const webpackDevMiddleware = require('webpack-dev-middleware')
-  const webpackHotMiddleware = require('webpack-hot-middleware')
-  const config = webpackConfig()
-  const compiler = webpack(config)
-
-  app.use(webpackDevMiddleware(compiler, {
-    noInfo: true,
-    publicPath: config.output.publicPath,
-    stats: {
-      colors: true
-    }
-  }))
-
-  app.use(webpackHotMiddleware(compiler))
+  return app
 }
-
-app.use(reactServer())
-
-module.exports = app
