@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server'
 import alt from '../alt-flux'
 
 export default (router, locals) => {
-  const { webpack_asset, css, data } = locals
+  const { webpack_asset, css, data, newrelic } = locals
 
   // Bootstrap data before we render
   alt.bootstrap(JSON.stringify(data || {}))
@@ -19,6 +19,7 @@ export default (router, locals) => {
     <!doctype html>
     <html ${head.htmlAttributes.toString()}>
       <head>
+        ${newrelic ? newrelic.getBrowserTimingHeader() : ''}
         ${head.title.toString()}
         ${head.base.toString()}
         ${head.meta.toString()}
