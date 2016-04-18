@@ -4,7 +4,7 @@ import WakaTimeStore from 'stores/WakaTimeStore'
 
 const { array } = PropTypes
 
-class Stats extends Component {
+class LandingStats extends Component {
   static propTypes = {
     stats: array
   }
@@ -31,11 +31,7 @@ class Stats extends Component {
     if (stats.length) {
       return (
         <ul>
-          {stats.map(({name, percent}) => {
-            return (
-              <li key={name}>{name} ({percent}%)</li>
-            )
-          })}
+          {stats.map(({name, percent}) => <li key={name}>{name} ({percent}%)</li>)}
         </ul>
       )
     }
@@ -49,7 +45,7 @@ class Stats extends Component {
     return (
       <div>
         <h2>
-          currently coding in <small>(<a href={wakaTimeUrl}>wakatime.com</a>)</small>
+          currently coding in <small>(via <a href={wakaTimeUrl}>wakatime.com</a>)</small>
         </h2>
         {this.renderStats()}
       </div>
@@ -57,4 +53,4 @@ class Stats extends Component {
   }
 }
 
-export default connectToStores(Stats)
+export default connectToStores(LandingStats)
