@@ -50,7 +50,7 @@ class App extends Component {
     }
 
     return (
-      <div className={styles.app} ref={this._onAppMounted}>
+      <div className={styles.app}>
         <Helmet {...head} />
         {this.props.children}
       </div>

@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import styles from './Landing.css'
 
+import Stats from '../stats'
+
 class Landing extends Component {
   render () {
     return (
@@ -11,6 +13,7 @@ class Landing extends Component {
           modern, dynamic frontends, to creating backends and API services, as
           well as full server configurations and deployment procedures.
         </p>
+        <Stats />
       </div>
     )
   }

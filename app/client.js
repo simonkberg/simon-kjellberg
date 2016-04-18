@@ -1,5 +1,6 @@
 
 import 'babel-polyfill'
+import 'isomorphic-fetch'
 import React from 'react'
 import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'

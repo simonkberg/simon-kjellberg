@@ -38,3 +38,27 @@ h3::before {
   content: "###";
   left: -3.5ch;
 }
+
+p {
+  margin-bottom: 1.5em;
+}
+
+ul {
+  list-style-type: none;
+
+  & li {
+    position: relative;
+    padding-left: 1.5ch;
+
+    &::before {
+      content: "*";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 1ch;
+      line-height: 1;
+      color: color(var(--root-color) alpha(-75%));
+      transform: translateY(-50%);
+    }
+  }
+}
