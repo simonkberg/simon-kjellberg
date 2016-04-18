@@ -25,15 +25,13 @@ export default () => {
       }
 
       if (props) {
-        const { status } = props.routes.find((route) => route.status) || {
-          status: 200
-        }
+        const { status } = props.routes.find((route) => route.status) || { status: 200 }
 
-        const createElement = (Component, props) => {
+        props.createElement = function createElement (Component, props) {
           return <Component context={context} {...props} />
         }
 
-        const html = htmlHelper(<RouterContext createElement={createElement} {...props} />, locals)
+        const html = htmlHelper(<RouterContext {...props} />, locals)
 
         return res.status(status).send(html)
       }
