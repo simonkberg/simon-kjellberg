@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node ./bin/serve",
     "build": "node ./bin/compile",
-    "dev": "NODE_ENV=development npm run build && npm start",
-    "ssl": "babel-node ./bin/ssl"
+    "ssl": "node ./bin/ssl",
+    "dev": "NODE_ENV=development npm run build && npm start"
   },
   "repository": {
     "type": "git",
@@ -39,6 +39,7 @@
     "express-webpack-assets": "0.0.2",
     "iso": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
+    "letiny": "^0.1.1",
     "moment": "^2.12.0",
     "morgan": "^1.7.0",
     "newrelic": "^1.26.2",

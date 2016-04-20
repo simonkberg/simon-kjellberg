@@ -1,5 +1,6 @@
 *.pid
 *.log
-node_modules
-build
+/node_modules
+/build
+/ssl
 .env
