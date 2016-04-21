@@ -7,7 +7,6 @@ export default function (opts = {}) {
 
   return Object.assign(config, {
     name: 'server',
-    devtool: 'eval',
     target: 'node',
 
     entry: {
