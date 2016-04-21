@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import Helmet from 'react-helmet'
 
+import favicons, { appleTouchIcons } from 'helpers/favicon'
 import withUrl from 'helpers/withUrl'
 import styles from './App.css'
 
@@ -46,6 +47,10 @@ class App extends Component {
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: ';TODO' },
         { property: 'og:type', content: 'website' }
+      ],
+      link: [
+        ...appleTouchIcons([152, 144, 120, 114, 72, 57]),
+        ...favicons([196, 32, 16])
       ]
     }
 

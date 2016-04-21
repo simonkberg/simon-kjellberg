@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="512"
+   height="512"
+   viewBox="0 0 512.00002 512.00002"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r"
+   sodipodi:docname="favicon.svg"
+   inkscape:export-filename="/home/simon/www/simonkberg/simon-kjellberg/static/favicon.svg.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#666666"
+     bordercolor="#33333f"
+     borderopacity="1"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.175"
+     inkscape:cx="-1468.1826"
+     inkscape:cy="-50.505136"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="2048"
+     inkscape:window-height="1094"
+     inkscape:window-x="2048"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     borderlayer="false"
+     inkscape:showpageshadow="true"
+     showborder="true"
+     inkscape:snap-page="true"
+     units="px">
+    <sodipodi:guide
+       position="32.678573,236.42858"
+       orientation="1,0"
+       id="guide3370" />
+    <sodipodi:guide
+       position="32.678573,-35.714287"
+       orientation="1,0"
+       id="guide3372" />
+    <inkscape:grid
+       type="xygrid"
+       id="grid3441" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-540.36225)">
+    <circle
+       style="fill:#000000"
+       id="path3439"
+       cx="256"
+       cy="796.36224"
+       r="256" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="195.71429"
+       y="683.79077"
+       id="text3340"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="195.71429"
+         y="683.79077"
+         id="tspan3344" /></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2"
+     transform="translate(0,-182.48819)">
+    <g
+       id="g3471"
+       transform="translate(-4.5e-6,0)">
+      <path
+         d="m 104.78029,344.05574 -22.107931,36.00434 102.328131,58.4281 -102.328131,60.32307 22.423761,34.10938 123.17275,-76.43028 0,-36.00434 -123.48858,-76.43027 z"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:180px;line-height:125%;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         id="path3465"
+         inkscape:connector-curvature="0" />
+      <path
+         d="m 429.32765,483.96736 c 0,-40.1101 -24.31873,-57.79644 -66.00797,-70.42954 -34.74103,-10.73814 -44.53168,-16.42305 -44.53168,-30.31946 0,-14.21224 12.94893,-21.47627 32.53024,-21.47627 17.68634,0 35.37268,6.00072 50.21658,18.318 l 24.31872,-28.10866 c -18.94965,-18.00216 -44.84751,-28.42448 -78.32523,-28.42448 -45.47917,0 -82.431,23.37124 -82.431,63.79717 0,33.16189 19.26548,52.42737 70.74538,68.21875 30.31944,9.159 39.47844,16.73886 39.47844,32.53024 0,17.05469 -14.52807,26.84535 -36.32017,26.84535 -23.37124,0 -42.95255,-7.89569 -59.05975,-22.10793 l -26.21369,29.05613 c 18.318,18.00217 45.16334,31.58277 86.53675,31.58277 55.90148,0 89.06338,-28.42449 89.06338,-69.48208 z"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:180px;line-height:125%;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         id="path3467"
+         inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>
