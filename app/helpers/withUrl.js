@@ -1,5 +1,5 @@
-import React, { Component, PropTypes } from 'react'
-import { PropTypes as RouterProps } from 'react-router'
+import React, { Component } from 'react'
+import { routerShape, locationShape } from 'react-router'
 import getDisplayName from './getDisplayName'
 import AppStore from 'stores/AppStore'
 
@@ -9,11 +9,11 @@ export default function withUrl (ComposedComponent) {
     static ComposedComponent = ComposedComponent;
 
     static contextTypes = {
-      router: PropTypes.object
+      router: routerShape
     }
 
     static propTypes = {
-      location: RouterProps.location
+      location: locationShape
     }
 
     constructor (props) {
