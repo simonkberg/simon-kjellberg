@@ -2,15 +2,22 @@ import React, { Component } from 'react'
 
 class LandingLinks extends Component {
   render () {
-    const githubUrl = 'https://github.com/simonkberg'
-    const emailUrl = 'mailto:simon.kjellberg@gmail.com'
+    const githubLink = {
+      href: 'https://github.com/simonkberg',
+      target: '_blank'
+    }
+
+    const emailLink = {
+      href: 'mailto:simon.kjellberg@gmail.com'
+    }
 
     return (
       <div>
         <h2>links</h2>
         <p>
-          [github](<a href={githubUrl} target='_blank'>{githubUrl}</a>)<br/>
-          [email](<a href={emailUrl} target='_blank'>{emailUrl}</a>)
+          <small>[github](<a {...githubLink}>{githubLink.href}</a>)</small>
+          <br/>
+          <small>[email](<a {...emailLink}>{emailLink.href}</a>)</small>
         </p>
       </div>
     )

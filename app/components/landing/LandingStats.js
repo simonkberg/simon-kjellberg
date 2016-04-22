@@ -40,12 +40,16 @@ class LandingStats extends Component {
   }
 
   render () {
-    const wakaTimeUrl = 'https://wakatime.com/@simonkberg'
+    const wakaTimeLink = {
+      href: 'https://wakatime.com/@simonkberg',
+      target: '_blank'
+    }
 
     return (
       <div>
         <h2>
-          currently coding in <small>(via <a href={wakaTimeUrl}>wakatime.com</a>)</small>
+          currently writing
+          <small> (via <a {...wakaTimeLink}>wakatime.com</a>)</small>
         </h2>
         {this.renderStats()}
       </div>
