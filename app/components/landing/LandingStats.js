@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import { Motion, spring, presets } from 'react-motion'
 import connectToStores from 'alt-utils/lib/connectToStores'
 import WakaTimeStore from 'stores/WakaTimeStore'
 import Loader from 'shared/components/loader'
@@ -26,13 +27,24 @@ class LandingStats extends Component {
     WakaTimeStore.fetchStats()
   }
 
+  renderPercent (percent) {
+    const target = spring(percent, presets.noWobble)
+
+    return (
+      <Motion defaultStyle={{count: 0}} style={{count: target}}>
+        {({count}) => <span>{count.toFixed(2)}</span>}
+      </Motion>
+    )
+  }
+
   renderStats () {
     const { stats } = this.props
 
     if (stats.length) {
       return (
         <ul>
-          {stats.map(({name, percent}) => <li key={name}>{name} ({percent}%)</li>)}
+          {stats.map(({name, percent}) =>
+            <li key={name}>{name} ({this.renderPercent(percent)}%)</li>)}
         </ul>
       )
     }
