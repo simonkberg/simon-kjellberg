@@ -1,0 +1,23 @@
+
+@keyframes fade {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.75; }
+}
+
+.loader {
+  position: relative;
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-image: url("shared/assets/logo.svg");
+  background-size: 1rem;
+  background-position: center;
+
+  animation: fade 1s infinite alternate;
+
+  & .loaderText {
+    position: absolute;
+    left: 100%;
+  }
+}

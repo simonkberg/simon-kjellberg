@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import connectToStores from 'alt-utils/lib/connectToStores'
 import WakaTimeStore from 'stores/WakaTimeStore'
+import Loader from 'shared/components/loader'
 
 const { array } = PropTypes
 
@@ -36,7 +37,7 @@ class LandingStats extends Component {
       )
     }
 
-    return <p>Fetching...</p>
+    return <Loader text='Fetching...' />
   }
 
   render () {

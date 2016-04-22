@@ -1,11 +1,6 @@
 
+@import "./variables.css";
 @import url("sanitize.css/lib/sanitize.css");
-
-:root {
-  --root-color: #000;
-  --root-font-family: "Fira Mono", monospace;
-  --monospace-font-family: var(--root-font-family);
-}
 
 a {
   text-decoration: none;
