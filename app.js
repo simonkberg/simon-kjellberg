@@ -15,6 +15,7 @@ module.exports = (nr = null) => {
   const dev = app.get('env') !== 'production'
 
   // middleware setup
+  app.set('trust proxy', 'loopback')
   app.use(favicon(path.join(__dirname, 'static/favicon.ico')))
   app.use(logger('dev'))
   app.use(bodyParser.json())
