@@ -1,23 +1,26 @@
 #!/usr/bin/env node
 
-import fs from 'fs'
-import path from 'path'
-import del from 'del'
-import { exec } from 'child_process'
-import le from 'letiny'
+'use strict'
 
-const paths = {}
-paths.static = path.join(__dirname, '..', 'static')
-paths.certs = path.normalize('/etc/ssl/private/simonkjellberg.com')
+var fs = require('fs')
+var path = require('path')
+var del = require('del')
+var exec = require('child_process').exec
+var le = require('letiny')
+
+var paths = {}
+paths.root = path.join(__dirname, '..')
+paths.static = path.join(paths.root, 'static')
+paths.certs = path.join(paths.root, 'ssl')
 paths.chain = path.join(paths.certs, 'chain.pem')
 
-const options ={
+var options = {
   email: 'admin@simonkjellberg.com',
   domains: [
     'simonkjellberg.com',
     'www.simonkjellberg.com',
     'simonkjellberg.se',
-    'www.simonkjellberg.se',
+    'www.simonkjellberg.se'
   ],
   webroot: paths.static,
   certFile: path.join(paths.certs, 'cert.pem'),
@@ -27,12 +30,22 @@ const options ={
   agreeTerms: true
 }
 
-le.getCert(options, (err, cert, privateKey, ca, accountKey) => {
+try {
+  fs.accessSync(paths.certs, fs.W_OK)
+} catch (err) {
+  if (err.code === 'ENOENT') {
+    fs.mkdirSync(paths.certs)
+  } else {
+    throw err
+  }
+}
+
+le.getCert(options, function (err, cert, pkey, ca, akey) {
   if (err) throw err
 
-  fs.writeFileSync(paths.chain, `${cert}\n${ca}`)
+  fs.writeFileSync(paths.chain, cert + '\n' + ca)
 
-  del(path.join(paths.static, '.well-known'))
+  del(path.join(paths.static, '.well-known/acme-challenge'))
 
   exec('service nginx reload')
 })

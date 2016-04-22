@@ -1,0 +1,6 @@
+
+:root {
+  --root-color: #000;
+  --root-font-family: "Fira Mono", monospace;
+  --monospace-font-family: var(--root-font-family);
+}

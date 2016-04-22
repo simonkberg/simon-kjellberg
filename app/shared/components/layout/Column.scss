@@ -1,0 +1,24 @@
+
+@import "~shared/styles/variables";
+@import "~shared/styles/layout";
+
+:global {
+  .#{$layout-prefix} {
+    &col {
+      @include layout-columns-base();
+      @include layout-columns(xs);
+
+      @media (min-width: $screen-sm-min) {
+        @include layout-columns(sm);
+      }
+
+      @media (min-width: $screen-md-min) {
+        @include layout-columns(md);
+      }
+
+      @media (min-width: $screen-lg-min) {
+        @include layout-columns(lg);
+      }
+    }
+  }
+}

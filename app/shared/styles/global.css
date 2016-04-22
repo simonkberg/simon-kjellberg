@@ -1,0 +1,75 @@
+
+@import "./variables.css";
+@import url("sanitize.css/lib/sanitize.css");
+
+a {
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:link,
+a:visited {
+  color: color(var(--root-color) lightness(25%));
+}
+
+a:hover,
+a:active {
+  color: color(var(--root-color) lightness(50%));
+}
+
+h1,
+h2,
+h3 {
+  position: relative;
+  font-size: 1em;
+
+  &::before {
+    position: absolute;
+    color: color(var(--root-color) alpha(-75%));
+  }
+
+  & small {
+    font-weight: normal;
+    color: color(var(--root-color) lightness(50%));
+  }
+}
+
+h1::before {
+  content: "#";
+  left: -1.5ch;
+}
+
+h2::before {
+  content: "##";
+  left: -2.5ch;
+}
+
+h3::before {
+  content: "###";
+  left: -3.5ch;
+}
+
+p {
+  margin-bottom: 1.5em;
+}
+
+ul {
+  list-style-type: none;
+  margin-bottom: 1.5em;
+
+  & li {
+    position: relative;
+    padding-left: 1.5ch;
+
+    &::before {
+      content: "*";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 1ch;
+      line-height: 1;
+      color: color(var(--root-color) alpha(-75%));
+      transform: translateY(-50%);
+    }
+  }
+}

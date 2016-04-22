@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+
+'use strict'
+
+require('dotenv').load({ silent: true })
+require('babel-register')
+require('babel-polyfill')
+
+var del = require('del')
+var path = require('path')
+var webpack = require('webpack')
+var webpackConfig = require('../webpack/config')({
+  env: process.env.NODE_ENV
+})
+
+var compiler = webpack(webpackConfig)
+var build = path.join(__dirname, '../build')
+
+// clean build folder
+del.sync(path.join(build, '**'))
+
+// compile project
+compiler.run(function (err, stats) {
+  if (err) throw err
+
+  if (stats.hasErrors()) {
+    console.log(stats.toString({ colors: true }))
+  }
+
+  if (stats.hasWarnings()) {
+    console.log(stats.toString({ colors: true }))
+  }
+})
