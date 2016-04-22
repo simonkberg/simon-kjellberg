@@ -5,14 +5,15 @@ import favicons, { appleTouchIcons } from 'helpers/favicon'
 import withUrl from 'helpers/withUrl'
 import styles from './App.css'
 
-const { shape, node, func } = PropTypes
+const { shape, node, func, string } = PropTypes
 
 class App extends Component {
   static propTypes = {
     context: shape({
       insertCss: func.isRequired
     }),
-    children: node
+    children: node,
+    url: string
   }
 
   static childContextTypes = {
@@ -38,19 +39,24 @@ class App extends Component {
   }
 
   render () {
+    const { url } = this.props
+
     const head = {
-      htmlAttributes: { lang: 'en' },
+      htmlAttributes: { lang: 'en', itemscope: true, itemtype: 'http://schema.org/WebPage' },
       titleTemplate: 'Simon Kjellberg » %s',
       defaultTitle: 'Simon Kjellberg',
       meta: [
-        { name: 'theme-color', content: '#fff' },
+        { name: 'theme-color', content: '#000000' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: ';TODO' },
-        { property: 'og:type', content: 'website' }
+        { name: 'description', property: 'og:description', itemprop: 'description', content: 'Creative full stack developer located in Stockholm, Sweden.' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', itemprop: 'url', content: url }
       ],
       link: [
         ...appleTouchIcons([152, 144, 120, 114, 72, 57]),
-        ...favicons([196, 32, 16])
+        ...favicons([196, 32, 16]),
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css?family=Fira+Mono:400,700' },
+        { rel: 'canonical', href: url }
       ]
     }
 

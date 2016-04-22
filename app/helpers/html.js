@@ -24,7 +24,6 @@ export default (router, locals) => {
         ${head.base.toString()}
         ${head.meta.toString()}
         ${head.link.toString()}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
         <style>${css.join('')}</style>
       </head>
       <body>
