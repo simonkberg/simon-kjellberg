@@ -26,7 +26,7 @@ match({ history, routes }, (err, redirectLocation, renderProps) => {
     }
 
     renderProps.onUpdate = function trackPageView () {
-      ga.pageview(this.state.location.pathname)
+      ga.pageview(window.location.pathname)
     }
 
     render(<Router {...renderProps} />, container)
