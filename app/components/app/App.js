@@ -14,6 +14,7 @@ class App extends Component {
       insertCss: func.isRequired
     }),
     children: node,
+    baseUrl: string,
     url: string
   }
 
@@ -40,7 +41,7 @@ class App extends Component {
   }
 
   render () {
-    const { url } = this.props
+    const { baseUrl, url } = this.props
 
     const head = {
       htmlAttributes: { lang: 'en', itemscope: true, itemtype: 'http://schema.org/WebPage' },
@@ -53,7 +54,7 @@ class App extends Component {
         { name: 'description', property: 'og:description', itemprop: 'description', content: 'Creative full stack developer located in Stockholm, Sweden.' },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', itemprop: 'url', content: url },
-        { property: 'og:image', itemprop: 'image', content: `/${share}` },
+        { property: 'og:image', itemprop: 'image', content: `${baseUrl}/${share}` },
         { property: 'fb:app_id', content: '1717386788525340' }
       ],
       link: [
