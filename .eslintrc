@@ -3,6 +3,8 @@
   "extends": ["standard", "plugin:react/recommended"],
   "plugins": ["react", "babel"],
   "globals": {
-    "fetch": true
+    "fetch": false,
+    "__DEV__": false,
+    "__BROWSER__": false
   }
 }

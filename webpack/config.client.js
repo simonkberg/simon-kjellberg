@@ -3,6 +3,8 @@ import AssetsPlugin from 'assets-webpack-plugin'
 import sharedConfig, { paths, getEntry } from './config.shared'
 
 export default function (opts = {}) {
+  opts.browser = true
+
   const config = sharedConfig(opts)
 
   return Object.assign(config, {

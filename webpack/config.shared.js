@@ -19,10 +19,14 @@ export function getEntry (entry, hot = false) {
   return entry
 }
 
-export function getPlugins (env = process.env.NODE_ENV) {
+export function getPlugins (opts = {}) {
+  const { env = process.env.NODE_ENV, browser } = opts
+
   let plugins = [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': `"${env || 'development'}"`
+      'process.env.NODE_ENV': `"${env || 'development'}"`,
+      '__DEV__': env !== 'production',
+      '__BROWSER__': !!browser
     })
   ]
 
@@ -47,7 +51,7 @@ export function getPlugins (env = process.env.NODE_ENV) {
   return plugins
 }
 
-export function getLoaders (env = process.env.NODE_ENV) {
+export function getLoaders (opts = {}) {
   let loaders = [{
     test: /\.js$/,
     loader: 'babel',
@@ -104,7 +108,7 @@ export default function sharedConfig (opts = {}) {
       publicPath: '/'
     },
 
-    plugins: getPlugins(opts.env),
+    plugins: getPlugins(opts),
 
     resolve: {
       extensions: ['', '.js', '.json'],
@@ -112,7 +116,7 @@ export default function sharedConfig (opts = {}) {
     },
 
     module: {
-      loaders: getLoaders(opts.env)
+      loaders: getLoaders(opts)
     },
 
     postcss: function (webpack) {
