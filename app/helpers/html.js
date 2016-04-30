@@ -1,19 +1,19 @@
+import React from 'react'
 import Helmet from 'react-helmet'
 import Iso from 'iso'
 import { renderToString } from 'react-dom/server'
-import alt from '../alt-flux'
+import configureStore from 'store/configureStore'
+import Root from 'containers/Root'
 
 export default (router, locals) => {
   const { webpack_asset, css, data, newrelic } = locals
 
-  // Bootstrap data before we render
-  alt.bootstrap(JSON.stringify(data || {}))
-
-  const content = renderToString(router)
+  const store = configureStore(data || {})
+  const content = renderToString(<Root store={store}>{router}</Root>)
   const head = Helmet.rewind()
   const iso = new Iso()
 
-  iso.add(content, alt.flush())
+  iso.add(content, store.getState())
 
   return `
     <!doctype html>

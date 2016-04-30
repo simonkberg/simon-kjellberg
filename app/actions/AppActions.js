@@ -1,10 +1,9 @@
 
-import { createActions } from 'alt-flux'
+export const SET_BASE_URL = 'SET_BASE_URL'
 
-class AppActions {
-  updateBaseUrl (baseUrl) {
-    return baseUrl
+export function setBaseUrl (baseUrl) {
+  return {
+    type: SET_BASE_URL,
+    baseUrl
   }
 }
-
-export default createActions(AppActions)

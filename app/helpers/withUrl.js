@@ -1,10 +1,12 @@
-import React, { Component } from 'react'
+import React, { Component, PropTypes } from 'react'
 import { routerShape, locationShape } from 'react-router'
+import { connect } from 'react-redux'
 import getDisplayName from './getDisplayName'
-import AppStore from 'stores/AppStore'
+
+const { string } = PropTypes
 
 export default function withUrl (ComposedComponent) {
-  return class WithUrl extends Component {
+  class WithUrl extends Component {
     static displayName = `WithUrl(${getDisplayName(ComposedComponent)})`;
     static ComposedComponent = ComposedComponent;
 
@@ -13,13 +15,8 @@ export default function withUrl (ComposedComponent) {
     }
 
     static propTypes = {
-      location: locationShape
-    }
-
-    constructor (props) {
-      super(props)
-
-      this.state = AppStore.getState()
+      location: locationShape,
+      baseUrl: string
     }
 
     componentWillMount () {
@@ -28,26 +25,13 @@ export default function withUrl (ComposedComponent) {
       this._setUrl(props, context)
     }
 
-    componentDidMount () {
-      AppStore.listen(this._onChange)
-    }
-
-    componentWillUnmount () {
-      AppStore.unlisten(this._onChange)
-    }
-
     componentWillReceiveProps (props, context) {
       this._setUrl(props, context)
     }
 
-    _onChange = (state) => {
-      this.setState(state)
-    }
-
     _setUrl = (props, context) => {
       const { router } = context
-      const { location } = props
-      const { baseUrl } = this.state
+      const { baseUrl, location } = props
 
       this.setState({
         url: baseUrl + router.createHref(location)
@@ -58,4 +42,10 @@ export default function withUrl (ComposedComponent) {
       return <ComposedComponent {...this.state} {...this.props} />
     }
   }
+
+  return connect(state => {
+    return {
+      baseUrl: state.app.baseUrl
+    }
+  })(WithUrl)
 }

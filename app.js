@@ -49,7 +49,7 @@ module.exports = (nr = null) => {
   // set server store
   app.use((req, res, next) => {
     res.locals.data = {
-      AppStore: {
+      app: {
         baseUrl: `${req.protocol}://${req.get('host')}`
       }
     }

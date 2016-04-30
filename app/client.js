@@ -6,8 +6,9 @@ import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
 import Iso from 'iso'
 import ga from 'react-ga'
-import alt from './alt-flux'
 import routes from './routes'
+import configureStore from './store/configureStore'
+import Root from './containers/Root'
 
 ga.initialize('UA-2241753-14')
 
@@ -15,8 +16,6 @@ match({ history, routes }, (err, redirectLocation, renderProps) => {
   if (err) throw err
 
   Iso.bootstrap((state, container) => {
-    alt.bootstrap(state)
-
     const context = {
       insertCss: (styles) => styles._insertCss()
     }
@@ -29,6 +28,11 @@ match({ history, routes }, (err, redirectLocation, renderProps) => {
       ga.pageview(window.location.pathname)
     }
 
-    render(<Router {...renderProps} />, container)
+    render(
+      <Root store={configureStore(state)}>
+        <Router {...renderProps} />
+      </Root>,
+      container
+    )
   })
 })

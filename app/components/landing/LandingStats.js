@@ -1,30 +1,25 @@
 import React, { Component, PropTypes } from 'react'
+import { connect } from 'react-redux'
 import { Motion, spring, presets } from 'react-motion'
-import connectToStores from 'alt-utils/lib/connectToStores'
-import WakaTimeStore from 'stores/WakaTimeStore'
 import Loader from 'shared/components/loader'
+import { loadStats } from 'actions'
 
-const { array } = PropTypes
+const { array, func } = PropTypes
 
 class LandingStats extends Component {
   static propTypes = {
-    stats: array
+    stats: array,
+    dispatch: func
   }
 
   static defaultProps = {
     stats: []
   }
 
-  static getStores () {
-    return [WakaTimeStore]
-  }
-
-  static getPropsFromStores () {
-    return WakaTimeStore.getState()
-  }
-
   componentDidMount () {
-    WakaTimeStore.fetchStats()
+    const { dispatch } = this.props
+
+    dispatch(loadStats())
   }
 
   renderPercent (percent) {
@@ -70,4 +65,8 @@ class LandingStats extends Component {
   }
 }
 
-export default connectToStores(LandingStats)
+export default connect((state) => {
+  return {
+    stats: state.stats.data
+  }
+})(LandingStats)
