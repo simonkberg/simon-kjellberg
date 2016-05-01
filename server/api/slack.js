@@ -1,8 +1,8 @@
 import express from 'express'
 import moment from 'moment'
 
-import slackHook from './lib/slackHook'
-import clockEmoji from './lib/clockEmoji'
+import slackHook from '../lib/slackHook'
+import clockEmoji from '../lib/clockEmoji'
 
 const router = express.Router()
 

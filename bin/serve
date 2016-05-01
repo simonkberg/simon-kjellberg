@@ -10,7 +10,7 @@ if (process.env.NEW_RELIC_LICENSE_KEY) {
   var nr = require('newrelic')
 }
 
-var app = require('../app')(nr)
+var app = require('../server/app')(nr)
 var debug = require('debug')
 var http = require('http')
 
@@ -29,6 +29,12 @@ app.set('port', port)
  */
 
 var server = http.createServer(app)
+
+/**
+ * Create chat server
+ */
+
+require('../server/chat')(server)
 
 /**
  * Listen on provided port, on all network interfaces.

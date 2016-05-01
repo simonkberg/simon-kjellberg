@@ -6,8 +6,8 @@ import cookieParser from 'cookie-parser'
 import bodyParser from 'body-parser'
 import compression from 'compression'
 import expressWebpackAssets from 'express-webpack-assets'
-import webpackConfig from './webpack/config.client'
-import reactServer from './build/server'
+import webpackConfig from '../webpack/config.client'
+import reactServer from '../build/server'
 import api from './api'
 
 module.exports = (nr = null) => {
@@ -16,21 +16,17 @@ module.exports = (nr = null) => {
 
   // middleware setup
   app.set('trust proxy', 'loopback')
-  app.use(favicon(path.join(__dirname, 'static/favicon.ico')))
+  app.use(favicon(path.join(__dirname, '../static/favicon.ico')))
   app.use(logger('dev'))
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(cookieParser())
   app.use(compression())
-  app.use(express.static(path.join(__dirname, 'static')))
-  app.use(express.static(path.join(__dirname, 'build')))
+  app.use(express.static(path.join(__dirname, '../static')))
+  app.use(express.static(path.join(__dirname, '../build')))
 
   // api
   app.use('/api', api)
-  // redirect old slack hooks
-  app.use('/slack/:method', (req, res) => {
-    return res.redirect(307, `/api/slack/${req.params.method}`)
-  })
 
   // edgy
   app.use((req, res, next) => {
@@ -57,7 +53,7 @@ module.exports = (nr = null) => {
     next()
   })
 
-  const manifest = path.join(__dirname, 'build/manifest.json')
+  const manifest = path.join(__dirname, '../build/manifest.json')
 
   app.use(expressWebpackAssets(manifest, { devMode: dev }))
 
