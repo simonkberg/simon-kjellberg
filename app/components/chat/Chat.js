@@ -31,9 +31,11 @@ class Chat extends Component {
     return Object.values(messages).reverse().map((message) => {
       const user = users[message.user]
 
+      if (!user) return null
+
       return (
         <li key={message.ts}>
-          <strong style={{color: user.color}}>{user.name}: </strong>
+          <strong style={{color: `#${user.color}`}}>{user.name}: </strong>
           {message.text}
         </li>
       )

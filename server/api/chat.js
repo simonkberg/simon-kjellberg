@@ -19,6 +19,8 @@ router.get('/users/:id', (req, res) => {
     response => {
       response.users = [response.user].map(mapUsers)
 
+      delete response.user
+
       return res.json(response)
     },
     error => res.json(error)
@@ -29,6 +31,8 @@ router.get('/users', (req, res) => {
   api.users.list().then(
     response => {
       response.users = response.members.map(mapUsers)
+
+      delete response.members
 
       return res.json(response)
     },
