@@ -14,4 +14,30 @@ router.get('/history', (req, res) => {
   )
 })
 
+router.get('/users/:id', (req, res) => {
+  api.users.info(req.params.id).then(
+    response => {
+      response.users = [response.user].map(mapUsers)
+
+      return res.json(response)
+    },
+    error => res.json(error)
+  )
+})
+
+router.get('/users', (req, res) => {
+  api.users.list().then(
+    response => {
+      response.users = response.members.map(mapUsers)
+
+      return res.json(response)
+    },
+    error => res.json(error)
+  )
+})
+
+function mapUsers ({ id, name, color }) {
+  return { id, name, color }
+}
+
 export default router

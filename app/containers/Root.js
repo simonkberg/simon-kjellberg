@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import { Provider } from 'react-redux'
+import DevTools from './DevTools'
 
 const { object, node } = PropTypes
 
@@ -12,7 +13,14 @@ class Root extends Component {
   render () {
     const { store, children } = this.props
 
-    return <Provider store={store} children={children} />
+    return (
+      <Provider store={store}>
+        <div>
+          {children}
+          { __DEV__ ? <DevTools /> : null}
+        </div>
+      </Provider>
+    )
   }
 }
 

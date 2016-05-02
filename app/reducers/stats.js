@@ -1,7 +1,7 @@
 import {
   FETCH_STATS,
   FETCH_STATS_SUCCESS,
-  FETCH_STATS_FAILURE
+  FETCH_STATS_ERROR
 } from 'actions'
 
 const initialState = {
@@ -23,7 +23,7 @@ export default function stats (state = initialState, action) {
         loading: false,
         data: action.response['data']
       }
-    case FETCH_STATS_FAILURE:
+    case FETCH_STATS_ERROR:
       return {
         ...state,
         loading: false,

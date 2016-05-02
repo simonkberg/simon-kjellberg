@@ -6,6 +6,8 @@ import withUrl from 'helpers/withUrl'
 import share from 'shared/assets/share.png'
 import styles from './App.css'
 
+import Chat from 'components/chat'
+
 const { shape, node, func, string } = PropTypes
 
 class App extends Component {
@@ -69,6 +71,7 @@ class App extends Component {
       <div className={styles.app}>
         <Helmet {...head} />
         {this.props.children}
+        <Chat />
       </div>
     )
   }
