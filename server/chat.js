@@ -8,16 +8,20 @@ module.exports = async (server) => {
   const wss = new Server({ server: server })
 
   const api = await rtm(SLACK_API_TOKEN)
-  const chat = rtm.dataStore.getDMById(SLACK_CHAT_CHANNEL)
+  const chat = api.dataStore.getDMById(SLACK_CHAT_CHANNEL)
 
   wss.on('connection', async (ws) => {
+    console.log('client connected')
+
     ws.on('message', (message) => {
+      console.log('Client Message', message)
       api.sendMessage(message, chat.id)
     })
 
     api.on(RTM_EVENTS.MESSAGE, (message) => {
+      console.log('Server Message', message)
       if (message.channel === chat.id) {
-        ws.send(message)
+        ws.send(JSON.stringify(message))
       }
     })
   })

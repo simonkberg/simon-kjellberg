@@ -18,11 +18,57 @@ class Chat extends Component {
     loading: false
   }
 
+  _ws = null
+
   componentDidMount () {
     const { dispatch } = this.props
 
     dispatch(loadChatHistory())
     dispatch(loadChatUsers())
+
+    this._ws = new WebSocket(`ws://${window.location.host}`)
+    this._ws.addEventListener('open', this._onSocketOpen)
+    this._ws.addEventListener('close', this._onSocketClose)
+    this._ws.addEventListener('error', this._onSocketError)
+  }
+
+  componentWillUnmount () {
+    if (this._ws) {
+      this._ws.close()
+    }
+  }
+
+  _onSocketOpen = (event) => {
+    console.log('Socket Open', event)
+    this._ws.addEventListener('message', this._onSocketMessage)
+  }
+
+  _onSocketClose = (event) => {
+    console.log('Socket Close', event)
+    this._ws.removeEventListener('message', this._onSocketMessage)
+  }
+
+  _onSocketError = (event) => {
+    console.log('Socket Error', event)
+  }
+
+  _onSocketMessage = () => {
+    console.log('Socket Message', event)
+  }
+
+  _onSubmit = (event) => {
+    event.persist()
+    event.preventDefault()
+
+    const data = new FormData(event.target)
+
+    this.sendMessage(data.get('message'))
+  }
+
+  sendMessage (message) {
+    if (this._ws) {
+      this._ws.send(message)
+    }
   }
 
   renderMessages () {
@@ -49,6 +95,10 @@ class Chat extends Component {
         <ul>
           {this.renderMessages()}
         </ul>
+        <form onSubmit={this._onSubmit}>
+          <input type='text' name='message' />
+          <button type='submit'>Send</button>
+        </form>
       </div>
     )
   }

@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 import thunkMiddleware from 'redux-thunk'
-import createLogger from 'redux-logger'
+// import createLogger from 'redux-logger'
 import rootReducer from 'reducers'
 import DevTools from 'containers/DevTools'
 
@@ -9,9 +9,9 @@ function getMiddleware () {
     thunkMiddleware
   ]
 
-  if (__DEV__) {
-    middleware.push(createLogger())
-  }
+  // if (__DEV__) {
+  //   middleware.push(createLogger())
+  // }
 
   return applyMiddleware(...middleware)
 }
