@@ -9,7 +9,11 @@ const api = web(SLACK_API_TOKEN)
 
 router.get('/history', (req, res) => {
   api.im.history(SLACK_CHAT_CHANNEL).then(
-    response => res.json(response),
+    response => {
+      response.messages = response.messages.map(mapMessages)
+
+      return res.json(response)
+    },
     error => res.json(error)
   )
 })
@@ -39,6 +43,10 @@ router.get('/users', (req, res) => {
     error => res.json(error)
   )
 })
+
+function mapMessages ({ user, text, ts }) {
+  return { user, text, ts }
+}
 
 function mapUsers ({ id, name, color }) {
   return { id, name, color }

@@ -20,8 +20,16 @@ module.exports = async (server) => {
 
     api.on(RTM_EVENTS.MESSAGE, (message) => {
       console.log('Server Message', message)
+
       if (message.channel === chat.id) {
-        ws.send(JSON.stringify(message))
+        const { type, user, text, ts } = message
+
+        ws.send(JSON.stringify({
+          type,
+          user,
+          text,
+          ts
+        }))
       }
     })
   })
