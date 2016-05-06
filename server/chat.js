@@ -22,10 +22,9 @@ module.exports = async (server) => {
       console.log('Server Message', message)
 
       if (message.channel === chat.id) {
-        const { type, user, text, ts } = message
+        const { user, text, ts } = message
 
         ws.send(JSON.stringify({
-          type,
           user,
           text,
           ts
