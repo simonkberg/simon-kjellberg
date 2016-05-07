@@ -59,6 +59,10 @@ class Chat extends Component {
     const message = JSON.parse(event.data)
 
     dispatch(addChatMessage(message))
+    // if (messsage.subtype && message.subtype === 'message_deleted') {
+      // dispatch(removeChatMessage(message))
+    // } else {
+    // }
   }
 
   _onSubmit = (event) => {

@@ -5,6 +5,7 @@ import {
   FETCH_CHAT_HISTORY_SUCCESS,
   FETCH_CHAT_HISTORY_ERROR,
   ADD_CHAT_MESSAGE,
+  REMOVE_CHAT_MESSAGE,
   FETCH_CHAT_USERS,
   FETCH_CHAT_USERS_SUCCESS,
   FETCH_CHAT_USERS_ERROR
@@ -27,9 +28,11 @@ const initialState = {
   }
 }
 
-function entities (state = initialState.entities, { response }) {
-  if (response && response.entities) {
-    const nextState = {...state}
+function entities (state = initialState.entities, action) {
+  const nextState = {...state}
+
+  if (action.response && action.response.entities) {
+    const { response } = action
 
     if (response.entities.messages) {
       nextState.messages = {
@@ -48,7 +51,14 @@ function entities (state = initialState.entities, { response }) {
     return nextState
   }
 
-  return state
+  switch (action.type) {
+    case REMOVE_CHAT_MESSAGE:
+      delete nextState.messages[action.ts]
+
+      return nextState
+    default:
+      return state
+  }
 }
 
 function messages (state = initialState.messages, action) {
@@ -74,6 +84,11 @@ function messages (state = initialState.messages, action) {
       return {
         ...state,
         ids: [...state.ids, action.response.result]
+      }
+    case REMOVE_CHAT_MESSAGE:
+      return {
+        ...state,
+        ids: state.ids.filter(ts => ts !== action.ts)
       }
     default:
       return state

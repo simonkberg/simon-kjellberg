@@ -1,6 +1,6 @@
 
 import { Server } from 'ws'
-import { rtm, RTM_EVENTS } from './lib/slack'
+import { rtm, RTM_EVENTS, RTM_MESSAGE_SUBTYPES } from './lib/slack'
 
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
@@ -29,8 +29,25 @@ module.exports = async (server) => {
     }
   })
 
-  function sendMessage (client, { user, text, ts }) {
-    client.send(JSON.stringify({ user, text, ts }), (err) => {
+  function sendMessage (client, { subtype, user, text, ts, ...other }) {
+    const payload = { subtype, user, text, ts }
+
+    payload.edited = !!other.edited
+
+    if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
+      payload.ts = other.deleted_ts
+    }
+
+    if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
+      const { message } = other
+
+      payload.user = message.user
+      payload.text = message.text
+      payload.ts = message.ts
+      payload.edited = true
+    }
+
+    client.send(JSON.stringify(payload), (err) => {
       if (err) console.error(`WebSocket Error: ${err.message}`)
     })
   }

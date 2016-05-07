@@ -3,7 +3,8 @@ import {
   WebClient,
   MemoryDataStore,
   CLIENT_EVENTS,
-  RTM_EVENTS
+  RTM_EVENTS,
+  RTM_MESSAGE_SUBTYPES
 } from '@slack/client'
 
 export default async function slack (token, opts = {}) {
@@ -35,5 +36,8 @@ export function web (token, opts = {}) {
   return new WebClient(token, opts)
 }
 
-export { CLIENT_EVENTS }
-export { RTM_EVENTS }
+export {
+  CLIENT_EVENTS,
+  RTM_EVENTS,
+  RTM_MESSAGE_SUBTYPES
+}

@@ -52,11 +52,19 @@ export function fetchChatHistoryError (error) {
 }
 
 export const ADD_CHAT_MESSAGE = 'ADD_CHAT_MESSAGE'
+export const REMOVE_CHAT_MESSAGE = 'REMOVE_CHAT_MESSAGE'
 
 export function addChatMessage (message) {
   return {
     type: ADD_CHAT_MESSAGE,
     response: normalize(message, Schema.CHAT_MESSAGE)
+  }
+}
+
+export function removeChatMessage ({ ts }) {
+  return {
+    type: ADD_CHAT_MESSAGE,
+    ts
   }
 }
 
