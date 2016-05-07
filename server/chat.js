@@ -1,14 +1,14 @@
 
 import { Server } from 'ws'
-import { rtm, RTM_EVENTS, RTM_MESSAGE_SUBTYPES } from './lib/slack'
+import slack, { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } from './lib/slack'
 
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
 module.exports = async (server) => {
   const wss = new Server({ server: server })
 
-  const api = await rtm(SLACK_API_TOKEN)
-  const chat = api.dataStore.getDMById(SLACK_CHAT_CHANNEL)
+  const { rtm, web } = await slack(SLACK_API_TOKEN)
+  const chat = rtm.dataStore.getDMById(SLACK_CHAT_CHANNEL)
 
   wss.on('connection', async (ws) => {
     console.log('client connected')
@@ -16,41 +16,50 @@ module.exports = async (server) => {
     ws.on('message', (message) => {
       console.log('Client Message', message)
 
-      api.sendMessage(message, chat.id)
+      rtm.sendMessage(message, chat.id)
         .then(res => sendMessage(ws, res))
     })
   })
 
-  api.on(RTM_EVENTS.MESSAGE, (message) => {
+  rtm.on(RTM_EVENTS.MESSAGE, (message) => {
     console.log('Server Message', message)
 
     if (message.channel === chat.id) {
+      if (message.text === '!clear') {
+        web.im.history(chat.id).then(({ messages }) => {
+          return messages.map(msg => {
+            return web.chat.delete(msg.ts, chat.id)
+              .catch(() => null)
+          })
+        }).catch(() => null)
+      }
+
       wss.clients.forEach(client => sendMessage(client, message))
     }
   })
 
-  function sendMessage (client, { subtype, user, text, ts, ...other }) {
-    const payload = { subtype, user, text, ts }
+  return wss
+}
 
-    payload.edited = !!other.edited
+function sendMessage (client, { subtype, user, text, ts, ...other }) {
+  const payload = { subtype, user, text, ts }
 
-    if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
-      payload.ts = other.deleted_ts
-    }
+  payload.edited = !!other.edited
 
-    if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
-      const { message } = other
-
-      payload.user = message.user
-      payload.text = message.text
-      payload.ts = message.ts
-      payload.edited = true
-    }
-
-    client.send(JSON.stringify(payload), (err) => {
-      if (err) console.error(`WebSocket Error: ${err.message}`)
-    })
+  if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
+    payload.ts = other.deleted_ts
   }
 
-  return wss
+  if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
+    const { message } = other
+
+    payload.user = message.user
+    payload.text = message.text
+    payload.ts = message.ts
+    payload.edited = true
+  }
+
+  client.send(JSON.stringify(payload), (err) => {
+    if (err) console.error(`WebSocket Error: ${err.message}`)
+  })
 }
