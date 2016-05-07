@@ -4,6 +4,7 @@ import {
   FETCH_CHAT_HISTORY,
   FETCH_CHAT_HISTORY_SUCCESS,
   FETCH_CHAT_HISTORY_ERROR,
+  ADD_CHAT_MESSAGE,
   FETCH_CHAT_USERS,
   FETCH_CHAT_USERS_SUCCESS,
   FETCH_CHAT_USERS_ERROR
@@ -28,10 +29,23 @@ const initialState = {
 
 function entities (state = initialState.entities, { response }) {
   if (response && response.entities) {
-    return {
-      ...state,
-      ...response.entities
+    const nextState = {...state}
+
+    if (response.entities.messages) {
+      nextState.messages = {
+        ...nextState.messages,
+        ...response.entities.messages
+      }
     }
+
+    if (response.entities.users) {
+      nextState.users = {
+        ...nextState.users,
+        ...response.entities.users
+      }
+    }
+
+    return nextState
   }
 
   return state
@@ -48,13 +62,18 @@ function messages (state = initialState.messages, action) {
       return {
         ...state,
         loading: false,
-        ids: [...state.ids, action.response.result]
+        ids: [...state.ids, ...action.response.result]
       }
     case FETCH_CHAT_HISTORY_ERROR:
       return {
         ...state,
         loading: false,
         error: action.error
+      }
+    case ADD_CHAT_MESSAGE:
+      return {
+        ...state,
+        ids: [...state.ids, action.response.result]
       }
     default:
       return state

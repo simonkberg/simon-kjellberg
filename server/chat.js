@@ -15,23 +15,25 @@ module.exports = async (server) => {
 
     ws.on('message', (message) => {
       console.log('Client Message', message)
+
       api.sendMessage(message, chat.id)
-    })
-
-    api.on(RTM_EVENTS.MESSAGE, (message) => {
-      console.log('Server Message', message)
-
-      if (message.channel === chat.id) {
-        const { user, text, ts } = message
-
-        ws.send(JSON.stringify({
-          user,
-          text,
-          ts
-        }))
-      }
+        .then(res => sendMessage(ws, res))
     })
   })
+
+  api.on(RTM_EVENTS.MESSAGE, (message) => {
+    console.log('Server Message', message)
+
+    if (message.channel === chat.id) {
+      wss.clients.forEach(client => sendMessage(client, message))
+    }
+  })
+
+  function sendMessage (client, { user, text, ts }) {
+    client.send(JSON.stringify({ user, text, ts }), (err) => {
+      if (err) console.error(`WebSocket Error: ${err.message}`)
+    })
+  }
 
   return wss
 }

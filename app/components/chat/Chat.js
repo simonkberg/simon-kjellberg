@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
-import { loadChatHistory, loadChatUsers } from 'actions'
+import { loadChatHistory, addChatMessage, loadChatUsers } from 'actions'
 
 const { object, func, bool } = PropTypes
 
@@ -52,8 +52,13 @@ class Chat extends Component {
     console.log('Socket Error', event)
   }
 
-  _onSocketMessage = () => {
+  _onSocketMessage = (event) => {
     console.log('Socket Message', event)
+
+    const { dispatch } = this.props
+    const message = JSON.parse(event.data)
+
+    dispatch(addChatMessage(message))
   }
 
   _onSubmit = (event) => {
@@ -74,18 +79,20 @@ class Chat extends Component {
   renderMessages () {
     const { messages, users } = this.props
 
-    return Object.values(messages).reverse().map((message) => {
-      const user = users[message.user]
+    return Object.values(messages)
+      .sort((a, b) => a.ts - b.ts)
+      .map((message) => {
+        const user = users[message.user]
 
-      if (!user) return null
+        if (!user) return null
 
-      return (
-        <li key={message.ts}>
-          <strong style={{color: `#${user.color}`}}>{user.name}: </strong>
-          {message.text}
-        </li>
-      )
-    })
+        return (
+          <li key={message.ts}>
+            <strong style={{color: `#${user.color}`}}>{user.name}: </strong>
+            {message.text}
+          </li>
+        )
+      })
   }
 
   render () {

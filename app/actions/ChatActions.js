@@ -51,6 +51,15 @@ export function fetchChatHistoryError (error) {
   }
 }
 
+export const ADD_CHAT_MESSAGE = 'ADD_CHAT_MESSAGE'
+
+export function addChatMessage (message) {
+  return {
+    type: ADD_CHAT_MESSAGE,
+    response: normalize(message, Schema.CHAT_MESSAGE)
+  }
+}
+
 export const FETCH_CHAT_USERS = 'FETCH_CHAT_USERS'
 export const FETCH_CHAT_USERS_SUCCESS = 'FETCH_CHAT_USERS_SUCCESS'
 export const FETCH_CHAT_USERS_ERROR = 'FETCH_CHAT_USERS_ERROR'
