@@ -53,6 +53,8 @@ function entities (state = initialState.entities, action) {
 
   switch (action.type) {
     case REMOVE_CHAT_MESSAGE:
+      nextState.messages = {...nextState.messages}
+
       delete nextState.messages[action.ts]
 
       return nextState

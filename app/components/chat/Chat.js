@@ -1,6 +1,11 @@
 import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
-import { loadChatHistory, addChatMessage, loadChatUsers } from 'actions'
+import {
+  loadChatHistory,
+  addChatMessage,
+  removeChatMessage,
+  loadChatUsers
+} from 'actions'
 
 const { object, func, bool } = PropTypes
 
@@ -58,11 +63,11 @@ class Chat extends Component {
     const { dispatch } = this.props
     const message = JSON.parse(event.data)
 
-    dispatch(addChatMessage(message))
-    // if (messsage.subtype && message.subtype === 'message_deleted') {
-      // dispatch(removeChatMessage(message))
-    // } else {
-    // }
+    if (message.subtype && message.subtype === 'message_deleted') {
+      dispatch(removeChatMessage(message))
+    } else {
+      dispatch(addChatMessage(message))
+    }
   }
 
   _onSubmit = (event) => {

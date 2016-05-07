@@ -63,7 +63,7 @@ export function addChatMessage (message) {
 
 export function removeChatMessage ({ ts }) {
   return {
-    type: ADD_CHAT_MESSAGE,
+    type: REMOVE_CHAT_MESSAGE,
     ts
   }
 }
