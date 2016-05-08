@@ -9,7 +9,7 @@ export default function withSocket (opts = {}) {
     _socket = null
     _component = null
 
-    componentWillMount () {
+    componentDidMount () {
       const { host } = opts
 
       this._socket = new WebSocket(`ws://${host || window.location.host}`)
