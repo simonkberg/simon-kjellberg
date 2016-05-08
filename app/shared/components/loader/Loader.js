@@ -25,4 +25,4 @@ class Loader extends Component {
   }
 }
 
-export default withStyles(Loader, styles)
+export default withStyles(styles)(Loader)

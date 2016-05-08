@@ -20,4 +20,4 @@ class NotFound extends Component {
   }
 }
 
-export default withStyles(NotFound, styles)
+export default withStyles(styles)(NotFound)

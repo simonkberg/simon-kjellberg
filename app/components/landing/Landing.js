@@ -16,4 +16,4 @@ class Landing extends Component {
   }
 }
 
-export default withStyles(Landing, styles)
+export default withStyles(styles)(Landing)

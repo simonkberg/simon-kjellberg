@@ -1,10 +1,12 @@
 import React, { Component, PropTypes } from 'react'
 import getDisplayName from './getDisplayName'
 
-export default function withStyles (ComposedComponent, ...styles) {
-  return class WithStyles extends Component {
+const { func } = PropTypes
+
+export default function withStyles (...styles) {
+  return (ComposedComponent) => class WithStyles extends Component {
     static contextTypes = {
-      insertCss: PropTypes.func.isRequired
+      insertCss: func.isRequired
     }
 
     static displayName = `WithStyles(${getDisplayName(ComposedComponent)})`
