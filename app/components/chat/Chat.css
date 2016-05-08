@@ -1,0 +1,34 @@
+@import "shared/styles/variables.css";
+
+.wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-top: 1px solid color(var(--root-color) alpha(-95%));
+  background-color: color(var(--root-background-color) alpha(-25%))
+}
+
+.ribbon {
+  composes: clearfix from "shared/styles/helpers.css";
+  composes: slack from "shared/styles/icons.css";
+
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5em;
+}
+
+.container {
+  max-width: 65rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.input {
+  width: 100%;
+}

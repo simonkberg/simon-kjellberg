@@ -1,6 +1,6 @@
 
 @import "./variables.css";
-@import url("sanitize.css/lib/sanitize.css");
+@import "sanitize.css/lib/sanitize.css";
 
 a {
   text-decoration: none;

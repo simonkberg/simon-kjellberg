@@ -1,0 +1,36 @@
+@font-face {
+  font-family: 'icons';
+  src:
+    url('shared/assets/icons.woff2') format('woff2'),
+    url('shared/assets/icons.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.icon {
+  font-family: "icons";
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+  display: inline-block;
+  text-decoration: inherit;
+  width: 1em;
+  margin-right: .2em;
+  text-align: center;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1em;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.slack {
+  composes: icon;
+  &::before { content: '\e800'; }
+}
+
+.cancel {
+  composes: icon;
+  &::before { content: '\e801'; }
+}

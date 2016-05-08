@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import withSocket from 'helpers/withSocket'
+import withStyles from 'helpers/withStyles'
 import { connect } from 'react-redux'
 import {
   loadChatHistory,
@@ -7,6 +8,8 @@ import {
   removeChatMessage,
   loadChatUsers
 } from 'actions'
+
+import styles from './Chat.css'
 
 const { object, func, bool } = PropTypes
 
@@ -64,9 +67,12 @@ class Chat extends Component {
   _onSubmit = (event) => {
     event.preventDefault()
 
-    const data = new FormData(event.target)
+    const { target } = event
+    const data = new FormData(target)
 
     this.sendMessage(data.get('message'))
+
+    target.children.namedItem('message').value = ''
   }
 
   sendMessage (message) {
@@ -95,23 +101,32 @@ class Chat extends Component {
   }
 
   render () {
+    const input = {
+      className: styles.input,
+      type: 'text',
+      name: 'message',
+      placeholder: 'Type a message...'
+    }
+
     return (
-      <div>
-        <h2>Chat</h2>
-        <ul>
-          {this.renderMessages()}
-        </ul>
-        <form onSubmit={this._onSubmit}>
-          <input type='text' name='message' />
-          <button type='submit'>Send</button>
-        </form>
+      <div className={styles.wrapper}>
+        <button className={styles.ribbon} />
+        <div className={styles.container}>
+          <ul>
+            {this.renderMessages()}
+          </ul>
+          <form onSubmit={this._onSubmit}>
+            <input {...input} />
+          </form>
+        </div>
       </div>
     )
   }
 }
 
 const WithSocket = withSocket()(Chat)
-const WithRedux = connect(({ chat }) => {
+const WithStyles = withStyles(styles)(WithSocket)
+const WithConnect = connect(({ chat }) => {
   const { entities, messages, users } = chat
 
   return {
@@ -119,6 +134,6 @@ const WithRedux = connect(({ chat }) => {
     users: entities.users,
     loading: messages.loading || users.loading
   }
-})(WithSocket)
+})(WithStyles)
 
-export default WithRedux
+export default WithConnect

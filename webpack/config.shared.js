@@ -91,6 +91,13 @@ export function getLoaders (opts = {}) {
       },
       'img'
     ]
+  }, {
+    test: /\.(woff2?)$/,
+    loader: 'url',
+    query: {
+      limit: 10000,
+      name: '[name]-[hash].[ext]'
+    }
   }]
 
   return loaders

@@ -1,6 +1,7 @@
 
 :root {
   --root-color: #000;
+  --root-background-color: #fff;
   --root-font-family: "Fira Mono", monospace;
   --monospace-font-family: var(--root-font-family);
 }
