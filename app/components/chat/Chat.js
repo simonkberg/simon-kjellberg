@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import withSocket from 'helpers/withSocket'
 import { connect } from 'react-redux'
 import {
   loadChatHistory,
@@ -23,55 +24,44 @@ class Chat extends Component {
     loading: false
   }
 
-  _ws = null
+  _socket = null
 
   componentDidMount () {
     const { dispatch } = this.props
 
     dispatch(loadChatHistory())
     dispatch(loadChatUsers())
-
-    this._ws = new WebSocket(`ws://${window.location.host}`)
-    this._ws.addEventListener('open', this._onSocketOpen)
-    this._ws.addEventListener('close', this._onSocketClose)
-    this._ws.addEventListener('error', this._onSocketError)
   }
 
-  componentWillUnmount () {
-    if (this._ws) {
-      this._ws.close()
-    }
-  }
-
-  _onSocketOpen = (event) => {
+  onSocketOpen = (event, socket) => {
     console.log('Socket Open', event)
-    this._ws.addEventListener('message', this._onSocketMessage)
+
+    this._socket = socket
   }
 
-  _onSocketClose = (event) => {
+  onSocketClose = (event) => {
     console.log('Socket Close', event)
-    this._ws.removeEventListener('message', this._onSocketMessage)
+
+    this._socket = null
   }
 
-  _onSocketError = (event) => {
+  onSocketError = (event) => {
     console.log('Socket Error', event)
   }
 
-  _onSocketMessage = (event) => {
+  onSocketMessage = (event, data) => {
     console.log('Socket Message', event)
 
     const { dispatch } = this.props
-    const message = JSON.parse(event.data)
 
-    if (message.subtype && message.subtype === 'message_deleted') {
-      dispatch(removeChatMessage(message))
+    if (data.subtype && data.subtype === 'message_deleted') {
+      dispatch(removeChatMessage(data))
     } else {
-      dispatch(addChatMessage(message))
+      dispatch(addChatMessage(data))
     }
   }
 
   _onSubmit = (event) => {
-    event.persist()
     event.preventDefault()
 
     const data = new FormData(event.target)
@@ -80,8 +70,8 @@ class Chat extends Component {
   }
 
   sendMessage (message) {
-    if (this._ws) {
-      this._ws.send(message)
+    if (this._socket) {
+      this._socket.send(message)
     }
   }
 
@@ -120,7 +110,8 @@ class Chat extends Component {
   }
 }
 
-export default connect(({ chat }) => {
+const WithSocket = withSocket()(Chat)
+const WithRedux = connect(({ chat }) => {
   const { entities, messages, users } = chat
 
   return {
@@ -128,4 +119,6 @@ export default connect(({ chat }) => {
     users: entities.users,
     loading: messages.loading || users.loading
   }
-})(Chat)
+})(WithSocket)
+
+export default WithRedux
