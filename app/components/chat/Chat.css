@@ -9,13 +9,15 @@
   background-color: color(var(--root-background-color) alpha(-25%))
 }
 
-.ribbon {
+.toggle {
   composes: clearfix from "shared/styles/helpers.css";
   composes: slack from "shared/styles/icons.css";
 
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0.5rem;
+  right: 0.5rem;
+  min-height: 1em;
+  margin: 0; 
   font-size: 1.5em;
 }
 

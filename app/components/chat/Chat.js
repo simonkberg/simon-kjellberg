@@ -110,7 +110,7 @@ class Chat extends Component {
 
     return (
       <div className={styles.wrapper}>
-        <button className={styles.ribbon} />
+        <button className={styles.toggle} />
         <div className={styles.container}>
           <ul>
             {this.renderMessages()}

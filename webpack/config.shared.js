@@ -68,7 +68,7 @@ export function getLoaders (opts = {}) {
           modules: true,
           importLoaders: 1,
           sourceMap: true,
-          name: '[name]_[local]_[hash:base64:3]'
+          localIdentName: '[name]_[local]_[hash:base64:3]'
         }
       },
       {
