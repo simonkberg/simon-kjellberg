@@ -1,12 +1,10 @@
-@import "shared/styles/variables.css";
-
 .wrapper {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  border-top: 1px solid color(var(--root-color) alpha(-95%));
-  background-color: color(var(--root-background-color) alpha(-25%));
+  border-top: 1px solid color(black alpha(-95%));
+  background-color: color(white alpha(-25%));
 }
 
 .toggle {
@@ -33,8 +31,14 @@
 
 .input {
   width: 100%;
+  color: gray;
+  border-bottom: 1px solid lightgray;
+  transition: border 0.3s, color 0.3s;
 
-  &:active {
-    background-color: color(var(--root-color) alpha(-95%));
+  &:active,
+  &:focus {
+    outline: none;
+    color: black;
+    border-bottom-color: gray;
   }
 }
