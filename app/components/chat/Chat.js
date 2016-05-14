@@ -82,7 +82,7 @@ export class Chat extends Component {
   }
 
   render () {
-    const { messages, users } = this.props
+    const { messages, users, loading } = this.props
     const input = {
       className: styles.input,
       type: 'text',
@@ -94,7 +94,8 @@ export class Chat extends Component {
       <div className={styles.wrapper}>
         <button className={styles.toggle} />
         <div className={styles.container}>
-          <ChatMessageList messages={messages} users={users} styles={styles} />
+          {!loading &&
+            <ChatMessageList messages={messages} users={users} styles={styles} />}
           <form onSubmit={this._onSubmit}>
             <input {...input} />
           </form>

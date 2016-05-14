@@ -47,6 +47,7 @@
     "react-ga": "^1.4.1",
     "react-helmet": "^3.1.0",
     "react-motion": "^0.4.3",
+    "react-motion-ui-pack": "^0.7.3",
     "react-redux": "^4.4.5",
     "react-router": "^2.3.0",
     "redux": "^3.5.2",

@@ -1,12 +1,30 @@
 import React, { PropTypes } from 'react'
 import ChatMessage from './ChatMessage'
+import Transition from 'react-motion-ui-pack'
 
 const ChatMessageList = ({ messages, users, styles }) => {
   const messageList = Object.values(messages)
     .sort((a, b) => a.ts - b.ts)
 
+  const props = {
+    component: 'ul',
+    className: styles.messageList,
+    appear: {
+      translateX: 0,
+      opacity: 0
+    },
+    enter: {
+      translateX: 0,
+      opacity: 1
+    },
+    leave: {
+      translateX: -100,
+      opacity: 0
+    }
+  }
+
   return (
-    <ul className={styles.messageList}>
+    <Transition {...props}>
         {messageList.map(message => {
           const props = {
             message: message,
@@ -17,7 +35,7 @@ const ChatMessageList = ({ messages, users, styles }) => {
 
           return <ChatMessage {...props} />
         })}
-    </ul>
+    </Transition>
   )
 }
 
