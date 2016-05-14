@@ -42,3 +42,7 @@
     border-bottom-color: gray;
   }
 }
+
+.messageEdited {
+  color: color(black lightness(75%));
+}
