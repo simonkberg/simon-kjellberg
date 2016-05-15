@@ -16,6 +16,7 @@
   z-index: 1;
   top: 0.5rem;
   right: 0.5rem;
+  height: 1em;
   min-height: 1em;
   margin: 0;
   font-size: 1.5em;
@@ -69,6 +70,40 @@
   }
 }
 
+.messageListWrapper {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: ' ';
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    height: 0.5rem;
+  }
+
+  &::before {
+    top: 0;
+    background:
+      linear-gradient(
+        to bottom,
+        color(white alpha(100%)),
+        color(white alpha(0%))
+      );
+  }
+
+  &::after {
+    bottom: 0;
+    background:
+      linear-gradient(
+        to bottom,
+        color(white alpha(0%)),
+        color(white alpha(100%))
+      );
+  }
+}
+
 .messageList {
   margin: 0;
   max-height: 0;
@@ -82,9 +117,8 @@
 }
 
 .message {
-  &:last-of-type {
-    margin-bottom: 0.5em;
-  }
+  &:first-of-type { margin-top: 0.5rem; }
+  &:last-of-type { margin-bottom: 0.5rem; }
 }
 
 .messageEdited {
