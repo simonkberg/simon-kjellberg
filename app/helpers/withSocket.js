@@ -10,9 +10,14 @@ export default function withSocket (opts = {}) {
     _component = null
 
     componentDidMount () {
-      const { host } = opts
+      const {
+        host = window.location.host,
+        protocol = window.location.protocol === 'https:'
+          ? 'wss'
+          : 'ws'
+      } = opts
 
-      this._socket = new WebSocket(`ws://${host || window.location.host}`)
+      this._socket = new WebSocket(`${protocol}://${host}`)
       this._socket.addEventListener('open', this._onSocketOpen)
       this._socket.addEventListener('close', this._onSocketClose)
       this._socket.addEventListener('error', this._onSocketError)
