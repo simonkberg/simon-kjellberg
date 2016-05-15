@@ -5,15 +5,15 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  border-top: 1px solid color(black alpha(-95%));
-  background-color: color(white alpha(-25%));
+  border-top: 1px solid color(black alpha(5%));
+  background-color: color(white alpha(95%));
 }
 
 .toggle {
   composes: clearfix from "shared/styles/helpers.css";
 
   position: absolute;
-  z-index: 1;
+  z-index: 2;
   top: 0.5rem;
   right: 0.5rem;
   height: 1em;
@@ -84,17 +84,17 @@
   }
 
   &::before {
-    top: 0;
+    top: -1px;
     background:
       linear-gradient(
         to bottom,
-        color(white alpha(100%)),
+        color(white alpha(95%)),
         color(white alpha(0%))
       );
   }
 
   &::after {
-    bottom: 0;
+    bottom: -1px;
     background:
       linear-gradient(
         to bottom,
