@@ -8,10 +8,13 @@ import {
   REMOVE_CHAT_MESSAGE,
   FETCH_CHAT_USERS,
   FETCH_CHAT_USERS_SUCCESS,
-  FETCH_CHAT_USERS_ERROR
+  FETCH_CHAT_USERS_ERROR,
+  OPEN_CHAT,
+  CLOSE_CHAT
 } from 'actions'
 
 const initialState = {
+  open: false,
   entities: {
     messages: {},
     users: {}
@@ -25,6 +28,17 @@ const initialState = {
     ids: [],
     loading: false,
     error: null
+  }
+}
+
+function open (state = initialState.open, action) {
+  switch (action.type) {
+    case OPEN_CHAT:
+      return true
+    case CLOSE_CHAT:
+      return false
+    default:
+      return state
   }
 }
 
@@ -123,6 +137,7 @@ function users (state = initialState.users, action) {
 }
 
 export default combineReducers({
+  open,
   entities,
   messages,
   users

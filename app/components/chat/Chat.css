@@ -1,4 +1,6 @@
 .wrapper {
+  composes: clearfix from "shared/styles/helpers.css";
+
   position: fixed;
   bottom: 0;
   left: 0;
@@ -9,14 +11,38 @@
 
 .toggle {
   composes: clearfix from "shared/styles/helpers.css";
-  composes: slack from "shared/styles/icons.css";
 
   position: absolute;
+  z-index: 1;
   top: 0.5rem;
   right: 0.5rem;
   min-height: 1em;
   margin: 0;
   font-size: 1.5em;
+  color: color(black alpha(30%));
+  cursor: pointer;
+  transition: color 0.3s;
+
+  &:hover {
+    color: color(black alpha(100%));
+  }
+
+  &:active,
+  &:focus {
+    outline: none;
+  }
+}
+
+.toggleOpen {
+  composes: slack from "shared/styles/icons.css";
+}
+
+.toggleClose {
+  composes: close from "shared/styles/icons.css";
+}
+
+.toggleText {
+  composes: hideText from "shared/styles/helpers.css";
 }
 
 .container {
@@ -40,6 +66,24 @@
     outline: none;
     color: black;
     border-bottom-color: gray;
+  }
+}
+
+.messageList {
+  margin: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s;
+}
+
+.messageListOpen {
+  max-height: 25vh;
+  overflow: auto;
+}
+
+.message {
+  &:last-of-type {
+    margin-bottom: 0.5em;
   }
 }
 

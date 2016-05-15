@@ -15,7 +15,7 @@
   display: inline-block;
   text-decoration: inherit;
   width: 1em;
-  margin-right: .2em;
+  margin-right: 0.2em;
   text-align: center;
   font-variant: normal;
   text-transform: none;
@@ -30,7 +30,7 @@
   &::before { content: '\e800'; }
 }
 
-.cancel {
+.close {
   composes: icon;
   &::before { content: '\e801'; }
 }

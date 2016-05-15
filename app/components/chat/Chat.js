@@ -1,8 +1,9 @@
 import React, { Component, PropTypes } from 'react'
-import withSocket from 'helpers/withSocket'
-import withStyles from 'helpers/withStyles'
+import classNames from 'classnames'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
+import withSocket from 'helpers/withSocket'
+import withStyles from 'helpers/withStyles'
 import * as ChatActions from 'actions/ChatActions'
 
 import ChatMessageList from './ChatMessageList'
@@ -12,16 +13,20 @@ const { object, func, bool } = PropTypes
 
 export class Chat extends Component {
   static propTypes = {
+    open: bool,
     messages: object,
     users: object,
     loading: bool,
     loadChatHistory: func,
     loadChatUsers: func,
     addChatMessage: func,
-    removeChatMessage: func
+    removeChatMessage: func,
+    openChat: func,
+    closeChat: func
   }
 
   static defaultProps = {
+    open: false,
     messages: {},
     users: {},
     loading: false
@@ -82,20 +87,34 @@ export class Chat extends Component {
   }
 
   render () {
-    const { messages, users, loading } = this.props
+    const { open, loading, openChat, closeChat } = this.props
+
+    const button = {
+      className: classNames(styles.toggle, {
+        [styles.toggleOpen]: open === false,
+        [styles.toggleClose]: open === true
+      }),
+      onClick: open
+        ? closeChat
+        : openChat
+    }
+
     const input = {
       className: styles.input,
       type: 'text',
       name: 'message',
-      placeholder: 'Type a message...'
+      placeholder: 'Type a message...',
+      onFocus: openChat
     }
 
     return (
       <div className={styles.wrapper}>
-        <button className={styles.toggle} />
+        <button {...button}>
+          <span className={styles.toggleText}>{open ? 'Close' : 'Open'}</span>
+        </button>
         <div className={styles.container}>
           {!loading &&
-            <ChatMessageList messages={messages} users={users} styles={styles} />}
+            <ChatMessageList {...this.props} styles={styles} />}
           <form onSubmit={this._onSubmit}>
             <input {...input} />
           </form>
@@ -109,9 +128,10 @@ const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(styles)(WithSocket)
 
 const mapStateToProps = ({ chat }) => {
-  const { entities, messages, users } = chat
+  const { open, entities, messages, users } = chat
 
   return {
+    open,
     messages: entities.messages,
     users: entities.users,
     loading: messages.loading || users.loading
