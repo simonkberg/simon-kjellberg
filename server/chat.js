@@ -1,5 +1,6 @@
 
 import { Server } from 'ws'
+import randomName from './lib/randomName'
 import slack, { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } from './lib/slack'
 
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
@@ -13,11 +14,15 @@ module.exports = async (server) => {
   wss.on('connection', async (ws) => {
     console.log('client connected')
 
+    const username = randomName()
+
     ws.on('message', (message) => {
       console.log('Client Message', message)
 
-      rtm.sendMessage(message, chat.id)
-        .then(res => sendMessage(ws, res))
+      web.chat.postMessage(chat.id, message, {
+        parse: 'full',
+        username: username
+      })
     })
   })
 

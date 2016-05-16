@@ -3,7 +3,7 @@ import colorHash from 'helpers/colorHash'
 
 const ChatMessage = ({ message = {}, user = '', styles, style }) => {
   const username = typeof user === 'string' ? user : user.name
-  console.log(colorHash(username))
+
   return (
     <li style={style} className={styles.message}>
       <strong style={{color: colorHash(username)}}>{username}: </strong>

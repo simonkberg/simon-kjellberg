@@ -115,7 +115,7 @@ export class Chat extends Component {
         <div className={styles.container}>
           {!loading &&
             <ChatMessageList {...this.props} styles={styles} />}
-          <form onSubmit={this._onSubmit}>
+          <form onSubmit={this._onSubmit} autoComplete='off'>
             <input {...input} />
           </form>
         </div>
