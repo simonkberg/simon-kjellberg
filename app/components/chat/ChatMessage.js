@@ -1,9 +1,12 @@
 import React, { PropTypes } from 'react'
+import colorHash from 'helpers/colorHash'
 
-const ChatMessage = ({ message, user, styles, style }) => {
+const ChatMessage = ({ message = {}, user = '', styles, style }) => {
+  const username = typeof user === 'string' ? user : user.name
+  console.log(colorHash(username))
   return (
     <li style={style} className={styles.message}>
-      <strong style={{color: `#${user.color}`}}>{user.name}: </strong>
+      <strong style={{color: colorHash(username)}}>{username}: </strong>
       {message.text}{' '}
       {message.edited &&
         <small className={styles.messageEdited}>(edited)</small>}
@@ -13,14 +16,12 @@ const ChatMessage = ({ message, user, styles, style }) => {
 
 ChatMessage.propTypes = {
   message: PropTypes.object,
-  user: PropTypes.object,
+  user: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.object
+  ]),
   styles: PropTypes.object.isRequired,
   style: PropTypes.object
-}
-
-ChatMessage.defaultProps = {
-  message: {},
-  user: {}
 }
 
 export default ChatMessage

@@ -88,7 +88,7 @@ class ChatMessageList extends Component {
               {motion.map(({style: {opacity, translateX}, key, data}) => {
                 const props = {
                   message: data,
-                  user: users[data.user],
+                  user: data.username || users[data.user],
                   styles: styles,
                   style: {
                     opacity,

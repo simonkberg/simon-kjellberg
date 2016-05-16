@@ -41,8 +41,8 @@ module.exports = async (server) => {
   return wss
 }
 
-function sendMessage (client, { subtype, user, text, ts, ...other }) {
-  const payload = { subtype, user, text, ts }
+function sendMessage (client, { subtype, username, user, text, ts, ...other }) {
+  const payload = { subtype, username, user, text, ts }
 
   payload.edited = !!other.edited
 
