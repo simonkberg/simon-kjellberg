@@ -33,8 +33,7 @@ export function getPlugins (opts = {}) {
   if (env === 'production') {
     plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true,
-      debug: false,
-      sourceMap: false
+      debug: true
     }))
     plugins.push(new webpack.optimize.UglifyJsPlugin({
       compress: {
@@ -48,19 +47,23 @@ export function getPlugins (opts = {}) {
       debug: true
     }))
     plugins.push(new webpack.HotModuleReplacementPlugin())
-    plugins.push(new webpack.NoErrorsPlugin())
+    // plugins.push(new webpack.NoErrorsPlugin())
   }
 
   return plugins
 }
 
 export function getLoaders (opts = {}) {
+  const { env = process.env.NODE_ENV } = opts
+
   let loaders = [{
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/,
     include: paths.app,
-    query: { cacheDirectory: true }
+    query: {
+      cacheDirectory: true
+    }
   }, {
     test: /\.css$/,
     loaders: [
@@ -69,14 +72,14 @@ export function getLoaders (opts = {}) {
         loader: 'css',
         query: {
           modules: true,
+          sourceMap: env !== 'production',
           importLoaders: 1,
-          sourceMap: true,
           localIdentName: '[name]_[local]_[hash:base64:3]'
         }
       },
       {
         loader: 'postcss',
-        query: { sourceMap: true }
+        query: { sourceMap: env !== 'production' }
       }
     ]
   }, {
@@ -107,8 +110,12 @@ export function getLoaders (opts = {}) {
 }
 
 export default function sharedConfig (opts = {}) {
+  const { env = process.env.NODE_ENV } = opts
+
   const config = {
-    devtool: '#cheap-module-eval-source-map',
+    devtool: env !== 'production'
+      ? '#cheap-module-eval-source-map'
+      : 'hidden-sourcemap',
 
     context: paths.app,
 
