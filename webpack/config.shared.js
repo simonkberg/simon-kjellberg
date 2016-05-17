@@ -62,7 +62,12 @@ export function getLoaders (opts = {}) {
     exclude: /node_modules/,
     include: paths.app,
     query: {
-      cacheDirectory: true
+      cacheDirectory: true,
+      presets: [
+        'react',
+        'es2015-webpack',
+        'stage-0'
+      ]
     }
   }, {
     test: /\.css$/,
