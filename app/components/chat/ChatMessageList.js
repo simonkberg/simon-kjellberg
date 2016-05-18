@@ -13,24 +13,30 @@ class ChatMessageList extends Component {
     styles: object
   }
 
-  _list = null
-  _shouldScroll = true
+  list = null
+  shouldScroll = true
+
+  componentDidMount () {
+    this.scrollToBottom()
+  }
 
   componentWillUpdate () {
-    const { _list: el } = this
+    if (this.list) {
+      const maxScroll = this.list.scrollTop + this.list.offsetHeight
 
-    if (el) {
-      this._shouldScroll = el.scrollTop + el.offsetHeight === el.scrollHeight
+      this.shouldScroll = maxScroll === this.list.scrollHeight
     }
   }
 
   componentDidUpdate () {
-    const { _list: el, _shouldScroll: shouldScroll } = this
+    if (this.shouldScroll) {
+      setTimeout(this.scrollToBottom, 0)
+    }
+  }
 
-    if (el && shouldScroll) {
-      setTimeout(() => {
-        el.scrollTop = el.scrollHeight
-      }, 0)
+  scrollToBottom = () => {
+    if (this.list) {
+      this.list.scrollTop = this.list.scrollHeight
     }
   }
 
