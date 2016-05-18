@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react'
 import colorHash from 'helpers/colorHash'
+import emoji from 'helpers/emojiOne'
 
 const ChatMessage = ({ message = {}, user = '', styles, style }) => {
   const username = typeof user === 'string' ? user : user.name
@@ -8,7 +9,7 @@ const ChatMessage = ({ message = {}, user = '', styles, style }) => {
   return (
     <li style={style} className={styles.message}>
       <strong style={{color: color}}>{username}: </strong>
-      {message.text}{' '}
+      {emoji(message.text)}{' '}
       {message.edited &&
         <small className={styles.messageEdited}>(edited)</small>}
     </li>

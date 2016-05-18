@@ -14,7 +14,7 @@ import {
 } from 'actions'
 
 const initialState = {
-  open: false,
+  open: __DEV__,
   entities: {
     messages: {},
     users: {}
