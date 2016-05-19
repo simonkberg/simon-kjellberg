@@ -1,4 +1,5 @@
 import React, { PropTypes } from 'react'
+import { connect } from 'react-redux'
 import colorHash from 'helpers/colorHash'
 
 const ChatMessage = ({ message = {}, user = '', styles, style }) => {
@@ -15,13 +16,24 @@ const ChatMessage = ({ message = {}, user = '', styles, style }) => {
 }
 
 ChatMessage.propTypes = {
+  id: PropTypes.string.isRequired,
   message: PropTypes.object,
   user: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.object
   ]),
   styles: PropTypes.object.isRequired,
-  style: PropTypes.object
+  style: PropTypes.object.isRequired
 }
 
-export default ChatMessage
+const mapStateToProps = ({ chat }, { id, ...props }) => {
+  const { entities: { messages, users } } = chat
+  const message = messages[id]
+
+  return {
+    message: message,
+    user: message.username || users[message.user]
+  }
+}
+
+export default connect(mapStateToProps)(ChatMessage)

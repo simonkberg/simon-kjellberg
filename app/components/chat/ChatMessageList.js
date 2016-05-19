@@ -1,15 +1,16 @@
 import React, { Component, PropTypes } from 'react'
+import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
+import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
 import ChatMessage from './ChatMessage'
 
-const { bool, object } = PropTypes
+const { bool, object, array } = PropTypes
 
 class ChatMessageList extends Component {
   static propTypes = {
     open: bool,
-    messages: object,
-    users: object,
+    messageIds: array,
     styles: object
   }
 
@@ -18,6 +19,10 @@ class ChatMessageList extends Component {
 
   componentDidMount () {
     this.scrollToBottom()
+  }
+
+  shouldComponentUpdate (nextProps, nextState) {
+    return shallowCompare(this, nextProps, nextState)
   }
 
   componentWillUpdate () {
@@ -41,19 +46,30 @@ class ChatMessageList extends Component {
   }
 
   getStyles (style = {}) {
-    const { messages } = this.props
-    const messageList = Object.values(messages)
-      .sort((a, b) => a.ts - b.ts)
+    const { messageIds } = this.props
 
-    return messageList.map(message => ({
-      data: {...message},
-      key: message.ts,
+    return messageIds.map(id => ({
+      key: id,
       style: {...style}
     }))
   }
 
+  getWillEnterStyles = () => ({
+    translateX: -50,
+    opacity: 0
+  })
+
+  getWillLeaveStyles = () => ({
+    translateX: spring(-50),
+    opacity: spring(0)
+  })
+
+  onListMount = (el) => {
+    this.list = el
+  }
+
   render () {
-    const { open, users, styles } = this.props
+    const { open, styles } = this.props
 
     const transition = {
       defaultStyles: this.getStyles({
@@ -64,26 +80,16 @@ class ChatMessageList extends Component {
         translateX: spring(0),
         opacity: spring(1, presets.gentle)
       }),
-      willEnter: () => ({
-        translateX: -50,
-        opacity: 0
-      }),
-      willLeave: () => ({
-        translateX: spring(-50),
-        opacity: spring(0)
-      })
+      willEnter: this.getWillEnterStyles,
+      willLeave: this.getWillLeaveStyles
     }
 
     const list = {
       className: classNames(styles.messageList, {
         [styles.messageListOpen]: open
       }),
-      ref: (el) => {
-        this._list = el
-      },
-      onTransitionEnd: ({ target }) => {
-        target.scrollTop = target.scrollHeight
-      }
+      ref: this.onListMount,
+      onTransitionEnd: this.scrollToBottom
     }
 
     return (
@@ -91,10 +97,9 @@ class ChatMessageList extends Component {
         <TransitionMotion {...transition}>
           {motion =>
             <ul {...list}>
-              {motion.map(({style: {opacity, translateX}, key, data}) => {
+              {motion.map(({style: {opacity, translateX}, key}) => {
                 const props = {
-                  message: data,
-                  user: data.username || users[data.user],
+                  id: key,
                   styles: styles,
                   style: {
                     opacity,
@@ -113,4 +118,10 @@ class ChatMessageList extends Component {
   }
 }
 
-export default ChatMessageList
+const mapStateToProps = ({ chat: { messages } }) => {
+  return {
+    messageIds: [...messages.ids].sort()
+  }
+}
+
+export default connect(mapStateToProps)(ChatMessageList)

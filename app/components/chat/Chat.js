@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
@@ -39,6 +40,10 @@ export class Chat extends Component {
 
     loadChatHistory()
     loadChatUsers()
+  }
+
+  shouldComponentUpdate (nextProps, nextState) {
+    return shallowCompare(this, nextProps, nextState)
   }
 
   onSocketOpen = (event, socket) => {
@@ -128,12 +133,10 @@ const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(styles)(WithSocket)
 
 const mapStateToProps = ({ chat }) => {
-  const { open, entities, messages, users } = chat
+  const { open, messages, users } = chat
 
   return {
     open,
-    messages: entities.messages,
-    users: entities.users,
     loading: messages.loading || users.loading
   }
 }

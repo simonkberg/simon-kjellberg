@@ -1,4 +1,5 @@
 import { createStore, applyMiddleware, compose } from 'redux'
+import { batchedSubscribe } from 'redux-batched-subscribe'
 import thunkMiddleware from 'redux-thunk'
 // import createLogger from 'redux-logger'
 import rootReducer from 'reducers'
@@ -17,13 +18,16 @@ function getMiddleware () {
 }
 
 function getEnhancer () {
-  const middleware = getMiddleware()
+  const args = [
+    getMiddleware(),
+    batchedSubscribe(notify => notify())
+  ]
 
   if (__DEV__) {
-    return compose(middleware, DevTools.instrument())
+    args.push(DevTools.instrument())
   }
 
-  return middleware
+  return compose(...args)
 }
 
 export default function configureStore (initialState = {}) {
