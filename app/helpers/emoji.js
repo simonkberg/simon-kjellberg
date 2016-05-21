@@ -25,8 +25,6 @@ export const replace = (match, p1, p2) => {
 
   const unicode = convert(name)
 
-  console.log(name, unicode)
-
   const props = {
     src: `${cdnUrl}${name}.png`,
     title: p1,
