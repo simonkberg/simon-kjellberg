@@ -1,38 +1,60 @@
 import React from 'react'
 import emojis from '../shared/data/emoji.json'
 
-const CDN_URL = 'https://cdn.jsdelivr.net/emojione/assets/png/'
-const EMOJI_MAP = new Map()
+const cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/'
+const emojiMap = new Map()
+const cache = new Map()
 
 emojis.forEach(({ unified, short_names }) => {
   short_names.forEach(shortName => {
-    EMOJI_MAP.set(shortName, unified.toLowerCase())
+    emojiMap.set(shortName, unified.toLowerCase())
   })
 })
 
-const REGEX_KEYS = [...EMOJI_MAP.keys()].join('|').replace(/[+]/g, '\\$&')
-const REGEX = new RegExp(`:(${REGEX_KEYS})(?:::)?(skin-tone-[2-6])?:`, 'g')
+const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
+const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
 export const replace = (match, p1, p2) => {
-  let unicode = EMOJI_MAP.get(p1)
+  if (cache.has(match)) return cache.get(match)
+
+  let name = emojiMap.get(p1)
 
   if (p2) {
-    unicode = `${unicode}-${EMOJI_MAP.get(p2)}`
+    name = `${name}-${emojiMap.get(p2)}`
   }
 
-  return <img src={`${CDN_URL}${unicode}.png`} alt={convert(unicode)} style={{width: '1em', height: '1em'}} />
+  const unicode = convert(name)
+
+  console.log(name, unicode)
+
+  const props = {
+    src: `${cdnUrl}${name}.png`,
+    title: p1,
+    alt: unicode,
+    key: unicode,
+    style: {
+      width: '1em',
+      height: '1em'
+    }
+  }
+
+  const emoji = <img {...props} />
+
+  cache.set(match, emoji)
+
+  return emoji
 }
 
 export const parse = (string) => {
   const output = []
-  const storedLastIndex = REGEX.lastIndex
+  const storedLastIndex = regex.lastIndex
 
-  REGEX.lastIndex = 0
+  regex.lastIndex = 0
 
   let result
   let lastIndex = 0
 
-  while (result = REGEX.exec(string)) {
+  while (result = regex.exec(string)) {
     let index = result.index
 
     if (index !== lastIndex) {
@@ -51,7 +73,7 @@ export const parse = (string) => {
     output.push(string.substring(lastIndex))
   }
 
-  REGEX.lastIndex = storedLastIndex
+  regex.lastIndex = storedLastIndex
 
   return output
 }

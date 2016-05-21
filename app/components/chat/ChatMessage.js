@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react'
 import colorHash from 'helpers/colorHash'
-import emoji from 'helpers/emojiOne'
+import emoji from 'helpers/emoji'
 
 const ChatMessage = ({ message = {}, user = '', styles, style }) => {
   const username = typeof user === 'string' ? user : user.name
