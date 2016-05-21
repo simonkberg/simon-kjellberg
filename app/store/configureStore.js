@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 import { batchedSubscribe } from 'redux-batched-subscribe'
+import { unstable_batchedUpdates as batchedUpdates } from 'react-dom' // eslint-disable-line camelcase
 import thunkMiddleware from 'redux-thunk'
-// import createLogger from 'redux-logger'
 import rootReducer from 'reducers'
 import DevTools from 'containers/DevTools'
 
@@ -10,17 +10,13 @@ function getMiddleware () {
     thunkMiddleware
   ]
 
-  // if (__DEV__) {
-  //   middleware.push(createLogger())
-  // }
-
   return applyMiddleware(...middleware)
 }
 
 function getEnhancer () {
   const args = [
     getMiddleware(),
-    batchedSubscribe(notify => notify())
+    batchedSubscribe(batchedUpdates)
   ]
 
   if (__DEV__) {

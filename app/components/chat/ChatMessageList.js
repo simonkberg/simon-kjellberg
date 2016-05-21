@@ -11,6 +11,8 @@ class ChatMessageList extends Component {
   static propTypes = {
     open: bool,
     messageIds: array,
+    messages: object,
+    users: object,
     styles: object
   }
 
@@ -46,12 +48,21 @@ class ChatMessageList extends Component {
   }
 
   getStyles (style = {}) {
-    const { messageIds } = this.props
+    const { messageIds, messages, users } = this.props
 
-    return messageIds.map(id => ({
-      key: id,
-      style: {...style}
-    }))
+    return messageIds.map(id => {
+      const message = messages[id]
+      const user = message.username || users[message.user]
+
+      return {
+        key: id,
+        style: {...style},
+        data: {
+          message,
+          user
+        }
+      }
+    })
   }
 
   getWillEnterStyles = () => ({
@@ -97,15 +108,20 @@ class ChatMessageList extends Component {
         <TransitionMotion {...transition}>
           {motion =>
             <ul {...list}>
-              {motion.map(({style: {opacity, translateX}, key}) => {
+              {motion.map(({
+                key,
+                style: { opacity, translateX },
+                data: { message, user }
+              }) => {
                 const props = {
-                  id: key,
-                  styles: styles,
+                  key,
+                  styles,
+                  message,
+                  user,
                   style: {
                     opacity,
                     transform: `translateX(${translateX}%)`
-                  },
-                  key: key
+                  }
                 }
 
                 return <ChatMessage {...props} />
@@ -118,9 +134,16 @@ class ChatMessageList extends Component {
   }
 }
 
-const mapStateToProps = ({ chat: { messages } }) => {
+const mapStateToProps = ({
+  chat: {
+    messages: { ids },
+    entities: { messages, users }
+  }
+}) => {
   return {
-    messageIds: [...messages.ids].sort()
+    messageIds: [...ids].sort(),
+    messages,
+    users
   }
 }
 
