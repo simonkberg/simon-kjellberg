@@ -10,14 +10,26 @@ class Root extends Component {
     children: node.isRequired
   }
 
+  state = {
+    devTools: false
+  }
+
+  componentDidMount () {
+    if (__DEV__) {
+      // Enable dev tools for client after mount
+      this.setState({ devTools: true }) // eslint-disable-line
+    }
+  }
+
   render () {
     const { store, children } = this.props
+    const { devTools } = this.state
 
     return (
       <Provider store={store}>
         <div>
           {children}
-          { __DEV__ ? <DevTools /> : null}
+          { devTools ? <DevTools /> : null}
         </div>
       </Provider>
     )
