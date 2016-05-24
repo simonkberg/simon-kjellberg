@@ -1,8 +1,8 @@
-import express from 'express'
-import moment from 'moment'
+const express = require('express')
+const moment = require('moment')
 
-import slackHook from '../lib/slackHook'
-import clockEmoji from '../lib/clockEmoji'
+const slackHook = require('../lib/slackHook')
+const clockEmoji = require('../lib/clockEmoji')
 
 const router = express.Router()
 
@@ -51,4 +51,4 @@ router.post('/eta', (req, res) => {
     .catch((err) => res.end(err))
 })
 
-export default router
+module.exports = router

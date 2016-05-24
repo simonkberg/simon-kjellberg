@@ -1,6 +1,6 @@
-import request from 'request'
+const request = require('request')
 
-const slackHook = (body = {}) => {
+module.exports = function slackHook (body = {}) {
   return new Promise((resolve, reject) => {
     request.post({
       url: process.env.SLACK_WEBHOOK,
@@ -13,5 +13,3 @@ const slackHook = (body = {}) => {
     })
   })
 }
-
-export default slackHook
