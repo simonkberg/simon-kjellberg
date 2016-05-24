@@ -3,7 +3,6 @@ import emojis from '../shared/data/emoji.json'
 
 const cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/'
 const emojiMap = new Map()
-const cache = new Map()
 
 emojis.forEach(({ unified, short_names }) => {
   short_names.forEach(shortName => {
@@ -14,9 +13,7 @@ emojis.forEach(({ unified, short_names }) => {
 const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
-export const replace = (match, p1, p2) => {
-  if (cache.has(match)) return cache.get(match)
-
+export const replace = (match, p1, p2, index) => {
   let name = emojiMap.get(p1)
 
   if (p2) {
@@ -29,16 +26,14 @@ export const replace = (match, p1, p2) => {
     src: `${cdnUrl}${name}.png`,
     title: p1,
     alt: unicode,
-    key: unicode,
+    key: index,
     style: {
-      width: '1em',
-      height: '1em'
+      width: '1.25em',
+      height: '1.25em'
     }
   }
 
   const emoji = <img {...props} />
-
-  cache.set(match, emoji)
 
   return emoji
 }
