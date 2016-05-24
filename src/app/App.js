@@ -4,9 +4,9 @@ import Helmet from 'react-helmet'
 import favicons, { appleTouchIcons } from 'helpers/favicon'
 import withUrl from 'helpers/withUrl'
 import share from 'shared/assets/share.png'
-import styles from './App.css'
+import styles from './styles.css'
 
-import Chat from 'components/chat'
+import Chat from 'chat'
 
 const { shape, node, func, string } = PropTypes
 

@@ -5,10 +5,10 @@ import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import withSocket from 'helpers/withSocket'
 import withStyles from 'helpers/withStyles'
-import * as ChatActions from 'actions/ChatActions'
 
 import ChatMessageList from './ChatMessageList'
-import styles from './Chat.css'
+import * as chatActions from './chatActions'
+import styles from './styles.css'
 
 const { object, func, bool } = PropTypes
 
@@ -142,7 +142,7 @@ const mapStateToProps = ({ chat }) => {
 }
 
 const mapDispatchToProps = (dispatch) => {
-  return bindActionCreators({...ChatActions}, dispatch)
+  return bindActionCreators({...chatActions}, dispatch)
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(WithStyles)

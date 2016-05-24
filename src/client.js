@@ -6,31 +6,27 @@ import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
 import Iso from 'iso'
 import ga from 'react-ga'
-import routes from './routes'
-import configureStore from './store/configureStore'
-import Root from './containers/Root'
+import Root, { configureStore, routes } from 'root'
 
-ga.initialize('UA-2241753-14')
-
-match({ history, routes }, (err, redirectLocation, renderProps) => {
-  if (err) throw err
+match({ history, routes }, (error, redirect, props) => {
+  if (error) throw error
 
   Iso.bootstrap((state, container) => {
     const context = {
       insertCss: (styles) => styles._insertCss()
     }
 
-    renderProps.createElement = function createElement (Component, props) {
+    props.createElement = function createElement (Component, props) {
       return <Component context={context} {...props} />
     }
 
-    renderProps.onUpdate = function trackPageView () {
+    props.onUpdate = function trackPageView () {
       ga.pageview(window.location.pathname)
     }
 
     render(
       <Root store={configureStore(state)}>
-        <Router {...renderProps} />
+        <Router {...props} />
       </Root>,
       container
     )

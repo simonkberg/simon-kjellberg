@@ -2,8 +2,8 @@
 import 'isomorphic-fetch'
 import React from 'react'
 import { match, RouterContext } from 'react-router'
-import htmlHelper from './helpers/html'
-import routes from './routes'
+import htmlHelper from 'helpers/html'
+import { routes } from 'root'
 
 export default () => {
   return (req, res, next) => {
