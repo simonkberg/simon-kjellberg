@@ -1,14 +1,14 @@
-import path from 'path'
-import webpack from 'webpack'
+const path = require('path')
+const webpack = require('webpack')
 
-export const paths = {}
+const paths = {}
 
 paths.config = __dirname
 paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
 paths.app = path.join(paths.root, 'app')
 
-export function getEntry (entry, hot = false) {
+function getEntry (entry, hot = false) {
   // cast to array
   entry = [].concat(entry)
 
@@ -19,7 +19,7 @@ export function getEntry (entry, hot = false) {
   return entry
 }
 
-export function getPlugins (opts = {}) {
+function getPlugins (opts = {}) {
   const { env = process.env.NODE_ENV, browser } = opts
 
   let plugins = [
@@ -53,7 +53,7 @@ export function getPlugins (opts = {}) {
   return plugins
 }
 
-export function getLoaders (opts = {}) {
+function getLoaders (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
   let loaders = [{
@@ -114,7 +114,7 @@ export function getLoaders (opts = {}) {
   return loaders
 }
 
-export default function sharedConfig (opts = {}) {
+module.exports = exports = function sharedConfig (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
   const config = {
@@ -156,3 +156,8 @@ export default function sharedConfig (opts = {}) {
 
   return config
 }
+
+exports.paths = paths
+exports.getEntry = getEntry
+exports.getPlugins = getPlugins
+exports.getLoaders = getLoaders
