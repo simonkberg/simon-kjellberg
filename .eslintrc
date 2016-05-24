@@ -1,10 +1,5 @@
 {
-  "parser": "babel-eslint",
-  "extends": ["standard", "plugin:react/recommended"],
-  "plugins": ["react", "babel"],
-  "env": {
-    "browser": true
-  },
+  "extends": "@simonkberg/eslint-config-react",
   "globals": {
     "fetch": false,
     "__DEV__": false,
