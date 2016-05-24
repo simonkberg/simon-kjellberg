@@ -1,19 +1,17 @@
-import React, { Component } from 'react'
+import React from 'react'
 import withStyles from 'helpers/withStyles'
 
-import { Intro, Stats, Links } from './index'
+import LandingIntro from './LandingIntro'
+import LandingStats from './LandingStats'
+import LandingLinks from './LandingLinks'
 import styles from './styles.css'
 
-class Landing extends Component {
-  render () {
-    return (
-      <div className={styles.landing}>
-        <Intro />
-        <Stats />
-        <Links />
-      </div>
-    )
-  }
-}
+export const Landing = () => (
+  <div className={styles.landing}>
+    <LandingIntro />
+    <LandingStats />
+    <LandingLinks />
+  </div>
+)
 
 export default withStyles(styles)(Landing)
