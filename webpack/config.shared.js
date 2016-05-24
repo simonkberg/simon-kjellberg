@@ -6,7 +6,7 @@ const paths = {}
 paths.config = __dirname
 paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
-paths.app = path.join(paths.root, 'app')
+paths.src = path.join(paths.root, 'src')
 
 function getEntry (entry, hot = false) {
   // cast to array
@@ -60,7 +60,7 @@ function getLoaders (opts = {}) {
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/,
-    include: paths.app,
+    include: paths.src,
     query: {
       cacheDirectory: true,
       presets: [
@@ -122,7 +122,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
       ? '#cheap-module-eval-source-map'
       : 'hidden-sourcemap',
 
-    context: paths.app,
+    context: paths.src,
 
     output: {
       path: paths.build,
@@ -134,7 +134,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
 
     resolve: {
       extensions: ['', '.js', '.json'],
-      modules: [paths.app, 'node_modules']
+      modules: [paths.src, 'node_modules']
     },
 
     module: {
@@ -144,7 +144,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
     postcss: function (webpack) {
       return [
         require('postcss-import')({
-          path: [paths.app],
+          path: [paths.src],
           addDependencyTo: webpack
         }),
         require('postcss-url')(),

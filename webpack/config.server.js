@@ -12,7 +12,7 @@ module.exports = function serverConfig (opts = {}) {
     target: 'node',
 
     entry: {
-      server: path.join(paths.app, 'server.js')
+      server: path.join(paths.src, 'server.js')
     },
 
     output: {
