@@ -3,8 +3,6 @@
 'use strict'
 
 require('dotenv').load({ silent: true })
-require('babel-register')
-require('babel-polyfill')
 
 if (process.env.NEW_RELIC_LICENSE_KEY) {
   var nr = require('newrelic')

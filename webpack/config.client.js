@@ -1,8 +1,10 @@
-import path from 'path'
-import AssetsPlugin from 'assets-webpack-plugin'
-import sharedConfig, { paths, getEntry } from './config.shared'
+const path = require('path')
+const AssetsPlugin = require('assets-webpack-plugin')
+const sharedConfig = require('./config.shared')
 
-export default function (opts = {}) {
+const { paths, getEntry } = sharedConfig
+
+module.exports = function clientConfig (opts = {}) {
   opts.browser = true
 
   const config = sharedConfig(opts)

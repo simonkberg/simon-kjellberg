@@ -1,21 +1,14 @@
-import {
+const {
   RtmClient,
   WebClient,
   MemoryDataStore,
   CLIENT_EVENTS,
   RTM_EVENTS,
   RTM_MESSAGE_SUBTYPES
-} from '@slack/client'
+} = require('@slack/client')
 
-export default async function slack (token, opts = {}) {
-  return {
-    rtm: await rtm(token, opts.rtm),
-    web: web(token, opts.web)
-  }
-}
-
-export function rtm (token, opts = {}) {
-  const rtm = new RtmClient(token, Object.assign({
+function rtm (token, opts = {}) {
+  const client = new RtmClient(token, Object.assign({
     logLevel: 'info',
     dataStore: new MemoryDataStore({}),
     autoReconnect: true,
@@ -23,18 +16,27 @@ export function rtm (token, opts = {}) {
   }, opts))
 
   return new Promise((resolve, reject) => {
-    rtm.start()
+    client.start()
 
-    rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, () => resolve(rtm))
+    client.on(CLIENT_EVENTS.RTM.AUTHENTICATED, _ => resolve(client))
   })
 }
 
-export function web (token, opts = {}) {
+function web (token, opts = {}) {
   return new WebClient(token, opts)
 }
 
-export {
-  CLIENT_EVENTS,
-  RTM_EVENTS,
-  RTM_MESSAGE_SUBTYPES
+module.exports = exports = function slack (token, opts = {}) {
+  return {
+    rtm: rtm(token, opts.rtm),
+    web: web(token, opts.web)
+  }
 }
+
+exports.rtm = rtm
+exports.web = web
+
+exports.CLIENT_EVENTS = CLIENT_EVENTS
+exports.CLIENT_EVENTS = CLIENT_EVENTS
+exports.RTM_EVENTS = RTM_EVENTS
+exports.RTM_MESSAGE_SUBTYPES = RTM_MESSAGE_SUBTYPES

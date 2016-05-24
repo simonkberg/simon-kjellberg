@@ -1,6 +1,6 @@
 
-import express from 'express'
-import { web } from '../lib/slack'
+const express = require('express')
+const { web } = require('../lib/slack')
 
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
@@ -52,4 +52,4 @@ function mapUsers ({ id, name, color }) {
   return { id, name, color }
 }
 
-export default router
+module.exports = router

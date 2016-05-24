@@ -1,62 +1,61 @@
 
-import { Server } from 'ws'
-import randomName from './lib/randomName'
-import slack, { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } from './lib/slack'
+const Server = require('ws').Server
+const randomName = require('./lib/randomName')
+const slack = require('./lib/slack')
 
+const { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } = slack
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
-module.exports = async (server) => {
+module.exports = function chatServer (server) {
   const wss = new Server({ server: server })
 
-  const { rtm, web } = await slack(SLACK_API_TOKEN)
-  const chat = rtm.dataStore.getDMById(SLACK_CHAT_CHANNEL)
+  const { rtm, web } = slack(SLACK_API_TOKEN)
 
-  wss.on('connection', async (ws) => {
-    console.log('client connected')
-
+  wss.on('connection', ws => {
     const username = randomName()
 
     ws.on('message', (message) => {
-      console.log('Client Message', message)
-
-      web.chat.postMessage(chat.id, message, {
+      web.chat.postMessage(SLACK_CHAT_CHANNEL, message, {
         parse: 'full',
         username: username
       })
     })
   })
 
-  rtm.on(RTM_EVENTS.MESSAGE, (message) => {
-    console.log('Server Message', message)
+  rtm.then(rtmClient => {
+    const chat = rtmClient.dataStore.getDMById(SLACK_CHAT_CHANNEL)
 
-    if (message.channel === chat.id) {
-      if (message.text === '!clear') {
-        web.im.history(chat.id).then(({ messages }) => {
-          return messages.map(msg => {
-            return web.chat.delete(msg.ts, chat.id)
+    rtmClient.on(RTM_EVENTS.MESSAGE, message => {
+      if (message.channel === chat.id) {
+        if (message.text === '!clear') {
+          web.im.history(chat.id).then(({ messages }) => {
+            return messages.map(msg => {
+              return web.chat.delete(msg.ts, chat.id)
               .catch(() => null)
-          })
-        }).catch(() => null)
-      }
+            })
+          }).catch(() => null)
+        }
 
-      wss.clients.forEach(client => sendMessage(client, message))
-    }
-  })
+        wss.clients.forEach(client => sendMessage(client, message))
+      }
+    })
+  }).catch(err => console.error(err))
 
   return wss
 }
 
-function sendMessage (client, { subtype, username, user, text, ts, ...other }) {
+function sendMessage (client, params) {
+  const { subtype, username, user, text, ts } = params
   const payload = { subtype, username, user, text, ts }
 
-  payload.edited = !!other.edited
+  payload.edited = !!params.edited
 
   if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
-    payload.ts = other.deleted_ts
+    payload.ts = params.deleted_ts
   }
 
   if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
-    const { message } = other
+    const { message } = params
 
     payload.user = message.user
     payload.text = message.text
@@ -64,7 +63,7 @@ function sendMessage (client, { subtype, username, user, text, ts, ...other }) {
     payload.edited = true
   }
 
-  client.send(JSON.stringify(payload), (err) => {
+  client.send(JSON.stringify(payload), err => {
     if (err) console.error(`WebSocket Error: ${err.message}`)
   })
 }

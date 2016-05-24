@@ -1,16 +1,16 @@
-import path from 'path'
-import logger from 'morgan'
-import express from 'express'
-import favicon from 'serve-favicon'
-import cookieParser from 'cookie-parser'
-import bodyParser from 'body-parser'
-import compression from 'compression'
-import expressWebpackAssets from 'express-webpack-assets'
-import webpackConfig from '../webpack/config.client'
-import reactServer from '../build/server'
-import api from './api'
+const path = require('path')
+const logger = require('morgan')
+const express = require('express')
+const favicon = require('serve-favicon')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const compression = require('compression')
+const expressWebpackAssets = require('express-webpack-assets')
+const webpackConfig = require('../webpack/config.client')
+const reactServer = require('../build/server').default
+const api = require('./api')
 
-module.exports = (nr = null) => {
+module.exports = function appServer (nr = null) {
   const app = express()
   const dev = app.get('env') !== 'production'
 

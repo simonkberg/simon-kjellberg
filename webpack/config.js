@@ -1,9 +1,8 @@
 
-import 'babel-polyfill'
-import clientConfig from './config.client'
-import serverConfig from './config.server'
+const clientConfig = require('./config.client')
+const serverConfig = require('./config.server')
 
-module.exports = function (opts = {}) {
+module.exports = function webpackConfig (opts = {}) {
   return [
     clientConfig(opts),
     serverConfig(opts)

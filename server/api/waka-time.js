@@ -1,6 +1,6 @@
-import express from 'express'
-import request from 'request'
-import cache from 'cached-request'
+const express = require('express')
+const request = require('request')
+const cache = require('cached-request')
 
 const JSON_STATS = 'https://wakatime.com/@simonkberg/4a1baa98-ab8f-436e-ada0-8810ef941f76.json'
 const JSON_ACTIVITY = 'https://wakatime.com/@simonkberg/bb9d21e6-a93d-4f64-b741-8a3f0b032fce.json'
@@ -24,4 +24,4 @@ function wakaTimeProxy (url, res) {
   })
 }
 
-export default router
+module.exports = router

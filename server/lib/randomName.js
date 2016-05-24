@@ -302,14 +302,14 @@ const animalNames = [
   'zebra'
 ]
 
-export function randomPositiveAdjective () {
+function randomPositiveAdjective () {
   return positiveAdjectives[Math.floor(Math.random() * positiveAdjectives.length)]
 }
 
-export function randomAnimalName () {
+function randomAnimalName () {
   return animalNames[Math.floor(Math.random() * animalNames.length)]
 }
 
-export default function randomName () {
+module.exports = exports = function randomName () {
   return `${randomPositiveAdjective()}-${randomAnimalName()}`
 }

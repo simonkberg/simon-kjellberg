@@ -1,5 +1,5 @@
 
-const clockEmoji = (time) => {
+module.exports = function clockEmoji (time) {
   var hour = parseInt(time.format('h'), 10)
   var min = 30 * Math.round(time.format('m') / 30)
 
@@ -10,5 +10,3 @@ const clockEmoji = (time) => {
 
   return `:clock${hour}${min || ''}:`
 }
-
-export default clockEmoji

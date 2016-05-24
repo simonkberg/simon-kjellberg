@@ -1,8 +1,10 @@
-import path from 'path'
-import nodeExternals from 'webpack-node-externals'
-import sharedConfig, { paths } from './config.shared'
+const path = require('path')
+const nodeExternals = require('webpack-node-externals')
+const sharedConfig = require('./config.shared')
 
-export default function (opts = {}) {
+const { paths } = sharedConfig
+
+module.exports = function serverConfig (opts = {}) {
   const config = sharedConfig(opts)
 
   return Object.assign(config, {
