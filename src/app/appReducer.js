@@ -1,4 +1,4 @@
-import { SET_BASE_URL } from 'actions'
+import { SET_BASE_URL } from './appActions'
 
 const initialState = {
   baseUrl: ''

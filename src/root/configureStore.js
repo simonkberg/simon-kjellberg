@@ -2,8 +2,8 @@ import { createStore, applyMiddleware, compose } from 'redux'
 import { batchedSubscribe } from 'redux-batched-subscribe'
 import { unstable_batchedUpdates as batchedUpdates } from 'react-dom' // eslint-disable-line camelcase
 import thunkMiddleware from 'redux-thunk'
-import rootReducer from 'reducers'
-import DevTools from 'containers/DevTools'
+import rootReducer from './reducers'
+import DevTools from './DevTools'
 
 function getMiddleware () {
   const middleware = [
@@ -35,8 +35,8 @@ export default function configureStore (initialState = {}) {
 
   if (__DEV__ && module.hot) {
     // Enable Webpack hot module replacement for reducers
-    module.hot.accept('reducers', () => {
-      const nextRootReducer = require('reducers').default
+    module.hot.accept('./reducers', () => {
+      const nextRootReducer = require('./reducers').default
       store.replaceReducer(nextRootReducer)
     })
   }

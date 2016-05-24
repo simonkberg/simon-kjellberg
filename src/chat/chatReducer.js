@@ -11,7 +11,7 @@ import {
   FETCH_CHAT_USERS_ERROR,
   OPEN_CHAT,
   CLOSE_CHAT
-} from 'actions'
+} from './chatActions'
 
 const initialState = {
   open: __DEV__,

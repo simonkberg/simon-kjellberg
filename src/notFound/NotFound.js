@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import Helmet from 'react-helmet'
 
 import withStyles from 'helpers/withStyles'
-import styles from './NotFound.css'
+import styles from './styles.css'
 
 class NotFound extends Component {
   render () {

@@ -2,8 +2,7 @@ import React from 'react'
 import Helmet from 'react-helmet'
 import Iso from 'iso'
 import { renderToString } from 'react-dom/server'
-import configureStore from 'store/configureStore'
-import Root from 'containers/Root'
+import Root, { configureStore } from 'root'
 
 export default (router, locals) => {
   const { webpack_asset, css, data, newrelic } = locals

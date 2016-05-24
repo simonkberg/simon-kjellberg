@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import withStyles from 'helpers/withStyles'
 
 import { Intro, Stats, Links } from './index'
-import styles from './Landing.css'
+import styles from './styles.css'
 
 class Landing extends Component {
   render () {

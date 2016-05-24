@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { Motion, spring, presets } from 'react-motion'
 import Loader from 'shared/components/loader'
-import { loadStats } from 'actions'
+import { loadStats } from 'stats/statsActions'
 
 const { array, func } = PropTypes
 
