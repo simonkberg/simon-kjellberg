@@ -14,7 +14,7 @@ const LandingLinks = () => (
     <h2>links</h2>
     <p>
       <small>[github](<a {...githubLink}>{githubLink.href}</a>)</small>
-      <br/>
+      <br />
       <small>[email](<a {...emailLink}>{emailLink.href}</a>)</small>
     </p>
   </div>

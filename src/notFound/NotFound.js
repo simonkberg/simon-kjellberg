@@ -1,23 +1,18 @@
-import React, { Component } from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 
 import withStyles from 'helpers/withStyles'
 import styles from './styles.css'
 
-class NotFound extends Component {
-  render () {
-    const head = {
-      title: '404'
-    }
+const head = { title: '404' }
+const shrug = '¯\_(ツ)_/¯' // eslint-disable-line no-useless-escape
 
-    return (
-      <div className={styles.notFound}>
-        <Helmet {...head} />
-        <h1>404 <small>¯\_(ツ)_/¯</small></h1>
-        <p>Not Found</p>
-      </div>
-    )
-  }
-}
+const NotFound = (
+  <div className={styles.notFound}>
+    <Helmet {...head} />
+    <h1>404 <small>{shrug}</small></h1>
+    <p>Not Found</p>
+  </div>
+)
 
 export default withStyles(styles)(NotFound)

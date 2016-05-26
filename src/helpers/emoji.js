@@ -44,10 +44,10 @@ export const parse = (string) => {
 
   regex.lastIndex = 0
 
-  let result
+  let result = regex.exec(string)
   let lastIndex = 0
 
-  while (result = regex.exec(string)) {
+  while (result) {
     let index = result.index
 
     if (index !== lastIndex) {
@@ -60,6 +60,8 @@ export const parse = (string) => {
     let out = replace(...result.concat(index, result.input))
 
     output.push(out)
+
+    result = regex.exec(string)
   }
 
   if (lastIndex < string.length) {

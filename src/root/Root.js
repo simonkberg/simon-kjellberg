@@ -17,7 +17,7 @@ class Root extends Component {
   componentDidMount () {
     if (__DEV__) {
       // Enable dev tools for client after mount
-      this.setState({ devTools: true }) // eslint-disable-line
+      this.setState({ devTools: true })
     }
   }
 
@@ -29,7 +29,7 @@ class Root extends Component {
       <Provider store={store}>
         <div>
           {children}
-          { devTools ? <DevTools /> : null}
+          {devTools ? <DevTools /> : null}
         </div>
       </Provider>
     )
