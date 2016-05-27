@@ -16,7 +16,7 @@ const initialState = Immutable.fromJS({
 export default function stats (state = initialState, action) {
   switch (action.type) {
     case FETCH_STATS:
-      return state.set({
+      return state.merge({
         loading: true,
         error: null
       })
