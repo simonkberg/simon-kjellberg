@@ -1,4 +1,5 @@
-import { combineReducers } from 'redux'
+import Immutable from 'immutable'
+import { combineReducers } from 'redux-immutable'
 
 import {
   FETCH_CHAT_HISTORY,
@@ -13,7 +14,7 @@ import {
   CLOSE_CHAT
 } from './chatActions'
 
-const initialState = {
+const initialState = Immutable.fromJS({
   open: __DEV__,
   entities: {
     messages: {},
@@ -29,9 +30,9 @@ const initialState = {
     loading: false,
     error: null
   }
-}
+})
 
-function open (state = initialState.open, action) {
+function open (state = initialState.get('open'), action) {
   switch (action.type) {
     case OPEN_CHAT:
       return true
@@ -42,95 +43,64 @@ function open (state = initialState.open, action) {
   }
 }
 
-function entities (state = initialState.entities, action) {
-  const nextState = {...state}
-
+function entities (state = initialState.get('entities'), action) {
   if (action.response && action.response.entities) {
     const { response } = action
 
-    if (response.entities.messages) {
-      nextState.messages = {
-        ...nextState.messages,
-        ...response.entities.messages
-      }
-    }
-
-    if (response.entities.users) {
-      nextState.users = {
-        ...nextState.users,
-        ...response.entities.users
-      }
-    }
-
-    return nextState
+    return state.mergeDeep(response.entities)
   }
 
   switch (action.type) {
     case REMOVE_CHAT_MESSAGE:
-      nextState.messages = {...nextState.messages}
-
-      delete nextState.messages[action.ts]
-
-      return nextState
+      return state.deleteIn(['messages', action.ts])
     default:
       return state
   }
 }
 
-function messages (state = initialState.messages, action) {
+function messages (state = initialState.get('messages'), action) {
   switch (action.type) {
     case FETCH_CHAT_HISTORY:
-      return {
-        ...state,
+      return state.merge({
+        error: null,
         loading: true
-      }
+      })
     case FETCH_CHAT_HISTORY_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        ids: [...state.ids, ...action.response.result]
-      }
+      return state.mergeDeep({
+        ids: action.response.result,
+        loading: false
+      })
     case FETCH_CHAT_HISTORY_ERROR:
-      return {
-        ...state,
+      return state.merge({
         loading: false,
         error: action.error
-      }
+      })
     case ADD_CHAT_MESSAGE:
-      return {
-        ...state,
-        ids: [...state.ids, action.response.result]
-      }
+      return state.update('ids', ids => ids.push(action.response.result))
     case REMOVE_CHAT_MESSAGE:
-      return {
-        ...state,
-        ids: state.ids.filter(ts => ts !== action.ts)
-      }
+      return state.update('ids', ids => ids.filter(ts => ts !== action.ts))
     default:
       return state
   }
 }
 
-function users (state = initialState.users, action) {
+function users (state = initialState.get('users'), action) {
   switch (action.type) {
     case FETCH_CHAT_USERS:
-      return {
-        ...state,
+      return state.merge({
         error: null,
         loading: true
-      }
+      })
     case FETCH_CHAT_USERS_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        ids: [...state.ids, ...action.response.result]
-      }
+      return state.mergeDeep({
+        ids: action.response.result,
+        loading: false
+      })
     case FETCH_CHAT_USERS_ERROR:
-      return {
-        ...state,
+      return state.merge({
         loading: false,
         error: action.error
-      }
+      })
     default:
       return state
   }

@@ -132,14 +132,11 @@ export class Chat extends Component {
 const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(styles)(WithSocket)
 
-const mapStateToProps = ({ chat }) => {
-  const { open, messages, users } = chat
-
-  return {
-    open,
-    loading: messages.loading || users.loading
-  }
-}
+const mapStateToProps = (state) => ({
+  open: state.getIn(['chat', 'open']),
+  loading: state.getIn(['chat', 'messages', 'loading'], false) ||
+    state.getIn(['chat', 'users', 'loading'], false)
+})
 
 const mapDispatchToProps = (dispatch) => {
   return bindActionCreators({...chatActions}, dispatch)

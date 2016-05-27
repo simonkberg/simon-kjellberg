@@ -134,17 +134,10 @@ class ChatMessageList extends Component {
   }
 }
 
-const mapStateToProps = ({
-  chat: {
-    messages: { ids },
-    entities: { messages, users }
-  }
-}) => {
-  return {
-    messageIds: [...ids].sort(),
-    messages,
-    users
-  }
-}
+const mapStateToProps = (state) => ({
+  messageIds: state.getIn(['chat', 'messages', 'ids']).sort().toArray(),
+  messages: state.getIn(['chat', 'entities', 'messages']).toJS(),
+  users: state.getIn(['chat', 'entities', 'users']).toJS()
+})
 
 export default connect(mapStateToProps)(ChatMessageList)

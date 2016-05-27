@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import shallowCompare from 'react-addons-shallow-compare'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import Loader from 'shared/components/loader'
@@ -22,6 +23,10 @@ export class Stats extends Component {
     this.props.loadStats()
   }
 
+  shouldComponentUpdate (nextProps, nextState) {
+    return shallowCompare(this, nextProps, nextState)
+  }
+
   render () {
     const { stats } = this.props
 
@@ -37,7 +42,7 @@ export class Stats extends Component {
   }
 }
 
-const mapStateToProps = ({ stats: { data: stats } }) => ({ stats })
+const mapStateToProps = (state) => ({ stats: state.getIn(['stats', 'data']).toJS() })
 
 const mapDispatchToProps = (dispatch) =>
   bindActionCreators({...statsActions}, dispatch)
