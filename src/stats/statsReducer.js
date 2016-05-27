@@ -7,24 +7,29 @@ import {
 } from './statsActions'
 
 const initialState = Immutable.fromJS({
+  entities: {},
+  ids: [],
   loading: false,
-  data: [],
   error: null
 })
 
 export default function stats (state = initialState, action) {
   switch (action.type) {
     case FETCH_STATS:
-      return state.set('loading', true)
+      return state.set({
+        loading: true,
+        error: null
+      })
     case FETCH_STATS_SUCCESS:
-      return state.merge({
-        loading: false,
-        data: action.response['data']
+      return state.mergeDeep({
+        ids: action.response.result,
+        entities: action.response.entities.stats,
+        loading: false
       })
     case FETCH_STATS_ERROR:
       return state.merge({
         loading: false,
-        data: action.error
+        error: action.error
       })
     default:
       return state

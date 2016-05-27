@@ -11,12 +11,12 @@ const { array, func } = PropTypes
 
 export class Stats extends Component {
   static propTypes = {
-    stats: array,
+    statsIds: array,
     loadStats: func.isRequired
   }
 
   static defaultProps = {
-    stats: []
+    statsIds: []
   }
 
   componentDidMount () {
@@ -28,21 +28,23 @@ export class Stats extends Component {
   }
 
   render () {
-    const { stats } = this.props
+    const { statsIds } = this.props
 
-    if (!stats.length) {
+    if (!statsIds.length) {
       return <Loader text='Fetching...' />
     }
 
     return (
       <ul>
-        {stats.map((props) => <StatsItem key={props.name} {...props} />)}
+        {statsIds.map(id => <StatsItem key={id} id={id} />)}
       </ul>
     )
   }
 }
 
-const mapStateToProps = (state) => ({ stats: state.getIn(['stats', 'data']).toJS() })
+const mapStateToProps = (state) => ({
+  statsIds: state.getIn(['stats', 'ids']).toArray()
+})
 
 const mapDispatchToProps = (dispatch) =>
   bindActionCreators({...statsActions}, dispatch)

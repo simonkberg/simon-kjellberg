@@ -44,13 +44,10 @@ function open (state = initialState.get('open'), action) {
 }
 
 function entities (state = initialState.get('entities'), action) {
-  if (action.response && action.response.entities) {
-    const { response } = action
-
-    return state.mergeDeep(response.entities)
-  }
-
   switch (action.type) {
+    case FETCH_CHAT_HISTORY_SUCCESS:
+    case FETCH_CHAT_USERS_SUCCESS:
+      return state.mergeDeep(action.response.entities)
     case REMOVE_CHAT_MESSAGE:
       return state.deleteIn(['messages', action.ts])
     default:
@@ -62,8 +59,8 @@ function messages (state = initialState.get('messages'), action) {
   switch (action.type) {
     case FETCH_CHAT_HISTORY:
       return state.merge({
-        error: null,
-        loading: true
+        loading: true,
+        error: null
       })
     case FETCH_CHAT_HISTORY_SUCCESS:
       return state.mergeDeep({
@@ -88,8 +85,8 @@ function users (state = initialState.get('users'), action) {
   switch (action.type) {
     case FETCH_CHAT_USERS:
       return state.merge({
-        error: null,
-        loading: true
+        loading: true,
+        error: null
       })
     case FETCH_CHAT_USERS_SUCCESS:
       return state.mergeDeep({
