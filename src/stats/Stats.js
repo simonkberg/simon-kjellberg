@@ -5,6 +5,7 @@ import { connect } from 'react-redux'
 import Loader from 'shared/components/loader'
 
 import * as statsActions from './statsActions'
+import { getStatsIds } from './statsSelectors'
 import StatsItem from './StatsItem'
 
 const { array, func } = PropTypes
@@ -43,7 +44,7 @@ export class Stats extends Component {
 }
 
 const mapStateToProps = (state) => ({
-  statsIds: state.getIn(['stats', 'ids']).toArray()
+  statsIds: getStatsIds(state)
 })
 
 const mapDispatchToProps = (dispatch) =>

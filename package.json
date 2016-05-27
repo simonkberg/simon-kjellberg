@@ -61,6 +61,7 @@
     "redux-immutable": "^3.0.6",
     "redux-thunk": "^2.0.1",
     "request": "^2.72.0",
+    "reselect": "^2.5.1",
     "sanitize.css": "^3.3.0",
     "serve-favicon": "^2.3.0",
     "ws": "^1.1.0"

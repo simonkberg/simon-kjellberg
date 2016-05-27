@@ -1,13 +1,14 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { Motion, spring, presets } from 'react-motion'
+import { makeGetStatsEntity } from './statsSelectors'
 
-const StatsItem = ({ id, percent }) => {
+const StatsItem = ({ id, name, percent }) => {
   const target = spring(percent, presets.noWobble)
 
   return (
     <li>
-      {id}{' '}
+      {name}{' '}
       <Motion defaultStyle={{count: 0}} style={{count: target}}>
         {({count}) => <span>({count.toFixed(2)}%)</span>}
       </Motion>
@@ -16,12 +17,16 @@ const StatsItem = ({ id, percent }) => {
 }
 
 StatsItem.propTypes = {
-  id: PropTypes.string,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string,
   percent: PropTypes.number
 }
 
-const mapStateToProps = (state, { id }) => ({
-  percent: state.getIn(['stats', 'entities', id, 'percent'])
-})
+const makeMapStateToProps = () => {
+  const getStatsEntity = makeGetStatsEntity()
+  return (state, props) => ({
+    ...getStatsEntity(state, props)
+  })
+}
 
-export default connect(mapStateToProps)(StatsItem)
+export default connect(makeMapStateToProps)(StatsItem)
