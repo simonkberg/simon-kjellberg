@@ -58,17 +58,15 @@ function getLoaders (opts = {}) {
 
   let loaders = [{
     test: /\.js$/,
-    loader: 'babel',
+    loaders: [
+      {
+        loader: 'babel',
+        query: { cacheDirectory: true }
+      },
+      'eslint-loader'
+    ],
     exclude: /node_modules/,
-    include: paths.src,
-    query: {
-      cacheDirectory: true,
-      presets: [
-        'react',
-        'es2015-webpack',
-        'stage-0'
-      ]
-    }
+    include: paths.src
   }, {
     test: /\.css$/,
     loaders: [
