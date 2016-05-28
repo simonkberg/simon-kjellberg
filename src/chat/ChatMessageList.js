@@ -55,12 +55,10 @@ class ChatMessageList extends Component {
 
   getStyles (style = {}) {
     const { messageIds, messages, users } = this.props
-    console.log(messageIds, messages, users)
+
     return messageIds.map(id => {
       const message = messages[id]
       const user = message.username || users[message.user]
-
-      console.log(id, message, user)
 
       return {
         key: id,
