@@ -9,7 +9,8 @@ import Iso from 'iso'
 import ga from 'react-ga'
 import Root, { configureStore, routes } from 'root'
 
-ga.initialize('UA-2241753-14')
+const gaId = process.env.GA_ID
+if (gaId) { ga.initialize(gaId) }
 
 match({ history, routes }, (error, redirect, props) => {
   if (error) throw error

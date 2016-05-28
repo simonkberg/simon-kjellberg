@@ -20,11 +20,18 @@ function getEntry (entry, hot = false) {
 }
 
 function getPlugins (opts = {}) {
-  const { env = process.env.NODE_ENV, browser } = opts
+  const {
+    env = process.env.NODE_ENV,
+    gaid = process.env.GA_ID,
+    browser
+  } = opts
 
   let plugins = [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': `"${env || 'development'}"`,
+      'process.env': {
+        NODE_ENV: `"${env || 'development'}"`,
+        GA_ID: `"${gaid || ''}"`
+      },
       '__DEV__': env !== 'production',
       '__BROWSER__': !!browser
     })
