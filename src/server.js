@@ -1,20 +1,13 @@
 
 import 'isomorphic-fetch'
 import React from 'react'
+import { renderToString } from 'react-dom/server'
 import { match, RouterContext } from 'react-router'
+import Root, { routes, configureStore } from 'root'
 import htmlHelper from 'helpers/html'
-import { routes } from 'root'
 
 export default () => {
   return (req, res, next) => {
-    const { locals } = res
-
-    locals.css = []
-
-    const context = {
-      insertCss: (styles) => locals.css.push(styles._getCss())
-    }
-
     match({ routes, location: req.url }, (error, redirect, props) => {
       if (error) {
         return res.status(500).send(error.message)
@@ -25,15 +18,24 @@ export default () => {
       }
 
       if (props) {
-        const { status } = props.routes.find((route) => route.status) || { status: 200 }
+        const { locals: { state, webpack_asset, newrelic } } = res
 
-        props.createElement = function createElement (Component, props) {
-          return <Component context={context} {...props} />
-        }
+        const css = []
+        const context = { insertCss: styles => css.push(styles._getCss()) }
+        const store = configureStore(state)
+        const content = renderToString(
+          <Root store={store} context={context}>
+            <RouterContext {...props} />
+          </Root>
+        )
 
-        const html = htmlHelper(<RouterContext {...props} />, locals)
+        const html = htmlHelper(content, {
+          css, store, webpack_asset, newrelic
+        })
 
-        return res.status(status).send(html)
+        const { status } = props.routes.find(route => route.status) || {}
+
+        return res.status(status || 200).send(html)
       }
 
       res.status(500).send('How the fuck?')

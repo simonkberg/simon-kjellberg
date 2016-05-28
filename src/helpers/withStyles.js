@@ -3,7 +3,8 @@ import getDisplayName from './getDisplayName'
 
 const { func } = PropTypes
 
-export default function withStyles (...styles) {
+export default function withStyles (styles) {
+  console.log(...styles)
   return (ComposedComponent) => class WithStyles extends Component {
     static contextTypes = {
       insertCss: func.isRequired
@@ -15,7 +16,7 @@ export default function withStyles (...styles) {
     componentWillMount () {
       const { insertCss } = this.context
 
-      this._removeCss = insertCss.apply(undefined, styles, { replace: true })
+      this._removeCss = insertCss(styles, { replace: true })
     }
 
     componentWillUnmount () {

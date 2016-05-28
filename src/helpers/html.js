@@ -1,15 +1,7 @@
-import React from 'react'
 import Helmet from 'react-helmet'
-import Immutable from 'immutable'
 import Iso from 'iso'
-import { renderToString } from 'react-dom/server'
-import Root, { configureStore } from 'root'
 
-export default (router, locals) => {
-  const { webpack_asset, css, state = Immutable.Map(), newrelic } = locals
-
-  const store = configureStore(state)
-  const content = renderToString(<Root store={store}>{router}</Root>)
+export default (content, { css, store, webpack_asset, newrelic }) => {
   const head = Helmet.rewind()
   const iso = new Iso()
 

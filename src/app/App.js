@@ -2,48 +2,25 @@ import React, { Component, PropTypes } from 'react'
 import Helmet from 'react-helmet'
 
 import favicons, { appleTouchIcons } from 'helpers/favicon'
+import withStyles from 'helpers/withStyles'
 import withUrl from 'helpers/withUrl'
 import share from 'shared/assets/share.png'
 import styles from './styles.css'
 
 import Chat from 'chat'
 
-const { shape, node, func, string } = PropTypes
+const { node, object, string } = PropTypes
 
-class App extends Component {
+export class App extends Component {
   static propTypes = {
-    context: shape({
-      insertCss: func.isRequired
-    }),
     children: node,
+    styles: object,
     baseUrl: string,
     url: string
   }
 
-  static childContextTypes = {
-    insertCss: func.isRequired
-  }
-
-  getChildContext () {
-    const { context } = this.props
-
-    return {
-      insertCss: context.insertCss
-    }
-  }
-
-  componentWillMount () {
-    const { insertCss } = this.props.context
-
-    this._removeCss = insertCss(styles, { replace: true })
-  }
-
-  componentWillUnmount () {
-    this._removeCss()
-  }
-
   render () {
-    const { baseUrl, url } = this.props
+    const { children, baseUrl, url, styles } = this.props
 
     const head = {
       htmlAttributes: { lang: 'en', itemscope: true, itemtype: 'http://schema.org/WebPage' },
@@ -70,11 +47,14 @@ class App extends Component {
     return (
       <div className={styles.app}>
         <Helmet {...head} />
-        {this.props.children}
+        {children}
         <Chat />
       </div>
     )
   }
 }
 
-export default withUrl(App)
+const WithStyles = withStyles(styles)(App)
+const WithUrl = withUrl(WithStyles)
+
+export default WithUrl
