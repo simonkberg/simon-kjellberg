@@ -23,7 +23,7 @@ export default function withStyles (...styles) {
     }
 
     render () {
-      return <ComposedComponent {...this.props} />
+      return <ComposedComponent {...this.props} styles={styles} />
     }
   }
 }
