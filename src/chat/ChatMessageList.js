@@ -63,10 +63,7 @@ class ChatMessageList extends Component {
       return {
         key: id,
         style: {...style},
-        data: {
-          message,
-          user
-        }
+        data: { message, user }
       }
     })
   }
@@ -83,6 +80,19 @@ class ChatMessageList extends Component {
 
   onListMount = (el) => {
     this.list = el
+  }
+
+  renderMessage = ({ key, style: { opacity, translateX }, data }) => {
+    const { styles } = this.props
+
+    const style = {
+      opacity,
+      transform: `translateX(${translateX}%)`
+    }
+
+    const props = { ...data, key, style, styles }
+
+    return <ChatMessage {...props} />
   }
 
   render () {
@@ -112,20 +122,9 @@ class ChatMessageList extends Component {
     return (
       <div className={styles.messageListWrapper}>
         <TransitionMotion {...transition}>
-          {motion =>
+          {messages =>
             <ul {...list}>
-              {motion.map(({ key, style: { opacity, translateX }, data }) => {
-                const props = {
-                  key,
-                  styles,
-                  style: {
-                    opacity,
-                    transform: `translateX(${translateX}%)`
-                  }
-                }
-
-                return <ChatMessage {...data} {...props} />
-              })}
+              {messages.map(this.renderMessage)}
             </ul>
           }
         </TransitionMotion>
