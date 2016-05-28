@@ -2,13 +2,13 @@
 
 'use strict'
 
-var fs = require('fs')
-var path = require('path')
-var del = require('del')
-var exec = require('child_process').exec
-var le = require('letiny')
+const fs = require('fs')
+const path = require('path')
+const del = require('del')
+const exec = require('child_process').exec
+const le = require('letiny')
 
-var paths = {}
+const paths = {}
 paths.root = path.join(__dirname, '..')
 paths.static = path.join(paths.root, 'static')
 paths.certs = path.join(paths.root, 'ssl')
@@ -40,12 +40,12 @@ try {
   }
 }
 
-le.getCert(options, function (err, cert, pkey, ca, akey) {
+le.getCert(options, (err, cert, pkey, ca, akey) => {
   if (err) throw err
 
-  fs.writeFileSync(paths.chain, cert + '\n' + ca)
+  fs.writeFileSync(paths.chain, `${cert}\n${ca}`)
 
-  del(path.join(paths.static, '.well-known/acme-challenge'))
+  del(path.join(paths.static, '.well-known', 'acme-challenge'))
 
   exec('service nginx reload')
 })
