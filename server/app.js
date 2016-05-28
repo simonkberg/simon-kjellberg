@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const compression = require('compression')
 const expressWebpackAssets = require('express-webpack-assets')
+const Immutable = require('immutable')
 const webpackConfig = require('../webpack/config.client')
 const reactServer = require('../build/server').default
 const api = require('./api')
@@ -44,11 +45,9 @@ module.exports = function appServer (nr = null) {
 
   // set server store
   app.use((req, res, next) => {
-    res.locals.data = {
-      app: {
-        baseUrl: `${req.protocol}://${req.get('host')}`
-      }
-    }
+    res.locals.state = Immutable.fromJS({
+      app: { baseUrl: `${req.protocol}://${req.get('host')}` }
+    })
 
     next()
   })

@@ -43,9 +43,7 @@ export default function withUrl (ComposedComponent) {
     }
   }
 
-  return connect(state => {
-    return {
-      baseUrl: state.app.baseUrl
-    }
-  })(WithUrl)
+  const mapStateToProps = state => ({ baseUrl: state.getIn(['app', 'baseUrl']) })
+
+  return connect(mapStateToProps)(WithUrl)
 }

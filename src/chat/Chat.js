@@ -8,6 +8,7 @@ import withStyles from 'helpers/withStyles'
 
 import ChatMessageList from './ChatMessageList'
 import * as chatActions from './chatActions'
+import { getChatOpen, getChatLoading } from './chatSelectors'
 import styles from './styles.css'
 
 const { object, func, bool } = PropTypes
@@ -132,14 +133,10 @@ export class Chat extends Component {
 const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(styles)(WithSocket)
 
-const mapStateToProps = ({ chat }) => {
-  const { open, messages, users } = chat
-
-  return {
-    open,
-    loading: messages.loading || users.loading
-  }
-}
+const mapStateToProps = (state) => ({
+  open: getChatOpen(state),
+  loading: getChatLoading(state)
+})
 
 const mapDispatchToProps = (dispatch) => {
   return bindActionCreators({...chatActions}, dispatch)

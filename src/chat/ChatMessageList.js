@@ -3,7 +3,13 @@ import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
 import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
+
 import ChatMessage from './ChatMessage'
+import {
+  getChatMessageIds,
+  getChatMessageEntities,
+  getChatUserEntities
+} from './chatSelectors'
 
 const { bool, object, array } = PropTypes
 
@@ -108,23 +114,17 @@ class ChatMessageList extends Component {
         <TransitionMotion {...transition}>
           {motion =>
             <ul {...list}>
-              {motion.map(({
-                key,
-                style: { opacity, translateX },
-                data: { message, user }
-              }) => {
+              {motion.map(({ key, style: { opacity, translateX }, data }) => {
                 const props = {
                   key,
                   styles,
-                  message,
-                  user,
                   style: {
                     opacity,
                     transform: `translateX(${translateX}%)`
                   }
                 }
 
-                return <ChatMessage {...props} />
+                return <ChatMessage {...data} {...props} />
               })}
             </ul>
           }
@@ -134,17 +134,10 @@ class ChatMessageList extends Component {
   }
 }
 
-const mapStateToProps = ({
-  chat: {
-    messages: { ids },
-    entities: { messages, users }
-  }
-}) => {
-  return {
-    messageIds: [...ids].sort(),
-    messages,
-    users
-  }
-}
+const mapStateToProps = (state) => ({
+  messageIds: getChatMessageIds(state),
+  messages: getChatMessageEntities(state),
+  users: getChatUserEntities(state)
+})
 
 export default connect(mapStateToProps)(ChatMessageList)

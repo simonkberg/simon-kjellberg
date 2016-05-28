@@ -4,17 +4,19 @@ import 'isomorphic-fetch'
 import React from 'react'
 import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
+import Immutable from 'immutable'
 import Iso from 'iso'
 import ga from 'react-ga'
 import Root, { configureStore, routes } from 'root'
+
+ga.initialize('UA-2241753-14')
 
 match({ history, routes }, (error, redirect, props) => {
   if (error) throw error
 
   Iso.bootstrap((state, container) => {
-    const context = {
-      insertCss: (styles) => styles._insertCss()
-    }
+    const store = configureStore(Immutable.fromJS(state))
+    const context = { insertCss: (styles) => styles._insertCss() }
 
     props.createElement = function createElement (Component, props) {
       return <Component context={context} {...props} />
@@ -25,7 +27,7 @@ match({ history, routes }, (error, redirect, props) => {
     }
 
     render(
-      <Root store={configureStore(state)}>
+      <Root store={store}>
         <Router {...props} />
       </Root>,
       container
