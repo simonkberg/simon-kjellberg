@@ -4,7 +4,6 @@ import getDisplayName from './getDisplayName'
 const { func } = PropTypes
 
 export default function withStyles (styles) {
-  console.log(...styles)
   return (ComposedComponent) => class WithStyles extends Component {
     static contextTypes = {
       insertCss: func.isRequired
