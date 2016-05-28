@@ -15,6 +15,7 @@ const { object, func, bool } = PropTypes
 
 export class Chat extends Component {
   static propTypes = {
+    styles: object,
     open: bool,
     messages: object,
     users: object,
@@ -93,7 +94,7 @@ export class Chat extends Component {
   }
 
   render () {
-    const { open, loading, openChat, closeChat } = this.props
+    const { styles, open, loading, openChat, closeChat } = this.props
 
     const button = {
       className: classNames(styles.toggle, {
