@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
+import raf from 'raf'
 import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
 
@@ -22,6 +23,7 @@ class ChatMessageList extends Component {
     styles: object
   }
 
+  raf = null
   list = null
   shouldScroll = true
 
@@ -41,10 +43,27 @@ class ChatMessageList extends Component {
     }
   }
 
-  componentDidUpdate () {
+  componentDidUpdate (prevProps) {
     if (this.shouldScroll) {
       setTimeout(this.scrollToBottom, 0)
+
+      if (prevProps.open !== this.props.open) {
+        this.startAnimation()
+      }
     }
+  }
+
+  componentWillUnmount () {
+    this.cancelAnimation()
+  }
+
+  startAnimation = () => {
+    this.scrollToBottom()
+    this.raf = raf(this.startAnimation)
+  }
+
+  cancelAnimation = () => {
+    raf.cancel(this.raf)
   }
 
   scrollToBottom = () => {
@@ -63,10 +82,7 @@ class ChatMessageList extends Component {
       return {
         key: id,
         style: {...style},
-        data: {
-          message,
-          user
-        }
+        data: { message, user }
       }
     })
   }
@@ -81,8 +97,21 @@ class ChatMessageList extends Component {
     opacity: spring(0)
   })
 
-  onListMount = (el) => {
+  setListRef = (el) => {
     this.list = el
+  }
+
+  renderMessage = ({ key, style: { opacity, translateX }, data }) => {
+    const { styles } = this.props
+
+    const style = {
+      opacity,
+      transform: `translateX(${translateX}%)`
+    }
+
+    const props = { ...data, key, style, styles }
+
+    return <ChatMessage {...props} />
   }
 
   render () {
@@ -105,27 +134,16 @@ class ChatMessageList extends Component {
       className: classNames(styles.messageList, {
         [styles.messageListOpen]: open
       }),
-      ref: this.onListMount,
-      onTransitionEnd: this.scrollToBottom
+      ref: this.setListRef,
+      onTransitionEnd: this.cancelAnimation
     }
 
     return (
       <div className={styles.messageListWrapper}>
         <TransitionMotion {...transition}>
-          {motion =>
+          {messages =>
             <ul {...list}>
-              {motion.map(({ key, style: { opacity, translateX }, data }) => {
-                const props = {
-                  key,
-                  styles,
-                  style: {
-                    opacity,
-                    transform: `translateX(${translateX}%)`
-                  }
-                }
-
-                return <ChatMessage {...data} {...props} />
-              })}
+              {messages.map(this.renderMessage)}
             </ul>
           }
         </TransitionMotion>
