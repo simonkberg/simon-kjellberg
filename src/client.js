@@ -16,18 +16,14 @@ match({ history, routes }, (error, redirect, props) => {
 
   Iso.bootstrap((state, container) => {
     const store = configureStore(Immutable.fromJS(state))
-    const context = { insertCss: (styles) => styles._insertCss() }
-
-    props.createElement = function createElement (Component, props) {
-      return <Component context={context} {...props} />
-    }
+    const context = { insertCss: (styles, opts) => styles._insertCss(opts) }
 
     props.onUpdate = function trackPageView () {
       ga.pageview(window.location.pathname)
     }
 
     render(
-      <Root store={store}>
+      <Root store={store} context={context}>
         <Router {...props} />
       </Root>,
       container

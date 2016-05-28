@@ -1,28 +1,21 @@
-import React, { Component, PropTypes } from 'react'
+import React, { PropTypes } from 'react'
 
 import withStyles from 'helpers/withStyles'
-import styles from './Loader.css'
+import Styles from './Loader.css'
 
-const { string } = PropTypes
+export const Loader = ({ text, styles }) => (
+  <div className={styles.loader}>
+    <span className={styles.loaderText}>{text}</span>
+  </div>
+)
 
-class Loader extends Component {
-  static propTypes = {
-    text: string
-  }
-
-  static defaultProps = {
-    text: 'Loading...'
-  }
-
-  render () {
-    const { text } = this.props
-
-    return (
-      <div className={styles.loader}>
-        <span className={styles.loaderText}>{text}</span>
-      </div>
-    )
-  }
+Loader.propTypes = {
+  text: PropTypes.string,
+  styles: PropTypes.object
 }
 
-export default withStyles(styles)(Loader)
+Loader.defaultProps = {
+  text: 'Loading...'
+}
+
+export default withStyles(Styles)(Loader)
