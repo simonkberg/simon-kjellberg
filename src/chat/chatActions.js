@@ -1,6 +1,8 @@
 
 import { normalize } from 'normalizr'
 import { Schema } from 'api'
+import { getBaseUrl } from 'app/appSelectors'
+import { getChatMessageIds, getChatUsersIds } from './chatSelectors'
 
 export const FETCH_CHAT_HISTORY = 'FETCH_CHAT_HISTORY'
 export const FETCH_CHAT_HISTORY_SUCCESS = 'FETCH_CHAT_HISTORY_SUCCESS'
@@ -8,7 +10,7 @@ export const FETCH_CHAT_HISTORY_ERROR = 'FETCH_CHAT_HISTORY_ERROR'
 
 export function loadChatHistory () {
   return function (dispatch, getState) {
-    const messageIds = getState().getIn(['chat', 'messages', 'ids'])
+    const messageIds = getChatMessageIds(getState())
 
     if (!messageIds.length) {
       return fetchChatHistory()(dispatch, getState)
@@ -20,7 +22,7 @@ export function fetchChatHistory () {
   return function (dispatch, getState) {
     dispatch({ type: FETCH_CHAT_HISTORY })
 
-    const baseUrl = getState().getIn(['app', 'baseUrl'])
+    const baseUrl = getBaseUrl(getState())
 
     fetch(`${baseUrl}/api/chat/history`)
       .then(res => res.json())
@@ -74,7 +76,7 @@ export const FETCH_CHAT_USERS_ERROR = 'FETCH_CHAT_USERS_ERROR'
 
 export function loadChatUsers () {
   return function (dispatch, getState) {
-    const userIds = getState().getIn(['chat', 'users', 'ids'])
+    const userIds = getChatUsersIds(getState())
 
     if (!userIds.length) {
       return fetchChatUsers()(dispatch, getState)
@@ -86,7 +88,7 @@ export function fetchChatUsers () {
   return function (dispatch, getState) {
     dispatch({ type: FETCH_CHAT_USERS })
 
-    const baseUrl = getState().getIn(['app', 'baseUrl'])
+    const baseUrl = getBaseUrl(getState())
 
     fetch(`${baseUrl}/api/chat/users`)
       .then(res => res.json())

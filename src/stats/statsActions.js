@@ -1,5 +1,7 @@
 import { normalize } from 'normalizr'
 import { Schema } from 'api'
+import { getBaseUrl } from 'app/appSelectors'
+import { getStatsIds } from './statsSelectors'
 
 export const FETCH_STATS = 'FETCH_STATS'
 export const FETCH_STATS_SUCCESS = 'FETCH_STATS_SUCCESS'
@@ -7,7 +9,7 @@ export const FETCH_STATS_ERROR = 'FETCH_STATS_ERROR'
 
 export function loadStats () {
   return function (dispatch, getState) {
-    const statsIds = getState().getIn(['stats', 'ids'])
+    const statsIds = getStatsIds(getState())
 
     if (!statsIds.length) {
       return fetchStats()(dispatch, getState)
@@ -19,7 +21,7 @@ export function fetchStats () {
   return function (dispatch, getState) {
     dispatch({ type: FETCH_STATS })
 
-    const baseUrl = getState().getIn(['app', 'baseUrl'])
+    const baseUrl = getBaseUrl(getState())
 
     fetch(`${baseUrl}/api/waka-time/stats`)
       .then(res => res.json())

@@ -3,7 +3,13 @@ import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
 import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
+
 import ChatMessage from './ChatMessage'
+import {
+  getChatMessageIds,
+  getChatMessageEntities,
+  getChatUserEntities
+} from './chatSelectors'
 
 const { bool, object, array } = PropTypes
 
@@ -49,10 +55,12 @@ class ChatMessageList extends Component {
 
   getStyles (style = {}) {
     const { messageIds, messages, users } = this.props
-
+    console.log(messageIds, messages, users)
     return messageIds.map(id => {
       const message = messages[id]
       const user = message.username || users[message.user]
+
+      console.log(id, message, user)
 
       return {
         key: id,
@@ -108,23 +116,17 @@ class ChatMessageList extends Component {
         <TransitionMotion {...transition}>
           {motion =>
             <ul {...list}>
-              {motion.map(({
-                key,
-                style: { opacity, translateX },
-                data: { message, user }
-              }) => {
+              {motion.map(({ key, style: { opacity, translateX }, data }) => {
                 const props = {
                   key,
                   styles,
-                  message,
-                  user,
                   style: {
                     opacity,
                     transform: `translateX(${translateX}%)`
                   }
                 }
 
-                return <ChatMessage {...props} />
+                return <ChatMessage {...data} {...props} />
               })}
             </ul>
           }
@@ -135,9 +137,9 @@ class ChatMessageList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-  messageIds: state.getIn(['chat', 'messages', 'ids']).sort().toArray(),
-  messages: state.getIn(['chat', 'entities', 'messages']).toJS(),
-  users: state.getIn(['chat', 'entities', 'users']).toJS()
+  messageIds: getChatMessageIds(state),
+  messages: getChatMessageEntities(state),
+  users: getChatUserEntities(state)
 })
 
 export default connect(mapStateToProps)(ChatMessageList)

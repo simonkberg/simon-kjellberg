@@ -8,6 +8,7 @@ import withStyles from 'helpers/withStyles'
 
 import ChatMessageList from './ChatMessageList'
 import * as chatActions from './chatActions'
+import { getChatOpen, getChatLoading } from './chatSelectors'
 import styles from './styles.css'
 
 const { object, func, bool } = PropTypes
@@ -133,9 +134,8 @@ const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(styles)(WithSocket)
 
 const mapStateToProps = (state) => ({
-  open: state.getIn(['chat', 'open']),
-  loading: state.getIn(['chat', 'messages', 'loading'], false) ||
-    state.getIn(['chat', 'users', 'loading'], false)
+  open: getChatOpen(state),
+  loading: getChatLoading(state)
 })
 
 const mapDispatchToProps = (dispatch) => {
