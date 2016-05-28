@@ -78,7 +78,7 @@ class ChatMessageList extends Component {
     opacity: spring(0)
   })
 
-  onListMount = (el) => {
+  setListRef = (el) => {
     this.list = el
   }
 
@@ -115,7 +115,7 @@ class ChatMessageList extends Component {
       className: classNames(styles.messageList, {
         [styles.messageListOpen]: open
       }),
-      ref: this.onListMount,
+      ref: this.setListRef,
       onTransitionEnd: this.scrollToBottom
     }
 
