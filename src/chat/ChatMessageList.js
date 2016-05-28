@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
+import raf from 'raf'
 import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
 
@@ -22,6 +23,7 @@ class ChatMessageList extends Component {
     styles: object
   }
 
+  raf = null
   list = null
   shouldScroll = true
 
@@ -41,10 +43,27 @@ class ChatMessageList extends Component {
     }
   }
 
-  componentDidUpdate () {
+  componentDidUpdate (prevProps) {
     if (this.shouldScroll) {
       setTimeout(this.scrollToBottom, 0)
+
+      if (prevProps.open !== this.props.open) {
+        this.startAnimation()
+      }
     }
+  }
+
+  componentWillUnmount () {
+    this.cancelAnimation()
+  }
+
+  startAnimation = () => {
+    this.scrollToBottom()
+    this.raf = raf(this.startAnimation)
+  }
+
+  cancelAnimation = () => {
+    raf.cancel(this.raf)
   }
 
   scrollToBottom = () => {
@@ -116,7 +135,7 @@ class ChatMessageList extends Component {
         [styles.messageListOpen]: open
       }),
       ref: this.setListRef,
-      onTransitionEnd: this.scrollToBottom
+      onTransitionEnd: this.cancelAnimation
     }
 
     return (
