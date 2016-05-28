@@ -4,8 +4,9 @@ import Helmet from 'react-helmet'
 import favicons, { appleTouchIcons } from 'helpers/favicon'
 import withStyles from 'helpers/withStyles'
 import withUrl from 'helpers/withUrl'
-import share from 'shared/assets/share.png'
-import styles from './styles.css'
+
+import ShareImage from 'shared/assets/share.png'
+import Styles from './App.css'
 
 import Chat from 'chat'
 
@@ -33,7 +34,7 @@ export class App extends Component {
         { name: 'description', property: 'og:description', itemprop: 'description', content: 'Creative full stack developer located in Stockholm, Sweden.' },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', itemprop: 'url', content: url },
-        { property: 'og:image', itemprop: 'image', content: `${baseUrl}/${share}` },
+        { property: 'og:image', itemprop: 'image', content: `${baseUrl}/${ShareImage}` },
         { property: 'fb:app_id', content: '1717386788525340' }
       ],
       link: [
@@ -54,7 +55,7 @@ export class App extends Component {
   }
 }
 
-const WithStyles = withStyles(styles)(App)
+const WithStyles = withStyles(Styles)(App)
 const WithUrl = withUrl(WithStyles)
 
 export default WithUrl

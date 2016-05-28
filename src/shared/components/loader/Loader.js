@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
 
 import withStyles from 'helpers/withStyles'
-import styles from './styles.css'
+import Styles from './Loader.css'
 
 export const Loader = ({ text, styles }) => (
   <div className={styles.loader}>
@@ -18,4 +18,4 @@ Loader.defaultProps = {
   text: 'Loading...'
 }
 
-export default withStyles(styles)(Loader)
+export default withStyles(Styles)(Loader)

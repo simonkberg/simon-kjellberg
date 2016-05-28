@@ -4,7 +4,7 @@ import withStyles from 'helpers/withStyles'
 import LandingIntro from './LandingIntro'
 import LandingStats from './LandingStats'
 import LandingLinks from './LandingLinks'
-import styles from './styles.css'
+import Styles from './Landing.css'
 
 export const Landing = ({ styles }) => (
   <div className={styles.landing}>
@@ -18,4 +18,4 @@ Landing.propTypes = {
   styles: PropTypes.object
 }
 
-export default withStyles(styles)(Landing)
+export default withStyles(Styles)(Landing)

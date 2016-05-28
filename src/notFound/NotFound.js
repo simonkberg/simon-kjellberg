@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react'
 import Helmet from 'react-helmet'
 
 import withStyles from 'helpers/withStyles'
-import styles from './styles.css'
+import Styles from './NotFound.css'
 
 const head = { title: '404' }
 const shrug = '¯\_(ツ)_/¯' // eslint-disable-line no-useless-escape
@@ -19,4 +19,4 @@ NotFound.propTypes = {
   styles: PropTypes.object
 }
 
-export default withStyles(styles)(NotFound)
+export default withStyles(Styles)(NotFound)
