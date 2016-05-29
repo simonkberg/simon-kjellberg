@@ -49,8 +49,6 @@ function entities (state = initialState.get('entities'), action) {
     case FETCH_CHAT_USERS_SUCCESS:
     case ADD_CHAT_MESSAGE:
       return state.mergeDeep(action.response.entities)
-    case REMOVE_CHAT_MESSAGE:
-      return state.deleteIn(['messages', action.ts])
     default:
       return state
   }
