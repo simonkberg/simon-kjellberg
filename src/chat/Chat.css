@@ -72,6 +72,9 @@
 
 .messageListWrapper {
   position: relative;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s;
 
   &::before,
   &::after {
@@ -104,16 +107,12 @@
   }
 }
 
-.messageList {
-  margin: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s;
+.messageListWrapperOpen {
+  max-height: 25vh;
 }
 
-.messageListOpen {
-  max-height: 25vh;
-  overflow: auto;
+.messageList {
+  margin: 0;
 }
 
 .message {
