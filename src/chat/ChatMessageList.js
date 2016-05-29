@@ -6,11 +6,7 @@ import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
 
 import ChatMessage from './ChatMessage'
-import {
-  getChatMessageIds,
-  getChatMessageEntities,
-  getChatUserEntities
-} from './chatSelectors'
+import { getChatMessageIds } from './chatSelectors'
 
 const { bool, object, array } = PropTypes
 
@@ -73,18 +69,12 @@ class ChatMessageList extends Component {
   }
 
   getStyles (style = {}) {
-    const { messageIds, messages, users } = this.props
+    const { messageIds } = this.props
 
-    return messageIds.map(id => {
-      const message = messages[id]
-      const user = message.username || users[message.user]
-
-      return {
-        key: id,
-        style: {...style},
-        data: { message, user }
-      }
-    })
+    return messageIds.map(id => ({
+      key: id,
+      style: {...style}
+    }))
   }
 
   getWillEnterStyles = () => ({
@@ -101,7 +91,7 @@ class ChatMessageList extends Component {
     this.list = el
   }
 
-  renderMessage = ({ key, style: { opacity, translateX }, data }) => {
+  renderMessage = ({ key, style: { opacity, translateX } }) => {
     const { styles } = this.props
 
     const style = {
@@ -109,7 +99,7 @@ class ChatMessageList extends Component {
       transform: `translateX(${translateX}%)`
     }
 
-    const props = { ...data, key, style, styles }
+    const props = { id: key, key, style, styles }
 
     return <ChatMessage {...props} />
   }
@@ -153,9 +143,7 @@ class ChatMessageList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-  messageIds: getChatMessageIds(state),
-  messages: getChatMessageEntities(state),
-  users: getChatUserEntities(state)
+  messageIds: getChatMessageIds(state)
 })
 
 export default connect(mapStateToProps)(ChatMessageList)
