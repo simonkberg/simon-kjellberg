@@ -1,8 +1,11 @@
 import React from 'react'
-import emojis from '../shared/data/emoji.json'
+import { renderToStaticMarkup } from 'react-dom/server'
+import emojis from './emoji.json'
+// import replace from './replace'
 
 const cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/'
 const emojiMap = new Map()
+const cache = new Map()
 
 emojis.forEach(({ unified, short_names }) => {
   short_names.forEach(shortName => {
@@ -13,7 +16,11 @@ emojis.forEach(({ unified, short_names }) => {
 const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
-export const replace = (match, p1, p2, index) => {
+export const transform = (match, p1, p2, index) => {
+  if (cache.has(match)) {
+    return cache.get(match)
+  }
+
   let name = emojiMap.get(p1)
 
   if (p2) {
@@ -26,51 +33,17 @@ export const replace = (match, p1, p2, index) => {
     src: `${cdnUrl}${name}.png`,
     title: p1,
     alt: unicode,
-    key: index,
     style: {
       width: '1.25em',
       height: '1.25em'
     }
   }
 
-  const emoji = <img {...props} />
+  const result = renderToStaticMarkup(<img {...props} />)
 
-  return emoji
-}
+  cache.set(match, result)
 
-export const parse = (string) => {
-  const output = []
-  const storedLastIndex = regex.lastIndex
-
-  regex.lastIndex = 0
-
-  let result = regex.exec(string)
-  let lastIndex = 0
-
-  while (result) {
-    let index = result.index
-
-    if (index !== lastIndex) {
-      output.push(string.substring(lastIndex, index))
-    }
-
-    let match = result[0]
-    lastIndex = index + match.length
-
-    let out = replace(...result.concat(index, result.input))
-
-    output.push(out)
-
-    result = regex.exec(string)
-  }
-
-  if (lastIndex < string.length) {
-    output.push(string.substring(lastIndex))
-  }
-
-  regex.lastIndex = storedLastIndex
-
-  return output
+  return result
 }
 
 export const convert = (unicode) => {
@@ -91,5 +64,7 @@ export const convert = (unicode) => {
 }
 
 export default function emoji (string) {
-  return React.createElement('span', null, parse(string))
+  return string.replace(regex, transform)
+
+  // return React.createElement('span', null, result)
 }
