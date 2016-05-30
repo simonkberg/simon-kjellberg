@@ -1,7 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import emojis from './emoji.json'
-// import replace from './replace'
 
 const cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/'
 const emojiMap = new Map()
@@ -16,34 +15,37 @@ emojis.forEach(({ unified, short_names }) => {
 const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
-export const transform = (match, p1, p2, index) => {
-  if (cache.has(match)) {
-    return cache.get(match)
-  }
-
-  let name = emojiMap.get(p1)
-
-  if (p2) {
-    name = `${name}-${emojiMap.get(p2)}`
-  }
-
-  const unicode = convert(name)
-
-  const props = {
-    src: `${cdnUrl}${name}.png`,
-    title: p1,
-    alt: unicode,
-    style: {
-      width: '1.25em',
-      height: '1.25em'
+export const transform = (options = {}) => {
+  return (match, p1, p2, index) => {
+    if (cache.has(match)) {
+      return cache.get(match)
     }
+
+    let name = emojiMap.get(p1)
+
+    if (p2) {
+      name = `${name}-${emojiMap.get(p2)}`
+    }
+
+    const unicode = convert(name)
+
+    const props = {
+      src: `${cdnUrl}${name}.png`,
+      title: p1,
+      alt: unicode,
+      style: {
+        width: '1.25em',
+        height: '1.25em'
+      },
+      ...options
+    }
+
+    const result = renderToStaticMarkup(<img {...props} />)
+
+    cache.set(match, result)
+
+    return result
   }
-
-  const result = renderToStaticMarkup(<img {...props} />)
-
-  cache.set(match, result)
-
-  return result
 }
 
 export const convert = (unicode) => {
@@ -63,8 +65,6 @@ export const convert = (unicode) => {
   return String.fromCharCode(char)
 }
 
-export default function emoji (string) {
-  return string.replace(regex, transform)
-
-  // return React.createElement('span', null, result)
+export default function emoji (string, options = {}) {
+  return string.replace(regex, transform(options))
 }
