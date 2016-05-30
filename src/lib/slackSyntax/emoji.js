@@ -1,10 +1,9 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { emojiCache } from './cache'
 import emojis from './emoji.json'
 
-const cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/'
 const emojiMap = new Map()
-const cache = new Map()
 
 emojis.forEach(({ unified, short_names }) => {
   short_names.forEach(shortName => {
@@ -16,6 +15,16 @@ const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
 export const transform = (options = {}) => {
+  const {
+    cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/',
+    style = {
+      width: '1.25em',
+      height: '1.25em'
+    },
+    cache = emojiCache,
+    ...other
+  } = options
+
   return (match, p1, p2, index) => {
     if (cache.has(match)) {
       return cache.get(match)
@@ -33,11 +42,8 @@ export const transform = (options = {}) => {
       src: `${cdnUrl}${name}.png`,
       title: p1,
       alt: unicode,
-      style: {
-        width: '1.25em',
-        height: '1.25em'
-      },
-      ...options
+      style,
+      ...other
     }
 
     const result = renderToStaticMarkup(<img {...props} />)
