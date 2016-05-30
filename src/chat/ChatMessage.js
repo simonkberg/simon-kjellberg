@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
-import slackSyntax from 'lib/slackSyntax'
+import SlackMessage from 'lib/slackSyntax'
 import colorHash from 'helpers/colorHash'
 
 import {
@@ -16,7 +16,7 @@ export const ChatMessage = ({ message = {}, user = 'anon', styles, style }) => {
   return (
     <li style={style} className={styles.message}>
       <strong style={{color: color}}>{username}: </strong>
-      {slackSyntax(message.text)}
+      <SlackMessage>{message.text}</SlackMessage>{' '}
       {message.edited &&
         <small className={styles.messageEdited}>(edited)</small>}
     </li>

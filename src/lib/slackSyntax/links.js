@@ -10,7 +10,7 @@ const transform = (match, p1, p2, p3) => {
     }
   }
 
-  return `<a href="${p1}">${p2 || p1}</a>`
+  return `<a href="${p2}">${p3 || p2}</a>`
 }
 
 export default function links (input) {
