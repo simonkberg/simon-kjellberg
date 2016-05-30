@@ -9,6 +9,10 @@ import Iso from 'iso'
 import ga from 'react-ga'
 import Root, { configureStore, routes } from 'root'
 
+if (__DEV__) {
+  window.Perf = require('react-addons-perf')
+}
+
 const gaId = process.env.GA_ID
 if (gaId) { ga.initialize(gaId) }
 
