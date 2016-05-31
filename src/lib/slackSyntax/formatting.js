@@ -6,7 +6,7 @@ const formats = [
 ]
 
 const escapeCode = (string) => {
-  return string.replace(/([*_~`])/g, (match, p1) => `&#${p1.charCodeAt()};`)
+  return string.replace(/([:*_~`])/g, (match, p1) => `&#${p1.charCodeAt()};`)
 }
 
 export default function formatting (string) {
