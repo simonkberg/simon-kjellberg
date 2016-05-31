@@ -1,6 +1,6 @@
 import { Component, PropTypes } from 'react'
-import parser from './parser'
 import { parseCache, emojiCache } from './cache'
+import messageParser from './messageParser'
 
 const { string, shape, func } = PropTypes
 
@@ -14,32 +14,38 @@ export default class SlackMessage extends Component {
   static propTypes = {
     children: string.isRequired,
     component: string,
-    parseCache: cacheShape,
-    emojiCache: cacheShape
+    parser: shape({
+      cache: cacheShape
+    }),
+    emoji: shape({
+      cache: cacheShape
+    })
   }
 
   static defaultProps = {
     component: 'span',
-    parseCache,
-    emojiCache
+    parser: {
+      cache: parseCache
+    },
+    emoji: {
+      cache: emojiCache
+    }
   }
 
   render () {
     const {
       children,
       component,
-      parseCache,
-      emojiCache
+      parser,
+      emoji
     } = this.props
 
-    return parser(children, {
+    return messageParser(children, {
       parser: {
         component,
-        cache: parseCache
+        ...parser
       },
-      emoji: {
-        cache: emojiCache
-      }
+      emoji
     })
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { emojiCache } from './cache'
-import emojis from './emoji.json'
+import emojis from './emojis.json'
 
 const emojiMap = new Map()
 
@@ -14,7 +14,7 @@ emojis.forEach(({ unified, short_names }) => {
 const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
-export const transform = (options = {}) => {
+const replace = (options = {}) => {
   const {
     cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/',
     style = {
@@ -54,7 +54,7 @@ export const transform = (options = {}) => {
   }
 }
 
-export const convert = (unicode) => {
+const convert = (unicode) => {
   if (unicode.indexOf('-') > -1) {
     return unicode.split('-').map(part => convert(part)).join('')
   }
@@ -71,6 +71,6 @@ export const convert = (unicode) => {
   return String.fromCharCode(char)
 }
 
-export default function emoji (string, options = {}) {
-  return string.replace(regex, transform(options))
+export default function emojiParser (string, options = {}) {
+  return string.replace(regex, replace(options))
 }
