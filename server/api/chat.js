@@ -37,6 +37,7 @@ router.get('/users', (req, res) => {
       response.users = response.members.map(mapUsers)
 
       delete response.members
+      delete response.cache_ts
 
       return res.json(response)
     },
