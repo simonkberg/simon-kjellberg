@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import raf from 'raf'
 import { connect } from 'react-redux'
 import { TransitionMotion, spring, presets } from 'react-motion'
+import Scrollbars from 'react-custom-scrollbars'
 
 import ChatMessage from './ChatMessage'
 import { getChatMessageIds } from './chatSelectors'
@@ -32,10 +33,12 @@ class ChatMessageList extends Component {
   }
 
   componentWillUpdate () {
-    if (this.list) {
-      const maxScroll = this.list.scrollTop + this.list.offsetHeight
+    if (this.scrollbars) {
+      const scrollTop = this.scrollbars.getScrollTop()
+      const clientHeight = this.scrollbars.getClientHeight()
+      const maxScroll = scrollTop + clientHeight
 
-      this.shouldScroll = maxScroll === this.list.scrollHeight
+      this.shouldScroll = maxScroll === this.scrollbars.getScrollHeight()
     }
   }
 
@@ -63,8 +66,8 @@ class ChatMessageList extends Component {
   }
 
   scrollToBottom = () => {
-    if (this.list) {
-      this.list.scrollTop = this.list.scrollHeight
+    if (this.scrollbars) {
+      this.scrollbars.scrollToBottom()
     }
   }
 
@@ -87,8 +90,18 @@ class ChatMessageList extends Component {
     opacity: spring(0)
   })
 
-  setListRef = (el) => {
-    this.list = el
+  setScrollbarsRef = (el) => {
+    this.scrollbars = el
+  }
+
+  renderMessageList = (messages) => {
+    const { styles } = this.props
+
+    return (
+      <ul className={styles.messageList}>
+        {messages.map(this.renderMessage)}
+      </ul>
+    )
   }
 
   renderMessage = ({ key, style: { opacity, translateX } }) => {
@@ -107,6 +120,20 @@ class ChatMessageList extends Component {
   render () {
     const { open, styles } = this.props
 
+    const container = {
+      className: classNames(styles.messageListWrapper, {
+        [styles.messageListWrapperOpen]: open
+      }),
+      onTransitionEnd: this.cancelAnimation
+    }
+
+    const scrollbars = {
+      ref: this.setScrollbarsRef,
+      autoHide: true,
+      autoHeight: true,
+      universal: true
+    }
+
     const transition = {
       defaultStyles: this.getStyles({
         translateX: 0,
@@ -120,23 +147,13 @@ class ChatMessageList extends Component {
       willLeave: this.getWillLeaveStyles
     }
 
-    const list = {
-      className: classNames(styles.messageList, {
-        [styles.messageListOpen]: open
-      }),
-      ref: this.setListRef,
-      onTransitionEnd: this.cancelAnimation
-    }
-
     return (
-      <div className={styles.messageListWrapper}>
-        <TransitionMotion {...transition}>
-          {messages =>
-            <ul {...list}>
-              {messages.map(this.renderMessage)}
-            </ul>
-          }
-        </TransitionMotion>
+      <div {...container}>
+        <Scrollbars {...scrollbars}>
+          <TransitionMotion {...transition}>
+            {messages => this.renderMessageList(messages)}
+          </TransitionMotion>
+        </Scrollbars>
       </div>
     )
   }
