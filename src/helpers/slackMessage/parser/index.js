@@ -1,12 +1,8 @@
-import React from 'react'
-import { Parser } from 'html-to-react'
 import textParser from './textParser'
 import emojiParser from './emojiParser'
-import { parseCache } from './cache'
+import { parseCache, emojiCache, cacheShape } from './cache'
 
-const { parse } = Parser(React)
-
-export default function messageParser (input, {
+export default function parser (input, {
   parser: {
     cache = parseCache,
     component = 'span'
@@ -21,9 +17,15 @@ export default function messageParser (input, {
 
   output = textParser(output)
   output = emojiParser(output, emoji)
-  output = parse(`<${component}>${output}</${component}>`)
 
   cache.set(input, output)
 
   return output
+}
+export {
+  textParser,
+  emojiParser,
+  parseCache,
+  emojiCache,
+  cacheShape
 }

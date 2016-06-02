@@ -1,7 +1,7 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { emojiCache } from './cache'
-import emojis from './emojis.json'
+import emojis from '../emojis.json'
 
 const emojiMap = new Map()
 

@@ -1,5 +1,6 @@
+import { PropTypes } from 'react'
 
-class LRU {
+export default class LRU {
   constructor (limit = 1000) {
     this.limit = limit
     this.map = new Map()
@@ -32,8 +33,10 @@ class LRU {
   clear = _ => this.map.clear()
 }
 
-const parseCache = new LRU(50)
-const emojiCache = new LRU(500)
-
-export default LRU
-export { parseCache, emojiCache }
+export const parseCache = new LRU(50)
+export const emojiCache = new LRU(500)
+export const cacheShape = PropTypes.shape({
+  has: PropTypes.func,
+  get: PropTypes.func,
+  set: PropTypes.func
+})

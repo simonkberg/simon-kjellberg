@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
-import SlackMessage from 'lib/slackSyntax'
+import SlackMessage from 'helpers/slackMessage'
 import colorHash from 'helpers/colorHash'
 
 import {
