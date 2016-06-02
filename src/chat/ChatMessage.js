@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
+import SlackMessage from 'helpers/slackMessage'
 import colorHash from 'helpers/colorHash'
-import emoji from 'helpers/emoji'
 
 import {
   makeGetChatMessageEntity,
@@ -16,7 +16,7 @@ export const ChatMessage = ({ message = {}, user = 'anon', styles, style }) => {
   return (
     <li style={style} className={styles.message}>
       <strong style={{color: color}}>{username}: </strong>
-      {emoji(message.text)}{' '}
+      <SlackMessage>{message.text}</SlackMessage>{' '}
       {message.edited &&
         <small className={styles.messageEdited}>(edited)</small>}
     </li>

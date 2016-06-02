@@ -21,6 +21,19 @@ a:active {
   color: color(var(--root-color) lightness(50%));
 }
 
+code {
+  padding: 0.2em;
+  color: firebrick;
+  font-size: 0.8em;
+  background-color: color(var(--root-color) lightness(90%));
+
+  &::before,
+  &::after {
+    content: "`";
+    color: var(--root-color);
+  }
+}
+
 h1,
 h2,
 h3 {
