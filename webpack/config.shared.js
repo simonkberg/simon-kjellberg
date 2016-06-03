@@ -62,6 +62,7 @@ function getPlugins (opts = {}) {
 
 function getLoaders (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
+  const isDev = env !== 'production'
 
   let loaders = [{
     test: /\.js$/,
@@ -82,14 +83,16 @@ function getLoaders (opts = {}) {
         loader: 'css',
         query: {
           modules: true,
-          sourceMap: env !== 'production',
+          sourceMap: isDev,
           importLoaders: 1,
-          localIdentName: '[name]_[local]_[hash:base64:3]'
+          localIdentName: isDev
+            ? '[name]__[local]__[hash:base64:5]'
+            : '[hash:base64]'
         }
       },
       {
         loader: 'postcss',
-        query: { sourceMap: env !== 'production' }
+        query: { sourceMap: isDev }
       }
     ]
   }, {
