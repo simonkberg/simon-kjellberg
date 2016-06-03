@@ -113,12 +113,43 @@
 
 .messageListOpen {
   max-height: 25vh;
-  overflow: auto;
+  overflow-y: auto;
 }
 
 .message {
+  transition: opacity 0.5s, transform 0.5s ease-out;
+
   &:first-of-type { margin-top: 0.5rem; }
   &:last-of-type { margin-bottom: 0.5rem; }
+
+  &.messageAppear {
+    will-change: opacity;
+    opacity: 0;
+  }
+
+  &.messageAppearActive {
+    opacity: 1;
+  }
+
+  &.messageEnter {
+    will-change: opacity, transform;
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  &.messageEnterActive {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  &.messageLeave {
+    will-change: opacity, transform;
+  }
+
+  &.messageLeaveActive {
+    opacity: 0;
+    transform: translate(-100%);
+  }
 }
 
 .messageEdited {
