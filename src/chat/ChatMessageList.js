@@ -1,9 +1,10 @@
 import React, { Component, PropTypes } from 'react'
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
+import { findDOMNode } from 'react-dom'
 import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
 import raf from 'raf'
 import { connect } from 'react-redux'
-import { TransitionMotion, spring, presets } from 'react-motion'
 
 import ChatMessage from './ChatMessage'
 import { getChatMessageIds } from './chatSelectors'
@@ -68,75 +69,39 @@ class ChatMessageList extends Component {
     }
   }
 
-  getStyles (style = {}) {
-    const { messageIds } = this.props
-
-    return messageIds.map(id => ({
-      key: id,
-      style: {...style}
-    }))
-  }
-
-  getWillEnterStyles = () => ({
-    translateX: -50,
-    opacity: 0
-  })
-
-  getWillLeaveStyles = () => ({
-    translateX: spring(-50),
-    opacity: spring(0)
-  })
-
   setListRef = (el) => {
-    this.list = el
-  }
-
-  renderMessage = ({ key, style: { opacity, translateX } }) => {
-    const { styles } = this.props
-
-    const style = {
-      opacity,
-      transform: `translateX(${translateX}%)`
-    }
-
-    const props = { id: key, key, style, styles }
-
-    return <ChatMessage {...props} />
+    this.list = findDOMNode(el)
   }
 
   render () {
-    const { open, styles } = this.props
-
-    const transition = {
-      defaultStyles: this.getStyles({
-        translateX: 0,
-        opacity: 0
-      }),
-      styles: this.getStyles({
-        translateX: spring(0),
-        opacity: spring(1, presets.gentle)
-      }),
-      willEnter: this.getWillEnterStyles,
-      willLeave: this.getWillLeaveStyles
-    }
+    const { open, styles, messageIds } = this.props
 
     const list = {
+      component: 'ul',
       className: classNames(styles.messageList, {
         [styles.messageListOpen]: open
       }),
       ref: this.setListRef,
-      onTransitionEnd: this.cancelAnimation
+      onTransitionEnd: this.cancelAnimation,
+      transitionAppear: true,
+      transitionName: {
+        enter: styles.messageEnter,
+        enterActive: styles.messageEnterActive,
+        leave: styles.messageLeave,
+        leaveActive: styles.messageLeaveActive,
+        appear: styles.messageAppear,
+        appearActive: styles.messageAppearActive
+      },
+      transitionAppearTimeout: 500,
+      transitionEnterTimeout: 500,
+      transitionLeaveTimeout: 500
     }
 
     return (
       <div className={styles.messageListWrapper}>
-        <TransitionMotion {...transition}>
-          {messages =>
-            <ul {...list}>
-              {messages.map(this.renderMessage)}
-            </ul>
-          }
-        </TransitionMotion>
+        <ReactCSSTransitionGroup {...list}>
+          {messageIds.map(id => <ChatMessage key={id} id={id} styles={styles} />)}
+        </ReactCSSTransitionGroup>
       </div>
     )
   }

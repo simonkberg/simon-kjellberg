@@ -8,13 +8,13 @@ import {
   makeGetChatUserEntity
 } from './chatSelectors'
 
-export const ChatMessage = ({ message = {}, user = 'anon', styles, style }) => {
+export const ChatMessage = ({ message = {}, user = 'anon', styles }) => {
   const isUserString = typeof user === 'string'
   const username = isUserString ? user : user.name
   const color = isUserString ? colorHash(username) : `#${user.color}`
 
   return (
-    <li style={style} className={styles.message}>
+    <li className={styles.message}>
       <strong style={{color: color}}>{username}: </strong>
       <SlackMessage>{message.text}</SlackMessage>{' '}
       {message.edited &&
@@ -29,8 +29,7 @@ ChatMessage.propTypes = {
     PropTypes.string,
     PropTypes.object
   ]),
-  styles: PropTypes.object.isRequired,
-  style: PropTypes.object.isRequired
+  styles: PropTypes.object.isRequired
 }
 
 const makeMapStateToProps = () => {
