@@ -3,19 +3,16 @@ import React, { PropTypes } from 'react'
 import withStyles from 'helpers/withStyles'
 import Styles from './Loader.css'
 
-export const Loader = ({ text, styles }) => (
+export const Loader = ({ styles }) => (
   <div className={styles.loader}>
-    <span className={styles.loaderText}>{text}</span>
+    <span className={styles.point1}></span>
+    <span className={styles.point2}></span>
+    <span className={styles.point3}></span>
   </div>
 )
 
 Loader.propTypes = {
-  text: PropTypes.string,
   styles: PropTypes.object
-}
-
-Loader.defaultProps = {
-  text: 'Loading...'
 }
 
 export default withStyles(Styles)(Loader)
