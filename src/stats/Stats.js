@@ -31,8 +31,8 @@ export class Stats extends Component {
   render () {
     const { statsIds } = this.props
 
-    if (!statsIds.length || true) {
-      return <Loader text='Fetching...' />
+    if (!statsIds.length) {
+      return <Loader />
     }
 
     return (
