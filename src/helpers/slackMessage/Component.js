@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react'
+import shallowCompare from 'react-addons-shallow-compare'
 import parser, { parseCache, emojiCache, cacheShape } from './parser'
 
 const { string, object } = PropTypes
@@ -19,6 +20,10 @@ export default class SlackMessage extends Component {
     component: 'span',
     parseCache,
     emojiCache
+  }
+
+  shouldComponentUpdate (nextProps, nextState) {
+    return shallowCompare(this, nextProps, nextState)
   }
 
   render () {
