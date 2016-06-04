@@ -87,7 +87,7 @@ ul {
       left: 0;
       top: 50%;
       height: 1ch;
-      line-height: 1;
+      line-height: 1ch;
       color: color(var(--root-color) alpha(-75%));
       transform: translateY(-50%);
     }
