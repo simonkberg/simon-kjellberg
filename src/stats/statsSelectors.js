@@ -16,9 +16,8 @@ export const getStatsEntities = createSelector(
 
 const getStatsEntityState = (state, { id }) => state.getIn(['stats', 'entities', id])
 
-export const makeGetStatsEntity = () => {
-  return createSelector(
+export const makeGetStatsEntity = () =>
+  createSelector(
     getStatsEntityState,
     entity => entity.toObject()
   )
-}

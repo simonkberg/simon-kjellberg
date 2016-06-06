@@ -65,19 +65,17 @@ export const getChatUserEntities = createSelector(
 const getChatMessageEntityState = (state, id) =>
   state.getIn(['chat', 'entities', 'messages', id])
 
-export const makeGetChatMessageEntity = () => {
-  return createSelector(
+export const makeGetChatMessageEntity = () =>
+  createSelector(
     getChatMessageEntityState,
     entity => entity.toObject()
   )
-}
 
 const getChatUserEntityState = (state, id) =>
   state.getIn(['chat', 'entities', 'users', id])
 
-export const makeGetChatUserEntity = () => {
-  return createSelector(
+export const makeGetChatUserEntity = () =>
+  createSelector(
     getChatUserEntityState,
     entity => entity.toObject()
   )
-}
