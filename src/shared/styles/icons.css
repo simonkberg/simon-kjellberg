@@ -15,7 +15,7 @@
   display: inline-block;
   text-decoration: inherit;
   width: 1em;
-  margin-right: 0.2em;
+  height: 1em;
   text-align: center;
   font-variant: normal;
   text-transform: none;
@@ -23,6 +23,11 @@
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  &::before {
+    width: inherit;
+    height: inherit;
+  }
 }
 
 .slack {
