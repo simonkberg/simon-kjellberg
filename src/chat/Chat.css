@@ -72,36 +72,6 @@
 
 .messageListWrapper {
   position: relative;
-
-  &::before,
-  &::after {
-    content: ' ';
-    position: absolute;
-    z-index: 1;
-    left: 0;
-    right: 0;
-    height: 0.5rem;
-  }
-
-  &::before {
-    top: -1px;
-    background:
-      linear-gradient(
-        to bottom,
-        color(white alpha(95%)),
-        color(white alpha(0%))
-      );
-  }
-
-  &::after {
-    bottom: -1px;
-    background:
-      linear-gradient(
-        to bottom,
-        color(white alpha(0%)),
-        color(white alpha(100%))
-      );
-  }
 }
 
 .messageList {
@@ -109,6 +79,10 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.5s;
+
+  &::-webkit-scrollbar { width: 0.5rem; }
+  &::-webkit-scrollbar-track { background: lightgray; }
+  &::-webkit-scrollbar-thumb { background: slategray; }
 }
 
 .messageListOpen {
