@@ -6,7 +6,7 @@ import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
 import Immutable from 'immutable'
 import Iso from 'iso'
-import ga from 'react-ga'
+import ReactGA from 'react-ga'
 import Root, { configureStore, routes } from 'root'
 
 if (__DEV__) {
@@ -14,7 +14,7 @@ if (__DEV__) {
 }
 
 const gaId = process.env.GA_ID
-if (gaId) { ga.initialize(gaId) }
+if (gaId) { ReactGA.initialize(gaId) }
 
 match({ history, routes }, (error, redirect, props) => {
   if (error) throw error
@@ -24,7 +24,8 @@ match({ history, routes }, (error, redirect, props) => {
     const context = { insertCss: (styles, opts) => styles._insertCss(opts) }
 
     props.onUpdate = function trackPageView () {
-      ga.pageview(window.location.pathname)
+      ReactGA.set({ page: window.location.pathname })
+      ReactGA.pageview(window.location.pathname)
     }
 
     render(
