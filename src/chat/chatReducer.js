@@ -1,5 +1,7 @@
-import Immutable from 'immutable'
+import { Map, Set } from 'immutable'
 import { combineReducers } from 'redux-immutable'
+
+import reducerMap from 'helpers/reducerMap'
 
 import {
   FETCH_CHAT_HISTORY,
@@ -14,93 +16,73 @@ import {
   CLOSE_CHAT
 } from './chatActions'
 
-const initialState = Immutable.fromJS({
+const initialState = {
   open: __DEV__,
-  entities: {
-    messages: {},
-    users: {}
-  },
-  messages: {
-    ids: [],
+  entities: Map({
+    messages: Map(),
+    users: Map()
+  }),
+  messages: Map({
+    ids: Set(),
     loading: false,
     error: null
-  },
-  users: {
-    ids: [],
+  }),
+  users: Map({
+    ids: Set(),
     loading: false,
     error: null
-  }
-})
-
-function open (state = initialState.get('open'), action) {
-  switch (action.type) {
-    case OPEN_CHAT:
-      return true
-    case CLOSE_CHAT:
-      return false
-    default:
-      return state
-  }
+  })
 }
 
-function entities (state = initialState.get('entities'), action) {
-  switch (action.type) {
-    case FETCH_CHAT_HISTORY_SUCCESS:
-    case FETCH_CHAT_USERS_SUCCESS:
-    case ADD_CHAT_MESSAGE:
-      return state.mergeDeep(action.response.entities)
-    default:
-      return state
-  }
-}
+const open = reducerMap({
+  [OPEN_CHAT]: () => true,
+  [CLOSE_CHAT]: () => false
+}, initialState.open)
 
-function messages (state = initialState.get('messages'), action) {
-  switch (action.type) {
-    case FETCH_CHAT_HISTORY:
-      return state.merge({
-        loading: true,
-        error: null
-      })
-    case FETCH_CHAT_HISTORY_SUCCESS:
-      return state.mergeDeep({
-        ids: action.response.result,
-        loading: false
-      })
-    case FETCH_CHAT_HISTORY_ERROR:
-      return state.merge({
-        loading: false,
-        error: action.error
-      })
-    case ADD_CHAT_MESSAGE:
-      return state.update('ids', ids => ids.push(action.response.result))
-    case REMOVE_CHAT_MESSAGE:
-      return state.update('ids', ids => ids.filter(ts => ts !== action.ts))
-    default:
-      return state
-  }
-}
+const mergeEntities = (state, action) =>
+  state.mergeDeep(action.response.entities)
 
-function users (state = initialState.get('users'), action) {
-  switch (action.type) {
-    case FETCH_CHAT_USERS:
-      return state.merge({
-        loading: true,
-        error: null
-      })
-    case FETCH_CHAT_USERS_SUCCESS:
-      return state.mergeDeep({
-        ids: action.response.result,
-        loading: false
-      })
-    case FETCH_CHAT_USERS_ERROR:
-      return state.merge({
-        loading: false,
-        error: action.error
-      })
-    default:
-      return state
-  }
-}
+const entities = reducerMap({
+  [FETCH_CHAT_HISTORY_SUCCESS]: mergeEntities,
+  [FETCH_CHAT_USERS_SUCCESS]: mergeEntities,
+  [ADD_CHAT_MESSAGE]: mergeEntities
+}, initialState.entities)
+
+const messages = reducerMap({
+  [FETCH_CHAT_HISTORY]: state => state.merge({
+    loading: true,
+    error: null
+  }),
+  [FETCH_CHAT_HISTORY_SUCCESS]: (state, action) => state.mergeDeep({
+    ids: action.response.result,
+    loading: false
+  }),
+  [FETCH_CHAT_HISTORY_ERROR]: (state, { error }) => state.merge({
+    loading: false,
+    error
+  }),
+  [ADD_CHAT_MESSAGE]: (state, action) => state.update(
+    'ids', ids => ids.push(action.response.result)
+  ),
+  [REMOVE_CHAT_MESSAGE]: (state, action) => state.update(
+    'ids', ids => ids.filter(ts => ts !== action.ts)
+  )
+}, initialState.messages)
+
+const users = reducerMap({
+  [FETCH_CHAT_USERS]: state => state.merge({
+    loading: true,
+    error: null
+  }),
+  [FETCH_CHAT_USERS_SUCCESS]: (state, action) => state.mergeDeep({
+    ids: action.response.result,
+    loading: false
+  }),
+  [FETCH_CHAT_USERS_ERROR]: (state, { error }) => state.merge({
+    loading: false,
+    error
+  })
+}, initialState.users)
 
 export default combineReducers({
   open,

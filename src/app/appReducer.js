@@ -1,14 +1,12 @@
-import Immutable from 'immutable'
+import { Map } from 'immutable'
 
 import { SET_BASE_URL } from './appActions'
+import reducerMap from 'helpers/reducerMap'
 
-const initialState = Immutable.fromJS({ baseUrl: '' })
+const initialState = Map({ baseUrl: '' })
 
-export default function app (state = initialState, action) {
-  switch (action.type) {
-    case SET_BASE_URL:
-      return state.set('baseUrl', action.baseUrl)
-    default:
-      return state
-  }
-}
+const app = reducerMap({
+  [SET_BASE_URL]: (state, action) => state.set('baseUrl', action.baseUrl)
+}, initialState)
+
+export default app
