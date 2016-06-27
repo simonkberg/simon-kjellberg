@@ -4,7 +4,6 @@ import { unstable_batchedUpdates as batchedUpdates } from 'react-dom' // eslint-
 import thunkMiddleware from 'redux-thunk'
 import Immutable from 'immutable'
 import rootReducer from './reducers'
-import DevTools from './DevTools'
 
 function getMiddleware () {
   const middleware = [
@@ -21,6 +20,8 @@ function getEnhancer () {
   ]
 
   if (__DEV__) {
+    const DevTools = require('./DevTools').default
+
     args.push(DevTools.instrument())
   }
 

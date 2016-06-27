@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react'
 import { Provider } from 'react-redux'
-import DevTools from './DevTools'
 
 const { shape, func, object, node } = PropTypes
 
@@ -18,7 +17,7 @@ class Root extends Component {
   }
 
   state = {
-    devTools: false
+    DevTools: null
   }
 
   getChildContext () {
@@ -32,19 +31,19 @@ class Root extends Component {
   componentDidMount () {
     if (__DEV__) {
       // Enable dev tools for client after mount
-      this.setState({ devTools: true })
+      this.setState({ DevTools: require('./DevTools').default })
     }
   }
 
   render () {
     const { store, children } = this.props
-    const { devTools } = this.state
+    const { DevTools } = this.state
 
     return (
       <Provider store={store}>
         <div>
           {children}
-          {devTools ? <DevTools /> : null}
+          {DevTools ? <DevTools /> : null}
         </div>
       </Provider>
     )
