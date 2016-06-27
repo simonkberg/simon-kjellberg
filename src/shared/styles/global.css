@@ -1,9 +1,17 @@
 
 @import "./variables.css";
-@import "sanitize.css/lib/sanitize.css";
+@import "sanitize.css/sanitize.css";
 
 :root {
   overflow: auto;
+  font-family: var(--root-font-family);
+  color: var(--root-color);
+  background-color: var(--root-background-color);
+}
+
+* {
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -19,6 +27,23 @@ a:visited {
 a:hover,
 a:active {
   color: color(var(--root-color) lightness(50%));
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--monospace-font-family);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-style: inherit;
+  font-weight: inherit;
+  line-height: inherit;
 }
 
 code {
@@ -75,11 +100,13 @@ p {
 
 ul {
   list-style-type: none;
+  padding: 0;
   margin-bottom: 1.5em;
 
   & li {
     position: relative;
     padding-left: 1.5ch;
+    margin-left: -1.5ch;
 
     &::before {
       content: "*";
