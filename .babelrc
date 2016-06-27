@@ -12,9 +12,8 @@
       ]
     },
     "production": {
-      "plugins": [
-        "transform-react-inline-elements",
-        "transform-react-constant-elements"
+      "presets": [
+        "react-optimize"
       ]
     }
   }
