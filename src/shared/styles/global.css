@@ -67,6 +67,7 @@ h2,
 h3 {
   position: relative;
   font-size: 1em;
+  margin: 0;
 
   &::before {
     position: absolute;
