@@ -1,8 +1,8 @@
 import React, { Component, PropTypes } from 'react'
 import shallowCompare from 'react-addons-shallow-compare'
-import parser, { parseCache, emojiCache, cacheShape } from './parser'
+import parser, { parserCache, emojiCache, cacheShape } from './parser'
 
-const { string, object } = PropTypes
+const { string } = PropTypes
 
 export default class SlackMessage extends Component {
   static propTypes = {
@@ -11,14 +11,13 @@ export default class SlackMessage extends Component {
     parserCache: cacheShape,
     emojiCache: cacheShape,
     emojiCdn: string,
-    emojiStyle: object,
     emojiClassName: string
   }
 
   static defaultProps = {
     children: '',
     component: 'span',
-    parseCache,
+    parserCache,
     emojiCache
   }
 
@@ -28,12 +27,11 @@ export default class SlackMessage extends Component {
 
   render () {
     const {
+      component: Component,
       children,
-      component,
       parserCache,
       emojiCache,
       emojiCdn,
-      emojiStyle,
       emojiClassName,
       ...props
     } = this.props
@@ -43,11 +41,10 @@ export default class SlackMessage extends Component {
       emoji: {
         cache: emojiCache,
         cdnUrl: emojiCdn,
-        style: emojiStyle,
         className: emojiClassName
       }
     }) || ''
 
-    return <component dangerouslySetInnerHTML={{__html}} {...props} />
+    return <Component dangerouslySetInnerHTML={{__html}} {...props} />
   }
 }

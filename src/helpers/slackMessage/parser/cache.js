@@ -33,7 +33,7 @@ export default class LRU {
   clear = _ => this.map.clear()
 }
 
-export const parseCache = new LRU(50)
+export const parserCache = new LRU(50)
 export const emojiCache = new LRU(500)
 export const cacheShape = PropTypes.shape({
   has: PropTypes.func,

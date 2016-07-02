@@ -1,5 +1,3 @@
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { emojiCache } from './cache'
 import emojis from '../emojis.json'
 
@@ -14,13 +12,15 @@ emojis.forEach(({ unified, short_names }) => {
 const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
+const render = (props = {}) =>
+  `<img ${Object.keys(props).reduce((tpl, prop) =>
+    `${tpl} ${prop}="${props[prop]}"`, ''
+  )}/>`
+
 const replace = (options = {}) => {
   const {
     cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/',
-    style = {
-      width: '1.25em',
-      height: '1.25em'
-    },
+    className = 'slack-emoji',
     cache = emojiCache,
     ...other
   } = options
@@ -42,11 +42,11 @@ const replace = (options = {}) => {
       src: `${cdnUrl}${name}.png`,
       title: p1,
       alt: unicode,
-      style,
+      class: className,
       ...other
     }
 
-    const result = renderToStaticMarkup(<img {...props} />)
+    const result = render(props)
 
     cache.set(match, result)
 
