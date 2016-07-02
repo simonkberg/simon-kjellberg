@@ -16,7 +16,10 @@ export const ChatMessage = ({ message = {}, user = 'anon', styles }) => {
   return (
     <li className={styles.message}>
       <strong style={{color: color}}>{username}: </strong>
-      <SlackMessage>{message.text}</SlackMessage>{' '}
+      <SlackMessage emojiClassName={styles.messageEmoji}>
+        {message.text}
+      </SlackMessage>
+      {' '}
       {message.edited &&
         <small className={styles.messageEdited}>(edited)</small>}
     </li>
