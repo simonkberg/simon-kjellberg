@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import shallowCompare from 'react-addons-shallow-compare'
-import parser, { parseCache, emojiCache, cacheShape } from './parser'
+import parser, { parserCache, emojiCache, cacheShape } from './parser'
 
 const { string, object } = PropTypes
 
@@ -18,7 +18,7 @@ export default class SlackMessage extends Component {
   static defaultProps = {
     children: '',
     component: 'span',
-    parseCache,
+    parserCache,
     emojiCache
   }
 
