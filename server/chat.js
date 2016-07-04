@@ -17,7 +17,7 @@ module.exports = function chatServer (server) {
     ws.on('message', (message) => {
       web.chat.postMessage(SLACK_CHAT_CHANNEL, message, {
         parse: 'full',
-        username: username
+        username: username,
       })
     })
   })

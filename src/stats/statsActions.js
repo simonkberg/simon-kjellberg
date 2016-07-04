@@ -37,13 +37,13 @@ export function fetchStats () {
 export function fetchStatsSuccess (response) {
   return {
     type: FETCH_STATS_SUCCESS,
-    response
+    response,
   }
 }
 
 export function fetchStatsError (error) {
   return {
     type: FETCH_STATS_ERROR,
-    error
+    error,
   }
 }

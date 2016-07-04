@@ -6,5 +6,5 @@ import chat from 'chat/chatReducer'
 export default combineReducers({
   app,
   stats,
-  chat
+  chat,
 })

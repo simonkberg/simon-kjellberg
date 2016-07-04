@@ -7,7 +7,7 @@ import rootReducer from './reducers'
 
 function getMiddleware () {
   const middleware = [
-    thunkMiddleware
+    thunkMiddleware,
   ]
 
   return applyMiddleware(...middleware)
@@ -16,7 +16,7 @@ function getMiddleware () {
 function getEnhancer () {
   const args = [
     getMiddleware(),
-    batchedSubscribe(batchedUpdates)
+    batchedSubscribe(batchedUpdates),
   ]
 
   if (__DEV__) {

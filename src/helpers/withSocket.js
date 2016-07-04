@@ -14,7 +14,7 @@ export default function withSocket (opts = {}) {
         host = window.location.host,
         protocol = window.location.protocol === 'https:'
           ? 'wss'
-          : 'ws'
+          : 'ws',
       } = opts
 
       this._socket = new WebSocket(`${protocol}://${host}`)

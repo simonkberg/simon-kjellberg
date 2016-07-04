@@ -16,7 +16,7 @@ export const NotFound = ({ styles }) => (
 )
 
 NotFound.propTypes = {
-  styles: PropTypes.object
+  styles: PropTypes.object,
 }
 
 export default withStyles(Styles)(NotFound)

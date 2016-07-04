@@ -11,14 +11,14 @@ export default class SlackMessage extends Component {
     parserCache: cacheShape,
     emojiCache: cacheShape,
     emojiCdn: string,
-    emojiClassName: string
+    emojiClassName: string,
   }
 
   static defaultProps = {
     children: '',
     component: 'span',
     parserCache,
-    emojiCache
+    emojiCache,
   }
 
   shouldComponentUpdate (nextProps, nextState) {
@@ -33,7 +33,7 @@ export default class SlackMessage extends Component {
       emojiCache,
       emojiCdn,
       emojiClassName,
-      ...props
+      ...props,
     } = this.props
 
     const __html = children && parser(children, {
@@ -41,8 +41,8 @@ export default class SlackMessage extends Component {
       emoji: {
         cache: emojiCache,
         cdnUrl: emojiCdn,
-        className: emojiClassName
-      }
+        className: emojiClassName,
+      },
     }) || ''
 
     return <Component dangerouslySetInnerHTML={{__html}} {...props} />

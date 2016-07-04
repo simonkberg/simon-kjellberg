@@ -46,7 +46,7 @@ module.exports = function appServer (nr = null) {
   // set server store
   app.use((req, res, next) => {
     res.locals.state = Immutable.fromJS({
-      app: { baseUrl: `${req.protocol}://${req.get('host')}` }
+      app: { baseUrl: `${req.protocol}://${req.get('host')}` },
     })
 
     next()
@@ -67,8 +67,8 @@ module.exports = function appServer (nr = null) {
       noInfo: true,
       publicPath: config.output.publicPath,
       stats: {
-        colors: true
-      }
+        colors: true,
+      },
     }))
 
     app.use(webpackHotMiddleware(compiler))

@@ -13,11 +13,11 @@ const { array, func } = PropTypes
 export class Stats extends Component {
   static propTypes = {
     statsIds: array,
-    loadStats: func.isRequired
+    loadStats: func.isRequired,
   }
 
   static defaultProps = {
-    statsIds: []
+    statsIds: [],
   }
 
   componentDidMount () {
@@ -44,7 +44,7 @@ export class Stats extends Component {
 }
 
 const mapStateToProps = (state) => ({
-  statsIds: getStatsIds(state)
+  statsIds: getStatsIds(state),
 })
 
 const mapDispatchToProps = (dispatch) =>

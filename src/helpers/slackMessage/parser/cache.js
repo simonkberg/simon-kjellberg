@@ -38,5 +38,5 @@ export const emojiCache = new LRU(500)
 export const cacheShape = PropTypes.shape({
   has: PropTypes.func,
   get: PropTypes.func,
-  set: PropTypes.func
+  set: PropTypes.func,
 })

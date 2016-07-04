@@ -25,14 +25,14 @@ export class Chat extends Component {
     addChatMessage: func,
     removeChatMessage: func,
     openChat: func,
-    closeChat: func
+    closeChat: func,
   }
 
   static defaultProps = {
     open: false,
     messages: {},
     users: {},
-    loading: false
+    loading: false,
   }
 
   _socket = null
@@ -99,11 +99,11 @@ export class Chat extends Component {
     const button = {
       className: classNames(styles.toggle, {
         [styles.toggleOpen]: open === false,
-        [styles.toggleClose]: open === true
+        [styles.toggleClose]: open === true,
       }),
       onClick: open
         ? closeChat
-        : openChat
+        : openChat,
     }
 
     const input = {
@@ -111,7 +111,7 @@ export class Chat extends Component {
       type: 'text',
       name: 'message',
       placeholder: 'Type a message...',
-      onFocus: openChat
+      onFocus: openChat,
     }
 
     return (
@@ -136,7 +136,7 @@ const WithStyles = withStyles(Styles)(WithSocket)
 
 const mapStateToProps = (state) => ({
   open: getChatOpen(state),
-  loading: getChatLoading(state)
+  loading: getChatLoading(state),
 })
 
 const mapDispatchToProps = (dispatch) => {

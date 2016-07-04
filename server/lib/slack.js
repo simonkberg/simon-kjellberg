@@ -4,7 +4,7 @@ const {
   MemoryDataStore,
   CLIENT_EVENTS,
   RTM_EVENTS,
-  RTM_MESSAGE_SUBTYPES
+  RTM_MESSAGE_SUBTYPES,
 } = require('@slack/client')
 
 function rtm (token, opts = {}) {
@@ -12,7 +12,7 @@ function rtm (token, opts = {}) {
     logLevel: 'info',
     dataStore: new MemoryDataStore({}),
     autoReconnect: true,
-    autoMark: true
+    autoMark: true,
   }, opts))
 
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ function web (token, opts = {}) {
 module.exports = exports = function slack (token, opts = {}) {
   return {
     rtm: rtm(token, opts.rtm),
-    web: web(token, opts.web)
+    web: web(token, opts.web),
   }
 }
 

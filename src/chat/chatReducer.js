@@ -13,30 +13,30 @@ import {
   FETCH_CHAT_USERS_SUCCESS,
   FETCH_CHAT_USERS_ERROR,
   OPEN_CHAT,
-  CLOSE_CHAT
+  CLOSE_CHAT,
 } from './chatActions'
 
 const initialState = {
   open: __DEV__,
   entities: Map({
     messages: Map(),
-    users: Map()
+    users: Map(),
   }),
   messages: Map({
     ids: Set(),
     loading: false,
-    error: null
+    error: null,
   }),
   users: Map({
     ids: Set(),
     loading: false,
-    error: null
-  })
+    error: null,
+  }),
 }
 
 const open = reducerMap({
   [OPEN_CHAT]: () => true,
-  [CLOSE_CHAT]: () => false
+  [CLOSE_CHAT]: () => false,
 }, initialState.open)
 
 const mergeEntities = (state, action) =>
@@ -45,48 +45,48 @@ const mergeEntities = (state, action) =>
 const entities = reducerMap({
   [FETCH_CHAT_HISTORY_SUCCESS]: mergeEntities,
   [FETCH_CHAT_USERS_SUCCESS]: mergeEntities,
-  [ADD_CHAT_MESSAGE]: mergeEntities
+  [ADD_CHAT_MESSAGE]: mergeEntities,
 }, initialState.entities)
 
 const messages = reducerMap({
   [FETCH_CHAT_HISTORY]: state => state.merge({
     loading: true,
-    error: null
+    error: null,
   }),
   [FETCH_CHAT_HISTORY_SUCCESS]: (state, action) => state.mergeDeep({
     ids: action.response.result,
-    loading: false
+    loading: false,
   }),
   [FETCH_CHAT_HISTORY_ERROR]: (state, { error }) => state.merge({
     loading: false,
-    error
+    error,
   }),
   [ADD_CHAT_MESSAGE]: (state, action) => state.update(
     'ids', ids => ids.push(action.response.result)
   ),
   [REMOVE_CHAT_MESSAGE]: (state, action) => state.update(
     'ids', ids => ids.filter(ts => ts !== action.ts)
-  )
+  ),
 }, initialState.messages)
 
 const users = reducerMap({
   [FETCH_CHAT_USERS]: state => state.merge({
     loading: true,
-    error: null
+    error: null,
   }),
   [FETCH_CHAT_USERS_SUCCESS]: (state, action) => state.mergeDeep({
     ids: action.response.result,
-    loading: false
+    loading: false,
   }),
   [FETCH_CHAT_USERS_ERROR]: (state, { error }) => state.merge({
     loading: false,
-    error
-  })
+    error,
+  }),
 }, initialState.users)
 
 export default combineReducers({
   open,
   entities,
   messages,
-  users
+  users,
 })

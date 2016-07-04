@@ -15,7 +15,7 @@ export const Landing = ({ styles }) => (
 )
 
 Landing.propTypes = {
-  styles: PropTypes.object
+  styles: PropTypes.object,
 }
 
 export default withStyles(Styles)(Landing)

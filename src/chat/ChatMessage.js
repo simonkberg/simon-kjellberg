@@ -5,7 +5,7 @@ import colorHash from 'helpers/colorHash'
 
 import {
   makeGetChatMessageEntity,
-  makeGetChatUserEntity
+  makeGetChatUserEntity,
 } from './chatSelectors'
 
 export const ChatMessage = ({ message = {}, user = 'anon', styles }) => {
@@ -30,9 +30,9 @@ ChatMessage.propTypes = {
   message: PropTypes.object,
   user: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.object
+    PropTypes.object,
   ]),
-  styles: PropTypes.object.isRequired
+  styles: PropTypes.object.isRequired,
 }
 
 const makeMapStateToProps = () => {

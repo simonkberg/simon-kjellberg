@@ -3,7 +3,7 @@ import Stats from 'stats'
 
 const wakaTimeLink = {
   href: 'https://wakatime.com/@simonkberg',
-  target: '_blank'
+  target: '_blank',
 }
 
 const LandingStats = () => (

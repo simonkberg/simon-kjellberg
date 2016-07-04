@@ -6,25 +6,25 @@ const { shape, func, object, node } = PropTypes
 class Root extends Component {
   static propTypes = {
     context: shape({
-      insertCss: func.isRequired
+      insertCss: func.isRequired,
     }),
     store: object.isRequired,
-    children: node.isRequired
+    children: node.isRequired,
   }
 
   static childContextTypes = {
-    insertCss: func.isRequired
+    insertCss: func.isRequired,
   }
 
   state = {
-    DevTools: null
+    DevTools: null,
   }
 
   getChildContext () {
     const { context } = this.props
 
     return {
-      insertCss: context.insertCss
+      insertCss: context.insertCss,
     }
   }
 

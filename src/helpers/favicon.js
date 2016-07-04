@@ -4,7 +4,7 @@ export function appleTouchIcons (sizes = [152], precomposed = true) {
     return {
       rel: `apple-touch-icon${precomposed ? '-precomposed' : ''}`,
       sizes: `${size}x${size}`,
-      href: `/apple-touch-icon-${size}x${size}.png`
+      href: `/apple-touch-icon-${size}x${size}.png`,
     }
   })
 }
@@ -15,7 +15,7 @@ export default function favicons (sizes = [16, 32]) {
       rel: 'icon',
       type: 'image/png',
       sizes: `${size}x${size}`,
-      href: `/favicon-${size}x${size}.png`
+      href: `/favicon-${size}x${size}.png`,
     }
   })
 }
