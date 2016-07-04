@@ -11,12 +11,12 @@ export default function withUrl (ComposedComponent) {
     static ComposedComponent = ComposedComponent;
 
     static contextTypes = {
-      router: routerShape
+      router: routerShape,
     }
 
     static propTypes = {
       location: locationShape,
-      baseUrl: string
+      baseUrl: string,
     }
 
     componentWillMount () {
@@ -34,7 +34,7 @@ export default function withUrl (ComposedComponent) {
       const { baseUrl, location } = props
 
       this.setState({
-        url: baseUrl + router.createHref(location)
+        url: baseUrl + router.createHref(location),
       })
     }
 

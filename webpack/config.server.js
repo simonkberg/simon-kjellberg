@@ -12,20 +12,20 @@ module.exports = function serverConfig (opts = {}) {
     target: 'node',
 
     entry: {
-      server: path.join(paths.src, 'server.js')
+      server: path.join(paths.src, 'server.js'),
     },
 
     output: {
       path: paths.build,
       filename: 'server.js',
-      libraryTarget: 'commonjs2'
+      libraryTarget: 'commonjs2',
     },
 
     externals: [nodeExternals()],
 
     node: {
       __filename: true,
-      __dirname: true
-    }
+      __dirname: true,
+    },
   })
 }

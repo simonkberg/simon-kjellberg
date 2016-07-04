@@ -6,7 +6,7 @@ import reducerMap from 'helpers/reducerMap'
 const initialState = Map({ baseUrl: '' })
 
 const app = reducerMap({
-  [SET_BASE_URL]: (state, action) => state.set('baseUrl', action.baseUrl)
+  [SET_BASE_URL]: (state, action) => state.set('baseUrl', action.baseUrl),
 }, initialState)
 
 export default app

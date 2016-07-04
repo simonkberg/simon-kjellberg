@@ -19,7 +19,7 @@ router.post('/slap', (req, res) => {
     text: `<@${user}> slaps <${target}> around a bit with a large trout`,
     channel: channel_id,
     username: 'slapbot',
-    icon_emoji: ':fish:'
+    icon_emoji: ':fish:',
   }
 
   slackHook(payload)
@@ -43,7 +43,7 @@ router.post('/eta', (req, res) => {
     text: `<@${user}>'s ETA is *${time.format('H:mm')}* (${time.fromNow()})` +
       (reason ? `\n>>> _${reason}_` : ''),
     username: 'etabot',
-    icon_emoji: clockEmoji(time)
+    icon_emoji: clockEmoji(time),
   }
 
   slackHook(payload)

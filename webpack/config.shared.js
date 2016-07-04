@@ -23,35 +23,35 @@ function getPlugins (opts = {}) {
   const {
     env = process.env.NODE_ENV,
     gaid = process.env.GA_ID,
-    browser
+    browser,
   } = opts
 
   let plugins = [
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: `"${env || 'development'}"`,
-        GA_ID: `"${gaid || ''}"`
+        GA_ID: `"${gaid || ''}"`,
       },
       '__DEV__': env !== 'production',
-      '__BROWSER__': !!browser
-    })
+      '__BROWSER__': !!browser,
+    }),
   ]
 
   if (env === 'production') {
     plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true,
-      debug: true
+      debug: true,
     }))
     plugins.push(new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false,
-        drop_console: true
+        drop_console: true,
       },
-      output: { comments: false }
+      output: { comments: false },
     }))
   } else {
     plugins.push(new webpack.LoaderOptionsPlugin({
-      debug: true
+      debug: true,
     }))
     plugins.push(new webpack.HotModuleReplacementPlugin())
     // plugins.push(new webpack.NoErrorsPlugin())
@@ -69,12 +69,12 @@ function getLoaders (opts = {}) {
     loaders: [
       {
         loader: 'babel',
-        query: { cacheDirectory: true }
+        query: { cacheDirectory: true },
       },
-      'eslint-loader'
+      'eslint-loader',
     ],
     exclude: /node_modules/,
-    include: paths.src
+    include: paths.src,
   }, {
     test: /\.css$/,
     loaders: [
@@ -87,17 +87,17 @@ function getLoaders (opts = {}) {
           importLoaders: 1,
           localIdentName: isDev
             ? '[name]__[local]__[hash:base64:5]'
-            : '[hash:base64]'
-        }
+            : '[hash:base64]',
+        },
       },
       {
         loader: 'postcss',
-        query: { sourceMap: isDev }
-      }
-    ]
+        query: { sourceMap: isDev },
+      },
+    ],
   }, {
     test: /\.(json)$/,
-    loader: 'json'
+    loader: 'json',
   }, {
     test: /\.(png|jpe?g|gif|svg)$/,
     loaders: [
@@ -105,18 +105,18 @@ function getLoaders (opts = {}) {
         loader: 'url',
         query: {
           limit: 10000,
-          name: '[name]-[hash].[ext]'
-        }
+          name: '[name]-[hash].[ext]',
+        },
       },
-      'img'
-    ]
+      'img',
+    ],
   }, {
     test: /\.(woff2?)$/,
     loader: 'url',
     query: {
       limit: 10000,
-      name: '[name]-[hash].[ext]'
-    }
+      name: '[name]-[hash].[ext]',
+    },
   }]
 
   return loaders
@@ -135,31 +135,31 @@ module.exports = exports = function sharedConfig (opts = {}) {
     output: {
       path: paths.build,
       filename: '[name].[hash].js',
-      publicPath: '/'
+      publicPath: '/',
     },
 
     plugins: getPlugins(opts),
 
     resolve: {
       extensions: ['', '.js', '.json'],
-      modules: [paths.src, 'node_modules']
+      modules: [paths.src, 'node_modules'],
     },
 
     module: {
-      loaders: getLoaders(opts)
+      loaders: getLoaders(opts),
     },
 
     postcss: function (webpack) {
       return [
         require('postcss-import')({
           path: [paths.src],
-          addDependencyTo: webpack
+          addDependencyTo: webpack,
         }),
         require('postcss-url')(),
         require('postcss-cssnext')({ browsers: ['last 2 versions'] }),
-        require('postcss-reporter')()
+        require('postcss-reporter')(),
       ]
-    }
+    },
   }
 
   return config

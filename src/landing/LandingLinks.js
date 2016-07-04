@@ -2,11 +2,11 @@ import React from 'react'
 
 const githubLink = {
   href: 'https://github.com/simonkberg',
-  target: '_blank'
+  target: '_blank',
 }
 
 const emailLink = {
-  href: 'mailto:simon.kjellberg@gmail.com'
+  href: 'mailto:simon.kjellberg@gmail.com',
 }
 
 const LandingLinks = () => (

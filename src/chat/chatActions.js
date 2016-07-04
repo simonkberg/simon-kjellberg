@@ -42,14 +42,14 @@ export function fetchChatHistory () {
 export function fetchChatHistorySuccess (response) {
   return {
     type: FETCH_CHAT_HISTORY_SUCCESS,
-    response
+    response,
   }
 }
 
 export function fetchChatHistoryError (error) {
   return {
     type: FETCH_CHAT_HISTORY_ERROR,
-    error
+    error,
   }
 }
 
@@ -59,14 +59,14 @@ export const REMOVE_CHAT_MESSAGE = 'REMOVE_CHAT_MESSAGE'
 export function addChatMessage (message) {
   return {
     type: ADD_CHAT_MESSAGE,
-    response: normalize(message, Schema.CHAT_MESSAGE)
+    response: normalize(message, Schema.CHAT_MESSAGE),
   }
 }
 
 export function removeChatMessage ({ ts }) {
   return {
     type: REMOVE_CHAT_MESSAGE,
-    ts
+    ts,
   }
 }
 
@@ -108,14 +108,14 @@ export function fetchChatUsers () {
 export function fetchChatUsersSuccess (response) {
   return {
     type: FETCH_CHAT_USERS_SUCCESS,
-    response
+    response,
   }
 }
 
 export function fetchChatUsersError (error) {
   return {
     type: FETCH_CHAT_USERS_ERROR,
-    error
+    error,
   }
 }
 

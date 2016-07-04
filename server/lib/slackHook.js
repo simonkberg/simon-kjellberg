@@ -5,7 +5,7 @@ module.exports = function slackHook (body = {}) {
     request.post({
       url: process.env.SLACK_WEBHOOK,
       json: true,
-      body: body
+      body: body,
     }, (err, res, body) => {
       if (err) return reject(err)
 

@@ -19,13 +19,13 @@ const StatsItem = ({ id, name, percent }) => {
 StatsItem.propTypes = {
   id: PropTypes.string.isRequired,
   name: PropTypes.string,
-  percent: PropTypes.number
+  percent: PropTypes.number,
 }
 
 const makeMapStateToProps = () => {
   const getStatsEntity = makeGetStatsEntity()
   return (state, props) => ({
-    ...getStatsEntity(state, props)
+    ...getStatsEntity(state, props),
   })
 }
 

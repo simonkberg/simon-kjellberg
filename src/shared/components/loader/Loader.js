@@ -12,7 +12,7 @@ export const Loader = ({ styles }) => (
 )
 
 Loader.propTypes = {
-  styles: PropTypes.object
+  styles: PropTypes.object,
 }
 
 export default withStyles(Styles)(Loader)

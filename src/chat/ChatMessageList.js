@@ -17,7 +17,7 @@ class ChatMessageList extends Component {
     messageIds: array,
     messages: object,
     users: object,
-    styles: object
+    styles: object,
   }
 
   raf = null
@@ -79,7 +79,7 @@ class ChatMessageList extends Component {
     const list = {
       component: 'ul',
       className: classNames(styles.messageList, {
-        [styles.messageListOpen]: open
+        [styles.messageListOpen]: open,
       }),
       ref: this.setListRef,
       onTransitionEnd: this.cancelAnimation,
@@ -90,11 +90,11 @@ class ChatMessageList extends Component {
         leave: styles.messageLeave,
         leaveActive: styles.messageLeaveActive,
         appear: styles.messageAppear,
-        appearActive: styles.messageAppearActive
+        appearActive: styles.messageAppearActive,
       },
       transitionAppearTimeout: 500,
       transitionEnterTimeout: 500,
-      transitionLeaveTimeout: 500
+      transitionLeaveTimeout: 500,
     }
 
     return (
@@ -108,7 +108,7 @@ class ChatMessageList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-  messageIds: getChatMessageIds(state)
+  messageIds: getChatMessageIds(state),
 })
 
 export default connect(mapStateToProps)(ChatMessageList)

@@ -30,7 +30,7 @@ export default () => {
         )
 
         const html = htmlHelper(content, {
-          css, store, webpack_asset, newrelic
+          css, store, webpack_asset, newrelic,
         })
 
         const { status } = props.routes.find(route => route.status) || {}

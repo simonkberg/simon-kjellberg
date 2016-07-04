@@ -94,7 +94,7 @@ const positiveAdjectives = [
   'versatile',
   'warmhearted',
   'willing',
-  'witty'
+  'witty',
 ]
 
 const animalNames = [
@@ -299,7 +299,7 @@ const animalNames = [
   'wombat',
   'wren',
   'yak',
-  'zebra'
+  'zebra',
 ]
 
 function randomPositiveAdjective () {

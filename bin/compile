@@ -8,7 +8,7 @@ var del = require('del')
 var path = require('path')
 var webpack = require('webpack')
 var webpackConfig = require('../webpack/config')({
-  env: process.env.NODE_ENV
+  env: process.env.NODE_ENV,
 })
 
 var compiler = webpack(webpackConfig)

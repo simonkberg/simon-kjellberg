@@ -28,7 +28,7 @@ const formats = [
   [/_(.+?)_/g, '<em>$1</em>'],
   // unescape emojis
   // strikethrough
-  [/~(.+?)~/g, '<s>$1</s>']
+  [/~(.+?)~/g, '<s>$1</s>'],
 ]
 
 const escapeChars = (string, char) => {

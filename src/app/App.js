@@ -17,7 +17,7 @@ export class App extends Component {
     children: node,
     styles: object,
     baseUrl: string,
-    url: string
+    url: string,
   }
 
   render () {
@@ -35,14 +35,14 @@ export class App extends Component {
         { property: 'og:type', content: 'website' },
         { property: 'og:url', itemprop: 'url', content: url },
         { property: 'og:image', itemprop: 'image', content: `${baseUrl}/${ShareImage}` },
-        { property: 'fb:app_id', content: '1717386788525340' }
+        { property: 'fb:app_id', content: '1717386788525340' },
       ],
       link: [
         ...appleTouchIcons([152, 144, 120, 114, 72, 57]),
         ...favicons([196, 32, 16]),
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css?family=Fira+Mono:400,700' },
-        { rel: 'canonical', href: url }
-      ]
+        { rel: 'canonical', href: url },
+      ],
     }
 
     return (

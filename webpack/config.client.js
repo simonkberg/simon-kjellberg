@@ -17,15 +17,15 @@ module.exports = function clientConfig (opts = {}) {
       client: getEntry(
         path.join(paths.src, 'client.js'),
         opts.env !== 'production'
-      )
+      ),
     },
 
     plugins: [
       ...config.plugins,
       new AssetsPlugin({
         filename: 'manifest.json',
-        path: path.join(paths.build)
-      })
-    ]
+        path: path.join(paths.build),
+      }),
+    ],
   })
 }

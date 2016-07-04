@@ -5,9 +5,9 @@ import { parserCache, emojiCache, cacheShape } from './cache'
 export default function parser (input, {
   parser: {
     cache = parserCache,
-    component = 'span'
+    component = 'span',
   } = {},
-  emoji
+  emoji,
 } = {}) {
   if (cache.has(input)) {
     return cache.get(input)
@@ -27,5 +27,5 @@ export {
   emojiParser,
   parserCache,
   emojiCache,
-  cacheShape
+  cacheShape,
 }

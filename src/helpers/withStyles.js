@@ -6,7 +6,7 @@ const { func } = PropTypes
 export default function withStyles (styles) {
   return (ComposedComponent) => class WithStyles extends Component {
     static contextTypes = {
-      insertCss: func.isRequired
+      insertCss: func.isRequired,
     }
 
     static displayName = `WithStyles(${getDisplayName(ComposedComponent)})`

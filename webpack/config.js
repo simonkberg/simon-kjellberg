@@ -5,6 +5,6 @@ const serverConfig = require('./config.server')
 module.exports = function webpackConfig (opts = {}) {
   return [
     clientConfig(opts),
-    serverConfig(opts)
+    serverConfig(opts),
   ]
 }
