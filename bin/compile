@@ -7,9 +7,7 @@ require('dotenv').load({ silent: true })
 var del = require('del')
 var path = require('path')
 var webpack = require('webpack')
-var webpackConfig = require('../webpack/config')({
-  env: process.env.NODE_ENV,
-})
+var webpackConfig = require('../webpack.config')()
 
 var compiler = webpack(webpackConfig)
 var build = path.join(__dirname, '../build')
@@ -23,9 +21,12 @@ compiler.run(function (err, stats) {
 
   if (stats.hasErrors()) {
     console.log(stats.toString({ colors: true }))
-  }
-
-  if (stats.hasWarnings()) {
+  } else if (stats.hasWarnings()) {
     console.log(stats.toString({ colors: true }))
+  } else {
+    console.log(stats.toString({
+      chunks: false,
+      colors: true,
+    }))
   }
 })
