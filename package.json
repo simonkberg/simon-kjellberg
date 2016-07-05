@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "scripts": {
     "test": "npm run lint",
-    "lint": "eslint bin/** server src webpack",
+    "lint": "npm run lint:stylelint && npm run lint:eslint",
+    "lint:stylelint": "stylelint \"src/**/*.css\"",
+    "lint:eslint": "eslint bin/** server src webpack",
     "start": "node ./bin/serve",
     "start:prod": "NODE_ENV=production npm run start",
     "start:dev": "NODE_ENV=development npm run start",
