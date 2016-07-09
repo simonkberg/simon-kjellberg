@@ -127,8 +127,8 @@ module.exports = exports = function sharedConfig (opts = {}) {
 
   const config = {
     devtool: env !== 'production'
-      ? '#cheap-module-eval-source-map'
-      : 'hidden-sourcemap',
+      ? 'cheap-module-source-map'
+      : 'hidden-source-map',
 
     context: paths.src,
 
