@@ -47,5 +47,5 @@ le.getCert(options, (err, cert, pkey, ca, akey) => {
 
   del(path.join(paths.static, '.well-known', 'acme-challenge'))
 
-  exec('service nginx reload')
+  exec('sudo service nginx reload')
 })
