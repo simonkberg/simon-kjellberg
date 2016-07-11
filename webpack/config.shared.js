@@ -38,23 +38,26 @@ function getPlugins (opts = {}) {
   ]
 
   if (env === 'production') {
-    plugins.push(new webpack.LoaderOptionsPlugin({
-      minimize: true,
-      debug: true,
-    }))
-    plugins.push(new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        drop_console: true,
-      },
-      output: { comments: false },
-    }))
+    plugins.push(...[
+      new webpack.LoaderOptionsPlugin({
+        minimize: true,
+        debug: false,
+      }),
+      new webpack.optimize.UglifyJsPlugin({
+        compress: {
+          warnings: false,
+          drop_console: true,
+        },
+        output: { comments: false },
+      }),
+      new webpack.optimize.OccurrenceOrderPlugin(),
+      new webpack.optimize.DedupePlugin(),
+    ])
   } else {
-    plugins.push(new webpack.LoaderOptionsPlugin({
-      debug: true,
-    }))
-    plugins.push(new webpack.HotModuleReplacementPlugin())
-    // plugins.push(new webpack.NoErrorsPlugin())
+    plugins.push(...[
+      new webpack.LoaderOptionsPlugin({ debug: true }),
+      new webpack.HotModuleReplacementPlugin(),
+    ])
   }
 
   return plugins
