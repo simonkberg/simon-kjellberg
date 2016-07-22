@@ -24,7 +24,6 @@ export class App extends Component {
     const { children, baseUrl, url, styles } = this.props
 
     const head = {
-      htmlAttributes: { lang: 'en', itemscope: true, itemtype: 'http://schema.org/WebPage' },
       titleTemplate: 'Simon Kjellberg » %s',
       defaultTitle: 'Simon Kjellberg',
       meta: [

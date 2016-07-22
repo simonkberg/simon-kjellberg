@@ -9,7 +9,7 @@ export default (content, { css, store, webpack_asset, newrelic }) => {
 
   return `
     <!doctype html>
-    <html ${head.htmlAttributes.toString()}>
+    <html lang="en" itemscope itemtype="http://schema.org/WebPage">
       <head>
         ${newrelic ? newrelic.getBrowserTimingHeader() : ''}
         ${head.title.toString()}
