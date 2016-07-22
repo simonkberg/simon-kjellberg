@@ -1,11 +1,9 @@
 import Helmet from 'react-helmet'
-import Iso from 'iso'
+import { server } from 'helpers/isoState'
 
 export default (content, { css, store, webpack_asset, newrelic }) => {
   const head = Helmet.rewind()
-  const iso = new Iso()
-
-  iso.add(content, store.getState())
+  const render = server(content, store.getState())
 
   return `
     <!doctype html>
@@ -19,7 +17,7 @@ export default (content, { css, store, webpack_asset, newrelic }) => {
         <style>${css.join('')}</style>
       </head>
       <body>
-        ${iso.render()}
+        ${render()}
         ${head.script.toString()}
         <script async src="${webpack_asset('client')['js']}"></script>
       </body>

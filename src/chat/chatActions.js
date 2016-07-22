@@ -24,7 +24,7 @@ export function fetchChatHistory () {
 
     const baseUrl = getBaseUrl(getState())
 
-    fetch(`${baseUrl}/api/chat/history`)
+    return fetch(`${baseUrl}/api/chat/history`)
       .then(res => res.json())
       .then(res => {
         if (res.ok) {
@@ -90,7 +90,7 @@ export function fetchChatUsers () {
 
     const baseUrl = getBaseUrl(getState())
 
-    fetch(`${baseUrl}/api/chat/users`)
+    return fetch(`${baseUrl}/api/chat/users`)
       .then(res => res.json())
       .then(res => {
         if (res.ok) {

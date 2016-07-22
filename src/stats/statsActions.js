@@ -23,7 +23,7 @@ export function fetchStats () {
 
     const baseUrl = getBaseUrl(getState())
 
-    fetch(`${baseUrl}/api/waka-time/stats`)
+    return fetch(`${baseUrl}/api/waka-time/stats`)
       .then(res => res.json())
       .then(res => {
         const stats = normalize(res.data, Schema.STATS_ITEMS)
