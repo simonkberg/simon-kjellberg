@@ -24,15 +24,9 @@ export default () => {
         const context = { insertCss: styles => css.push(styles._getCss()) }
         const store = configureStore(state)
 
-        const fetchStats = store.dispatch(actions.fetchStats())
-        const fetchChatHistory = store.dispatch(actions.fetchChatHistory())
-        const fetchChatUsers = store.dispatch(actions.fetchChatUsers())
+        const prefetch = [store.dispatch(actions.fetchStats())]
 
-        return Promise.all([
-          fetchStats,
-          fetchChatHistory,
-          fetchChatUsers,
-        ]).then(() => {
+        return Promise.all(prefetch).then(() => {
           const content = renderToString(
             <Root store={store} context={context}>
               <RouterContext {...props} />
