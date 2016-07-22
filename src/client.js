@@ -5,7 +5,7 @@ import React from 'react'
 import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
 import Immutable from 'immutable'
-import Iso from 'iso'
+import { client } from 'helpers/isoState'
 import ReactGA from 'react-ga'
 import Root, { configureStore, routes } from 'root'
 
@@ -19,7 +19,7 @@ if (gaId) { ReactGA.initialize(gaId) }
 match({ history, routes }, (error, redirect, props) => {
   if (error) throw error
 
-  Iso.bootstrap((state, container) => {
+  client((state, container) => {
     const store = configureStore(Immutable.fromJS(state))
     const context = { insertCss: (styles, opts) => styles._insertCss(opts) }
 
