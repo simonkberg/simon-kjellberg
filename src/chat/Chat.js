@@ -7,6 +7,7 @@ import withSocket from 'helpers/withSocket'
 import withStyles from 'helpers/withStyles'
 
 import ChatMessageList from './ChatMessageList'
+import ChatInput from './ChatInput'
 import * as chatActions from './chatActions'
 import { getChatOpen, getChatLoading } from './chatSelectors'
 import Styles from './Chat.css'
@@ -76,18 +77,7 @@ export class Chat extends Component {
     }
   }
 
-  _onSubmit = (event) => {
-    event.preventDefault()
-
-    const { target } = event
-    const data = new FormData(target)
-
-    this.sendMessage(data.get('message'))
-
-    target.children.namedItem('message').value = ''
-  }
-
-  sendMessage (message) {
+  sendMessage = message => {
     if (this._socket) {
       this._socket.send(message)
     }
@@ -107,11 +97,9 @@ export class Chat extends Component {
     }
 
     const input = {
-      className: styles.input,
-      type: 'text',
-      name: 'message',
-      placeholder: 'Type a message...',
-      onFocus: openChat,
+      sendMessage: this.sendMessage,
+      styles,
+      openChat,
     }
 
     return (
@@ -121,10 +109,8 @@ export class Chat extends Component {
         </button>
         <div className={styles.container}>
           {!loading &&
-            <ChatMessageList {...this.props} styles={styles} />}
-          <form onSubmit={this._onSubmit} autoComplete='off'>
-            <input {...input} />
-          </form>
+            <ChatMessageList {...this.props} />}
+          <ChatInput {...input} />
         </div>
       </div>
     )
