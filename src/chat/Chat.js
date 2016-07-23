@@ -7,6 +7,7 @@ import withSocket from 'helpers/withSocket'
 import withStyles from 'helpers/withStyles'
 
 import ChatMessageList from './ChatMessageList'
+import ChatInput from './ChatInput'
 import * as chatActions from './chatActions'
 import { getChatOpen, getChatLoading } from './chatSelectors'
 import Styles from './Chat.css'
@@ -26,6 +27,8 @@ export class Chat extends Component {
     removeChatMessage: func,
     openChat: func,
     closeChat: func,
+    socket: object,
+    socketOpen: bool,
   }
 
   static defaultProps = {
@@ -48,20 +51,8 @@ export class Chat extends Component {
     return shallowCompare(this, nextProps, nextState)
   }
 
-  onSocketOpen = (event, socket) => {
-    console.log('Socket Open', event)
-
-    this._socket = socket
-  }
-
-  onSocketClose = (event) => {
-    console.log('Socket Close', event)
-
-    this._socket = null
-  }
-
-  onSocketError = (event) => {
-    console.log('Socket Error', event)
+  onSocketError = event => {
+    console.error('Socket Error', event)
   }
 
   onSocketMessage = (event, data) => {
@@ -76,25 +67,18 @@ export class Chat extends Component {
     }
   }
 
-  _onSubmit = (event) => {
-    event.preventDefault()
+  sendMessage = message => {
+    const { socket } = this.props
 
-    const { target } = event
-    const data = new FormData(target)
-
-    this.sendMessage(data.get('message'))
-
-    target.children.namedItem('message').value = ''
-  }
-
-  sendMessage (message) {
-    if (this._socket) {
-      this._socket.send(message)
+    if (socket) {
+      socket.send(message)
     }
   }
 
   render () {
-    const { styles, open, loading, openChat, closeChat } = this.props
+    const { styles, open, loading, openChat, closeChat, socketOpen } = this.props
+
+    if (!socketOpen) return null
 
     const button = {
       className: classNames(styles.toggle, {
@@ -107,11 +91,9 @@ export class Chat extends Component {
     }
 
     const input = {
-      className: styles.input,
-      type: 'text',
-      name: 'message',
-      placeholder: 'Type a message...',
-      onFocus: openChat,
+      sendMessage: this.sendMessage,
+      styles,
+      openChat,
     }
 
     return (
@@ -121,10 +103,8 @@ export class Chat extends Component {
         </button>
         <div className={styles.container}>
           {!loading &&
-            <ChatMessageList {...this.props} styles={styles} />}
-          <form onSubmit={this._onSubmit} autoComplete='off'>
-            <input {...input} />
-          </form>
+            <ChatMessageList {...this.props} />}
+          <ChatInput {...input} />
         </div>
       </div>
     )
