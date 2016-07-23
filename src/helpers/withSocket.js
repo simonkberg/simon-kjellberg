@@ -6,8 +6,14 @@ export default function withSocket (opts = {}) {
     static displayName = `WithSocket(${getDisplayName(ComposedComponent)})`;
     static ComposedComponent = ComposedComponent;
 
-    _socket = null
-    _component = null
+    state = {
+      socket: null,
+      socketOpen: false,
+      socketError: null,
+    }
+
+    socket = null
+    component = null
 
     componentDidMount () {
       const {
@@ -17,52 +23,66 @@ export default function withSocket (opts = {}) {
           : 'ws',
       } = opts
 
-      this._socket = new WebSocket(`${protocol}://${host}`)
-      this._socket.addEventListener('open', this._onSocketOpen)
-      this._socket.addEventListener('close', this._onSocketClose)
-      this._socket.addEventListener('error', this._onSocketError)
+      this.socket = new WebSocket(`${protocol}://${host}`)
+      this.socket.addEventListener('open', this.onSocketOpen)
+      this.socket.addEventListener('close', this.onSocketClose)
+      this.socket.addEventListener('error', this.onSocketError)
+
+      this.setState({ socket: this.socket })
     }
 
-    _onSocketOpen = (event) => {
-      this._socket.addEventListener('message', this._onSocketMessage)
+    onSocketOpen = (event) => {
+      this.socket.addEventListener('message', this.onSocketMessage)
 
-      if (this._component && this._component['onSocketOpen']) {
-        this._component.onSocketOpen(event, this._socket)
-      }
+      this.setState({ socketOpen: true }, () => {
+        if (this.component && this.component['onSocketOpen']) {
+          this.component.onSocketOpen(event, this.socket)
+        }
+      })
     }
 
-    _onSocketClose = (event) => {
-      this._socket.removeEventListener('message', this._onSocketMessage)
+    onSocketClose = (event) => {
+      this.socket.removeEventListener('message', this.onSocketMessage)
 
-      if (this._component && this._component['onSocketClose']) {
-        this._component.onSocketClose(event)
-      }
+      this.setState({ socketOpen: false }, () => {
+        if (this.component && this.component['onSocketClose']) {
+          this.component.onSocketClose(event)
+        }
+      })
     }
 
-    _onSocketError = (event) => {
-      if (this._component && this._component['onSocketError']) {
-        this._component.onSocketError(event)
-      }
+    onSocketError = (event) => {
+      this.setState({ socketError: event }, () => {
+        if (this.component && this.component['onSocketError']) {
+          this.component.onSocketError(event)
+        }
+      })
     }
 
-    _onSocketMessage = (event) => {
+    onSocketMessage = (event) => {
       const data = JSON.parse(event.data)
 
-      if (this._component && this._component['onSocketMessage']) {
-        this._component.onSocketMessage(event, data)
+      if (this.component && this.component['onSocketMessage']) {
+        this.component.onSocketMessage(event, data)
       }
     }
 
     componentWillUnmount () {
-      if (this._socket) this._socket.close()
+      if (this.socket) this.socket.close()
+    }
+
+    ref = el => {
+      this.component = el
     }
 
     render () {
-      const _ref = (el) => {
-        this._component = el
+      const props = {
+        ref: this.ref,
+        ...this.props,
+        ...this.state,
       }
 
-      return <ComposedComponent ref={_ref} {...this.props} />
+      return <ComposedComponent {...props} />
     }
   }
 }

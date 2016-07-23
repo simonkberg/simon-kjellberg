@@ -27,6 +27,8 @@ export class Chat extends Component {
     removeChatMessage: func,
     openChat: func,
     closeChat: func,
+    socket: object,
+    socketOpen: bool,
   }
 
   static defaultProps = {
@@ -49,20 +51,8 @@ export class Chat extends Component {
     return shallowCompare(this, nextProps, nextState)
   }
 
-  onSocketOpen = (event, socket) => {
-    console.log('Socket Open', event)
-
-    this._socket = socket
-  }
-
-  onSocketClose = (event) => {
-    console.log('Socket Close', event)
-
-    this._socket = null
-  }
-
-  onSocketError = (event) => {
-    console.log('Socket Error', event)
+  onSocketError = event => {
+    console.error('Socket Error', event)
   }
 
   onSocketMessage = (event, data) => {
@@ -78,13 +68,17 @@ export class Chat extends Component {
   }
 
   sendMessage = message => {
-    if (this._socket) {
-      this._socket.send(message)
+    const { socket } = this.props
+
+    if (socket) {
+      socket.send(message)
     }
   }
 
   render () {
-    const { styles, open, loading, openChat, closeChat } = this.props
+    const { styles, open, loading, openChat, closeChat, socketOpen } = this.props
+
+    if (!socketOpen) return null
 
     const button = {
       className: classNames(styles.toggle, {
