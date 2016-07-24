@@ -5,6 +5,11 @@ const wakaTime = require('./waka-time')
 
 const router = express.Router()
 
+router.use((req, res, next) => {
+  res.append('Cache-Control', 'no-cache')
+  next()
+})
+
 router.get('/ping', (req, res, next) => {
   res.send('pong')
 })

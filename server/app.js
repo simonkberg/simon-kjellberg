@@ -23,8 +23,8 @@ module.exports = function appServer (nr = null) {
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(cookieParser())
   app.use(compression())
-  app.use(express.static(path.join(__dirname, '../static')))
-  app.use(express.static(path.join(__dirname, '../build')))
+  app.use(express.static(path.join(__dirname, '../static'), { maxAge: '1 week' }))
+  app.use(express.static(path.join(__dirname, '../build'), { maxAge: '1 year' }))
 
   // api
   app.use('/api', api)
