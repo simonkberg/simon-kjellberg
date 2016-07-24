@@ -8,6 +8,8 @@ import htmlHelper from 'helpers/html'
 
 export default () => {
   return (req, res, next) => {
+    res.append('Cache-Control', 'no-cache')
+
     match({ routes, location: req.url }, (error, redirect, props) => {
       if (error) {
         return res.status(500).send(error.message)
