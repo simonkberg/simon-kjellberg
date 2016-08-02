@@ -5,6 +5,11 @@ const githubLink = {
   target: '_blank',
 }
 
+const linkedinLink = {
+  href: 'https://linkedin.com/in/simonkjellberg',
+  target: '_blank',
+}
+
 const emailLink = {
   href: 'mailto:simon.kjellberg@gmail.com',
 }
@@ -14,6 +19,8 @@ const LandingLinks = () => (
     <h2>links</h2>
     <p>
       <small>[github](<a {...githubLink}>{githubLink.href}</a>)</small>
+      <br />
+      <small>[linkedin](<a {...linkedinLink}>{linkedinLink.href}</a>)</small>
       <br />
       <small>[email](<a {...emailLink}>{emailLink.href}</a>)</small>
     </p>
