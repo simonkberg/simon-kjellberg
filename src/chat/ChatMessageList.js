@@ -1,7 +1,6 @@
-import React, { Component, PropTypes } from 'react'
+import React, { PureComponent, PropTypes } from 'react'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
 import { findDOMNode } from 'react-dom'
-import shallowCompare from 'react-addons-shallow-compare'
 import classNames from 'classnames'
 import raf from 'raf'
 import { connect } from 'react-redux'
@@ -11,7 +10,7 @@ import { getChatMessageIds } from './chatSelectors'
 
 const { bool, object, array } = PropTypes
 
-class ChatMessageList extends Component {
+class ChatMessageList extends PureComponent {
   static propTypes = {
     open: bool,
     messageIds: array,
@@ -26,10 +25,6 @@ class ChatMessageList extends Component {
 
   componentDidMount () {
     this.scrollToBottom()
-  }
-
-  shouldComponentUpdate (nextProps, nextState) {
-    return shallowCompare(this, nextProps, nextState)
   }
 
   componentWillUpdate () {

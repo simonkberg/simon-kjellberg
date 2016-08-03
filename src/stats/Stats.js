@@ -1,5 +1,4 @@
-import React, { Component, PropTypes } from 'react'
-import shallowCompare from 'react-addons-shallow-compare'
+import React, { PureComponent, PropTypes } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import Loader from 'shared/components/loader'
@@ -10,7 +9,7 @@ import StatsItem from './StatsItem'
 
 const { array, func } = PropTypes
 
-export class Stats extends Component {
+export class Stats extends PureComponent {
   static propTypes = {
     statsIds: array,
     loadStats: func.isRequired,
@@ -22,10 +21,6 @@ export class Stats extends Component {
 
   componentDidMount () {
     this.props.loadStats()
-  }
-
-  shouldComponentUpdate (nextProps, nextState) {
-    return shallowCompare(this, nextProps, nextState)
   }
 
   render () {

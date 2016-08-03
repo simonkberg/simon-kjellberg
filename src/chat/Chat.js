@@ -1,5 +1,4 @@
-import React, { Component, PropTypes } from 'react'
-import shallowCompare from 'react-addons-shallow-compare'
+import React, { PureComponent, PropTypes } from 'react'
 import classNames from 'classnames'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
@@ -14,7 +13,7 @@ import Styles from './Chat.css'
 
 const { object, func, bool } = PropTypes
 
-export class Chat extends Component {
+export class Chat extends PureComponent {
   static propTypes = {
     styles: object,
     open: bool,
@@ -45,10 +44,6 @@ export class Chat extends Component {
 
     loadChatHistory()
     loadChatUsers()
-  }
-
-  shouldComponentUpdate (nextProps, nextState) {
-    return shallowCompare(this, nextProps, nextState)
   }
 
   onSocketError = event => {
