@@ -1,5 +1,5 @@
 import { emojiCache } from './cache'
-import emojis from '../emojis.json'
+import emojis from 'emoji-datasource'
 
 const emojiMap = new Map()
 
