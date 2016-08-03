@@ -39,6 +39,7 @@
     "cookie-parser": "^1.4.3",
     "debug": "^2.2.0",
     "dotenv": "^2.0.0",
+    "emoji-datasource": "^2.4.4",
     "express": "^4.13.4",
     "express-webpack-assets": "0.0.2",
     "html-to-react": "^1.0.0",
