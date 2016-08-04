@@ -35,6 +35,10 @@ function getPlugins (opts = {}) {
       '__DEV__': env !== 'production',
       '__BROWSER__': !!browser,
     }),
+    new webpack.optimize.CommonsChunkPlugin({
+      children: true,
+      async: true,
+    }),
   ]
 
   if (env === 'production') {
@@ -138,6 +142,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
     output: {
       path: paths.build,
       filename: '[name].[hash].js',
+      chunkFilename: '[name].[chunkhash].js',
       publicPath: '/',
     },
 

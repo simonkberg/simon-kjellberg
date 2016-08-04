@@ -8,7 +8,7 @@ import withUrl from 'helpers/withUrl'
 import ShareImage from 'shared/assets/share.png'
 import Styles from './App.css'
 
-import Chat from 'chat'
+import ChatAsync from 'chat/ChatAsync'
 
 const { node, object, string } = PropTypes
 
@@ -48,7 +48,7 @@ export class App extends Component {
       <div className={styles.app}>
         <Helmet {...head} />
         {children}
-        <Chat />
+        <ChatAsync />
       </div>
     )
   }
