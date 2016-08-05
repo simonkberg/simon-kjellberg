@@ -1,6 +1,6 @@
 const path = require('path')
 const nodeExternals = require('webpack-node-externals')
-const sharedConfig = require('./config.shared')
+const sharedConfig = require('./shared')
 
 const { paths } = sharedConfig
 
