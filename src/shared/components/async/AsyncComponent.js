@@ -21,8 +21,10 @@ export default class AsyncComponent extends Component {
   }
 
   render () {
-    return this.state.component
-      ? <this.state.component />
+    const { component: Component } = this.state
+
+    return Component
+      ? <Component />
       : this.props.placeholder()
   }
 }
