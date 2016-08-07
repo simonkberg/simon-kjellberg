@@ -1,6 +1,5 @@
 .wrapper {
   composes: clearfix from "shared/styles/helpers.css";
-
   position: fixed;
   bottom: 0;
   left: 0;
@@ -11,7 +10,6 @@
 
 .toggle {
   composes: clearfix from "shared/styles/helpers.css";
-
   position: absolute;
   z-index: 2;
   top: 0.5rem;
