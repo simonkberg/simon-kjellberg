@@ -4,7 +4,7 @@ const webpack = require('webpack')
 const paths = {}
 
 paths.config = __dirname
-paths.root = path.join(paths.config, '..', '..')
+paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
 paths.src = path.join(paths.root, 'src')
 

@@ -1,8 +1,8 @@
 {
   "compact": false,
   "presets": [
-    "./config/babel/preset-es2015-webpack",
     "react",
+    "es2015-webpack",
     "stage-0"
   ],
   "env": {

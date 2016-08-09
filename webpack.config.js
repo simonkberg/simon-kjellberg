@@ -1,6 +1,6 @@
 
-const clientConfig = require('./config/webpack/client')
-const serverConfig = require('./config/webpack/server')
+const clientConfig = require('./webpack/config.client')
+const serverConfig = require('./webpack/config.server')
 
 module.exports = function webpackConfig (opts = {}) {
   // Default options

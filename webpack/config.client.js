@@ -1,6 +1,6 @@
 const path = require('path')
 const AssetsPlugin = require('assets-webpack-plugin')
-const sharedConfig = require('./shared')
+const sharedConfig = require('./config.shared')
 
 const { paths, getEntry } = sharedConfig
 

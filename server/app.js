@@ -7,7 +7,7 @@ const bodyParser = require('body-parser')
 const compression = require('compression')
 const expressWebpackAssets = require('express-webpack-assets')
 const Immutable = require('immutable')
-const webpackConfig = require('../config/webpack/client')
+const webpackConfig = require('../webpack/config.client')
 const reactServer = require('../build/server').default
 const api = require('./api')
 
