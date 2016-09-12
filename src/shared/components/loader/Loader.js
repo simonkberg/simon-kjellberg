@@ -5,9 +5,9 @@ import Styles from './Loader.css'
 
 export const Loader = ({ styles }) => (
   <div className={styles.loader}>
-    <span className={styles.point1}></span>
-    <span className={styles.point2}></span>
-    <span className={styles.point3}></span>
+    <span className={styles.point1} />
+    <span className={styles.point2} />
+    <span className={styles.point3} />
   </div>
 )
 
