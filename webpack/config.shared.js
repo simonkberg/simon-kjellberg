@@ -39,6 +39,22 @@ function getPlugins (opts = {}) {
       children: true,
       async: true,
     }),
+    new webpack.LoaderOptionsPlugin({
+      options: {
+        context: paths.src,
+        postcss: function (webpack) {
+          return [
+            require('postcss-import')({
+              path: [paths.src],
+              addDependencyTo: webpack,
+            }),
+            require('postcss-url')(),
+            require('postcss-cssnext')({ browsers: ['last 2 versions'] }),
+            require('postcss-reporter')(),
+          ]
+        },
+      },
+    }),
   ]
 
   if (env === 'production') {
@@ -54,7 +70,6 @@ function getPlugins (opts = {}) {
         },
         output: { comments: false },
       }),
-      new webpack.optimize.OccurrenceOrderPlugin(),
       new webpack.optimize.DedupePlugin(),
     ])
   } else {
@@ -73,10 +88,10 @@ function getLoaders (opts = {}) {
 
   let loaders = [{
     test: /\.js$/,
-    loaders: [
+    use: [
       {
         loader: 'babel',
-        query: { cacheDirectory: true },
+        options: { cacheDirectory: true },
       },
       'eslint-loader',
     ],
@@ -84,11 +99,11 @@ function getLoaders (opts = {}) {
     include: paths.src,
   }, {
     test: /\.css$/,
-    loaders: [
+    use: [
       'isomorphic-style',
       {
         loader: 'css',
-        query: {
+        options: {
           modules: true,
           sourceMap: isDev,
           importLoaders: 1,
@@ -99,7 +114,7 @@ function getLoaders (opts = {}) {
       },
       {
         loader: 'postcss',
-        query: { sourceMap: isDev },
+        options: { sourceMap: isDev },
       },
     ],
   }, {
@@ -107,10 +122,10 @@ function getLoaders (opts = {}) {
     loader: 'json',
   }, {
     test: /\.(png|jpe?g|gif|svg)$/,
-    loaders: [
+    use: [
       {
         loader: 'url',
-        query: {
+        options: {
           limit: 10000,
           name: '[name]-[hash].[ext]',
         },
@@ -120,7 +135,7 @@ function getLoaders (opts = {}) {
   }, {
     test: /\.(woff2?)$/,
     loader: 'url',
-    query: {
+    options: {
       limit: 10000,
       name: '[name]-[hash].[ext]',
     },
@@ -137,8 +152,6 @@ module.exports = exports = function sharedConfig (opts = {}) {
       ? 'cheap-module-source-map'
       : 'hidden-source-map',
 
-    context: paths.src,
-
     output: {
       path: paths.build,
       filename: '[name].[hash].js',
@@ -149,24 +162,12 @@ module.exports = exports = function sharedConfig (opts = {}) {
     plugins: getPlugins(opts),
 
     resolve: {
-      extensions: ['', '.js', '.json'],
+      extensions: ['*', '.js', '.json'],
       modules: [paths.src, 'node_modules'],
     },
 
     module: {
-      loaders: getLoaders(opts),
-    },
-
-    postcss: function (webpack) {
-      return [
-        require('postcss-import')({
-          path: [paths.src],
-          addDependencyTo: webpack,
-        }),
-        require('postcss-url')(),
-        require('postcss-cssnext')({ browsers: ['last 2 versions'] }),
-        require('postcss-reporter')(),
-      ]
+      rules: getLoaders(opts),
     },
   }
 
