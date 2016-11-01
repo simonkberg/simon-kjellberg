@@ -39,22 +39,11 @@ function getPlugins (opts = {}) {
       children: true,
       async: true,
     }),
-    new webpack.LoaderOptionsPlugin({
-      options: {
-        context: paths.src,
-        postcss: function (webpack) {
-          return [
-            require('postcss-import')({
-              path: [paths.src],
-              addDependencyTo: webpack,
-            }),
-            require('postcss-url')(),
-            require('postcss-cssnext')({ browsers: ['last 2 versions'] }),
-            require('postcss-reporter')(),
-          ]
-        },
-      },
-    }),
+    // new webpack.LoaderOptionsPlugin({
+    //   options: {
+    //     context: paths.src,
+    //   },
+    // }),
   ]
 
   if (env === 'production') {
