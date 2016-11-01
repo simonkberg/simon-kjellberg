@@ -23,7 +23,7 @@ const formats = [
   // bold
   [/\*(.+?)\*/g, '<strong>$1</strong>'],
   // escape emojis
-  [/(:[\w\d_\-\+]+_[\w\d_\-\+]+:)/g, match => escapeChars(match, '_')],
+  [/(:[\w\d_\-+]+_[\w\d_\-+]+:)/g, match => escapeChars(match, '_')],
   // italic
   [/_(.+?)_/g, '<em>$1</em>'],
   // unescape emojis
@@ -61,7 +61,7 @@ const escapeTags = (string, tag) => {
     escapedTags.add(tag)
   }
 
-  const regex = new RegExp(`<(\/)?(${tag})>`, 'g')
+  const regex = new RegExp(`<(/)?(${tag})>`, 'g')
 
   return string.replace(regex, `@--$1${UID}$2--@`)
 }
@@ -69,7 +69,7 @@ const escapeTags = (string, tag) => {
 const unescapeTags = (string) => {
   if (escapedTags.size > 0) {
     const tags = [...escapedTags.values()].join('|')
-    const regex = new RegExp(`@--(\/)?${UID}(${tags})--@`, 'g')
+    const regex = new RegExp(`@--(/)?${UID}(${tags})--@`, 'g')
 
     string = string.replace(regex, '<$1$2>')
 

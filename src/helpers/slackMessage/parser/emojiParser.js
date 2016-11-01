@@ -22,7 +22,7 @@ const replace = (options = {}) => {
     cdnUrl = 'https://twemoji.maxcdn.com/2/72x72/',
     className = 'slack-emoji',
     cache = emojiCache,
-    ...other,
+    ...other
   } = options
 
   return (match, p1, p2, index) => {

@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react'
+import React, { PropTypes } from 'react'
 import parser, { parserCache, emojiCache, cacheShape } from './parser'
 
 const { string } = PropTypes
@@ -10,7 +10,7 @@ const SlackMessage = ({
   emojiCache,
   emojiCdn,
   emojiClassName,
-  ...props,
+  ...props
 }) => {
   const parserOptions = {
     parser: { cache: parserCache },
