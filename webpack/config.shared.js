@@ -79,7 +79,7 @@ function getLoaders (opts = {}) {
     test: /\.js$/,
     use: [
       {
-        loader: 'babel',
+        loader: 'babel-loader',
         options: { cacheDirectory: true },
       },
       'eslint-loader',
@@ -153,6 +153,10 @@ module.exports = exports = function sharedConfig (opts = {}) {
     resolve: {
       extensions: ['*', '.js', '.json'],
       modules: [paths.src, 'node_modules'],
+    },
+
+    resolveLoader: {
+      moduleExtensions: ['-loader'],
     },
 
     module: {

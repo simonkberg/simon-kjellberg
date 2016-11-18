@@ -3,18 +3,18 @@
   "name": "simon-kjellberg",
   "version": "0.0.0",
   "scripts": {
-    "test": "npm run lint",
-    "lint": "npm run lint:stylelint && npm run lint:eslint",
+    "test": "yon run lint",
+    "lint": "yon run lint:stylelint && yon run lint:eslint",
     "lint:stylelint": "stylelint \"src/**/*.css\"",
     "lint:eslint": "eslint bin/** server src webpack",
     "start": "node ./bin/serve",
-    "start:prod": "NODE_ENV=production npm run start",
-    "start:dev": "NODE_ENV=development npm run start",
+    "start:prod": "NODE_ENV=production yon run start",
+    "start:dev": "NODE_ENV=development yon run start",
     "build": "node ./bin/compile",
-    "build:prod": "NODE_ENV=production npm run build",
-    "build:dev": "NODE_ENV=development npm run build",
+    "build:prod": "NODE_ENV=production yon run build",
+    "build:dev": "NODE_ENV=development yon run build",
     "ssl": "node ./bin/ssl",
-    "dev": "npm run build:dev && npm run start:dev"
+    "dev": "yon run build:dev && yon run start:dev"
   },
   "repository": {
     "type": "git",
@@ -69,7 +69,8 @@
     "sanitize.css": "^4.1.0",
     "serialize-javascript": "^1.3.0",
     "serve-favicon": "^2.3.0",
-    "ws": "^1.1.0"
+    "ws": "^1.1.0",
+    "yarn-or-npm": "^2.0.2"
   },
   "devDependencies": {
     "@simonkberg/eslint-config-react": "^5.0.0",
