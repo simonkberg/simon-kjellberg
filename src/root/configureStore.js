@@ -32,7 +32,7 @@ export default function configureStore (initialState = Immutable.Map()) {
   const store = createStore(
     rootReducer,
     initialState,
-    getEnhancer()
+    getEnhancer(),
   )
 
   if (__DEV__ && module.hot) {

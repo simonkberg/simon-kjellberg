@@ -32,7 +32,7 @@ match({ history, routes }, (error, redirect, props) => {
       <Root store={store} context={context}>
         <Router {...props} />
       </Root>,
-      container
+      container,
     )
   })
 })
