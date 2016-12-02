@@ -2,17 +2,17 @@
 # yarn lockfile v1
 
 
-"@simonkberg/eslint-config-react@^5.1.1":
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config-react/-/eslint-config-react-5.1.1.tgz#0d13bfabe8dc5acca8fe03f00fd48e837db6f2b2"
+"@simonkberg/eslint-config-react@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config-react/-/eslint-config-react-6.0.0.tgz#03ca1620a1b4db10d9ec4d0fa48dc44c28f85d94"
   dependencies:
-    "@simonkberg/eslint-config" "^1.0.0"
+    "@simonkberg/eslint-config" "^2.0.0"
     eslint-config-standard-react "^4.0.1"
     eslint-plugin-react "^6.2.0"
 
-"@simonkberg/eslint-config@^1.0.0":
-  version v1.0.0
-  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-1.0.0.tgz#081b28c2e9671b3fc1f5b1eb426b8455179f0f5b"
+"@simonkberg/eslint-config@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-2.0.0.tgz#6f832f1a6774794218304f171e61a2884c2cff4b"
   dependencies:
     babel-eslint "^7.1.0"
     eslint-config-standard "^6.0.0"

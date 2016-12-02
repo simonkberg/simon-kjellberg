@@ -32,7 +32,7 @@ export default () => {
           const content = renderToString(
             <Root store={store} context={context}>
               <RouterContext {...props} />
-            </Root>
+            </Root>,
           )
 
           const html = htmlHelper(content, {

@@ -5,7 +5,7 @@ const getChatOpenState = state =>
 
 export const getChatOpen = createSelector(
   getChatOpenState,
-  open => !!open
+  open => !!open,
 )
 
 const getChatMessagesLoadingState = state =>
@@ -13,7 +13,7 @@ const getChatMessagesLoadingState = state =>
 
 export const getChatMessagesLoading = createSelector(
   getChatMessagesLoadingState,
-  loading => !!loading
+  loading => !!loading,
 )
 
 const getChatUsersLoadingState = state =>
@@ -21,13 +21,13 @@ const getChatUsersLoadingState = state =>
 
 export const getChatUsersLoading = createSelector(
   getChatUsersLoadingState,
-  loading => !!loading
+  loading => !!loading,
 )
 
 export const getChatLoading = createSelector(
   getChatMessagesLoadingState,
   getChatUsersLoadingState,
-  (messages, users) => !!(messages || users)
+  (messages, users) => !!(messages || users),
 )
 
 const getChatMessageIdsState = state =>
@@ -35,7 +35,7 @@ const getChatMessageIdsState = state =>
 
 export const getChatMessageIds = createSelector(
   getChatMessageIdsState,
-  ids => ids.sort().toArray()
+  ids => ids.sort().toArray(),
 )
 
 const getChatMessageEntititesState = state =>
@@ -43,7 +43,7 @@ const getChatMessageEntititesState = state =>
 
 export const getChatMessageEntities = createSelector(
   getChatMessageEntititesState,
-  entities => entities.toJS()
+  entities => entities.toJS(),
 )
 
 const getChatUsersIdsState = state =>
@@ -51,7 +51,7 @@ const getChatUsersIdsState = state =>
 
 export const getChatUsersIds = createSelector(
   getChatUsersIdsState,
-  ids => ids.toArray()
+  ids => ids.toArray(),
 )
 
 const getChatUserEntititesState = state =>
@@ -59,7 +59,7 @@ const getChatUserEntititesState = state =>
 
 export const getChatUserEntities = createSelector(
   getChatUserEntititesState,
-  entities => entities.toJS()
+  entities => entities.toJS(),
 )
 
 const getChatMessageEntityState = (state, id) =>
@@ -68,7 +68,7 @@ const getChatMessageEntityState = (state, id) =>
 export const makeGetChatMessageEntity = () =>
   createSelector(
     getChatMessageEntityState,
-    entity => entity.toObject()
+    entity => entity.toObject(),
   )
 
 const getChatUserEntityState = (state, id) =>
@@ -77,5 +77,5 @@ const getChatUserEntityState = (state, id) =>
 export const makeGetChatUserEntity = () =>
   createSelector(
     getChatUserEntityState,
-    entity => entity.toObject()
+    entity => entity.toObject(),
   )

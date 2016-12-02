@@ -19,7 +19,7 @@ module.exports = function clientConfig (opts = {}) {
     entry: {
       client: getEntry(
         path.join(paths.src, 'client.js'),
-        opts.env !== 'production'
+        opts.env !== 'production',
       ),
     },
 

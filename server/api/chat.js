@@ -14,7 +14,7 @@ router.get('/history', (req, res) => {
 
       return res.json(response)
     },
-    error => res.json(error)
+    error => res.json(error),
   )
 })
 
@@ -27,7 +27,7 @@ router.get('/users/:id', (req, res) => {
 
       return res.json(response)
     },
-    error => res.json(error)
+    error => res.json(error),
   )
 })
 
@@ -41,7 +41,7 @@ router.get('/users', (req, res) => {
 
       return res.json(response)
     },
-    error => res.json(error)
+    error => res.json(error),
   )
 })
 
