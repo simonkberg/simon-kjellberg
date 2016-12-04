@@ -9,14 +9,16 @@ paths.build = path.join(paths.root, 'build')
 paths.src = path.join(paths.root, 'src')
 
 function getEntry (entry, hot = false) {
-  // cast to array
-  entry = [].concat(entry)
+  const entries = []
 
   if (hot) {
-    entry.push('webpack-hot-middleware/client')
+    entries.push(
+      'react-hot-loader/patch',
+      'webpack-hot-middleware/client'
+    )
   }
 
-  return entry
+  return entries.concat(entry)
 }
 
 function getPlugins (opts = {}) {

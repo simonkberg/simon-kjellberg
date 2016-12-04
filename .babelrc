@@ -12,15 +12,13 @@
     "stage-0"
   ],
   "env": {
-    "development": {
-      "presets": [
-        "react-hmre"
-      ]
-    },
     "production": {
       "presets": [
         "react-optimize"
       ]
     }
-  }
+  },
+  "plugins": [
+    "react-hot-loader/babel"
+  ]
 }
