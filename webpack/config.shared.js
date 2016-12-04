@@ -61,7 +61,6 @@ function getPlugins (opts = {}) {
         },
         output: { comments: false },
       }),
-      new webpack.optimize.DedupePlugin(),
     ])
   } else {
     plugins.push(...[
