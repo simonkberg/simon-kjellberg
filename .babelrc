@@ -1,7 +1,13 @@
 {
   "compact": false,
   "presets": [
-    ["es2015", { "modules": false }],
+    ["env", {
+      "targets": {
+        "node": "current",
+        "browsers": "last 2 versions"
+      },
+      "modules": false
+    }],
     "react",
     "stage-0"
   ],
