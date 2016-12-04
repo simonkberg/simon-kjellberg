@@ -4,6 +4,7 @@ import 'isomorphic-fetch'
 import React from 'react'
 import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
+import { AppContainer } from 'react-hot-loader'
 import Immutable from 'immutable'
 import { client } from 'helpers/isoState'
 import ReactGA from 'react-ga'
@@ -29,10 +30,25 @@ match({ history, routes }, (error, redirect, props) => {
     }
 
     render(
-      <Root store={store} context={context}>
-        <Router {...props} />
-      </Root>,
+      <AppContainer>
+        <Root store={store} context={context}>
+          <Router {...props} />
+        </Root>
+      </AppContainer>,
       container,
     )
+
+    if (module.hot) {
+      module.hot.accept('root', () => {
+        render(
+          <AppContainer>
+            <Root store={store} context={context}>
+              <Router {...props} />
+            </Root>
+          </AppContainer>,
+          container,
+        )
+      })
+    }
   })
 })
