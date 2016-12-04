@@ -1,8 +1,0 @@
-{
-  "extends": "@simonkberg/eslint-config-react",
-  "globals": {
-    "fetch": false,
-    "__DEV__": false,
-    "__BROWSER__": false
-  }
-}
