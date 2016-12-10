@@ -6,7 +6,8 @@
         "node": "current",
         "browsers": "last 2 versions"
       },
-      "modules": false
+      "modules": false,
+      "useBuiltIns": true
     }],
     "react",
     "stage-0"
