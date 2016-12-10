@@ -120,7 +120,7 @@ function getLoaders (opts = {}) {
           name: '[name]-[hash].[ext]',
         },
       },
-      'img',
+      // 'img',
     ],
   }, {
     test: /\.(woff2?)$/,
