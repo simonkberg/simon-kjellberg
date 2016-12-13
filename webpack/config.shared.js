@@ -108,9 +108,6 @@ function getLoaders (opts = {}) {
       },
     ],
   }, {
-    test: /\.(json)$/,
-    loader: 'json',
-  }, {
     test: /\.(png|jpe?g|gif|svg)$/,
     use: [
       {
@@ -147,6 +144,10 @@ module.exports = exports = function sharedConfig (opts = {}) {
       filename: '[name].[hash].js',
       chunkFilename: '[name].[chunkhash].js',
       publicPath: '/',
+    },
+
+    performance: {
+      hints: false,
     },
 
     plugins: getPlugins(opts),
