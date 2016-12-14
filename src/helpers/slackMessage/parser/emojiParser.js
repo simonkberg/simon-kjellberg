@@ -1,15 +1,7 @@
 import { emojiCache } from './cache'
 import emojis from 'emoji-datasource'
 
-const emojiMap = new Map()
-
-emojis.forEach(({ unified, short_names }) => {
-  short_names.forEach(shortName => {
-    emojiMap.set(shortName, unified.toLowerCase())
-  })
-})
-
-const regexKeys = [...emojiMap.keys()].join('|').replace(/[+]/g, '\\$&')
+const regexKeys = [...Object.keys(emojis)].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
 const render = (props = {}) =>
@@ -30,13 +22,13 @@ const replace = (options = {}) => {
       return cache.get(match)
     }
 
-    let name = emojiMap.get(p1)
+    let { name, unicode } = emojis[p1]
 
     if (p2) {
-      name = `${name}-${emojiMap.get(p2)}`
+      let suffix = emojis[p2]
+      name = `${name}-${suffix.name}`
+      unicode += suffix.unicode
     }
-
-    const unicode = convert(name)
 
     const props = {
       src: `${cdnUrl}${name}.png`,

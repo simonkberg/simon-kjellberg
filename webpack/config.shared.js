@@ -4,6 +4,7 @@ const webpack = require('webpack')
 const paths = {}
 
 paths.config = __dirname
+paths.loaders = path.join(paths.config, 'loaders')
 paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
 paths.src = path.join(paths.root, 'src')
@@ -126,6 +127,9 @@ function getLoaders (opts = {}) {
       limit: 10000,
       name: '[name]-[hash].[ext]',
     },
+  }, {
+    test: /emoji\.json$/,
+    loader: 'emoji',
   }]
 
   return loaders
@@ -158,6 +162,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
     },
 
     resolveLoader: {
+      modules: [paths.loaders, 'node_modules'],
       moduleExtensions: ['-loader'],
     },
 
