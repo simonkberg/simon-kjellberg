@@ -19,6 +19,7 @@ export default (content, { css, store, webpack_asset, newrelic }) => {
       <body>
         ${render()}
         ${head.script.toString()}
+        <script src="${webpack_asset('vendor')['js']}"></script>
         <script async src="${webpack_asset('client')['js']}"></script>
       </body>
     </html>

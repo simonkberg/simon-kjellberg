@@ -14,7 +14,8 @@
     "build:prod": "NODE_ENV=production yon run build",
     "build:dev": "NODE_ENV=development yon run build",
     "ssl": "node ./bin/ssl",
-    "dev": "yon run build:dev && yon run start:dev"
+    "dev": "yon run build:dev && yon run start:dev",
+    "prod": "yon run build:prod && yon run start:prod"
   },
   "repository": {
     "type": "git",
