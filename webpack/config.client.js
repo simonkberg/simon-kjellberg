@@ -44,12 +44,12 @@ module.exports = function clientConfig (opts = {}) {
         path: path.join(paths.build),
       }),
       new CommonsChunkPlugin({
-        name: 'vendor',
+        names: ['vendor', 'manifest'],
         filename: '[name].[hash].js',
         minChunks: Infinity,
       }),
       new BundleAnalyzerPlugin({
-        analyzerMode: 'static',
+        analyzerMode: isDev ? 'static' : 'disabled',
         openAnalyzer: false,
       }),
     ],

@@ -138,8 +138,10 @@ function getLoaders (opts = {}) {
 module.exports = exports = function sharedConfig (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
+  const isDev = env !== 'production'
+
   const config = {
-    devtool: env !== 'production'
+    devtool: isDev
       ? 'cheap-module-source-map'
       : 'hidden-source-map',
 
@@ -148,10 +150,13 @@ module.exports = exports = function sharedConfig (opts = {}) {
       filename: '[name].[hash].js',
       chunkFilename: '[name].[chunkhash].js',
       publicPath: '/',
+      pathinfo: isDev,
     },
 
     performance: {
-      hints: false,
+      maxAssetSize: 500000,
+      maxEntrypointSize: 500000,
+      hints: isDev ? false : 'warning',
     },
 
     plugins: getPlugins(opts),
