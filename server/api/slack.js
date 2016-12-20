@@ -6,8 +6,14 @@ const clockEmoji = require('../lib/clockEmoji')
 
 const router = express.Router()
 
+const { SLACK_SLAP_TOKEN, SLACK_ETA_TOKEN } = process.env
+
 router.post('/slap', (req, res) => {
-  let { user_name: user, text, channel_id } = req.body
+  let { user_name: user, text, channel_id, token } = req.body
+
+  if (token !== SLACK_SLAP_TOKEN) {
+    return res.end('Invalid token')
+  }
 
   let target = text || user
 
@@ -28,7 +34,11 @@ router.post('/slap', (req, res) => {
 })
 
 router.post('/eta', (req, res) => {
-  let { user_name: user, text } = req.body
+  let { user_name: user, text, token } = req.body
+
+  if (token !== SLACK_ETA_TOKEN) {
+    return res.end('Invalid token')
+  }
 
   text = (text || '').split(' ')
 
