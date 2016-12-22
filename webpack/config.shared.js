@@ -38,15 +38,6 @@ function getPlugins (opts = {}) {
       '__DEV__': env !== 'production',
       '__BROWSER__': !!browser,
     }),
-    new webpack.optimize.CommonsChunkPlugin({
-      children: true,
-      async: true,
-    }),
-    // new webpack.LoaderOptionsPlugin({
-    //   options: {
-    //     context: paths.src,
-    //   },
-    // }),
   ]
 
   if (env === 'production') {
@@ -115,7 +106,7 @@ function getLoaders (opts = {}) {
         loader: 'url',
         options: {
           limit: 10000,
-          name: '[name]-[hash].[ext]',
+          name: 'static/img/[name].[hash:8].[ext]',
         },
       },
       // 'img',
@@ -125,7 +116,7 @@ function getLoaders (opts = {}) {
     loader: 'url',
     options: {
       limit: 10000,
-      name: '[name]-[hash].[ext]',
+      name: 'static/fonts/[name].[hash:8].[ext]',
     },
   }, {
     test: /emoji\.json$/,
@@ -147,8 +138,8 @@ module.exports = exports = function sharedConfig (opts = {}) {
 
     output: {
       path: paths.build,
-      filename: '[name].[hash].js',
-      chunkFilename: '[name].[chunkhash].js',
+      filename: 'static/js/[name].[hash:8].js',
+      chunkFilename: 'static/js/[name].[chunkhash:8].chunk.js',
       publicPath: '/',
       pathinfo: isDev,
     },

@@ -45,7 +45,7 @@ module.exports = function clientConfig (opts = {}) {
       }),
       new CommonsChunkPlugin({
         names: ['vendor', 'manifest'],
-        filename: '[name].[hash].js',
+        filename: 'static/js/[name].[hash:8].js',
         minChunks: Infinity,
       }),
       new BundleAnalyzerPlugin({

@@ -5,7 +5,7 @@ const serverConfig = require('./webpack/config.server')
 module.exports = function webpackConfig (opts = {}) {
   // Default options
   opts = Object.assign({
-    env: process.env.NODE_ENV,
+    env: process.env.NODE_ENV || 'development',
   }, opts)
 
   return [
