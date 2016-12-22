@@ -6,7 +6,11 @@ const clockEmoji = require('../lib/clockEmoji')
 
 const router = express.Router()
 
-const { SLACK_SLAP_TOKEN, SLACK_ETA_TOKEN } = process.env
+const {
+  SLACK_SLAP_TOKEN,
+  SLACK_ETA_TOKEN,
+  SLACK_ETA_CHANNEL,
+} = process.env
 
 router.post('/slap', (req, res) => {
   let { user_name: user, text, channel_id, token } = req.body
@@ -52,6 +56,7 @@ router.post('/eta', (req, res) => {
   const payload = {
     text: `<@${user}>'s ETA is *${time.format('H:mm')}* (${time.fromNow()})` +
       (reason ? `\n>>> _${reason}_` : ''),
+    channel: SLACK_ETA_CHANNEL,
     username: 'etabot',
     icon_emoji: clockEmoji(time),
   }
