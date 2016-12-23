@@ -28,7 +28,7 @@ compiler.run(function (err, stats) {
     console.error(log)
     process.exit(1)
   } else if (stats.hasWarnings()) {
-    console.warning(log)
+    console.warn(log)
   } else {
     console.log(log)
   }
