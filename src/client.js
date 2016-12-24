@@ -1,6 +1,6 @@
-
 import 'babel-polyfill'
 import 'isomorphic-fetch'
+
 import React from 'react'
 import { render } from 'react-dom'
 import { Router, match, browserHistory as history } from 'react-router'
@@ -10,12 +10,19 @@ import { client } from 'helpers/isoState'
 import ReactGA from 'react-ga'
 import Root, { configureStore, routes } from 'root'
 
+const gaId = process.env.GA_ID
+
 if (__DEV__) {
   window.Perf = require('react-addons-perf')
 }
 
-const gaId = process.env.GA_ID
-if (gaId) { ReactGA.initialize(gaId) }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+}
+
+if (gaId) {
+  ReactGA.initialize(gaId)
+}
 
 match({ history, routes }, (error, redirect, props) => {
   if (error) throw error
