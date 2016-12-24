@@ -1,6 +1,7 @@
 const webpack = require('webpack')
 const path = require('path')
 const AssetsPlugin = require('assets-webpack-plugin')
+const SWPrecachePlugin = require('sw-precache-webpack-plugin')
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 const sharedConfig = require('./config.shared')
 
@@ -41,12 +42,16 @@ module.exports = function clientConfig (opts = {}) {
       ...config.plugins,
       new AssetsPlugin({
         filename: 'manifest.json',
-        path: path.join(paths.build),
+        path: paths.build,
       }),
       new CommonsChunkPlugin({
         names: ['vendor', 'manifest'],
         filename: 'static/js/[name].[hash:8].js',
         minChunks: Infinity,
+      }),
+      new SWPrecachePlugin({
+        cacheId: 'simon-kjellberg',
+        filename: 'sw.js',
       }),
       new BundleAnalyzerPlugin({
         analyzerMode: isDev ? 'static' : 'disabled',
