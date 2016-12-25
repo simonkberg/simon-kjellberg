@@ -52,6 +52,7 @@ module.exports = function clientConfig (opts = {}) {
       new SWPrecachePlugin({
         cacheId: 'simon-kjellberg',
         filename: 'sw.js',
+        verbose: false,
       }),
       new BundleAnalyzerPlugin({
         analyzerMode: isDev ? 'static' : 'disabled',

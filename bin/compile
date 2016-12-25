@@ -32,6 +32,4 @@ compiler.run(function (err, stats) {
   } else {
     console.log(log)
   }
-
-  process.exit(0)
 })
