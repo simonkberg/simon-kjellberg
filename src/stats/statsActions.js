@@ -1,7 +1,7 @@
 import { normalize } from 'normalizr'
-import { Schema } from 'api'
 import { getBaseUrl } from 'app/appSelectors'
 import { getStatsIds } from './statsSelectors'
+import * as Schema from './statsSchema'
 
 export const FETCH_STATS = 'FETCH_STATS'
 export const FETCH_STATS_SUCCESS = 'FETCH_STATS_SUCCESS'

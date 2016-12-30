@@ -1,8 +1,8 @@
 
 import { normalize } from 'normalizr'
-import { Schema } from 'api'
 import { getBaseUrl } from 'app/appSelectors'
 import { getChatMessageIds, getChatUsersIds } from './chatSelectors'
+import * as Schema from './chatSchema'
 
 export const FETCH_CHAT_HISTORY = 'FETCH_CHAT_HISTORY'
 export const FETCH_CHAT_HISTORY_SUCCESS = 'FETCH_CHAT_HISTORY_SUCCESS'
