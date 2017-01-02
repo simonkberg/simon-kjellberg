@@ -62,10 +62,10 @@ const messages = reducerMap({
     error,
   }),
   [ADD_CHAT_MESSAGE]: (state, action) => state.update(
-    'ids', ids => ids.push(action.response.result),
+    'ids', ids => ids.push(action.response.result)
   ),
   [REMOVE_CHAT_MESSAGE]: (state, action) => state.update(
-    'ids', ids => ids.filter(ts => ts !== action.ts),
+    'ids', ids => ids.filter(ts => ts !== action.ts)
   ),
 }, initialState.messages)
 
