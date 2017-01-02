@@ -42,7 +42,7 @@ match({ history, routes }, (error, redirect, props) => {
           <Router {...props} />
         </Root>
       </AppContainer>,
-      container,
+      container
     )
 
     if (module.hot) {
@@ -53,7 +53,7 @@ match({ history, routes }, (error, redirect, props) => {
               <Router {...props} />
             </Root>
           </AppContainer>,
-          container,
+          container
         )
       })
     }

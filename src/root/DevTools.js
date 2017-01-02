@@ -12,5 +12,5 @@ const dock = {
 export default createDevTools(
   <DockMonitor {...dock}>
     <LogMonitor />
-  </DockMonitor>,
+  </DockMonitor>
 )
