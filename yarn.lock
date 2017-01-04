@@ -3420,7 +3420,7 @@ methods@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/methods/-/methods-1.1.2.tgz#5529a4d67654134edcc5266656835b0f851afcee"
 
-micromatch@^2.1.5:
+micromatch@^2.1.5, micromatch@^2.3.11:
   version "2.3.11"
   resolved "https://registry.yarnpkg.com/micromatch/-/micromatch-2.3.11.tgz#86677c97d1720b363431d04d0d15293bd38c1565"
   dependencies:
@@ -3515,7 +3515,7 @@ ms@0.7.2, ms@^0.7.1:
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.2.tgz#ae25cf2512b3885a1d95d7f037868d8431124765"
 
-multimatch@^2.0.0, multimatch@^2.1.0:
+multimatch@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/multimatch/-/multimatch-2.1.0.tgz#9c7906a22fb4c02919e2f5f75161b4cdbd4b2a2b"
   dependencies:
@@ -3646,9 +3646,9 @@ normalize-url@^1.4.0:
     query-string "^4.1.0"
     sort-keys "^1.0.0"
 
-normalizr@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/normalizr/-/normalizr-3.0.0.tgz#43099e099c102762f9b270fad02a7ca69620310e"
+normalizr@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/normalizr/-/normalizr-3.0.1.tgz#45c8fffa4e253f10f9d2c44e2d94290c3c08e2c5"
 
 npmlog@^4.0.1:
   version "4.0.1"
@@ -4854,9 +4854,9 @@ redux-devtools-instrument@^1.0.1:
     lodash "^4.2.0"
     symbol-observable "^0.2.4"
 
-redux-devtools-log-monitor@^1.0.11:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/redux-devtools-log-monitor/-/redux-devtools-log-monitor-1.1.1.tgz#6d6c731e239934e4306765c256d9e1c1efd72e3c"
+redux-devtools-log-monitor@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/redux-devtools-log-monitor/-/redux-devtools-log-monitor-1.2.0.tgz#136a202f999c659a13fbb5c50793106e80722311"
   dependencies:
     lodash.debounce "^4.0.4"
     react-json-tree "^0.10.0"
@@ -5369,9 +5369,9 @@ stylelint-config-standard@^15.0.1:
   version "15.0.1"
   resolved "https://registry.yarnpkg.com/stylelint-config-standard/-/stylelint-config-standard-15.0.1.tgz#f588e036bca6bb52391ea784198e773a9ca70efe"
 
-stylelint@^7.7.0:
-  version "7.7.0"
-  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-7.7.0.tgz#bf222c2a202c0b02d7834ad321fe0883d33cfde0"
+stylelint@^7.7.1:
+  version "7.7.1"
+  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-7.7.1.tgz#af30b6677e307d38b0ad64b70e719c1752973c67"
   dependencies:
     autoprefixer "^6.0.0"
     balanced-match "^0.4.0"
@@ -5389,7 +5389,7 @@ stylelint@^7.7.0:
     lodash "^4.0.0"
     log-symbols "^1.0.2"
     meow "^3.3.0"
-    multimatch "^2.1.0"
+    micromatch "^2.3.11"
     normalize-selector "^0.2.0"
     postcss "^5.0.20"
     postcss-less "^0.14.0"
@@ -5783,9 +5783,9 @@ webpack-dev-middleware@^1.9.0:
     path-is-absolute "^1.0.0"
     range-parser "^1.0.3"
 
-webpack-hot-middleware@^2.14.0:
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/webpack-hot-middleware/-/webpack-hot-middleware-2.14.0.tgz#64bb8cf056ba84c699d148840ae77e54179abb6d"
+webpack-hot-middleware@^2.15.0:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/webpack-hot-middleware/-/webpack-hot-middleware-2.15.0.tgz#71995af7c0025f109df482f86f1e10379526d026"
   dependencies:
     ansi-html "0.0.6"
     html-entities "^1.2.0"

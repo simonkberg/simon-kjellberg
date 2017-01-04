@@ -51,7 +51,7 @@
     "morgan": "^1.7.0",
     "ms": "^0.7.1",
     "newrelic": "^1.36.0",
-    "normalizr": "^3.0.0",
+    "normalizr": "^3.0.1",
     "raf": "^3.2.0",
     "react": "^15.4.1",
     "react-addons-css-transition-group": "^15.4.1",
@@ -97,15 +97,15 @@
     "react-hot-loader": "3.0.0-beta.6",
     "redux-devtools": "^3.3.1",
     "redux-devtools-dock-monitor": "^1.1.1",
-    "redux-devtools-log-monitor": "^1.0.11",
-    "stylelint": "^7.7.0",
+    "redux-devtools-log-monitor": "^1.2.0",
+    "stylelint": "^7.7.1",
     "stylelint-config-standard": "^15.0.1",
     "sw-precache-webpack-plugin": "^0.7.1",
     "url-loader": "^0.5.7",
     "webpack": "^2.2.0-rc.3",
     "webpack-bundle-analyzer": "^2.2.1",
     "webpack-dev-middleware": "^1.9.0",
-    "webpack-hot-middleware": "^2.14.0",
+    "webpack-hot-middleware": "^2.15.0",
     "webpack-node-externals": "^1.2.0"
   }
 }
