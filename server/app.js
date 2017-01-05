@@ -11,7 +11,7 @@ const webpackConfig = require('../webpack/config.client')
 const reactServer = require('../build/server').default
 const api = require('./api')
 
-module.exports = function appServer (nr = null) {
+module.exports = function appServer ({ nr }) {
   const app = express()
   const dev = app.get('env') !== 'production'
 
@@ -57,11 +57,13 @@ module.exports = function appServer (nr = null) {
   app.use(expressWebpackAssets(manifest, { devMode: dev }))
 
   if (dev) {
+    const debug = require('debug')
     const webpack = require('webpack')
     const webpackDevMiddleware = require('webpack-dev-middleware')
     const webpackHotMiddleware = require('webpack-hot-middleware')
     const config = webpackConfig()
     const compiler = webpack(config)
+    const log = debug('sk:app')
 
     app.use(webpackDevMiddleware(compiler, {
       noInfo: true,
@@ -71,7 +73,7 @@ module.exports = function appServer (nr = null) {
       },
     }))
 
-    app.use(webpackHotMiddleware(compiler))
+    app.use(webpackHotMiddleware(compiler, { log }))
   }
 
   app.use(reactServer())

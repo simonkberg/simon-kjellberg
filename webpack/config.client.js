@@ -58,7 +58,7 @@ module.exports = function clientConfig (opts = {}) {
         verbose: false,
       }),
       new BundleAnalyzerPlugin({
-        analyzerMode: isDev ? 'static' : 'static',
+        analyzerMode: isDev ? 'static' : 'disabled',
         openAnalyzer: false,
       }),
     ],
