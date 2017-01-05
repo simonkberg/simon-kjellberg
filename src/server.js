@@ -1,8 +1,8 @@
 import 'isomorphic-fetch'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import match from 'react-router/es/match'
-import RouterContext from 'react-router/es/RouterContext'
+import match from 'react-router/lib/match'
+import RouterContext from 'react-router/lib/RouterContext'
 import Root, { routes, actions, configureStore } from 'root'
 import htmlHelper from 'helpers/html'
 

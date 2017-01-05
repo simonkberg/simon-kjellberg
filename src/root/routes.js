@@ -1,6 +1,6 @@
 import React from 'react'
-import Route from 'react-router/es/Route'
-import IndexRoute from 'react-router/es/IndexRoute'
+import Route from 'react-router/lib/Route'
+import IndexRoute from 'react-router/lib/IndexRoute'
 
 import App from 'app'
 import Landing from 'landing'
