@@ -1,5 +1,12 @@
 const path = require('path')
-const webpack = require('webpack')
+
+const {
+  DefinePlugin,
+  HotModuleReplacementPlugin,
+  optimize: {
+    UglifyJsPlugin,
+  },
+} = require('webpack')
 
 const paths = {}
 
@@ -30,7 +37,7 @@ function getPlugins (opts = {}) {
   } = opts
 
   let plugins = [
-    new webpack.DefinePlugin({
+    new DefinePlugin({
       'process.env': {
         NODE_ENV: `"${env || 'development'}"`,
         GA_ID: `"${gaid || ''}"`,
@@ -41,24 +48,19 @@ function getPlugins (opts = {}) {
   ]
 
   if (env === 'production') {
-    plugins.push(...[
-      new webpack.LoaderOptionsPlugin({
-        minimize: true,
-        debug: false,
-      }),
-      new webpack.optimize.UglifyJsPlugin({
+    plugins.push(
+      new UglifyJsPlugin({
         compress: {
           warnings: false,
           drop_console: true,
         },
         output: { comments: false },
-      }),
-    ])
+      })
+    )
   } else {
-    plugins.push(...[
-      new webpack.LoaderOptionsPlugin({ debug: true }),
-      new webpack.HotModuleReplacementPlugin(),
-    ])
+    plugins.push(
+      new HotModuleReplacementPlugin()
+    )
   }
 
   return plugins
@@ -87,6 +89,7 @@ function getLoaders (opts = {}) {
         loader: 'css',
         options: {
           modules: true,
+          minimize: !isDev,
           sourceMap: isDev,
           importLoaders: 1,
           localIdentName: isDev

@@ -3,7 +3,9 @@ import 'isomorphic-fetch'
 
 import React from 'react'
 import { render } from 'react-dom'
-import { Router, match, browserHistory as history } from 'react-router'
+import Router from 'react-router/es/Router'
+import match from 'react-router/es/match'
+import history from 'react-router/es/browserHistory'
 import { AppContainer } from 'react-hot-loader'
 import Immutable from 'immutable'
 import { client } from 'helpers/isoState'
@@ -36,7 +38,7 @@ match({ history, routes }, (error, redirect, props) => {
       ReactGA.pageview(window.location.pathname)
     }
 
-    render(
+    const renderApp = () => render(
       <AppContainer>
         <Root store={store} context={context}>
           <Router {...props} />
@@ -45,17 +47,10 @@ match({ history, routes }, (error, redirect, props) => {
       container
     )
 
+    renderApp()
+
     if (module.hot) {
-      module.hot.accept('root', () => {
-        render(
-          <AppContainer>
-            <Root store={store} context={context}>
-              <Router {...props} />
-            </Root>
-          </AppContainer>,
-          container
-        )
-      })
+      module.hot.accept('root', () => renderApp)
     }
   })
 })

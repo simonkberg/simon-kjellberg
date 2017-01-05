@@ -25,6 +25,10 @@ module.exports = function serverConfig (opts = {}) {
       libraryTarget: 'commonjs2',
     },
 
+    resolve: Object.assign({}, config.resolve, {
+      mainFields: ['module', 'jesnext:main', 'main'],
+    }),
+
     externals: [nodeExternals()],
 
     node: {

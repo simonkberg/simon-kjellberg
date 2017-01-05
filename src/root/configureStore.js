@@ -1,6 +1,4 @@
 import { createStore, applyMiddleware, compose } from 'redux'
-import { batchedSubscribe } from 'redux-batched-subscribe'
-import { unstable_batchedUpdates as batchedUpdates } from 'react-dom'
 import thunkMiddleware from 'redux-thunk'
 import Immutable from 'immutable'
 import rootReducer from './reducers'
@@ -16,7 +14,6 @@ function getMiddleware () {
 function getEnhancer () {
   const args = [
     getMiddleware(),
-    batchedSubscribe(batchedUpdates),
   ]
 
   if (__DEV__) {

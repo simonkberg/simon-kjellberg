@@ -1,5 +1,5 @@
 import React, { Component, PropTypes } from 'react'
-import { routerShape, locationShape } from 'react-router'
+import { routerShape, locationShape } from 'react-router/es/PropTypes'
 import { connect } from 'react-redux'
 import getDisplayName from './getDisplayName'
 

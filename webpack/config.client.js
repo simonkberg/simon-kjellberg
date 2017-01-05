@@ -1,11 +1,10 @@
-const webpack = require('webpack')
 const path = require('path')
+const { CommonsChunkPlugin } = require('webpack').optimize
 const AssetsPlugin = require('assets-webpack-plugin')
 const SWPrecachePlugin = require('sw-precache-webpack-plugin')
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
-const sharedConfig = require('./config.shared')
 
-const { CommonsChunkPlugin } = webpack.optimize
+const sharedConfig = require('./config.shared')
 const { paths, getEntry } = sharedConfig
 
 module.exports = function clientConfig (opts = {}) {
@@ -17,7 +16,7 @@ module.exports = function clientConfig (opts = {}) {
   const isDev = opts.env !== 'production'
   const config = sharedConfig(opts)
 
-  return Object.assign(config, {
+  return Object.assign({}, config, {
     name: 'client',
     target: 'web',
 
@@ -27,14 +26,18 @@ module.exports = function clientConfig (opts = {}) {
         isDev
       ),
       vendor: [
-        'react',
+        'immutable',
+        'react-addons-css-transition-group',
         'react-dom',
-        'react-router',
+        'react-ga',
+        'react-helmet',
         'react-motion',
         'react-redux',
-        'react-helmet',
-        'immutable',
-        'react-ga',
+        'react',
+        'redux-immutable',
+        'redux-thunk',
+        'redux',
+        'reselect',
       ],
     },
 
@@ -55,9 +58,13 @@ module.exports = function clientConfig (opts = {}) {
         verbose: false,
       }),
       new BundleAnalyzerPlugin({
-        analyzerMode: isDev ? 'static' : 'disabled',
+        analyzerMode: isDev ? 'static' : 'static',
         openAnalyzer: false,
       }),
     ],
+
+    resolve: Object.assign({}, config.resolve, {
+      mainFields: ['browser', 'module', 'jesnext:main', 'main'],
+    }),
   })
 }
