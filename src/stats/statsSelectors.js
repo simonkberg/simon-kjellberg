@@ -7,14 +7,24 @@ export const getStatsIds = createSelector(
   stats => stats.toArray()
 )
 
-const getStatsEntitiesState = state => state.getIn(['stats', 'entities'])
+const getStatsEntitiesState = state =>
+  state.getIn(['stats', 'entities'])
 
 export const getStatsEntities = createSelector(
   getStatsEntitiesState,
   entities => entities.toJS()
 )
 
-const getStatsEntityState = (state, { id }) => state.getIn(['stats', 'entities', id])
+export const getSortedStatsIds = createSelector(
+  getStatsIds,
+  getStatsEntities,
+  (ids, entities) => ids.sort(
+    (a, b) => entities[b].percent - entities[a].percent
+  )
+)
+
+const getStatsEntityState = (state, { id }) =>
+  state.getIn(['stats', 'entities', id])
 
 export const makeGetStatsEntity = () =>
   createSelector(

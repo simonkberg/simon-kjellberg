@@ -16,10 +16,10 @@ const gaId = process.env.GA_ID
 
 if (__DEV__) {
   window.Perf = require('react-addons-perf')
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
+} else {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+  }
 }
 
 if (gaId) {

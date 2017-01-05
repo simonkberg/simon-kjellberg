@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import Loader from 'shared/components/loader'
 
 import * as statsActions from './statsActions'
-import { getStatsIds } from './statsSelectors'
+import { getSortedStatsIds } from './statsSelectors'
 import StatsItem from './StatsItem'
 
 const { array, func } = PropTypes
@@ -39,7 +39,7 @@ export class Stats extends PureComponent {
 }
 
 const mapStateToProps = (state) => ({
-  statsIds: getStatsIds(state),
+  statsIds: getSortedStatsIds(state),
 })
 
 const mapDispatchToProps = (dispatch) =>
