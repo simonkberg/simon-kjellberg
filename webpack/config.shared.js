@@ -31,16 +31,18 @@ function getEntry (entry, hot = false) {
 
 function getPlugins (opts = {}) {
   const {
-    env = process.env.NODE_ENV,
-    gaid = process.env.GA_ID,
+    env = process.env.NODE_ENV || 'development',
+    gaid = process.env.GA_ID || '',
+    debug = process.env.DEBUG || '',
     browser,
   } = opts
 
   let plugins = [
     new DefinePlugin({
       'process.env': {
-        NODE_ENV: `"${env || 'development'}"`,
-        GA_ID: `"${gaid || ''}"`,
+        NODE_ENV: `"${env}"`,
+        DEBUG: `"${debug}"`,
+        GA_ID: `"${gaid}"`,
       },
       '__DEV__': env !== 'production',
       '__BROWSER__': !!browser,
@@ -50,10 +52,7 @@ function getPlugins (opts = {}) {
   if (env === 'production') {
     plugins.push(
       new UglifyJsPlugin({
-        compress: {
-          warnings: false,
-          drop_console: true,
-        },
+        compress: { warnings: false },
         output: { comments: false },
       })
     )

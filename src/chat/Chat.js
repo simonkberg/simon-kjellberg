@@ -4,6 +4,7 @@ import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import withSocket from 'helpers/withSocket'
 import withStyles from 'helpers/withStyles'
+import log from 'helpers/log'
 
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
@@ -47,11 +48,11 @@ export class Chat extends PureComponent {
   }
 
   onSocketError = event => {
-    console.error('Socket Error', event)
+    log('Socket Error', event)
   }
 
   onSocketMessage = (event, data) => {
-    console.log('Socket Message', event)
+    log('Socket Message', event)
 
     const { removeChatMessage, addChatMessage } = this.props
 
