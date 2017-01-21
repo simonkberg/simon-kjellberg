@@ -60,6 +60,7 @@ module.exports = function clientConfig (opts = {}) {
       new BundleAnalyzerPlugin({
         analyzerMode: isDev ? 'static' : 'disabled',
         openAnalyzer: false,
+        logLevel: 'error',
       }),
     ],
 
