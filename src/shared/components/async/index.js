@@ -1,3 +1,1 @@
-import AsyncComponent from './AsyncComponent'
-
-export default AsyncComponent
+export default from './AsyncComponent'

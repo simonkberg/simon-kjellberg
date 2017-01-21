@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { Motion, spring, presets } from 'react-motion'
-import { makeGetStatsEntity } from './statsSelectors'
+import { getStatsItem } from './statsSelectors'
 
 const StatsItem = ({ id, name, percent }) => {
   const target = spring(percent, presets.noWobble)
@@ -22,11 +22,8 @@ StatsItem.propTypes = {
   percent: PropTypes.number,
 }
 
-const makeMapStateToProps = () => {
-  const getStatsEntity = makeGetStatsEntity()
-  return (state, props) => ({
-    ...getStatsEntity(state, props),
-  })
-}
+const mapStateToProps = (state, props) => ({
+  ...getStatsItem(state, props),
+})
 
-export default connect(makeMapStateToProps)(StatsItem)
+export default connect(mapStateToProps)(StatsItem)

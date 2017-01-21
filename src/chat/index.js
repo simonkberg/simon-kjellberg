@@ -1,7 +1,4 @@
-
-import Chat from './Chat'
-
-export default Chat
+export default from './Chat'
 export ChatAsync from './ChatAsync'
 export ChatMessage from './ChatMessage'
 export ChatMessageList from './ChatMessageList'

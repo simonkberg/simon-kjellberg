@@ -5,7 +5,7 @@ import withStyles from 'helpers/withStyles'
 import Styles from './NotFound.css'
 
 const head = { title: '404' }
-const shrug = '¯\_(ツ)_/¯' // eslint-disable-line no-useless-escape
+const shrug = '\xAF_(\u30C4)_/\xAF'
 
 export const NotFound = ({ styles }) => (
   <div className={styles.notFound}>

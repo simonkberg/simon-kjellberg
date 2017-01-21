@@ -2,11 +2,7 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import SlackMessage from 'helpers/slackMessage'
 import colorHash from 'helpers/colorHash'
-
-import {
-  makeGetChatMessageEntity,
-  makeGetChatUserEntity,
-} from './chatSelectors'
+import { getChatMessage, getChatUser } from './chatSelectors'
 
 export const ChatMessage = ({ message = {}, user = 'anon', styles }) => {
   const isUserString = typeof user === 'string'
@@ -35,16 +31,11 @@ ChatMessage.propTypes = {
   styles: PropTypes.object.isRequired,
 }
 
-const makeMapStateToProps = () => {
-  const getChatMessageEntity = makeGetChatMessageEntity()
-  const getChatUserEntity = makeGetChatUserEntity()
+const mapStateToProps = (state, { id }) => {
+  const message = getChatMessage(state, id)
+  const user = message.username || getChatUser(state, message.user)
 
-  return (state, { id }) => {
-    const message = getChatMessageEntity(state, id)
-    const user = message.username || getChatUserEntity(state, message.user)
-
-    return {message, user}
-  }
+  return {message, user}
 }
 
-export default connect(makeMapStateToProps)(ChatMessage)
+export default connect(mapStateToProps)(ChatMessage)

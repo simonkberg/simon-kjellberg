@@ -1,5 +1,2 @@
-
-import SlackMessage from './Component'
-
-export default SlackMessage
+export default from './Component'
 export parser from './parser'

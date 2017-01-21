@@ -22,6 +22,7 @@ export default function parser (input, {
 
   return output
 }
+
 export {
   textParser,
   emojiParser,

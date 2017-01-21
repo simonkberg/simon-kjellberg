@@ -1,7 +1,4 @@
-
-import Stats from './Stats'
-
-export default Stats
+export default from './Stats'
 export StatsItem from './StatsItem'
 export statsReducer from './statsReducer'
 export * as statsSchema from './statsSchema'
