@@ -5,13 +5,14 @@ const { func, object } = PropTypes
 class ChatInput extends Component {
   static propTypes = {
     styles: object,
-    sendMessage: func,
-    openChat: func,
+    sendMessage: func.isRequired,
+    openChat: func.isRequired,
   }
 
   state = { value: '' }
 
-  onChange = ({ target: { value } }) => this.setState({ value })
+  onChange = ({ target: { value } }) =>
+    this.setState({ value })
 
   onSubmit = event => {
     event.preventDefault()
@@ -21,18 +22,27 @@ class ChatInput extends Component {
   }
 
   render () {
+    const { value } = this.state
+    const { styles, openChat } = this.props
+
+    const form = {
+      className: styles.form,
+      onSubmit: this.onSubmit,
+      autoComplete: 'off',
+    }
+
     const input = {
-      className: this.props.styles.input,
+      className: styles.input,
       type: 'text',
       name: 'message',
       placeholder: 'Type a message...',
-      value: this.state.value,
-      onFocus: this.props.openChat,
+      onFocus: openChat,
       onChange: this.onChange,
+      value,
     }
 
     return (
-      <form onSubmit={this.onSubmit} autoComplete='off'>
+      <form {...form}>
         <input {...input} />
       </form>
     )

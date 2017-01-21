@@ -1,6 +1,5 @@
 import React, { PureComponent, PropTypes } from 'react'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
-import { findDOMNode } from 'react-dom'
 import classNames from 'classnames'
 import raf from 'raf'
 import { connect } from 'react-redux'
@@ -20,7 +19,7 @@ class ChatMessageList extends PureComponent {
   }
 
   raf = null
-  list = null
+  wrapper = null
   shouldScroll = true
 
   componentDidMount () {
@@ -28,10 +27,10 @@ class ChatMessageList extends PureComponent {
   }
 
   componentWillUpdate () {
-    if (this.list) {
-      const maxScroll = this.list.scrollTop + this.list.offsetHeight
+    if (this.wrapper) {
+      const maxScroll = this.wrapper.scrollTop + this.wrapper.offsetHeight
 
-      this.shouldScroll = maxScroll === this.list.scrollHeight
+      this.shouldScroll = maxScroll === this.wrapper.scrollHeight
     }
   }
 
@@ -59,25 +58,28 @@ class ChatMessageList extends PureComponent {
   }
 
   scrollToBottom = () => {
-    if (this.list) {
-      this.list.scrollTop = this.list.scrollHeight
+    if (this.wrapper) {
+      this.wrapper.scrollTop = this.wrapper.scrollHeight
     }
   }
 
-  setListRef = (el) => {
-    this.list = findDOMNode(el)
+  setWrapperRef = el => {
+    this.wrapper = el
   }
 
   render () {
     const { open, styles, messageIds } = this.props
+
+    const wrapper = {
+      className: styles.messageListWrapper,
+      ref: this.setWrapperRef,
+    }
 
     const list = {
       component: 'ul',
       className: classNames(styles.messageList, {
         [styles.messageListOpen]: open,
       }),
-      ref: this.setListRef,
-      onTransitionEnd: this.cancelAnimation,
       transitionAppear: true,
       transitionName: {
         enter: styles.messageEnter,
@@ -93,9 +95,11 @@ class ChatMessageList extends PureComponent {
     }
 
     return (
-      <div className={styles.messageListWrapper}>
+      <div {...wrapper}>
         <ReactCSSTransitionGroup {...list}>
-          {messageIds.map(id => <ChatMessage key={id} id={id} styles={styles} />)}
+          {messageIds.map(id =>
+            <ChatMessage key={id} id={id} styles={styles} />
+          )}
         </ReactCSSTransitionGroup>
       </div>
     )
@@ -106,4 +110,9 @@ const mapStateToProps = (state) => ({
   messageIds: getChatMessageIds(state),
 })
 
-export default connect(mapStateToProps)(ChatMessageList)
+export default connect(
+  mapStateToProps,
+  null,
+  null,
+  { withRef: true }
+)(ChatMessageList)
