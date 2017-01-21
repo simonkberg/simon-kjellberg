@@ -29,7 +29,7 @@ class Root extends Component {
   }
 
   componentDidMount () {
-    if (__DEV__) {
+    if (__DEV__ && !window.__REDUX_DEVTOOLS_EXTENSION__) {
       // Enable dev tools for client after mount
       this.setState({ DevTools: require('./DevTools').default })
     }

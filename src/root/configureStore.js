@@ -3,6 +3,11 @@ import thunkMiddleware from 'redux-thunk'
 import Immutable from 'immutable'
 import rootReducer from './reducers'
 
+const devToolsCompose = __DEV__ &&
+  typeof window !== 'undefined' &&
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+const composeEnhancers = devToolsCompose || compose
+
 function getMiddleware () {
   const middleware = [
     thunkMiddleware,
@@ -16,13 +21,13 @@ function getEnhancer () {
     getMiddleware(),
   ]
 
-  if (__DEV__) {
+  if (__DEV__ && !devToolsCompose) {
     const DevTools = require('./DevTools').default
 
     args.push(DevTools.instrument())
   }
 
-  return compose(...args)
+  return composeEnhancers(...args)
 }
 
 export default function configureStore (initialState = Immutable.Map()) {
