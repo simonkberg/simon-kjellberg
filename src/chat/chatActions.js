@@ -46,10 +46,16 @@ export const fetchChatHistoryError = error => ({
 })
 
 export const ADD_CHAT_MESSAGE = 'ADD_CHAT_MESSAGE'
+export const UPDATE_CHAT_MESSAGE = 'UPDATE_CHAT_MESSAGE'
 export const REMOVE_CHAT_MESSAGE = 'REMOVE_CHAT_MESSAGE'
 
 export const addChatMessage = message => ({
   type: ADD_CHAT_MESSAGE,
+  response: normalize(message, Schema.CHAT_MESSAGE),
+})
+
+export const updateChatMessage = message => ({
+  type: UPDATE_CHAT_MESSAGE,
   response: normalize(message, Schema.CHAT_MESSAGE),
 })
 

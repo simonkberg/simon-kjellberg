@@ -8,6 +8,7 @@ import {
   FETCH_CHAT_HISTORY_SUCCESS,
   FETCH_CHAT_HISTORY_ERROR,
   ADD_CHAT_MESSAGE,
+  UPDATE_CHAT_MESSAGE,
   REMOVE_CHAT_MESSAGE,
   FETCH_CHAT_USERS,
   FETCH_CHAT_USERS_SUCCESS,
@@ -46,6 +47,7 @@ const entities = reducerMap({
   [FETCH_CHAT_HISTORY_SUCCESS]: mergeEntities,
   [FETCH_CHAT_USERS_SUCCESS]: mergeEntities,
   [ADD_CHAT_MESSAGE]: mergeEntities,
+  [UPDATE_CHAT_MESSAGE]: mergeEntities,
 }, initialState.entities)
 
 const messages = reducerMap({

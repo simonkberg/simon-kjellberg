@@ -24,6 +24,7 @@ export class Chat extends PureComponent {
     loadChatHistory: func,
     loadChatUsers: func,
     addChatMessage: func,
+    updateChatMessage: func,
     removeChatMessage: func,
     openChat: func,
     closeChat: func,
@@ -54,10 +55,21 @@ export class Chat extends PureComponent {
   onSocketMessage = (event, data) => {
     log('Socket Message', event)
 
-    const { removeChatMessage, addChatMessage } = this.props
+    const {
+      removeChatMessage,
+      updateChatMessage,
+      addChatMessage,
+    } = this.props
 
-    if (data.subtype && data.subtype === 'message_deleted') {
-      removeChatMessage(data)
+    if (data.subtype) {
+      switch (data.subtype) {
+        case 'message_deleted':
+          removeChatMessage(data)
+          break
+        case 'message_changed':
+          updateChatMessage(data)
+          break
+      }
     } else {
       addChatMessage(data)
     }
