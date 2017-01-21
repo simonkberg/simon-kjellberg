@@ -21,10 +21,12 @@ export default class AsyncComponent extends Component {
   }
 
   render () {
+    // eslint-disable-next-line no-unused-vars
+    const { loader, placeholder, ...props } = this.props
     const { component: Component } = this.state
 
     return Component
-      ? <Component />
-      : this.props.placeholder()
+      ? <Component {...props} />
+      : this.props.placeholder(props)
   }
 }
