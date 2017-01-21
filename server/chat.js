@@ -1,7 +1,9 @@
 
+const debug = require('debug')
 const Server = require('ws').Server
 const randomName = require('./lib/randomName')
 const slack = require('./lib/slack')
+const log = debug('sk:chat')
 
 const { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } = slack
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
@@ -14,7 +16,11 @@ module.exports = function chatServer (server) {
   wss.on('connection', ws => {
     const username = randomName()
 
+    log(`${username} connected`)
+
     ws.on('message', (message) => {
+      log(`${username}: ${message}`)
+
       web.chat.postMessage(SLACK_CHAT_CHANNEL, message, {
         parse: 'full',
         username: username,
@@ -27,6 +33,8 @@ module.exports = function chatServer (server) {
 
     rtmClient.on(RTM_EVENTS.MESSAGE, message => {
       if (message.channel === chat.id) {
+        log(RTM_EVENTS.MESSAGE, message)
+
         if (message.text === '!clear') {
           web.im.history(chat.id).then(({ messages }) => {
             return messages.map(msg => {
@@ -45,8 +53,27 @@ module.exports = function chatServer (server) {
 }
 
 function sendMessage (client, params) {
-  const { subtype, username, user, text, ts } = params
-  const payload = { subtype, username, user, text, ts }
+  const {
+    subtype,
+    username,
+    user,
+    text,
+    ts,
+    thread_ts,
+    reply_count,
+    replies,
+  } = params
+
+  const payload = {
+    subtype,
+    username,
+    user,
+    text,
+    ts,
+    thread_ts,
+    reply_count,
+    replies,
+  }
 
   payload.edited = !!params.edited
 
@@ -61,6 +88,16 @@ function sendMessage (client, params) {
     payload.text = message.text
     payload.ts = message.ts
     payload.edited = true
+  }
+
+  if (subtype === 'message_replied') {
+    const { message } = params
+
+    payload.user = message.user
+    payload.text = message.text
+    payload.ts = message.ts
+    payload.reply_count = message.reply_count
+    payload.replies = message.replies
   }
 
   client.send(JSON.stringify(payload), err => {

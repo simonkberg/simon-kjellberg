@@ -61,17 +61,16 @@ export class Chat extends PureComponent {
       addChatMessage,
     } = this.props
 
-    if (data.subtype) {
-      switch (data.subtype) {
-        case 'message_deleted':
-          removeChatMessage(data)
-          break
-        case 'message_changed':
-          updateChatMessage(data)
-          break
-      }
-    } else {
-      addChatMessage(data)
+    switch (data.subtype) {
+      case 'message_deleted':
+        removeChatMessage(data)
+        break
+      case 'message_changed':
+      case 'message_replied':
+        updateChatMessage(data)
+        break
+      default:
+        addChatMessage(data)
     }
   }
 
