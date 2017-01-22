@@ -2,3 +2,14 @@
 .landing {
   position: relative;
 }
+
+.linkWrapper {
+  white-space: nowrap;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.link {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

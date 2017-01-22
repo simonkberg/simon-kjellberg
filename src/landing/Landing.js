@@ -10,7 +10,7 @@ export const Landing = ({ styles }) => (
   <div className={styles.landing}>
     <LandingIntro />
     <LandingStats />
-    <LandingLinks />
+    <LandingLinks styles={styles} />
   </div>
 )
 
