@@ -3,21 +3,23 @@ import { connect } from 'react-redux'
 import SlackMessage from 'helpers/slackMessage'
 import colorHash from 'helpers/colorHash'
 import { getChatMessage, getChatUser } from './chatSelectors'
+import ChatMessageThread from './ChatMessageThread'
 
-export const ChatMessage = ({ message = {}, user = 'anon', styles }) => {
-  const isUserString = typeof user === 'string'
-  const username = isUserString ? user : user.name
-  const color = isUserString ? colorHash(username) : `#${user.color}`
+export const ChatMessage = ({ message = {}, user = {}, styles }) => {
+  const { ts, text, edited, replies } = message
+  const { name } = user
 
   return (
     <li className={styles.message}>
-      <strong style={{color: color}}>{username}: </strong>
+      <strong style={{color: colorHash(name)}}>{name}: </strong>
       <SlackMessage emojiClassName={styles.messageEmoji}>
-        {message.text}
+        {text}
       </SlackMessage>
       {' '}
-      {message.edited &&
+      {edited &&
         <small className={styles.messageEdited}>(edited)</small>}
+      {replies &&
+        <ChatMessageThread id={ts} styles={styles} />}
     </li>
   )
 }
@@ -33,7 +35,10 @@ ChatMessage.propTypes = {
 
 const mapStateToProps = (state, { id }) => {
   const message = getChatMessage(state, id)
-  const user = message.username || getChatUser(state, message.user)
+  const name = message.username
+  const user = name !== void 0
+    ? { name }
+    : getChatUser(state, message.user)
 
   return {message, user}
 }

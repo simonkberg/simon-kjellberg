@@ -9,7 +9,7 @@ import log from 'helpers/log'
 import ChatMessageList from './ChatMessageList'
 import ChatInput from './ChatInput'
 import * as chatActions from './chatActions'
-import { getChatOpen, getChatLoading } from './chatSelectors'
+import { getChatLoading } from './chatSelectors'
 import Styles from './Chat.css'
 
 const { object, func, bool } = PropTypes
@@ -17,7 +17,6 @@ const { object, func, bool } = PropTypes
 export class Chat extends PureComponent {
   static propTypes = {
     styles: object,
-    open: bool,
     messages: object,
     users: object,
     loading: bool,
@@ -26,20 +25,17 @@ export class Chat extends PureComponent {
     addChatMessage: func,
     updateChatMessage: func,
     removeChatMessage: func,
-    openChat: func,
-    closeChat: func,
     socket: object,
     socketOpen: bool,
   }
 
   static defaultProps = {
-    open: false,
     messages: {},
     users: {},
     loading: false,
   }
 
-  _socket = null
+  state = { open: __DEV__ }
 
   componentDidMount () {
     const { loadChatHistory, loadChatUsers } = this.props
@@ -47,6 +43,10 @@ export class Chat extends PureComponent {
     loadChatHistory()
     loadChatUsers()
   }
+
+  openChat = () => this.setState({ open: true })
+  closeChat = () => this.setState({ open: false })
+  toggleChat = () => this.setState(state => ({ open: !state.open }))
 
   onSocketError = event => {
     log('Socket Error', event)
@@ -93,7 +93,8 @@ export class Chat extends PureComponent {
   }
 
   render () {
-    const { styles, open, loading, openChat, closeChat, socketOpen } = this.props
+    const { open } = this.state
+    const { styles, loading, socketOpen } = this.props
 
     if (!socketOpen) return null
 
@@ -109,20 +110,19 @@ export class Chat extends PureComponent {
         [styles.toggleOpen]: open === false,
         [styles.toggleClose]: open === true,
       }),
-      onClick: open
-        ? closeChat
-        : openChat,
+      onClick: this.toggleChat,
     }
 
     const list = {
       ...this.props,
       ref: this.setListRef,
+      open,
     }
 
     const input = {
       sendMessage: this.sendMessage,
+      openChat: this.openChat,
       styles,
-      openChat,
     }
 
     return (
@@ -144,7 +144,6 @@ const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(Styles)(WithSocket)
 
 const mapStateToProps = (state) => ({
-  open: getChatOpen(state),
   loading: getChatLoading(state),
 })
 

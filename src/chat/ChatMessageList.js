@@ -1,11 +1,10 @@
 import React, { PureComponent, PropTypes } from 'react'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
-import classNames from 'classnames'
 import raf from 'raf'
 import { connect } from 'react-redux'
 
 import ChatMessage from './ChatMessage'
-import { getChatMessageIds } from './chatSelectors'
+import { getMainChatMessageIds } from './chatSelectors'
 
 const { bool, object, array } = PropTypes
 
@@ -68,7 +67,7 @@ class ChatMessageList extends PureComponent {
   }
 
   render () {
-    const { open, styles, messageIds } = this.props
+    const { styles, messageIds } = this.props
 
     const wrapper = {
       className: styles.messageListWrapper,
@@ -77,9 +76,7 @@ class ChatMessageList extends PureComponent {
 
     const list = {
       component: 'ul',
-      className: classNames(styles.messageList, {
-        [styles.messageListOpen]: open,
-      }),
+      className: styles.messageList,
       transitionAppear: true,
       transitionName: {
         enter: styles.messageEnter,
@@ -107,7 +104,7 @@ class ChatMessageList extends PureComponent {
 }
 
 const mapStateToProps = (state) => ({
-  messageIds: getChatMessageIds(state),
+  messageIds: getMainChatMessageIds(state),
 })
 
 export default connect(

@@ -13,12 +13,9 @@ import {
   FETCH_CHAT_USERS,
   FETCH_CHAT_USERS_SUCCESS,
   FETCH_CHAT_USERS_ERROR,
-  OPEN_CHAT,
-  CLOSE_CHAT,
 } from './chatActions'
 
 const initialState = {
-  open: __DEV__,
   entities: Map({
     messages: Map(),
     users: Map(),
@@ -34,11 +31,6 @@ const initialState = {
     error: null,
   }),
 }
-
-const open = reducerMap({
-  [OPEN_CHAT]: () => true,
-  [CLOSE_CHAT]: () => false,
-}, initialState.open)
 
 const mergeEntities = (state, action) =>
   state.mergeDeep(action.response.entities)
@@ -87,7 +79,6 @@ const users = reducerMap({
 }, initialState.users)
 
 export default combineReducers({
-  open,
   entities,
   messages,
   users,
