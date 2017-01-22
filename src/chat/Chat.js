@@ -35,6 +35,8 @@ export class Chat extends PureComponent {
     loading: false,
   }
 
+  list = null
+  wrapper = null
   state = { open: __DEV__ }
 
   componentDidMount () {
@@ -42,11 +44,51 @@ export class Chat extends PureComponent {
 
     loadChatHistory()
     loadChatUsers()
+
+    if (this.state.open) {
+      this.bindDocumentClick()
+    }
   }
 
-  openChat = () => this.setState({ open: true })
-  closeChat = () => this.setState({ open: false })
-  toggleChat = () => this.setState(state => ({ open: !state.open }))
+  componentWillUnmount () {
+    this.unbindDocumentClick()
+  }
+
+  openChat = () =>
+    this.state.open === false &&
+      this.setState({ open: true }, this.bindDocumentClick)
+
+  closeChat = () =>
+    this.state.open === true &&
+      this.setState({ open: false }, this.unbindDocumentClick)
+
+  toggleChat = () => this.setState(
+    state => ({ open: !state.open }),
+    () => this.state.open
+      ? this.bindDocumentClick()
+      : this.unbindDocumentClick()
+  )
+
+  bindDocumentClick = () =>
+    document.addEventListener('click', this.onDocumentClick, {
+      passive: true,
+    })
+
+  unbindDocumentClick = () =>
+    document.removeEventListener('click', this.onDocumentClick, {
+      passive: true,
+    })
+
+  onDocumentClick = event => {
+    if (
+      this.state.open &&
+      this.wrapper &&
+      event.target !== this.wrapper &&
+      !this.wrapper.contains(event.target)
+    ) {
+      this.closeChat()
+    }
+  }
 
   onSocketError = event => {
     log('Socket Error', event)
@@ -88,6 +130,10 @@ export class Chat extends PureComponent {
     }
   }
 
+  setWrapperRef = el => {
+    this.wrapper = el
+  }
+
   setListRef = el => {
     this.list = el && el.getWrappedInstance()
   }
@@ -103,6 +149,7 @@ export class Chat extends PureComponent {
         [styles.isOpen]: !!open,
       }),
       onTransitionEnd: this.onTransitionEnd,
+      ref: this.setWrapperRef,
     }
 
     const button = {
@@ -128,7 +175,9 @@ export class Chat extends PureComponent {
     return (
       <div {...wrapper}>
         <button {...button}>
-          <span className={styles.toggleText}>{open ? 'Close' : 'Open'}</span>
+          <span className={styles.toggleText}>
+            {open ? 'Close' : 'Open'}
+          </span>
         </button>
         <div className={styles.container}>
           {!loading &&
