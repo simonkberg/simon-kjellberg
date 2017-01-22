@@ -77,10 +77,10 @@ export const getChatUsers = ca(
 
 export const getChatMessage = cas(
   getChatMessageState,
-  entity => entity.toObject()
+  entity => entity.toJS()
 )
 
 export const getChatUser = cas(
   getChatUserState,
-  entity => entity.toObject()
+  entity => entity.toJS()
 )

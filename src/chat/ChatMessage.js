@@ -18,7 +18,7 @@ export const ChatMessage = ({ message = {}, user = {}, styles }) => {
       {' '}
       {edited &&
         <small className={styles.messageEdited}>(edited)</small>}
-      {replies &&
+      {replies && replies.length > 0 &&
         <ChatMessageThread id={ts} styles={styles} />}
     </li>
   )

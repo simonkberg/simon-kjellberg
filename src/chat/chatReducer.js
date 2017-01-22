@@ -1,4 +1,4 @@
-import { Map, Set } from 'immutable'
+import { Map, Set, is } from 'immutable'
 import { combineReducers } from 'redux-immutable'
 
 import reducerMap from 'helpers/reducerMap'
@@ -32,14 +32,26 @@ const initialState = {
   }),
 }
 
-const mergeEntities = (state, action) =>
-  state.mergeDeep(action.response.entities)
+const mergeEntities = (state, {response}) =>
+  state.mergeDeep(response.entities)
 
 const entities = reducerMap({
   [FETCH_CHAT_HISTORY_SUCCESS]: mergeEntities,
   [FETCH_CHAT_USERS_SUCCESS]: mergeEntities,
   [ADD_CHAT_MESSAGE]: mergeEntities,
-  [UPDATE_CHAT_MESSAGE]: mergeEntities,
+  [UPDATE_CHAT_MESSAGE]: (state, {response}) =>
+    state.update(
+      'messages',
+      map => map.mergeWith(
+        (existing, value) =>
+          existing.mergeWith(
+            (existing, value) =>
+              is(existing, value) ? existing : value,
+            value
+          ),
+        response.entities.messages
+      )
+    ),
 }, initialState.entities)
 
 const messages = reducerMap({

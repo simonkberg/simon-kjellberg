@@ -1,5 +1,5 @@
-
 const debug = require('debug')
+const pick = require('lodash/pick')
 const Server = require('ws').Server
 const randomName = require('./lib/randomName')
 const slack = require('./lib/slack')
@@ -18,7 +18,7 @@ module.exports = function chatServer (server) {
 
     log(`${username} connected`)
 
-    ws.on('message', (message) => {
+    ws.on('message', message => {
       log(`${username}: ${message}`)
 
       web.chat.postMessage(SLACK_CHAT_CHANNEL, message, {
@@ -36,12 +36,12 @@ module.exports = function chatServer (server) {
         log(RTM_EVENTS.MESSAGE, message)
 
         if (message.text === '!clear') {
-          web.im.history(chat.id).then(({ messages }) => {
-            return messages.map(msg => {
-              return web.chat.delete(msg.ts, chat.id)
-              .catch(() => null)
-            })
-          }).catch(() => null)
+          web.im.history(chat.id).then(({messages}) =>
+            messages.map(msg =>
+              web.chat.delete(msg.ts, chat.id)
+                .catch(() => null)
+            )
+          ).catch(() => null)
         }
 
         wss.clients.forEach(client => sendMessage(client, message))
@@ -53,51 +53,46 @@ module.exports = function chatServer (server) {
 }
 
 function sendMessage (client, params) {
-  const {
-    subtype,
-    username,
-    user,
-    text,
-    ts,
-    thread_ts,
-    reply_count,
-    replies,
-  } = params
-
-  const payload = {
-    subtype,
-    username,
-    user,
-    text,
-    ts,
-    thread_ts,
-    reply_count,
-    replies,
-  }
+  const payload = pick(params, [
+    'subtype',
+    'username',
+    'user',
+    'text',
+    'ts',
+    'thread_ts',
+    'reply_count',
+    'replies',
+  ])
 
   payload.edited = !!params.edited
 
-  if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
+  if (payload.subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
     payload.ts = params.deleted_ts
   }
 
-  if (subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
-    const { message } = params
+  if (payload.subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
+    const message = Object.assign({}, params.previous_message, params.message)
 
-    payload.user = message.user
-    payload.text = message.text
-    payload.ts = message.ts
-    payload.edited = true
+    Object.assign(payload, pick(message, [
+      'user',
+      'text',
+      'ts',
+      'thread_ts',
+      'reply_count',
+      'replies',
+    ]))
+
+    payload.edited = !!message.edited
   }
 
-  if (subtype === 'message_replied') {
-    const { message } = params
-
-    payload.user = message.user
-    payload.text = message.text
-    payload.ts = message.ts
-    payload.reply_count = message.reply_count
-    payload.replies = message.replies
+  if (payload.subtype === 'message_replied') {
+    Object.assign(payload, pick(params.message, [
+      'user',
+      'text',
+      'ts',
+      'reply_count',
+      'replies',
+    ]))
   }
 
   client.send(JSON.stringify(payload), err => {
