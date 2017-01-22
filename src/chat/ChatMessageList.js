@@ -42,7 +42,7 @@ class ChatMessageList extends PureComponent {
   onScroll = event => {
     const { scrollTop, scrollHeight, offsetHeight } = this.wrapper
 
-    this.shouldScroll = (scrollTop + offsetHeight) === scrollHeight
+    this.shouldScroll = (scrollTop + offsetHeight) >= scrollHeight
   }
 
   onResize = entries => {
