@@ -124,18 +124,8 @@ export class Chat extends PureComponent {
     }
   }
 
-  onTransitionEnd = () => {
-    if (this.list) {
-      this.list.cancelAnimation()
-    }
-  }
-
   setWrapperRef = el => {
     this.wrapper = el
-  }
-
-  setListRef = el => {
-    this.list = el && el.getWrappedInstance()
   }
 
   render () {
@@ -148,7 +138,6 @@ export class Chat extends PureComponent {
       className: classNames(styles.wrapper, {
         [styles.isOpen]: !!open,
       }),
-      onTransitionEnd: this.onTransitionEnd,
       ref: this.setWrapperRef,
     }
 
@@ -158,12 +147,6 @@ export class Chat extends PureComponent {
         [styles.toggleClose]: open === true,
       }),
       onClick: this.toggleChat,
-    }
-
-    const list = {
-      ...this.props,
-      ref: this.setListRef,
-      open,
     }
 
     const input = {
@@ -181,7 +164,7 @@ export class Chat extends PureComponent {
         </button>
         <div className={styles.container}>
           {!loading &&
-            <ChatMessageList {...list} />}
+            <ChatMessageList {...this.props} />}
           <ChatInput {...input} />
         </div>
       </div>

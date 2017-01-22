@@ -1,6 +1,7 @@
 import React, { PureComponent, PropTypes } from 'react'
+import { findDOMNode } from 'react-dom'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
-import raf from 'raf'
+import ResizeObserver from 'resize-observer-polyfill'
 import { connect } from 'react-redux'
 
 import ChatMessage from './ChatMessage'
@@ -23,37 +24,31 @@ class ChatMessageList extends PureComponent {
 
   componentDidMount () {
     this.scrollToBottom()
-  }
 
-  componentWillUpdate () {
-    if (this.wrapper) {
-      const maxScroll = this.wrapper.scrollTop + this.wrapper.offsetHeight
+    this.observer = new ResizeObserver(this.onResize)
+    this.observer.observe(this.wrapper)
+    this.observer.observe(this.list)
 
-      this.shouldScroll = maxScroll === this.wrapper.scrollHeight
-    }
-  }
-
-  componentDidUpdate (prevProps) {
-    if (this.shouldScroll) {
-      setTimeout(this.scrollToBottom, 0)
-
-      if (prevProps.open !== this.props.open) {
-        this.startAnimation()
-      }
-    }
+    this.wrapper.addEventListener('scroll', this.onScroll, { passive: true })
   }
 
   componentWillUnmount () {
-    this.cancelAnimation()
+    this.observer.disconnect(this.wrapper)
+    this.observer.disconnect(this.list)
+
+    this.wrapper.removeEventListener('scroll', this.onScroll)
   }
 
-  startAnimation = () => {
-    this.scrollToBottom()
-    this.raf = raf(this.startAnimation)
+  onScroll = event => {
+    const { scrollTop, scrollHeight, offsetHeight } = this.wrapper
+
+    this.shouldScroll = (scrollTop + offsetHeight) === scrollHeight
   }
 
-  cancelAnimation = () => {
-    raf.cancel(this.raf)
+  onResize = entries => {
+    if (this.shouldScroll) {
+      this.scrollToBottom()
+    }
   }
 
   scrollToBottom = () => {
@@ -64,6 +59,10 @@ class ChatMessageList extends PureComponent {
 
   setWrapperRef = el => {
     this.wrapper = el
+  }
+
+  setListRef = el => {
+    this.list = el && findDOMNode(el)
   }
 
   render () {
@@ -89,6 +88,7 @@ class ChatMessageList extends PureComponent {
       transitionAppearTimeout: 500,
       transitionEnterTimeout: 500,
       transitionLeaveTimeout: 500,
+      ref: this.setListRef,
     }
 
     return (
