@@ -56,6 +56,7 @@ module.exports = function clientConfig (opts = {}) {
         cacheId: 'simon-kjellberg',
         filename: 'sw.js',
         verbose: false,
+        minify: true,
       }),
       new BundleAnalyzerPlugin({
         analyzerMode: isDev ? 'static' : 'disabled',
