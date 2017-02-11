@@ -24,7 +24,12 @@ module.exports = function appServer ({ nr }) {
   app.use(cookieParser())
   app.use(compression())
   app.use(express.static(path.join(__dirname, '../static'), { maxAge: '7 days' }))
-  app.use(express.static(path.join(__dirname, '../build'), { maxAge: '1 year' }))
+  app.use('/sw.js', express.static(path.join(__dirname, '../build/sw.js')))
+  app.use('/static', express.static(path.join(__dirname, '../build/static'), {
+    setHeaders: (res, path, stats) => {
+      res.set('Cache-Control', 'max-age=31536000, immutable')
+    },
+  }))
 
   // api
   app.use('/api', api)
