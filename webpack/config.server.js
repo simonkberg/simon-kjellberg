@@ -1,5 +1,4 @@
 const path = require('path')
-const nodeExternals = require('webpack-node-externals')
 const sharedConfig = require('./config.shared')
 
 const { paths } = sharedConfig
@@ -28,8 +27,6 @@ module.exports = function serverConfig (opts = {}) {
     resolve: Object.assign({}, config.resolve, {
       mainFields: ['module', 'jesnext:main', 'main'],
     }),
-
-    externals: [nodeExternals()],
 
     node: {
       __filename: true,
