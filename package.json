@@ -75,7 +75,7 @@
     "ws": "^2.1.0"
   },
   "devDependencies": {
-    "@simonkberg/eslint-config-react": "^7.0.0",
+    "@simonkberg/eslint-config-react": "^8.0.0",
     "assets-webpack-plugin": "^3.5.1",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.3.2",
