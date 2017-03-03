@@ -5,6 +5,7 @@
 :root {
   overflow: auto;
   font-family: var(--root-font-family);
+  line-height: 1.5;
   color: var(--root-color);
   background-color: var(--root-background-color);
 }
