@@ -21,7 +21,7 @@ const SlackMessage = ({
     },
   }
 
-  const __html = children && parser(children, parserOptions) || ''
+  const __html = (children && parser(children, parserOptions)) || ''
 
   return <Component dangerouslySetInnerHTML={{__html}} {...props} />
 }

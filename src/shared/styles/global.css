@@ -44,6 +44,7 @@ textarea {
   font-style: inherit;
   font-weight: inherit;
   line-height: inherit;
+  border-style: none;
 }
 
 code {

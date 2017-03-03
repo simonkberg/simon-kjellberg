@@ -90,6 +90,7 @@
 
 .input {
   width: 100%;
+  height: 1.5rem;
   color: gray;
   border-bottom: 1px solid lightgray;
   transition: border 0.3s, color 0.3s;
