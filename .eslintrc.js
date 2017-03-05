@@ -1,10 +1,5 @@
 module.exports = {
   extends: '@simonkberg/eslint-config-react',
-  rules: {
-    'object-curly-spacing': [0, 'always'],
-    'no-mixed-operators': 0,
-    'babel/semi': [2, 'never'],
-  },
   globals: {
     __DEV__: false,
     __BROWSER__: false,
