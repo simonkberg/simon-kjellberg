@@ -7,17 +7,17 @@ const { string } = PropTypes
 
 export default function withUrl (ComposedComponent) {
   class WithUrl extends Component {
-    static displayName = `WithUrl(${getDisplayName(ComposedComponent)})`;
-    static ComposedComponent = ComposedComponent;
+    static displayName = `WithUrl(${getDisplayName(ComposedComponent)})`
+    static ComposedComponent = ComposedComponent
 
     static contextTypes = {
       router: routerShape,
-    };
+    }
 
     static propTypes = {
       location: locationShape,
       baseUrl: string,
-    };
+    }
 
     componentWillMount () {
       const { props, context } = this
@@ -36,7 +36,7 @@ export default function withUrl (ComposedComponent) {
       this.setState({
         url: baseUrl + router.createHref(location),
       })
-    };
+    }
 
     render () {
       return <ComposedComponent {...this.state} {...this.props} />

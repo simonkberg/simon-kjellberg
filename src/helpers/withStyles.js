@@ -7,10 +7,10 @@ export default function withStyles (styles) {
   return ComposedComponent => class WithStyles extends Component {
     static contextTypes = {
       insertCss: func.isRequired,
-    };
+    }
 
-    static displayName = `WithStyles(${getDisplayName(ComposedComponent)})`;
-    static ComposedComponent = ComposedComponent;
+    static displayName = `WithStyles(${getDisplayName(ComposedComponent)})`
+    static ComposedComponent = ComposedComponent
 
     componentWillMount () {
       const { insertCss } = this.context

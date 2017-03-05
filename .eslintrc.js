@@ -3,6 +3,7 @@ module.exports = {
   rules: {
     'object-curly-spacing': [0, 'always'],
     'no-mixed-operators': 0,
+    'babel/semi': [2, 'never'],
   },
   globals: {
     __DEV__: false,

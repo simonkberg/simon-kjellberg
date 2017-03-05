@@ -18,7 +18,7 @@ export class App extends Component {
     styles: object,
     baseUrl: string,
     url: string,
-  };
+  }
 
   render () {
     const { children, baseUrl, url, styles } = this.props

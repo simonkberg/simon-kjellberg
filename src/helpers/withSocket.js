@@ -3,17 +3,17 @@ import getDisplayName from './getDisplayName'
 
 export default function withSocket (opts = {}) {
   return ComposedComponent => class WithSocket extends Component {
-    static displayName = `WithSocket(${getDisplayName(ComposedComponent)})`;
-    static ComposedComponent = ComposedComponent;
+    static displayName = `WithSocket(${getDisplayName(ComposedComponent)})`
+    static ComposedComponent = ComposedComponent
 
     state = {
       socket: null,
       socketOpen: false,
       socketError: null,
-    };
+    }
 
-    socket = null;
-    component = null;
+    socket = null
+    component = null
 
     componentDidMount () {
       const {
@@ -37,7 +37,7 @@ export default function withSocket (opts = {}) {
           this.component.onSocketOpen(event, this.socket)
         }
       })
-    };
+    }
 
     onSocketClose = event => {
       this.socket.removeEventListener('message', this.onSocketMessage)
@@ -47,7 +47,7 @@ export default function withSocket (opts = {}) {
           this.component.onSocketClose(event)
         }
       })
-    };
+    }
 
     onSocketError = event => {
       this.setState({ socketError: event }, () => {
@@ -55,7 +55,7 @@ export default function withSocket (opts = {}) {
           this.component.onSocketError(event)
         }
       })
-    };
+    }
 
     onSocketMessage = event => {
       const data = JSON.parse(event.data)
@@ -63,7 +63,7 @@ export default function withSocket (opts = {}) {
       if (this.component && this.component['onSocketMessage']) {
         this.component.onSocketMessage(event, data)
       }
-    };
+    }
 
     componentWillUnmount () {
       if (this.socket) this.socket.close()
@@ -71,7 +71,7 @@ export default function withSocket (opts = {}) {
 
     ref = el => {
       this.component = el
-    };
+    }
 
     render () {
       const props = {

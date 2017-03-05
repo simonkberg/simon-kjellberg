@@ -16,11 +16,11 @@ class ChatMessageList extends PureComponent {
     messages: object,
     users: object,
     styles: object,
-  };
+  }
 
-  raf = null;
-  wrapper = null;
-  shouldScroll = true;
+  raf = null
+  wrapper = null
+  shouldScroll = true
 
   componentDidMount () {
     this.scrollToBottom()
@@ -43,27 +43,27 @@ class ChatMessageList extends PureComponent {
     const { scrollTop, scrollHeight, offsetHeight } = this.wrapper
 
     this.shouldScroll = scrollTop + offsetHeight >= scrollHeight
-  };
+  }
 
   onResize = entries => {
     if (this.shouldScroll) {
       this.scrollToBottom()
     }
-  };
+  }
 
   scrollToBottom = () => {
     if (this.wrapper) {
       this.wrapper.scrollTop = this.wrapper.scrollHeight
     }
-  };
+  }
 
   setWrapperRef = el => {
     this.wrapper = el
-  };
+  }
 
   setListRef = el => {
     this.list = el && findDOMNode(el)
-  };
+  }
 
   render () {
     const { styles, messageIds } = this.props

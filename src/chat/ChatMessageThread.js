@@ -12,7 +12,7 @@ class ChatMessageThread extends PureComponent {
     messageIds: array,
     users: object,
     styles: object,
-  };
+  }
 
   render () {
     const { styles, messageIds } = this.props

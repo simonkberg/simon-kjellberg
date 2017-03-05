@@ -13,11 +13,11 @@ export class Stats extends PureComponent {
   static propTypes = {
     statsIds: array,
     loadStats: func.isRequired,
-  };
+  }
 
   static defaultProps = {
     statsIds: [],
-  };
+  }
 
   componentDidMount () {
     this.props.loadStats()
