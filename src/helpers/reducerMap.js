@@ -1,4 +1,3 @@
-
 import { Map } from 'immutable'
 
 const returnState = state => state

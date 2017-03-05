@@ -1,7 +1,7 @@
 const memoize = fn => {
   const cache = new Map()
 
-  return (arg) => {
+  return arg => {
     if (!cache.has(arg)) {
       cache.set(arg, fn(arg))
     }

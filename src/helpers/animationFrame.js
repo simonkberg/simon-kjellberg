@@ -1,14 +1,14 @@
 import raf from 'raf'
 
 export default function animationFrame (fn) {
-  let frame = {
+  const frame = {
     id: 0,
     cancel () {
       raf.cancel(this.id)
     },
   }
 
-  let cb = (ts) => {
+  const cb = ts => {
     frame.id = fn(ts, frame) && raf(cb)
   }
 

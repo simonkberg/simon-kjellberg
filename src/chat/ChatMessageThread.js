@@ -12,7 +12,7 @@ class ChatMessageThread extends PureComponent {
     messageIds: array,
     users: object,
     styles: object,
-  }
+  };
 
   render () {
     const { styles, messageIds } = this.props
@@ -36,9 +36,7 @@ class ChatMessageThread extends PureComponent {
 
     return (
       <ReactCSSTransitionGroup {...list}>
-        {messageIds.map(id =>
-          <ChatMessage key={id} id={id} styles={styles} />
-        )}
+        {messageIds.map(id => <ChatMessage key={id} id={id} styles={styles} />)}
       </ReactCSSTransitionGroup>
     )
   }
@@ -48,9 +46,6 @@ const mapStateToProps = (state, { id }) => ({
   messageIds: getChatThreadIds(state, id),
 })
 
-export default connect(
-  mapStateToProps,
-  null,
-  null,
-  { withRef: true }
-)(ChatMessageThread)
+export default connect(mapStateToProps, null, null, { withRef: true })(
+  ChatMessageThread
+)

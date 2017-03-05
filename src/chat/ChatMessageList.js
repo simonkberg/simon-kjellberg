@@ -16,11 +16,11 @@ class ChatMessageList extends PureComponent {
     messages: object,
     users: object,
     styles: object,
-  }
+  };
 
-  raf = null
-  wrapper = null
-  shouldScroll = true
+  raf = null;
+  wrapper = null;
+  shouldScroll = true;
 
   componentDidMount () {
     this.scrollToBottom()
@@ -42,28 +42,28 @@ class ChatMessageList extends PureComponent {
   onScroll = event => {
     const { scrollTop, scrollHeight, offsetHeight } = this.wrapper
 
-    this.shouldScroll = (scrollTop + offsetHeight) >= scrollHeight
-  }
+    this.shouldScroll = scrollTop + offsetHeight >= scrollHeight
+  };
 
   onResize = entries => {
     if (this.shouldScroll) {
       this.scrollToBottom()
     }
-  }
+  };
 
   scrollToBottom = () => {
     if (this.wrapper) {
       this.wrapper.scrollTop = this.wrapper.scrollHeight
     }
-  }
+  };
 
   setWrapperRef = el => {
     this.wrapper = el
-  }
+  };
 
   setListRef = el => {
     this.list = el && findDOMNode(el)
-  }
+  };
 
   render () {
     const { styles, messageIds } = this.props
@@ -94,22 +94,19 @@ class ChatMessageList extends PureComponent {
     return (
       <div {...wrapper}>
         <ReactCSSTransitionGroup {...list}>
-          {messageIds.map(id =>
+          {messageIds.map(id => (
             <ChatMessage key={id} id={id} styles={styles} />
-          )}
+          ))}
         </ReactCSSTransitionGroup>
       </div>
     )
   }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
   messageIds: getMainChatMessageIds(state),
 })
 
-export default connect(
-  mapStateToProps,
-  null,
-  null,
-  { withRef: true }
-)(ChatMessageList)
+export default connect(mapStateToProps, null, null, { withRef: true })(
+  ChatMessageList
+)

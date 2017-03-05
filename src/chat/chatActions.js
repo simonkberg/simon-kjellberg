@@ -1,4 +1,3 @@
-
 import { normalize } from 'normalizr'
 import { getBaseUrl } from 'app/appSelectors'
 import { getChatMessageIds, getChatUsersIds } from './chatSelectors'

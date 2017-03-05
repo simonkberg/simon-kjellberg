@@ -5,28 +5,31 @@ const escapedTags = new Set()
 // order is important!
 const formats = [
   // code
-  [/`(.+?)`/g, (match, code) => {
-    return escapeTags(`<code>${escapeCode(code)}</code>`, 'code')
-  }],
+  [
+    /`(.+?)`/g,
+    (match, code) => {
+      return escapeTags(`<code>${escapeCode(code)}</code>`, 'code')
+    },
+  ],
   // links
-  [/<([!|#|@])?(.+?)(?:\|(.+?))?>/g, (match, prefix, link, title) => {
-    title = title || link
+  [
+    /<([!|#|@])?(.+?)(?:\|(.+?))?>/g,
+    (match, prefix, link, title) => {
+      title = title || link
 
-    if (prefix) {
-      return prefix === '!'
-        ? `@${title}`
-        : `${prefix}${title}`
-    }
+      if (prefix) {
+        return prefix === '!' ? `@${title}` : `${prefix}${title}`
+      }
 
-    return `<a href="${link}">${title}</a>`
-  }],
+      return `<a href="${link}">${title}</a>`
+    },
+  ],
   // bold
   [/\*(.+?)\*/g, '<strong>$1</strong>'],
   // escape emojis
   [/(:[\w\d_\-+]+_[\w\d_\-+]+:)/g, match => escapeChars(match, '_')],
   // italic
   [/_(.+?)_/g, '<em>$1</em>'],
-  // unescape emojis
   // strikethrough
   [/~(.+?)~/g, '<s>$1</s>'],
 ]
@@ -66,7 +69,7 @@ const escapeTags = (string, tag) => {
   return string.replace(regex, `@--$1${UID}$2--@`)
 }
 
-const unescapeTags = (string) => {
+const unescapeTags = string => {
   if (escapedTags.size > 0) {
     const tags = [...escapedTags.values()].join('|')
     const regex = new RegExp(`@--(/)?${UID}(${tags})--@`, 'g')
@@ -79,7 +82,7 @@ const unescapeTags = (string) => {
   return string
 }
 
-const escapeCode = (string) => {
+const escapeCode = string => {
   return string.replace(/([:*_~`])/g, (match, p1) => `&#${p1.charCodeAt()};`)
 }
 

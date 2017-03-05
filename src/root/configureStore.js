@@ -9,17 +9,13 @@ const devToolsCompose = __DEV__ &&
 const composeEnhancers = devToolsCompose || compose
 
 function getMiddleware () {
-  const middleware = [
-    thunkMiddleware,
-  ]
+  const middleware = [thunkMiddleware]
 
   return applyMiddleware(...middleware)
 }
 
 function getEnhancer () {
-  const args = [
-    getMiddleware(),
-  ]
+  const args = [getMiddleware()]
 
   if (__DEV__ && !devToolsCompose) {
     const DevTools = require('./DevTools').default
@@ -31,11 +27,7 @@ function getEnhancer () {
 }
 
 export default function configureStore (initialState = Immutable.Map()) {
-  const store = createStore(
-    rootReducer,
-    initialState,
-    getEnhancer()
-  )
+  const store = createStore(rootReducer, initialState, getEnhancer())
 
   if (__DEV__ && module.hot) {
     // Enable Webpack hot module replacement for reducers

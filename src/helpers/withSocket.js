@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import getDisplayName from './getDisplayName'
 
 export default function withSocket (opts = {}) {
-  return (ComposedComponent) => class WithSocket extends Component {
+  return ComposedComponent => class WithSocket extends Component {
     static displayName = `WithSocket(${getDisplayName(ComposedComponent)})`;
     static ComposedComponent = ComposedComponent;
 
@@ -10,17 +10,15 @@ export default function withSocket (opts = {}) {
       socket: null,
       socketOpen: false,
       socketError: null,
-    }
+    };
 
-    socket = null
-    component = null
+    socket = null;
+    component = null;
 
     componentDidMount () {
       const {
         host = window.location.host,
-        protocol = window.location.protocol === 'https:'
-          ? 'wss'
-          : 'ws',
+        protocol = window.location.protocol === 'https:' ? 'wss' : 'ws',
       } = opts
 
       this.socket = new WebSocket(`${protocol}://${host}`)
@@ -31,7 +29,7 @@ export default function withSocket (opts = {}) {
       this.setState({ socket: this.socket })
     }
 
-    onSocketOpen = (event) => {
+    onSocketOpen = event => {
       this.socket.addEventListener('message', this.onSocketMessage)
 
       this.setState({ socketOpen: true }, () => {
@@ -39,9 +37,9 @@ export default function withSocket (opts = {}) {
           this.component.onSocketOpen(event, this.socket)
         }
       })
-    }
+    };
 
-    onSocketClose = (event) => {
+    onSocketClose = event => {
       this.socket.removeEventListener('message', this.onSocketMessage)
 
       this.setState({ socketOpen: false }, () => {
@@ -49,23 +47,23 @@ export default function withSocket (opts = {}) {
           this.component.onSocketClose(event)
         }
       })
-    }
+    };
 
-    onSocketError = (event) => {
+    onSocketError = event => {
       this.setState({ socketError: event }, () => {
         if (this.component && this.component['onSocketError']) {
           this.component.onSocketError(event)
         }
       })
-    }
+    };
 
-    onSocketMessage = (event) => {
+    onSocketMessage = event => {
       const data = JSON.parse(event.data)
 
       if (this.component && this.component['onSocketMessage']) {
         this.component.onSocketMessage(event, data)
       }
-    }
+    };
 
     componentWillUnmount () {
       if (this.socket) this.socket.close()
@@ -73,7 +71,7 @@ export default function withSocket (opts = {}) {
 
     ref = el => {
       this.component = el
-    }
+    };
 
     render () {
       const props = {

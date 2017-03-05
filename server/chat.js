@@ -28,26 +28,28 @@ module.exports = function chatServer (server) {
     })
   })
 
-  rtm.then(rtmClient => {
-    const chat = rtmClient.dataStore.getDMById(SLACK_CHAT_CHANNEL)
+  rtm
+    .then(rtmClient => {
+      const chat = rtmClient.dataStore.getDMById(SLACK_CHAT_CHANNEL)
 
-    rtmClient.on(RTM_EVENTS.MESSAGE, message => {
-      if (message.channel === chat.id) {
-        log(RTM_EVENTS.MESSAGE, message)
+      rtmClient.on(RTM_EVENTS.MESSAGE, message => {
+        if (message.channel === chat.id) {
+          log(RTM_EVENTS.MESSAGE, message)
 
-        if (message.text === '!clear') {
-          web.im.history(chat.id).then(({messages}) =>
-            messages.map(msg =>
-              web.chat.delete(msg.ts, chat.id)
-                .catch(() => null)
-            )
-          ).catch(() => null)
+          if (message.text === '!clear') {
+            web.im
+              .history(chat.id)
+              .then(({ messages }) =>
+                messages.map(msg =>
+                  web.chat.delete(msg.ts, chat.id).catch(() => null)))
+              .catch(() => null)
+          }
+
+          wss.clients.forEach(client => sendMessage(client, message))
         }
-
-        wss.clients.forEach(client => sendMessage(client, message))
-      }
+      })
     })
-  }).catch(err => console.error(err))
+    .catch(err => console.error(err))
 
   return wss
 }
@@ -73,26 +75,26 @@ function sendMessage (client, params) {
   if (payload.subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
     const message = Object.assign({}, params.previous_message, params.message)
 
-    Object.assign(payload, pick(message, [
-      'user',
-      'text',
-      'ts',
-      'thread_ts',
-      'reply_count',
-      'replies',
-    ]))
+    Object.assign(
+      payload,
+      pick(message, [
+        'user',
+        'text',
+        'ts',
+        'thread_ts',
+        'reply_count',
+        'replies',
+      ])
+    )
 
     payload.edited = !!message.edited
   }
 
   if (payload.subtype === 'message_replied') {
-    Object.assign(payload, pick(params.message, [
-      'user',
-      'text',
-      'ts',
-      'reply_count',
-      'replies',
-    ]))
+    Object.assign(
+      payload,
+      pick(params.message, ['user', 'text', 'ts', 'reply_count', 'replies'])
+    )
   }
 
   client.send(JSON.stringify(payload), err => {
