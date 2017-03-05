@@ -1,6 +1,5 @@
-
 export function appleTouchIcons (sizes = [152], precomposed = true) {
-  return sizes.map((size) => {
+  return sizes.map(size => {
     return {
       rel: `apple-touch-icon${precomposed ? '-precomposed' : ''}`,
       sizes: `${size}x${size}`,
@@ -10,7 +9,7 @@ export function appleTouchIcons (sizes = [152], precomposed = true) {
 }
 
 export default function favicons (sizes = [16, 32]) {
-  return sizes.map((size) => {
+  return sizes.map(size => {
     return {
       rel: 'icon',
       type: 'image/png',

@@ -16,7 +16,9 @@ const createArgumentedSelector = (...funcs) => {
     memoizedFn(props)(state, ...args)
 
   wrappedSelector.recomputations = () => recomputations
-  wrappedSelector.resetRecomputations = () => { recomputations = 0 }
+  wrappedSelector.resetRecomputations = () => {
+    recomputations = 0
+  }
 
   return wrappedSelector
 }

@@ -13,11 +13,11 @@ export class Stats extends PureComponent {
   static propTypes = {
     statsIds: array,
     loadStats: func.isRequired,
-  }
+  };
 
   static defaultProps = {
     statsIds: [],
-  }
+  };
 
   componentDidMount () {
     this.props.loadStats()
@@ -38,11 +38,11 @@ export class Stats extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
   statsIds: getSortedStatsIds(state),
 })
 
-const mapDispatchToProps = (dispatch) =>
-  bindActionCreators({...statsActions}, dispatch)
+const mapDispatchToProps = dispatch =>
+  bindActionCreators({ ...statsActions }, dispatch)
 
 export default connect(mapStateToProps, mapDispatchToProps)(Stats)

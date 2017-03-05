@@ -157,7 +157,7 @@ exports.config = {
      *
      * @env NEW_RELIC_LOG_ENABLED
      */
-    enabled: true
+    enabled: true,
   },
   /**
    * Whether to collect & submit error traces to New Relic.
@@ -196,7 +196,7 @@ exports.config = {
      * your own server's sake. The payload of events is compressed, but if it
      * grows too large the New Relic servers may reject it.
      */
-    max_event_samples_stored: 100
+    max_event_samples_stored: 100,
   },
   /**
    * Options regarding collecting system information. Used for system
@@ -216,7 +216,7 @@ exports.config = {
      *
      * @env NEW_RELIC_UTILIZATION_DETECT_DOCKER
      */
-    detect_docker: true
+    detect_docker: true,
   },
   transaction_tracer: {
     /**
@@ -282,7 +282,7 @@ exports.config = {
      * traces.  This is the minimum duration a query must take (in ms) for it
      * to be considered for for slow query and inclusion in transaction traces.
      */
-    explain_threshold: 500
+    explain_threshold: 500,
   },
   /**
    * Whether to enable internal supportability metrics and diagnostics. You're
@@ -308,7 +308,7 @@ exports.config = {
      *
      * @env NEW_RELIC_DEBUG_TRACER
      */
-    tracer_tracing: false
+    tracer_tracing: false,
   },
   /**
    * Rules for naming or ignoring transactions.
@@ -331,7 +331,7 @@ exports.config = {
      *
      * @env NEW_RELIC_IGNORING_RULES
      */
-    ignore: []
+    ignore: [],
   },
   /**
    * By default, any transactions that are not affected by other bits of
@@ -354,7 +354,6 @@ exports.config = {
    * through the server response, up until the actual page render completes.
    */
   browser_monitoring: {
-
     /**
      * Enable browser monitoring header generation.
      *
@@ -391,7 +390,7 @@ exports.config = {
      *
      * @env NEW_RELIC_BROWSER_MONITOR_DEBUG
      */
-    debug: false
+    debug: false,
   },
   /**
    * Transaction Events
@@ -423,7 +422,7 @@ exports.config = {
      * behavior. You probably want at least double the value, but more is okay
      * as long as you can handle the memory overhead.
      */
-    max_samples_stored: 20000
+    max_samples_stored: 20000,
   },
 
   /**
@@ -453,13 +452,13 @@ exports.config = {
      * your own server's sake. The payload of events is compressed, but if it
      * grows too large the New Relic servers may reject it.
      */
-    max_samples_stored: 1000
+    max_samples_stored: 1000,
   },
   /**
    * This is used to configure properties about the user's host name.
    */
   process_host: {
-     /**
+    /**
      * Configurable display name for hosts
      *
      * @env NEW_RELIC_PROCESS_HOST_DISPLAY_NAME
@@ -470,7 +469,7 @@ exports.config = {
      *
      * @env NEW_RELIC_IPV_PREFERENCE
      */
-    ipv_preference: '4'
+    ipv_preference: '4',
   },
 
   /**
@@ -508,6 +507,6 @@ exports.config = {
    */
   slow_sql: {
     enabled: false,
-    max_samples: 10
-  }
+    max_samples: 10,
+  },
 }

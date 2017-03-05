@@ -19,7 +19,7 @@ const emailLink = {
 
 const Link = ({ styles, ...link }) => (
   <small className={styles.linkWrapper}>
-      [{link.title}](<a className={styles.link} {...link}>{link.href}</a>)
+    [{link.title}](<a className={styles.link} {...link}>{link.href}</a>)
   </small>
 )
 

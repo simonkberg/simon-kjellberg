@@ -10,15 +10,15 @@ class Root extends Component {
     }),
     store: object.isRequired,
     children: node.isRequired,
-  }
+  };
 
   static childContextTypes = {
     insertCss: func.isRequired,
-  }
+  };
 
   state = {
     DevTools: null,
-  }
+  };
 
   getChildContext () {
     const { context } = this.props

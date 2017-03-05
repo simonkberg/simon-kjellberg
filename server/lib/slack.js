@@ -8,12 +8,18 @@ const {
 } = require('@slack/client')
 
 function rtm (token, opts = {}) {
-  const client = new RtmClient(token, Object.assign({
-    logLevel: 'info',
-    dataStore: new MemoryDataStore({}),
-    autoReconnect: true,
-    autoMark: true,
-  }, opts))
+  const client = new RtmClient(
+    token,
+    Object.assign(
+      {
+        logLevel: 'info',
+        dataStore: new MemoryDataStore({}),
+        autoReconnect: true,
+        autoMark: true,
+      },
+      opts
+    )
+  )
 
   return new Promise((resolve, reject) => {
     client.start()
@@ -26,12 +32,12 @@ function web (token, opts = {}) {
   return new WebClient(token, opts)
 }
 
-module.exports = exports = function slack (token, opts = {}) {
+module.exports = (exports = function slack (token, opts = {}) {
   return {
     rtm: rtm(token, opts.rtm),
     web: web(token, opts.web),
   }
-}
+})
 
 exports.rtm = rtm
 exports.web = web

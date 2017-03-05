@@ -2,34 +2,42 @@
   "private": true,
   "name": "simon-kjellberg",
   "version": "0.0.0",
+  "author": "Simon Kjellberg",
+  "license": "MIT",
+  "repository": "simonkberg/simon-kjellberg",
+  "bugs": "https://github.com/simonkberg/simon-kjellberg/issues",
+  "homepage": "https://github.com/simonkberg/simon-kjellberg",
+  "engines": {
+    "node": ">=7.0.0"
+  },
   "scripts": {
     "test": "nyr lint",
+    "format": "prettier-eslint --write \"*.js\" \"{bin,server,src,webpack}/**/*.js\"",
     "lint": "nyr lint:stylelint && nyr lint:eslint",
     "lint:stylelint": "stylelint \"src/**/*.css\"",
-    "lint:eslint": "eslint bin/** server src webpack",
-    "start": "node ./bin/serve",
+    "lint:eslint": "eslint --fix bin/** server src webpack",
+    "lint:staged": "lint-staged",
+    "start": "node ./bin/serve.js",
     "start:prod": "NODE_ENV=production nyr start",
     "start:dev": "NODE_ENV=development nyr start",
-    "build": "node ./bin/compile",
+    "build": "node ./bin/compile.js",
     "build:prod": "NODE_ENV=production nyr build",
     "build:dev": "NODE_ENV=development nyr build",
-    "ssl": "node ./bin/ssl",
+    "ssl": "node ./bin/ssl.js",
     "dev": "nyr build:dev && nyr start:dev",
     "prod": "nyr build:prod && nyr start:prod"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/simonkberg/simon-kjellberg.git"
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier-eslint --write",
+      "git add"
+    ],
+    "*.css": [
+      "stylelint"
+    ]
   },
-  "author": "Simon Kjellberg",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/simonkberg/simon-kjellberg/issues"
-  },
-  "homepage": "https://github.com/simonkberg/simon-kjellberg",
-  "engines": {
-    "node": ">=6.0.0"
-  },
+  "pre-commit": "lint:staged",
   "dependencies": {
     "@slack/client": "^3.8.1",
     "async-cache": "^1.1.0",
@@ -91,10 +99,14 @@
     "eslint-loader": "^1.6.3",
     "file-loader": "^0.10.1",
     "isomorphic-style-loader": "^1.1.0",
+    "lint-staged": "^3.3.1",
     "postcss": "^5.2.15",
     "postcss-cssnext": "^2.9.0",
     "postcss-loader": "^1.3.3",
     "postcss-smart-import": "^0.6.9",
+    "pre-commit": "^1.2.2",
+    "prettier": "^0.21.0",
+    "prettier-eslint-cli": "^3.1.2",
     "react-addons-perf": "^15.4.2",
     "redux-devtools": "^3.3.2",
     "redux-devtools-dock-monitor": "^1.1.1",

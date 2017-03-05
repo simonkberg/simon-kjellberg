@@ -17,7 +17,4 @@ function client (cb) {
   cb(state, node)
 }
 
-export {
-  server,
-  client,
-}
+export { server, client }

@@ -1,4 +1,3 @@
-
 const positiveAdjectives = [
   'adaptable',
   'adventurous',
@@ -302,14 +301,16 @@ const animalNames = [
   'zebra',
 ]
 
+const { floor, random } = Math
+
 function randomPositiveAdjective () {
-  return positiveAdjectives[Math.floor(Math.random() * positiveAdjectives.length)]
+  return positiveAdjectives[floor(random() * positiveAdjectives.length)]
 }
 
 function randomAnimalName () {
-  return animalNames[Math.floor(Math.random() * animalNames.length)]
+  return animalNames[floor(random() * animalNames.length)]
 }
 
-module.exports = exports = function randomName () {
+module.exports = (exports = function randomName () {
   return `${randomPositiveAdjective()}-${randomAnimalName()}`
-}
+})

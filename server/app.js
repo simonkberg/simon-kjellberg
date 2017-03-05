@@ -23,13 +23,18 @@ module.exports = function appServer ({ nr }) {
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(cookieParser())
   app.use(compression())
-  app.use(express.static(path.join(__dirname, '../static'), { maxAge: '7 days' }))
+  app.use(
+    express.static(path.join(__dirname, '../static'), { maxAge: '7 days' })
+  )
   app.use('/sw.js', express.static(path.join(__dirname, '../build/sw.js')))
-  app.use('/static', express.static(path.join(__dirname, '../build/static'), {
-    setHeaders: (res, path, stats) => {
-      res.set('Cache-Control', 'max-age=31536000, immutable')
-    },
-  }))
+  app.use(
+    '/static',
+    express.static(path.join(__dirname, '../build/static'), {
+      setHeaders: (res, path, stats) => {
+        res.set('Cache-Control', 'max-age=31536000, immutable')
+      },
+    })
+  )
 
   // api
   app.use('/api', api)
@@ -70,13 +75,15 @@ module.exports = function appServer ({ nr }) {
     const compiler = webpack(config)
     const log = debug('sk:app')
 
-    app.use(webpackDevMiddleware(compiler, {
-      noInfo: true,
-      publicPath: config.output.publicPath,
-      stats: {
-        colors: true,
-      },
-    }))
+    app.use(
+      webpackDevMiddleware(compiler, {
+        noInfo: true,
+        publicPath: config.output.publicPath,
+        stats: {
+          colors: true,
+        },
+      })
+    )
 
     app.use(webpackHotMiddleware(compiler, { log }))
   }

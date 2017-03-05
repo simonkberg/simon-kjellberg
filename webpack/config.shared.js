@@ -20,10 +20,7 @@ function getEntry (entry, hot = false) {
   const entries = []
 
   if (hot) {
-    entries.push(
-      'react-hot-loader/patch',
-      'webpack-hot-middleware/client'
-    )
+    entries.push('react-hot-loader/patch', 'webpack-hot-middleware/client')
   }
 
   return entries.concat(entry)
@@ -44,8 +41,8 @@ function getPlugins (opts = {}) {
         DEBUG: `"${debug}"`,
         GA_ID: `"${gaid}"`,
       },
-      '__DEV__': env !== 'production',
-      '__BROWSER__': !!browser,
+      __DEV__: env !== 'production',
+      __BROWSER__: !!browser,
     }),
   ]
 
@@ -57,9 +54,7 @@ function getPlugins (opts = {}) {
       })
     )
   } else {
-    plugins.push(
-      new HotModuleReplacementPlugin()
-    )
+    plugins.push(new HotModuleReplacementPlugin())
   }
 
   return plugins
@@ -69,74 +64,78 @@ function getLoaders (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
   const isDev = env !== 'production'
 
-  let loaders = [{
-    test: /\.js$/,
-    use: [
-      {
-        loader: 'babel-loader',
-        options: { cacheDirectory: true },
-      },
-      'eslint-loader',
-    ],
-    exclude: /node_modules/,
-    include: paths.src,
-  }, {
-    test: /\.css$/,
-    use: [
-      'isomorphic-style',
-      {
-        loader: 'css',
-        options: {
-          modules: true,
-          minimize: !isDev,
-          sourceMap: isDev,
-          importLoaders: 1,
-          localIdentName: isDev
-            ? '[name]__[local]__[hash:base64:5]'
-            : '[hash:base64]',
+  let loaders = [
+    {
+      test: /\.js$/,
+      use: [
+        {
+          loader: 'babel-loader',
+          options: { cacheDirectory: true },
         },
-      },
-      {
-        loader: 'postcss',
-        options: { sourceMap: isDev },
-      },
-    ],
-  }, {
-    test: /\.(png|jpe?g|gif|svg)$/,
-    use: [
-      {
-        loader: 'url',
-        options: {
-          limit: 10000,
-          name: 'static/img/[name].[hash:8].[ext]',
-        },
-      },
-      // 'img',
-    ],
-  }, {
-    test: /\.(woff2?)$/,
-    loader: 'url',
-    options: {
-      limit: 10000,
-      name: 'static/fonts/[name].[hash:8].[ext]',
+        'eslint-loader',
+      ],
+      exclude: /node_modules/,
+      include: paths.src,
     },
-  }, {
-    test: /emoji\.json$/,
-    loader: 'emoji',
-  }]
+    {
+      test: /\.css$/,
+      use: [
+        'isomorphic-style',
+        {
+          loader: 'css',
+          options: {
+            modules: true,
+            minimize: !isDev,
+            sourceMap: isDev,
+            importLoaders: 1,
+            localIdentName: isDev
+              ? '[name]__[local]__[hash:base64:5]'
+              : '[hash:base64]',
+          },
+        },
+        {
+          loader: 'postcss',
+          options: { sourceMap: isDev },
+        },
+      ],
+    },
+    {
+      test: /\.(png|jpe?g|gif|svg)$/,
+      use: [
+        {
+          loader: 'url',
+          options: {
+            limit: 10000,
+            name: 'static/img/[name].[hash:8].[ext]',
+          },
+        },
+        // 'img',
+      ],
+    },
+    {
+      test: /\.(woff2?)$/,
+      loader: 'url',
+      options: {
+        limit: 10000,
+        name: 'static/fonts/[name].[hash:8].[ext]',
+      },
+    },
+    {
+      test: /emoji\.json$/,
+      loader: 'emoji',
+    },
+  ]
 
   return loaders
 }
 
-module.exports = exports = function sharedConfig (opts = {}) {
+module.exports = (exports = function sharedConfig (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
   const isDev = env !== 'production'
 
   const config = {
-    devtool: isDev
-      ? 'cheap-module-source-map'
-      : 'hidden-source-map',
+    devtool: isDev ? 'cheap-module-source-map' : 'hidden-source-map',
 
     output: {
       path: paths.build,
@@ -170,7 +169,7 @@ module.exports = exports = function sharedConfig (opts = {}) {
   }
 
   return config
-}
+})
 
 exports.paths = paths
 exports.getEntry = getEntry

@@ -4,9 +4,12 @@ const sharedConfig = require('./config.shared')
 const { paths } = sharedConfig
 
 module.exports = function serverConfig (opts = {}) {
-  opts = Object.assign({
-    env: process.env.NODE_ENV,
-  }, opts)
+  opts = Object.assign(
+    {
+      env: process.env.NODE_ENV,
+    },
+    opts
+  )
 
   const config = sharedConfig(opts)
 

@@ -12,12 +12,12 @@ export default function withUrl (ComposedComponent) {
 
     static contextTypes = {
       router: routerShape,
-    }
+    };
 
     static propTypes = {
       location: locationShape,
       baseUrl: string,
-    }
+    };
 
     componentWillMount () {
       const { props, context } = this
@@ -36,14 +36,16 @@ export default function withUrl (ComposedComponent) {
       this.setState({
         url: baseUrl + router.createHref(location),
       })
-    }
+    };
 
     render () {
       return <ComposedComponent {...this.state} {...this.props} />
     }
   }
 
-  const mapStateToProps = state => ({ baseUrl: state.getIn(['app', 'baseUrl']) })
+  const mapStateToProps = state => ({
+    baseUrl: state.getIn(['app', 'baseUrl']),
+  })
 
   return connect(mapStateToProps)(WithUrl)
 }

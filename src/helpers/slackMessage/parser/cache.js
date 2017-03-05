@@ -6,7 +6,7 @@ export default class LRU {
     this.map = new Map()
   }
 
-  has = key => this.map.has(key)
+  has = key => this.map.has(key);
 
   set = (key, value) => {
     this.map.delete(key)
@@ -17,7 +17,7 @@ export default class LRU {
     }
 
     return this
-  }
+  };
 
   get = key => {
     if (this.has(key)) {
@@ -28,9 +28,9 @@ export default class LRU {
 
       return value
     }
-  }
+  };
 
-  clear = _ => this.map.clear()
+  clear = _ => this.map.clear();
 }
 
 export const parserCache = new LRU(50)

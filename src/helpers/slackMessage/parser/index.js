@@ -2,13 +2,16 @@ import textParser from './textParser'
 import emojiParser from './emojiParser'
 import { parserCache, emojiCache, cacheShape } from './cache'
 
-export default function parser (input, {
-  parser: {
-    cache = parserCache,
-    component = 'span',
-  } = {},
-  emoji,
-} = {}) {
+export default function parser (
+  input,
+  {
+    parser: {
+      cache = parserCache,
+      component = 'span',
+    } = {},
+    emoji,
+  } = {}
+) {
   if (cache.has(input)) {
     return cache.get(input)
   }
@@ -23,10 +26,4 @@ export default function parser (input, {
   return output
 }
 
-export {
-  textParser,
-  emojiParser,
-  parserCache,
-  emojiCache,
-  cacheShape,
-}
+export { textParser, emojiParser, parserCache, emojiCache, cacheShape }

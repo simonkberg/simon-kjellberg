@@ -6,15 +6,15 @@ export default class AsyncComponent extends Component {
   static propTypes = {
     loader: func.isRequired,
     placeholder: func,
-  }
+  };
 
   static defaultProps = {
     placeholder: () => null,
-  }
+  };
 
   state = {
     component: null,
-  }
+  };
 
   componentDidMount () {
     this.props.loader(component => this.setState({ component }))
@@ -25,8 +25,6 @@ export default class AsyncComponent extends Component {
     const { loader, placeholder, ...props } = this.props
     const { component: Component } = this.state
 
-    return Component
-      ? <Component {...props} />
-      : this.props.placeholder(props)
+    return Component ? <Component {...props} /> : this.props.placeholder(props)
   }
 }

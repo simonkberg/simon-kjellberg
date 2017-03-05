@@ -1,8 +1,7 @@
-
 const cache = new Map()
 
 const charToCharCode = s => s.charCodeAt(0)
-const hashReducer = (a, c) => ((a << 5) + a) ^ c
+const hashReducer = (a, c) => (a << 5) + a ^ c
 
 export function hashString (string) {
   if (!string.length) return 0
@@ -11,10 +10,7 @@ export function hashString (string) {
     return cache.get(string)
   }
 
-  const hash = string
-    .split('')
-    .map(charToCharCode)
-    .reduce(hashReducer, 5381)
+  const hash = string.split('').map(charToCharCode).reduce(hashReducer, 5381)
 
   cache.set(string, hash)
 

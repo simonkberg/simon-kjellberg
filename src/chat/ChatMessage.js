@@ -11,14 +11,14 @@ export const ChatMessage = ({ message = {}, user = {}, styles }) => {
 
   return (
     <li className={styles.message}>
-      <strong style={{color: colorHash(name)}}>{name}: </strong>
+      <strong style={{ color: colorHash(name) }}>{name}: </strong>
       <SlackMessage emojiClassName={styles.messageEmoji}>
         {text}
       </SlackMessage>
       {' '}
-      {edited &&
-        <small className={styles.messageEdited}>(edited)</small>}
-      {replies && replies.length > 0 &&
+      {edited && <small className={styles.messageEdited}>(edited)</small>}
+      {replies &&
+        replies.length > 0 &&
         <ChatMessageThread id={ts} styles={styles} />}
     </li>
   )
@@ -26,21 +26,16 @@ export const ChatMessage = ({ message = {}, user = {}, styles }) => {
 
 ChatMessage.propTypes = {
   message: PropTypes.object,
-  user: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.object,
-  ]),
+  user: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   styles: PropTypes.object.isRequired,
 }
 
 const mapStateToProps = (state, { id }) => {
   const message = getChatMessage(state, id)
   const name = message.username
-  const user = name !== void 0
-    ? { name }
-    : getChatUser(state, message.user)
+  const user = name !== void 0 ? { name } : getChatUser(state, message.user)
 
-  return {message, user}
+  return { message, user }
 }
 
 export default connect(mapStateToProps)(ChatMessage)

@@ -8,10 +8,13 @@ const sharedConfig = require('./config.shared')
 const { paths, getEntry } = sharedConfig
 
 module.exports = function clientConfig (opts = {}) {
-  opts = Object.assign({
-    env: process.env.NODE_ENV,
-    browser: true,
-  }, opts)
+  opts = Object.assign(
+    {
+      env: process.env.NODE_ENV,
+      browser: true,
+    },
+    opts
+  )
 
   const isDev = opts.env !== 'production'
   const config = sharedConfig(opts)
@@ -21,10 +24,7 @@ module.exports = function clientConfig (opts = {}) {
     target: 'web',
 
     entry: {
-      client: getEntry(
-        path.join(paths.src, 'client.js'),
-        isDev
-      ),
+      client: getEntry(path.join(paths.src, 'client.js'), isDev),
       vendor: [
         'immutable',
         'react-addons-css-transition-group',

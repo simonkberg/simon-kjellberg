@@ -27,17 +27,17 @@ export class Chat extends PureComponent {
     removeChatMessage: func,
     socket: object,
     socketOpen: bool,
-  }
+  };
 
   static defaultProps = {
     messages: {},
     users: {},
     loading: false,
-  }
+  };
 
-  list = null
-  wrapper = null
-  state = { open: __DEV__ }
+  list = null;
+  wrapper = null;
+  state = { open: __DEV__ };
 
   componentDidMount () {
     const { loadChatHistory, loadChatUsers } = this.props
@@ -56,28 +56,28 @@ export class Chat extends PureComponent {
 
   openChat = () =>
     this.state.open === false &&
-      this.setState({ open: true }, this.bindDocumentClick)
+    this.setState({ open: true }, this.bindDocumentClick);
 
   closeChat = () =>
     this.state.open === true &&
-      this.setState({ open: false }, this.unbindDocumentClick)
+    this.setState({ open: false }, this.unbindDocumentClick);
 
-  toggleChat = () => this.setState(
-    state => ({ open: !state.open }),
-    () => this.state.open
-      ? this.bindDocumentClick()
-      : this.unbindDocumentClick()
-  )
+  toggleChat = () =>
+    this.setState(
+      state => ({ open: !state.open }),
+      () =>
+        this.state.open ? this.bindDocumentClick() : this.unbindDocumentClick()
+    );
 
   bindDocumentClick = () =>
     document.addEventListener('click', this.onDocumentClick, {
       passive: true,
-    })
+    });
 
   unbindDocumentClick = () =>
     document.removeEventListener('click', this.onDocumentClick, {
       passive: true,
-    })
+    });
 
   onDocumentClick = event => {
     if (
@@ -88,11 +88,11 @@ export class Chat extends PureComponent {
     ) {
       this.closeChat()
     }
-  }
+  };
 
   onSocketError = event => {
     log('Socket Error', event)
-  }
+  };
 
   onSocketMessage = (event, data) => {
     log('Socket Message', event)
@@ -116,7 +116,7 @@ export class Chat extends PureComponent {
       default:
         addChatMessage(message)
     }
-  }
+  };
 
   sendMessage = message => {
     const { socket } = this.props
@@ -124,11 +124,11 @@ export class Chat extends PureComponent {
     if (socket) {
       socket.send(message)
     }
-  }
+  };
 
   setWrapperRef = el => {
     this.wrapper = el
-  }
+  };
 
   render () {
     const { open } = this.state
@@ -165,8 +165,7 @@ export class Chat extends PureComponent {
           </span>
         </button>
         <div className={styles.container}>
-          {!loading &&
-            <ChatMessageList {...this.props} />}
+          {!loading && <ChatMessageList {...this.props} />}
           <ChatInput {...input} />
         </div>
       </div>
@@ -177,12 +176,12 @@ export class Chat extends PureComponent {
 const WithSocket = withSocket()(Chat)
 const WithStyles = withStyles(Styles)(WithSocket)
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = state => ({
   loading: getChatLoading(state),
 })
 
-const mapDispatchToProps = (dispatch) => {
-  return bindActionCreators({...chatActions}, dispatch)
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({ ...chatActions }, dispatch)
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(WithStyles)

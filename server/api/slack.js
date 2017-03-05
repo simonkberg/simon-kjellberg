@@ -32,9 +32,7 @@ router.post('/slap', (req, res) => {
     icon_emoji: ':fish:',
   }
 
-  slackHook(payload)
-    .then(() => res.end())
-    .catch((err) => res.end(err))
+  slackHook(payload).then(() => res.end()).catch(err => res.end(err))
 })
 
 router.post('/eta', (req, res) => {
@@ -50,7 +48,7 @@ router.post('/eta', (req, res) => {
   let reason = text.join(' ')
 
   if (!time.isValid()) {
-    return res.end('Couldn\'t parse the time. Sorry!')
+    return res.end("Couldn't parse the time. Sorry!")
   }
 
   const payload = {
@@ -61,9 +59,7 @@ router.post('/eta', (req, res) => {
     icon_emoji: clockEmoji(time),
   }
 
-  slackHook(payload)
-    .then(() => res.end())
-    .catch((err) => res.end(err))
+  slackHook(payload).then(() => res.end()).catch(err => res.end(err))
 })
 
 module.exports = router
