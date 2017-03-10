@@ -56,18 +56,21 @@ const entities = reducerMap(
 
 const messages = reducerMap(
   {
-    [FETCH_CHAT_HISTORY]: state => state.merge({
-      loading: true,
-      error: null,
-    }),
-    [FETCH_CHAT_HISTORY_SUCCESS]: (state, action) => state.mergeDeep({
-      ids: action.response.result,
-      loading: false,
-    }),
-    [FETCH_CHAT_HISTORY_ERROR]: (state, { error }) => state.merge({
-      loading: false,
-      error,
-    }),
+    [FETCH_CHAT_HISTORY]: state =>
+      state.merge({
+        loading: true,
+        error: null,
+      }),
+    [FETCH_CHAT_HISTORY_SUCCESS]: (state, action) =>
+      state.mergeDeep({
+        ids: action.response.result,
+        loading: false,
+      }),
+    [FETCH_CHAT_HISTORY_ERROR]: (state, { error }) =>
+      state.merge({
+        loading: false,
+        error,
+      }),
     [ADD_CHAT_MESSAGE]: (state, action) =>
       state.update('ids', ids => ids.push(action.response.result)),
     [REMOVE_CHAT_MESSAGE]: (state, action) =>
@@ -78,18 +81,21 @@ const messages = reducerMap(
 
 const users = reducerMap(
   {
-    [FETCH_CHAT_USERS]: state => state.merge({
-      loading: true,
-      error: null,
-    }),
-    [FETCH_CHAT_USERS_SUCCESS]: (state, action) => state.mergeDeep({
-      ids: action.response.result,
-      loading: false,
-    }),
-    [FETCH_CHAT_USERS_ERROR]: (state, { error }) => state.merge({
-      loading: false,
-      error,
-    }),
+    [FETCH_CHAT_USERS]: state =>
+      state.merge({
+        loading: true,
+        error: null,
+      }),
+    [FETCH_CHAT_USERS_SUCCESS]: (state, action) =>
+      state.mergeDeep({
+        ids: action.response.result,
+        loading: false,
+      }),
+    [FETCH_CHAT_USERS_ERROR]: (state, { error }) =>
+      state.merge({
+        loading: false,
+        error,
+      }),
   },
   initialState.users
 )

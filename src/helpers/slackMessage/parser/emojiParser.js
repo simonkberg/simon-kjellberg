@@ -5,8 +5,7 @@ const regexKeys = [...Object.keys(emojis)].join('|').replace(/[+]/g, '\\$&')
 const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
 
 const render = (props = {}) =>
-  `<img ${Object.keys(props).reduce((tpl, prop) =>
-      `${tpl} ${prop}="${props[prop]}"`, '')}/>`
+  `<img ${Object.keys(props).reduce((tpl, prop) => `${tpl} ${prop}="${props[prop]}"`, '')}/>`
 
 const replace = (options = {}) => {
   const {

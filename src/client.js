@@ -38,14 +38,15 @@ match({ history, routes }, (error, redirect, props) => {
       ReactGA.pageview(window.location.pathname)
     }
 
-    const renderApp = () => render(
-      <AppContainer>
-        <Root store={store} context={context}>
-          <Router {...props} />
-        </Root>
-      </AppContainer>,
-      container
-    )
+    const renderApp = () =>
+      render(
+        <AppContainer>
+          <Root store={store} context={context}>
+            <Router {...props} />
+          </Root>
+        </AppContainer>,
+        container
+      )
 
     renderApp()
 

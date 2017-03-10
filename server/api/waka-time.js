@@ -10,9 +10,10 @@ const router = express.Router()
 const maxAge = ms('6 hours')
 const stats = new Cache({
   max: 2,
-  load: (url, cb) => request({ url, json: true }, (err, res, body) => {
-    cb(err, body)
-  }),
+  load: (url, cb) =>
+    request({ url, json: true }, (err, res, body) => {
+      cb(err, body)
+    }),
   maxAge,
 })
 

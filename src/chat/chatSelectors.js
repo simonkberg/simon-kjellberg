@@ -39,29 +39,26 @@ export const getChatLoading = ca(
   (messages, users) => !!(messages || users)
 )
 
-export const getChatMessageIds = ca(
-  getChatMessageIdsState,
-  ids => ids.toArray()
-)
+export const getChatMessageIds = ca(getChatMessageIdsState, ids =>
+  ids.toArray())
 
 export const getMainChatMessageIds = ca(
   getChatMessageIdsState,
   getChatMessagesState,
-  (ids, entries) => ids
-    .filter(ts => {
-      const threadTs = entries.getIn([ts, 'thread_ts'])
-      return !threadTs || threadTs === ts
-    })
-    .toArray()
+  (ids, entries) =>
+    ids
+      .filter(ts => {
+        const threadTs = entries.getIn([ts, 'thread_ts'])
+        return !threadTs || threadTs === ts
+      })
+      .toArray()
 )
 
 export const getChatThreadIds = cas(getChatMessageState, message =>
   message.get('replies').toArray())
 
-export const getChatMessages = ca(
-  getChatMessagesState,
-  entities => entities.toJS()
-)
+export const getChatMessages = ca(getChatMessagesState, entities =>
+  entities.toJS())
 
 export const getChatUsersIds = ca(getChatUsersIdsState, ids => ids.toArray())
 
