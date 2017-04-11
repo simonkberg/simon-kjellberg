@@ -82,7 +82,7 @@
     "ws": "^2.2.0"
   },
   "devDependencies": {
-    "@simonkberg/eslint-config-react": "^9.0.0",
+    "@simonkberg/eslint-config-react": "^10.0.0",
     "assets-webpack-plugin": "^3.5.1",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.4.0",
