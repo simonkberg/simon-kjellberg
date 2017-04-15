@@ -3,7 +3,8 @@ import thunkMiddleware from 'redux-thunk'
 import Immutable from 'immutable'
 import rootReducer from './reducers'
 
-const devToolsCompose = __DEV__ &&
+const devToolsCompose =
+  __DEV__ &&
   typeof window !== 'undefined' &&
   window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
 const composeEnhancers = devToolsCompose || compose

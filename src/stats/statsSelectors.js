@@ -10,7 +10,8 @@ const getStatsState = state => state.getIn(['stats', 'entities'])
 export const getStats = cs(getStatsState, entities => entities.toJS())
 
 export const getSortedStatsIds = cs(getStatsIds, getStats, (ids, entities) =>
-  ids.sort((a, b) => entities[b].percent - entities[a].percent))
+  ids.sort((a, b) => entities[b].percent - entities[a].percent)
+)
 
 const getStatsItemState = (state, { id }) =>
   state.getIn(['stats', 'entities', id])

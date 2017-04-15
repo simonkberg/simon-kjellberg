@@ -44,19 +44,17 @@ router.get('/users', (req, res) => {
   )
 })
 
-function mapMessages (
-  {
-    subtype,
-    username,
-    user,
-    text,
-    ts,
-    thread_ts,
-    edited,
-    reply_count,
-    replies,
-  }
-) {
+function mapMessages ({
+  subtype,
+  username,
+  user,
+  text,
+  ts,
+  thread_ts,
+  edited,
+  reply_count,
+  replies,
+}) {
   return {
     subtype,
     username,

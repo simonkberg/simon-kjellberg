@@ -32,12 +32,12 @@ function web (token, opts = {}) {
   return new WebClient(token, opts)
 }
 
-module.exports = (exports = function slack (token, opts = {}) {
+module.exports = exports = function slack (token, opts = {}) {
   return {
     rtm: rtm(token, opts.rtm),
     web: web(token, opts.web),
   }
-})
+}
 
 exports.rtm = rtm
 exports.web = web

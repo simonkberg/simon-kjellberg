@@ -5,8 +5,10 @@ const JSON_KEY = '__ISO_STATE'
 
 function server (content, state) {
   return function render () {
-    return `<div ${NODE_KEY}>${content}</div>` +
+    return (
+      `<div ${NODE_KEY}>${content}</div>` +
       `<script>window.${JSON_KEY}=${serialize(state)}</script>`
+    )
   }
 }
 

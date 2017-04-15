@@ -3,17 +3,15 @@ import parser, { parserCache, emojiCache, cacheShape } from './parser'
 
 const { string } = PropTypes
 
-const SlackMessage = (
-  {
-    component: Component,
-    children,
-    parserCache,
-    emojiCache,
-    emojiCdn,
-    emojiClassName,
-    ...props
-  }
-) => {
+const SlackMessage = ({
+  component: Component,
+  children,
+  parserCache,
+  emojiCache,
+  emojiCdn,
+  emojiClassName,
+  ...props
+}) => {
   const parserOptions = {
     parser: { cache: parserCache },
     emoji: {
