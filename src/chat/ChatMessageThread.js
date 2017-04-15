@@ -10,7 +10,6 @@ const { object, array } = PropTypes
 class ChatMessageThread extends PureComponent {
   static propTypes = {
     messageIds: array,
-    users: object,
     styles: object,
   }
 
