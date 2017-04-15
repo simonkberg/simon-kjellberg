@@ -1,4 +1,5 @@
-import React, { PureComponent, PropTypes } from 'react'
+import PropTypes from 'prop-types'
+import React, { PureComponent } from 'react'
 import { findDOMNode } from 'react-dom'
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
 import ResizeObserver from 'resize-observer-polyfill'
