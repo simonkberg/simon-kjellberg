@@ -45,11 +45,12 @@ const entities = reducerMap(
         map.mergeWith(
           (existing, value) =>
             existing.mergeWith(
-              (existing, value) => is(existing, value) ? existing : value,
+              (existing, value) => (is(existing, value) ? existing : value),
               value
             ),
           response.entities.messages
-        )),
+        )
+      ),
   },
   initialState.entities
 )

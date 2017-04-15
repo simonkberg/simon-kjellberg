@@ -40,7 +40,8 @@ export const getChatLoading = ca(
 )
 
 export const getChatMessageIds = ca(getChatMessageIdsState, ids =>
-  ids.toArray())
+  ids.toArray()
+)
 
 export const getMainChatMessageIds = ca(
   getChatMessageIdsState,
@@ -55,10 +56,12 @@ export const getMainChatMessageIds = ca(
 )
 
 export const getChatThreadIds = cas(getChatMessageState, message =>
-  message.get('replies').toArray())
+  message.get('replies').toArray()
+)
 
 export const getChatMessages = ca(getChatMessagesState, entities =>
-  entities.toJS())
+  entities.toJS()
+)
 
 export const getChatUsersIds = ca(getChatUsersIdsState, ids => ids.toArray())
 

@@ -311,6 +311,6 @@ function randomAnimalName () {
   return animalNames[floor(random() * animalNames.length)]
 }
 
-module.exports = (exports = function randomName () {
+module.exports = exports = function randomName () {
   return `${randomPositiveAdjective()}-${randomAnimalName()}`
-})
+}

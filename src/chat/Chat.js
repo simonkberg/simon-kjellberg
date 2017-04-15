@@ -64,7 +64,9 @@ export class Chat extends PureComponent {
     this.setState(
       state => ({ open: !state.open }),
       () =>
-        this.state.open ? this.bindDocumentClick() : this.unbindDocumentClick()
+        (this.state.open
+          ? this.bindDocumentClick()
+          : this.unbindDocumentClick())
     )
 
   bindDocumentClick = () =>
@@ -95,11 +97,7 @@ export class Chat extends PureComponent {
   onSocketMessage = (event, data) => {
     log('Socket Message', event)
 
-    const {
-      removeChatMessage,
-      updateChatMessage,
-      addChatMessage,
-    } = this.props
+    const { removeChatMessage, updateChatMessage, addChatMessage } = this.props
 
     const { subtype, ...message } = data
 

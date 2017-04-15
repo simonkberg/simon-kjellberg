@@ -7,34 +7,32 @@ export const FETCH_CHAT_HISTORY = 'FETCH_CHAT_HISTORY'
 export const FETCH_CHAT_HISTORY_SUCCESS = 'FETCH_CHAT_HISTORY_SUCCESS'
 export const FETCH_CHAT_HISTORY_ERROR = 'FETCH_CHAT_HISTORY_ERROR'
 
-export const loadChatHistory = () =>
-  (dispatch, getState) => {
-    const messageIds = getChatMessageIds(getState())
+export const loadChatHistory = () => (dispatch, getState) => {
+  const messageIds = getChatMessageIds(getState())
 
-    if (!messageIds.length) {
-      return fetchChatHistory()(dispatch, getState)
-    }
+  if (!messageIds.length) {
+    return fetchChatHistory()(dispatch, getState)
   }
+}
 
-export const fetchChatHistory = () =>
-  (dispatch, getState) => {
-    dispatch({ type: FETCH_CHAT_HISTORY })
+export const fetchChatHistory = () => (dispatch, getState) => {
+  dispatch({ type: FETCH_CHAT_HISTORY })
 
-    const baseUrl = getBaseUrl(getState())
+  const baseUrl = getBaseUrl(getState())
 
-    return fetch(`${baseUrl}/api/chat/history`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.ok) {
-          const messages = normalize(res.messages, Schema.CHAT_MESSAGES)
+  return fetch(`${baseUrl}/api/chat/history`)
+    .then(res => res.json())
+    .then(res => {
+      if (res.ok) {
+        const messages = normalize(res.messages, Schema.CHAT_MESSAGES)
 
-          return dispatch(fetchChatHistorySuccess(messages))
-        }
+        return dispatch(fetchChatHistorySuccess(messages))
+      }
 
-        dispatch(fetchChatHistoryError(res.message))
-      })
-      .catch(err => dispatch(fetchChatHistoryError(err.message)))
-  }
+      dispatch(fetchChatHistoryError(res.message))
+    })
+    .catch(err => dispatch(fetchChatHistoryError(err.message)))
+}
 
 export const fetchChatHistorySuccess = response => ({
   type: FETCH_CHAT_HISTORY_SUCCESS,
@@ -69,34 +67,32 @@ export const FETCH_CHAT_USERS = 'FETCH_CHAT_USERS'
 export const FETCH_CHAT_USERS_SUCCESS = 'FETCH_CHAT_USERS_SUCCESS'
 export const FETCH_CHAT_USERS_ERROR = 'FETCH_CHAT_USERS_ERROR'
 
-export const loadChatUsers = () =>
-  (dispatch, getState) => {
-    const userIds = getChatUsersIds(getState())
+export const loadChatUsers = () => (dispatch, getState) => {
+  const userIds = getChatUsersIds(getState())
 
-    if (!userIds.length) {
-      return fetchChatUsers()(dispatch, getState)
-    }
+  if (!userIds.length) {
+    return fetchChatUsers()(dispatch, getState)
   }
+}
 
-export const fetchChatUsers = () =>
-  (dispatch, getState) => {
-    dispatch({ type: FETCH_CHAT_USERS })
+export const fetchChatUsers = () => (dispatch, getState) => {
+  dispatch({ type: FETCH_CHAT_USERS })
 
-    const baseUrl = getBaseUrl(getState())
+  const baseUrl = getBaseUrl(getState())
 
-    return fetch(`${baseUrl}/api/chat/users`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.ok) {
-          const users = normalize(res.users, Schema.CHAT_USERS)
+  return fetch(`${baseUrl}/api/chat/users`)
+    .then(res => res.json())
+    .then(res => {
+      if (res.ok) {
+        const users = normalize(res.users, Schema.CHAT_USERS)
 
-          return dispatch(fetchChatUsersSuccess(users))
-        }
+        return dispatch(fetchChatUsersSuccess(users))
+      }
 
-        dispatch(fetchChatUsersError(res.message))
-      })
-      .catch(err => dispatch(fetchChatUsersError(err.message)))
-  }
+      dispatch(fetchChatUsersError(res.message))
+    })
+    .catch(err => dispatch(fetchChatUsersError(err.message)))
+}
 
 export const fetchChatUsersSuccess = response => ({
   type: FETCH_CHAT_USERS_SUCCESS,

@@ -3,9 +3,7 @@ const path = require('path')
 const {
   DefinePlugin,
   HotModuleReplacementPlugin,
-  optimize: {
-    UglifyJsPlugin,
-  },
+  optimize: { UglifyJsPlugin },
 } = require('webpack')
 
 const paths = {}
@@ -129,7 +127,7 @@ function getLoaders (opts = {}) {
   return loaders
 }
 
-module.exports = (exports = function sharedConfig (opts = {}) {
+module.exports = exports = function sharedConfig (opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
   const isDev = env !== 'production'
@@ -169,7 +167,7 @@ module.exports = (exports = function sharedConfig (opts = {}) {
   }
 
   return config
-})
+}
 
 exports.paths = paths
 exports.getEntry = getEntry

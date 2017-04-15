@@ -41,7 +41,9 @@ module.exports = function chatServer (server) {
               .history(chat.id)
               .then(({ messages }) =>
                 messages.map(msg =>
-                  web.chat.delete(msg.ts, chat.id).catch(() => null)))
+                  web.chat.delete(msg.ts, chat.id).catch(() => null)
+                )
+              )
               .catch(() => null)
           }
 
