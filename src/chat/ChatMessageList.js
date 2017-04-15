@@ -7,14 +7,11 @@ import { connect } from 'react-redux'
 import ChatMessage from './ChatMessage'
 import { getMainChatMessageIds } from './chatSelectors'
 
-const { bool, object, array } = PropTypes
+const { object, array } = PropTypes
 
 class ChatMessageList extends PureComponent {
   static propTypes = {
-    open: bool,
     messageIds: array,
-    messages: object,
-    users: object,
     styles: object,
   }
 

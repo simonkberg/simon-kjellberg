@@ -82,7 +82,7 @@
     "ws": "^2.2.0"
   },
   "devDependencies": {
-    "@simonkberg/eslint-config-react": "^9.0.0",
+    "@simonkberg/eslint-config-react": "^10.0.0",
     "assets-webpack-plugin": "^3.5.1",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.4.0",
@@ -94,8 +94,8 @@
     "babel-preset-stage-0": "^6.22.0",
     "css-loader": "^0.26.4",
     "del": "^2.2.0",
-    "eslint": "^3.17.1",
-    "eslint-loader": "^1.6.3",
+    "eslint": "^3.19.0",
+    "eslint-loader": "^1.7.1",
     "file-loader": "^0.10.1",
     "isomorphic-style-loader": "^1.1.0",
     "lint-staged": "^3.3.1",

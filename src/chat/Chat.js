@@ -17,8 +17,6 @@ const { object, func, bool } = PropTypes
 export class Chat extends PureComponent {
   static propTypes = {
     styles: object,
-    messages: object,
-    users: object,
     loading: bool,
     loadChatHistory: func,
     loadChatUsers: func,
