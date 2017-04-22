@@ -28,7 +28,6 @@ function getPlugins (opts = {}) {
   const {
     env = process.env.NODE_ENV || 'development',
     gaid = process.env.GA_ID || '',
-    debug = process.env.DEBUG || '',
     browser,
   } = opts
 
@@ -36,7 +35,6 @@ function getPlugins (opts = {}) {
     new DefinePlugin({
       'process.env': {
         NODE_ENV: `"${env}"`,
-        DEBUG: `"${debug}"`,
         GA_ID: `"${gaid}"`,
       },
       __DEV__: env !== 'production',
