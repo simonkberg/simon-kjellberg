@@ -1,5 +1,5 @@
 const path = require('path')
-const { CommonsChunkPlugin } = require('webpack').optimize
+const { DefinePlugin, optimize: { CommonsChunkPlugin } } = require('webpack')
 const AssetsPlugin = require('assets-webpack-plugin')
 const SWPrecachePlugin = require('sw-precache-webpack-plugin')
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
@@ -11,6 +11,7 @@ module.exports = function clientConfig (opts = {}) {
   opts = Object.assign(
     {
       env: process.env.NODE_ENV,
+      debug: process.env.DEBUG,
       browser: true,
     },
     opts
@@ -43,6 +44,9 @@ module.exports = function clientConfig (opts = {}) {
 
     plugins: [
       ...config.plugins,
+      new DefinePlugin({
+        'process.env.DEBUG': `"${opts.debug}"`,
+      }),
       new AssetsPlugin({
         filename: 'manifest.json',
         path: paths.build,

@@ -4,7 +4,8 @@
     ["env", {
       "targets": {
         "node": "current",
-        "browsers": "last 2 versions"
+        "browsers": "last 2 versions",
+        "uglify": true
       },
       "modules": false,
       "useBuiltIns": true
