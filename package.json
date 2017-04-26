@@ -113,7 +113,7 @@
     "redux-devtools-log-monitor": "^1.2.0",
     "stylelint": "^7.10.1",
     "stylelint-config-standard": "^16.0.0",
-    "sw-precache-webpack-plugin": "^0.9.1",
+    "sw-precache-webpack-plugin": "^0.10.0",
     "url-loader": "^0.5.8",
     "webpack": "^2.4.1",
     "webpack-bundle-analyzer": "^2.4.0",
