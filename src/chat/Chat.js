@@ -65,9 +65,7 @@ export class Chat extends PureComponent {
     this.setState(
       state => ({ open: !state.open }),
       () =>
-        (this.state.open
-          ? this.bindDocumentClick()
-          : this.unbindDocumentClick())
+        this.state.open ? this.bindDocumentClick() : this.unbindDocumentClick()
     )
 
   bindDocumentClick = () =>
