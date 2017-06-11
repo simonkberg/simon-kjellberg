@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 
 export default class LRU {
-  constructor (limit = 1000) {
+  constructor(limit = 1000) {
     this.limit = limit
     this.map = new Map()
   }

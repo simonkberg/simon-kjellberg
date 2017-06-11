@@ -9,13 +9,13 @@ const devToolsCompose =
   window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
 const composeEnhancers = devToolsCompose || compose
 
-function getMiddleware () {
+function getMiddleware() {
   const middleware = [thunkMiddleware]
 
   return applyMiddleware(...middleware)
 }
 
-function getEnhancer () {
+function getEnhancer() {
   const args = [getMiddleware()]
 
   if (__DEV__ && !devToolsCompose) {
@@ -27,7 +27,7 @@ function getEnhancer () {
   return composeEnhancers(...args)
 }
 
-export default function configureStore (initialState = Immutable.Map()) {
+export default function configureStore(initialState = Immutable.Map()) {
   const store = createStore(rootReducer, initialState, getEnhancer())
 
   if (__DEV__ && module.hot) {

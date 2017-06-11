@@ -44,7 +44,7 @@ router.get('/users', (req, res) => {
   )
 })
 
-function mapMessages ({
+function mapMessages({
   subtype,
   username,
   user,
@@ -68,7 +68,7 @@ function mapMessages ({
   }
 }
 
-function mapUsers ({ id, name, color }) {
+function mapUsers({ id, name, color }) {
   return { id, name, color }
 }
 

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import getDisplayName from './getDisplayName'
 
-export default function withSocket (opts = {}) {
+export default function withSocket(opts = {}) {
   return ComposedComponent =>
     class WithSocket extends Component {
       static displayName = `WithSocket(${getDisplayName(ComposedComponent)})`
@@ -16,7 +16,7 @@ export default function withSocket (opts = {}) {
       socket = null
       component = null
 
-      componentDidMount () {
+      componentDidMount() {
         const {
           host = window.location.host,
           protocol = window.location.protocol === 'https:' ? 'wss' : 'ws',
@@ -66,7 +66,7 @@ export default function withSocket (opts = {}) {
         }
       }
 
-      componentWillUnmount () {
+      componentWillUnmount() {
         if (this.socket) this.socket.close()
       }
 
@@ -74,7 +74,7 @@ export default function withSocket (opts = {}) {
         this.component = el
       }
 
-      render () {
+      render() {
         const props = {
           ref: this.ref,
           ...this.props,

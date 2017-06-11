@@ -22,7 +22,7 @@ const stats = new Cache({
 router.get('/stats', (req, res) => wakaTimeProxy(JSON_STATS, res))
 router.get('/activity', (req, res) => wakaTimeProxy(JSON_ACTIVITY, res))
 
-function wakaTimeProxy (url, res) {
+function wakaTimeProxy(url, res) {
   stats.get(url, (err, data) => {
     if (err) throw err
 

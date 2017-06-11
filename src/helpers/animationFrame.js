@@ -1,9 +1,9 @@
 import raf from 'raf'
 
-export default function animationFrame (fn) {
+export default function animationFrame(fn) {
   const frame = {
     id: 0,
-    cancel () {
+    cancel() {
       raf.cancel(this.id)
     },
   }

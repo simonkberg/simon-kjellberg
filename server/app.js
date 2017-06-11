@@ -11,7 +11,7 @@ const webpackConfig = require('../webpack/config.client')
 const reactServer = require('../build/server').default
 const api = require('./api')
 
-module.exports = function appServer ({ nr }) {
+module.exports = function appServer({ nr }) {
   const app = express()
   const dev = app.get('env') !== 'production'
 

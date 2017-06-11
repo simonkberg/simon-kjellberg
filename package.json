@@ -38,6 +38,7 @@
       "git add"
     ],
     "*.css": [
+      "prettier",
       "stylelint --fix"
     ]
   },

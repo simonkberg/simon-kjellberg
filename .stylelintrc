@@ -5,6 +5,8 @@
       "ignoreProperties": [
         "composes"
       ]
-    }]
+    }],
+    "selector-list-comma-newline-after": null,
+    "declaration-colon-newline-after": null,
   }
 }

@@ -6,7 +6,7 @@ const wakaTimeLink = {
   target: '_blank',
 }
 
-const LandingStats = () => (
+const LandingStats = () =>
   <div>
     <h2>
       currently writing
@@ -14,6 +14,5 @@ const LandingStats = () => (
     </h2>
     <Stats />
   </div>
-)
 
 export default LandingStats

@@ -38,7 +38,7 @@ export class Chat extends PureComponent {
   wrapper = null
   state = { open: __DEV__ }
 
-  componentDidMount () {
+  componentDidMount() {
     const { loadChatHistory, loadChatUsers } = this.props
 
     loadChatHistory()
@@ -49,7 +49,7 @@ export class Chat extends PureComponent {
     }
   }
 
-  componentWillUnmount () {
+  componentWillUnmount() {
     this.unbindDocumentClick()
   }
 
@@ -125,7 +125,7 @@ export class Chat extends PureComponent {
     this.wrapper = el
   }
 
-  render () {
+  render() {
     const { open } = this.state
     const { styles, loading, socketOpen } = this.props
 

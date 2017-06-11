@@ -17,11 +17,11 @@ export default class AsyncComponent extends Component {
     component: null,
   }
 
-  componentDidMount () {
+  componentDidMount() {
     this.props.loader(component => this.setState({ component }))
   }
 
-  render () {
+  render() {
     // eslint-disable-next-line no-unused-vars
     const { loader, placeholder, ...props } = this.props
     const { component: Component } = this.state

@@ -1,7 +1,5 @@
-
 .clearfix {
-  &::before,
-  &::after {
+  &::before, &::after {
     content: " ";
     display: table;
   }
@@ -33,8 +31,7 @@
 .srOnlyFocusable {
   composes: srOnly;
 
-  &:active,
-  &:focus {
+  &:active, &:focus {
     position: static;
     width: auto;
     height: auto;

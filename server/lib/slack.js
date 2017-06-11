@@ -7,7 +7,7 @@ const {
   RTM_MESSAGE_SUBTYPES,
 } = require('@slack/client')
 
-function rtm (token, opts = {}) {
+function rtm(token, opts = {}) {
   const client = new RtmClient(
     token,
     Object.assign(
@@ -28,11 +28,11 @@ function rtm (token, opts = {}) {
   })
 }
 
-function web (token, opts = {}) {
+function web(token, opts = {}) {
   return new WebClient(token, opts)
 }
 
-module.exports = exports = function slack (token, opts = {}) {
+module.exports = exports = function slack(token, opts = {}) {
   return {
     rtm: rtm(token, opts.rtm),
     web: web(token, opts.web),

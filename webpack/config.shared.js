@@ -14,7 +14,7 @@ paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
 paths.src = path.join(paths.root, 'src')
 
-function getEntry (entry, hot = false) {
+function getEntry(entry, hot = false) {
   const entries = []
 
   if (hot) {
@@ -24,7 +24,7 @@ function getEntry (entry, hot = false) {
   return entries.concat(entry)
 }
 
-function getPlugins (opts = {}) {
+function getPlugins(opts = {}) {
   const {
     env = process.env.NODE_ENV || 'development',
     gaid = process.env.GA_ID || '',
@@ -56,7 +56,7 @@ function getPlugins (opts = {}) {
   return plugins
 }
 
-function getLoaders (opts = {}) {
+function getLoaders(opts = {}) {
   const { env = process.env.NODE_ENV } = opts
   const isDev = env !== 'production'
 
@@ -125,7 +125,7 @@ function getLoaders (opts = {}) {
   return loaders
 }
 
-module.exports = exports = function sharedConfig (opts = {}) {
+module.exports = exports = function sharedConfig(opts = {}) {
   const { env = process.env.NODE_ENV } = opts
 
   const isDev = env !== 'production'

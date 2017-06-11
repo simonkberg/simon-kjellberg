@@ -114,7 +114,7 @@ exports.config = {
    *
    * @env NEW_RELIC_APDEX
    */
-  apdex_t: 0.100,
+  apdex_t: 0.1,
   /**
    * Whether to capture parameters in the request URL in slow transaction
    * traces and error traces. Because this can pass sensitive data, it's

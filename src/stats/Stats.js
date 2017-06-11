@@ -20,11 +20,11 @@ export class Stats extends PureComponent {
     statsIds: [],
   }
 
-  componentDidMount () {
+  componentDidMount() {
     this.props.loadStats()
   }
 
-  render () {
+  render() {
     const { statsIds } = this.props
 
     if (!statsIds.length) {

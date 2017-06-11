@@ -8,7 +8,7 @@ const log = debug('sk:chat')
 const { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } = slack
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
-module.exports = function chatServer (server) {
+module.exports = function chatServer(server) {
   const wss = new Server({ server: server })
 
   const { rtm, web } = slack(SLACK_API_TOKEN)
@@ -56,7 +56,7 @@ module.exports = function chatServer (server) {
   return wss
 }
 
-function sendMessage (client, params) {
+function sendMessage(client, params) {
   const payload = pick(params, [
     'subtype',
     'username',
