@@ -15,7 +15,7 @@ const convert = unicode => {
   return String.fromCharCode(char)
 }
 
-module.exports = function (source) {
+module.exports = function(source) {
   this.cacheable()
 
   const value = typeof source === 'string' ? JSON.parse(source) : source

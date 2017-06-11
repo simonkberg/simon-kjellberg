@@ -88,6 +88,6 @@ const escapeCode = string => {
 
 const replace = (string, format) => string.replace(...format)
 
-export default function textParser (string) {
+export default function textParser(string) {
   return unescapeChars(unescapeTags(formats.reduce(replace, string)))
 }

@@ -1,5 +1,7 @@
-const canUseDOM = !!(typeof window !== 'undefined' &&
+const canUseDOM = !!(
+  typeof window !== 'undefined' &&
   window.document &&
-  window.document.createElement)
+  window.document.createElement
+)
 
 export default canUseDOM

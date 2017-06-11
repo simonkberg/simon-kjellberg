@@ -21,7 +21,7 @@ class Root extends Component {
     DevTools: null,
   }
 
-  getChildContext () {
+  getChildContext() {
     const { context } = this.props
 
     return {
@@ -29,14 +29,14 @@ class Root extends Component {
     }
   }
 
-  componentDidMount () {
+  componentDidMount() {
     if (__DEV__ && !window.__REDUX_DEVTOOLS_EXTENSION__) {
       // Enable dev tools for client after mount
       this.setState({ DevTools: require('./DevTools').default })
     }
   }
 
-  render () {
+  render() {
     const { store, children } = this.props
     const { DevTools } = this.state
 

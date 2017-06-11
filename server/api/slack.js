@@ -48,8 +48,9 @@ router.post('/eta', (req, res) => {
   }
 
   const payload = {
-    text: `<@${user}>'s ETA is *${time.format('H:mm')}* (${time.fromNow()})` +
-      (reason ? `\n>>> _${reason}_` : ''),
+    text:
+      `<@${user}>'s ETA is *${time.format('H:mm')}* (${time.fromNow()})` +
+        (reason ? `\n>>> _${reason}_` : ''),
     channel: SLACK_ETA_CHANNEL,
     username: 'etabot',
     icon_emoji: clockEmoji(time),

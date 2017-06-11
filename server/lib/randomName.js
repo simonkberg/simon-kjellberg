@@ -303,14 +303,14 @@ const animalNames = [
 
 const { floor, random } = Math
 
-function randomPositiveAdjective () {
+function randomPositiveAdjective() {
   return positiveAdjectives[floor(random() * positiveAdjectives.length)]
 }
 
-function randomAnimalName () {
+function randomAnimalName() {
   return animalNames[floor(random() * animalNames.length)]
 }
 
-module.exports = exports = function randomName () {
+module.exports = exports = function randomName() {
   return `${randomPositiveAdjective()}-${randomAnimalName()}`
 }

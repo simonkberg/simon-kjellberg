@@ -6,7 +6,7 @@ import getDisplayName from './getDisplayName'
 
 const { string } = PropTypes
 
-export default function withUrl (ComposedComponent) {
+export default function withUrl(ComposedComponent) {
   class WithUrl extends Component {
     static displayName = `WithUrl(${getDisplayName(ComposedComponent)})`
     static ComposedComponent = ComposedComponent
@@ -20,13 +20,13 @@ export default function withUrl (ComposedComponent) {
       baseUrl: string,
     }
 
-    componentWillMount () {
+    componentWillMount() {
       const { props, context } = this
 
       this._setUrl(props, context)
     }
 
-    componentWillReceiveProps (props, context) {
+    componentWillReceiveProps(props, context) {
       this._setUrl(props, context)
     }
 
@@ -39,7 +39,7 @@ export default function withUrl (ComposedComponent) {
       })
     }
 
-    render () {
+    render() {
       return <ComposedComponent {...this.state} {...this.props} />
     }
   }

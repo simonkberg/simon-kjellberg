@@ -21,7 +21,7 @@ class ChatInput extends Component {
     this.setState({ value: '' })
   }
 
-  render () {
+  render() {
     const { value } = this.state
     const { styles, openChat } = this.props
 

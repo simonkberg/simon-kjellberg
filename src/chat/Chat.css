@@ -39,8 +39,7 @@
     color: color(black alpha(100%));
   }
 
-  &:active,
-  &:focus {
+  &:active, &:focus {
     outline: none;
   }
 
@@ -94,8 +93,7 @@
   border-bottom: 1px solid lightgray;
   transition: border 0.3s, color 0.3s;
 
-  &:active,
-  &:focus {
+  &:active, &:focus {
     outline: none;
     color: black;
     border-bottom-color: gray;
@@ -108,9 +106,17 @@
   overflow: hidden;
   margin-bottom: 2rem;
 
-  &::-webkit-scrollbar { width: 0.4rem; }
-  &::-webkit-scrollbar-track { background: lightgray; }
-  &::-webkit-scrollbar-thumb { background: slategray; }
+  &::-webkit-scrollbar {
+    width: 0.4rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: lightgray;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: slategray;
+  }
 
   @nest .isOpen & {
     overflow-y: auto;
@@ -131,7 +137,9 @@
 .message {
   transition: opacity 0.5s, transform 0.5s ease-out;
 
-  &::before { content: ''; }
+  &::before {
+    content: '';
+  }
 
   &.messageAppear {
     will-change: opacity;

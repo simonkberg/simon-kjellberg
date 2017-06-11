@@ -21,7 +21,7 @@ export class App extends Component {
     url: string,
   }
 
-  render () {
+  render() {
     const { children, baseUrl, url, styles } = this.props
 
     const head = {
@@ -40,7 +40,8 @@ export class App extends Component {
           name: 'description',
           property: 'og:description',
           itemprop: 'description',
-          content: 'Creative full stack developer located in Stockholm, Sweden.',
+          content:
+            'Creative full stack developer located in Stockholm, Sweden.',
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', itemprop: 'url', content: url },

@@ -7,8 +7,8 @@ import Landing from 'landing'
 import NotFound from 'notFound'
 
 export default (
-  <Route path='/' component={App}>
+  <Route path="/" component={App}>
     <IndexRoute component={Landing} />
-    <Route path='*' status={404} component={NotFound} />
+    <Route path="*" status={404} component={NotFound} />
   </Route>
 )

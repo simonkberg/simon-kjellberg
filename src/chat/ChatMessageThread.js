@@ -14,7 +14,7 @@ class ChatMessageThread extends PureComponent {
     styles: object,
   }
 
-  render () {
+  render() {
     const { styles, messageIds } = this.props
 
     const list = {

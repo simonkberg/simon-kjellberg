@@ -7,7 +7,7 @@ const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 const sharedConfig = require('./config.shared')
 const { paths, getEntry } = sharedConfig
 
-module.exports = function clientConfig (opts = {}) {
+module.exports = function clientConfig(opts = {}) {
   opts = Object.assign(
     {
       env: process.env.NODE_ENV,

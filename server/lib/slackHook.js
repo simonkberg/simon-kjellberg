@@ -1,6 +1,6 @@
 const request = require('request')
 
-module.exports = function slackHook (body = {}) {
+module.exports = function slackHook(body = {}) {
   return new Promise((resolve, reject) => {
     request.post(
       {

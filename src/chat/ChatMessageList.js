@@ -20,7 +20,7 @@ class ChatMessageList extends PureComponent {
   wrapper = null
   shouldScroll = true
 
-  componentDidMount () {
+  componentDidMount() {
     this.scrollToBottom()
 
     this.observer = new ResizeObserver(this.onResize)
@@ -30,7 +30,7 @@ class ChatMessageList extends PureComponent {
     this.wrapper.addEventListener('scroll', this.onScroll, { passive: true })
   }
 
-  componentWillUnmount () {
+  componentWillUnmount() {
     this.observer.disconnect(this.wrapper)
     this.observer.disconnect(this.list)
 
@@ -63,7 +63,7 @@ class ChatMessageList extends PureComponent {
     this.list = el && findDOMNode(el)
   }
 
-  render () {
+  render() {
     const { styles, messageIds } = this.props
 
     const wrapper = {
@@ -92,9 +92,9 @@ class ChatMessageList extends PureComponent {
     return (
       <div {...wrapper}>
         <ReactCSSTransitionGroup {...list}>
-          {messageIds.map(id => (
+          {messageIds.map(id =>
             <ChatMessage key={id} id={id} styles={styles} />
-          ))}
+          )}
         </ReactCSSTransitionGroup>
       </div>
     )

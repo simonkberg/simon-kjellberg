@@ -11,8 +11,7 @@ export default (content, { css, store, webpack_asset, newrelic }) => {
     webpack_asset('client')['js'],
   ]
 
-  const mapToPreload = href =>
-    `<link rel="preload" href="${href}" as="script">`
+  const mapToPreload = href => `<link rel="preload" href="${href}" as="script">`
 
   const mapToScript = src => `<script src="${src}" defer></script>`
 
