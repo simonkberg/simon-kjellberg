@@ -3,7 +3,7 @@ const path = require('path')
 const {
   DefinePlugin,
   HotModuleReplacementPlugin,
-  optimize: { UglifyJsPlugin },
+  optimize: { UglifyJsPlugin, ModuleConcatenationPlugin },
 } = require('webpack')
 
 const paths = {}
@@ -47,7 +47,8 @@ function getPlugins(opts = {}) {
       new UglifyJsPlugin({
         compress: { warnings: false },
         output: { comments: false },
-      })
+      }),
+      new ModuleConcatenationPlugin()
     )
   } else {
     plugins.push(new HotModuleReplacementPlugin())
