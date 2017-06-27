@@ -6,8 +6,8 @@ const convert = unicode => {
   const char = parseInt(unicode, 16)
 
   if (char >= 0x10000 && char <= 0x10ffff) {
-    let high = Math.floor((char - 0x10000) / 0x400) + 0xd800
-    var low = (char - 0x10000) % 0x400 + 0xdc00
+    const high = Math.floor((char - 0x10000) / 0x400) + 0xd800
+    const low = (char - 0x10000) % 0x400 + 0xdc00
 
     return String.fromCharCode(high) + String.fromCharCode(low)
   }
@@ -19,16 +19,30 @@ module.exports = function(source) {
   this.cacheable()
 
   const value = typeof source === 'string' ? JSON.parse(source) : source
-  const result = {}
+  const result = value.reduce(
+    (result, emoji) =>
+      emoji.short_names.reduce((result, shortName) => {
+        const name = emoji.unified.toLowerCase()
 
-  value.forEach(({ unified, short_names }) => {
-    short_names.forEach(shortName => {
-      const name = unified.toLowerCase()
-      const unicode = convert(name)
+        result[shortName] = {
+          name,
+          unicode: convert(name),
+          skins: Object.entries(
+            emoji.skin_variations || {}
+          ).reduce((acc, [key, skin]) => {
+            const name = skin.unified.toLowerCase()
+            const unicode = convert(name)
 
-      result[shortName] = { name, unicode }
-    })
-  })
+            acc[key.toLowerCase()] = { name, unicode }
+
+            return acc
+          }, {}),
+        }
+
+        return result
+      }, result),
+    {}
+  )
 
   this.value = [result]
 

@@ -52,7 +52,7 @@
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.8",
     "dotenv": "^4.0.0",
-    "emoji-datasource": "^2.4.4",
+    "emoji-datasource": "^3.0.0",
     "express": "^4.15.3",
     "express-webpack-assets": "0.0.2",
     "immutable": "^3.8.1",
