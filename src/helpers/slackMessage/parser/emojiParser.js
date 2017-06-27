@@ -2,7 +2,7 @@ import { emojiCache } from './cache'
 import emojis from 'emoji-datasource'
 
 const regexKeys = [...Object.keys(emojis)].join('|').replace(/[+]/g, '\\$&')
-const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'g')
+const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6])?:`, 'gi')
 
 const render = (props = {}) =>
   `<img ${Object.keys(props).reduce(
@@ -23,13 +23,9 @@ const replace = (options = {}) => {
       return cache.get(match)
     }
 
-    let { name, unicode } = emojis[p1]
-
-    if (p2) {
-      let suffix = emojis[p2]
-      name = `${name}-${suffix.name}`
-      unicode += suffix.unicode
-    }
+    const emoji = emojis[p1.toLowerCase()]
+    const skin = p2 && emojis[p2.toLowerCase()]
+    const { name, unicode } = skin ? emoji.skins[skin.name] : emoji
 
     const props = {
       src: `${cdnUrl}${name}.png`,
