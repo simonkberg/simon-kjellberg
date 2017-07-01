@@ -7,9 +7,9 @@ const LandingIntro = () =>
       <small> Stockholm, Sweden</small>
     </h1>
     <p>
-      Full stack developer with experience ranging from building modern,
-      dynamic frontends, to creating backends and API services, as well as
-      full server configurations and deployment procedures.
+      Full stack developer with experience ranging from building modern, dynamic
+      frontends, to creating backends and API services, as well as full server
+      configurations and deployment procedures.
     </p>
   </div>
 

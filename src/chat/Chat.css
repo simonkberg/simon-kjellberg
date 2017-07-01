@@ -39,7 +39,8 @@
     color: color(black alpha(100%));
   }
 
-  &:active, &:focus {
+  &:active,
+  &:focus {
     outline: none;
   }
 
@@ -93,7 +94,8 @@
   border-bottom: 1px solid lightgray;
   transition: border 0.3s, color 0.3s;
 
-  &:active, &:focus {
+  &:active,
+  &:focus {
     outline: none;
     color: black;
     border-bottom-color: gray;

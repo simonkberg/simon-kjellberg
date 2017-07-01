@@ -10,7 +10,9 @@ const LandingStats = () =>
   <div>
     <h2>
       currently writing
-      <small> (via <a {...wakaTimeLink}>wakatime.com</a>)</small>
+      <small>
+        {' '}(via <a {...wakaTimeLink}>wakatime.com</a>)
+      </small>
     </h2>
     <Stats />
   </div>

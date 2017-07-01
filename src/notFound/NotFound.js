@@ -11,7 +11,9 @@ const shrug = '\xAF_(\u30C4)_/\xAF'
 export const NotFound = ({ styles }) =>
   <div className={styles.notFound}>
     <Helmet {...head} />
-    <h1>404 <small>{shrug}</small></h1>
+    <h1>
+      404 <small>{shrug}</small>
+    </h1>
     <p>Not Found</p>
   </div>
 

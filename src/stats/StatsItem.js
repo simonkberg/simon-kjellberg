@@ -11,7 +11,10 @@ const StatsItem = ({ id, name, percent }) => {
     <li>
       {name}{' '}
       <Motion defaultStyle={{ count: 0 }} style={{ count: target }}>
-        {({ count }) => <span>({count.toFixed(2)}%)</span>}
+        {({ count }) =>
+          <span>
+            ({count.toFixed(2)}%)
+          </span>}
       </Motion>
     </li>
   )
