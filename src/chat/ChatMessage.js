@@ -15,8 +15,7 @@ export const ChatMessage = ({ message = {}, user = {}, styles }) => {
       <strong style={{ color: colorHash(name) }}>{name}: </strong>
       <SlackMessage emojiClassName={styles.messageEmoji}>
         {text}
-      </SlackMessage>
-      {' '}
+      </SlackMessage>{' '}
       {edited && <small className={styles.messageEdited}>(edited)</small>}
       {replies &&
         replies.length > 0 &&
