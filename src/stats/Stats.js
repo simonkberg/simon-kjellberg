@@ -5,19 +5,23 @@ import { connect } from 'react-redux'
 import Loader from 'shared/components/loader'
 
 import * as statsActions from './statsActions'
-import { getSortedStatsIds } from './statsSelectors'
+import * as statsSelectors from './statsSelectors'
 import StatsItem from './StatsItem'
 
-const { array, func } = PropTypes
+const { array, bool, string, func } = PropTypes
 
 export class Stats extends PureComponent {
   static propTypes = {
-    statsIds: array,
+    ids: array,
+    isLoading: bool,
+    error: string,
     loadStats: func.isRequired,
   }
 
   static defaultProps = {
-    statsIds: [],
+    ids: [],
+    isLoading: false,
+    error: null,
   }
 
   componentDidMount() {
@@ -25,22 +29,28 @@ export class Stats extends PureComponent {
   }
 
   render() {
-    const { statsIds } = this.props
+    const { ids, isLoading, error } = this.props
 
-    if (!statsIds.length) {
+    if (error) {
+      return <p>Stats are temporarily unavailable :(</p>
+    }
+
+    if (isLoading) {
       return <Loader />
     }
 
     return (
       <ul>
-        {statsIds.map(id => <StatsItem key={id} id={id} />)}
+        {ids.map(id => <StatsItem key={id} id={id} />)}
       </ul>
     )
   }
 }
 
 const mapStateToProps = state => ({
-  statsIds: getSortedStatsIds(state),
+  ids: statsSelectors.getSortedStatsIds(state),
+  isLoading: statsSelectors.getStatsLoading(state),
+  error: statsSelectors.getStatsError(state),
 })
 
 const mapDispatchToProps = dispatch =>

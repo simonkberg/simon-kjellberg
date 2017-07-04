@@ -19,16 +19,15 @@ const stats = new Cache({
   maxAge,
 })
 
-router.get('/stats', (req, res) => wakaTimeProxy(JSON_STATS, res))
-router.get('/activity', (req, res) => wakaTimeProxy(JSON_ACTIVITY, res))
-
-function wakaTimeProxy(url, res) {
+const wakaTimeProxy = url => (req, res, next) =>
   stats.get(url, (err, data) => {
-    if (err) throw err
+    if (err) return next(err)
 
     res.append('Cache-Control', `max-age=${maxAge}`)
     res.json(data)
   })
-}
+
+router.get('/stats', wakaTimeProxy(JSON_STATS))
+router.get('/activity', wakaTimeProxy(JSON_ACTIVITY))
 
 module.exports = router
