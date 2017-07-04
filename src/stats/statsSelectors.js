@@ -17,3 +17,11 @@ const getStatsItemState = (state, { id }) =>
   state.getIn(['stats', 'entities', id])
 
 export const getStatsItem = cas(getStatsItemState, entity => entity.toObject())
+
+const getStatsLoadingState = state => state.getIn(['stats', 'loading'], false)
+
+export const getStatsLoading = cas(getStatsLoadingState, loading => loading)
+
+const getStatsErrorState = state => state.getIn(['stats', 'error'], null)
+
+export const getStatsError = cas(getStatsErrorState, error => error)
