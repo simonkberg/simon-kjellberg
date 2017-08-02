@@ -14,9 +14,7 @@ import Root, { configureStore, routes } from 'root'
 
 const gaId = process.env.GA_ID
 
-if (__DEV__) {
-  window.Perf = require('react-addons-perf')
-} else {
+if (!__DEV__) {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
   }
