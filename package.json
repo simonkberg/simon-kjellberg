@@ -50,7 +50,7 @@
     "classnames": "^2.2.4",
     "compression": "^1.7.0",
     "cookie-parser": "^1.4.3",
-    "debug": "^2.6.8",
+    "debug": "^3.0.0",
     "dotenv": "^4.0.0",
     "emoji-datasource": "^3.0.0",
     "express": "^4.15.3",
