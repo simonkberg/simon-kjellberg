@@ -105,7 +105,7 @@
     "eslint-loader": "^1.9.0",
     "file-loader": "^0.11.2",
     "husky": "^0.14.3",
-    "isomorphic-style-loader": "^3.0.0",
+    "isomorphic-style-loader": "^4.0.0",
     "lint-staged": "^4.0.2",
     "postcss": "^6.0.8",
     "postcss-cssnext": "^3.0.2",
