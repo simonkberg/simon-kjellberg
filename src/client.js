@@ -2,7 +2,7 @@ import 'babel-polyfill'
 import 'isomorphic-fetch'
 
 import React from 'react'
-import { render } from 'react-dom'
+import { hydrate } from 'react-dom'
 import Router from 'react-router/lib/Router'
 import match from 'react-router/lib/match'
 import history from 'react-router/lib/browserHistory'
@@ -14,9 +14,7 @@ import Root, { configureStore, routes } from 'root'
 
 const gaId = process.env.GA_ID
 
-if (__DEV__) {
-  window.Perf = require('react-addons-perf')
-} else {
+if (!__DEV__) {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
   }
@@ -39,7 +37,7 @@ match({ history, routes }, (error, redirect, props) => {
     }
 
     const renderApp = () =>
-      render(
+      hydrate(
         <AppContainer>
           <Root store={store} context={context}>
             <Router {...props} />
