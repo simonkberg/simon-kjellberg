@@ -14,6 +14,8 @@ paths.root = path.join(paths.config, '..')
 paths.build = path.join(paths.root, 'build')
 paths.src = path.join(paths.root, 'src')
 
+const babelRc = require(path.resolve(paths.root, '.babelrc.js'))
+
 function getEntry(entry, hot = false) {
   const entries = []
 
@@ -67,12 +69,13 @@ function getLoaders(opts = {}) {
       use: [
         {
           loader: 'babel-loader',
-          options: { cacheDirectory: true },
+          options: Object.assign(
+            { cacheDirectory: true, babelrc: false },
+            babelRc
+          ),
         },
         'eslint-loader',
       ],
-      exclude: /node_modules/,
-      include: paths.src,
     },
     {
       test: /\.css$/,
