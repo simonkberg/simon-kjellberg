@@ -31,9 +31,11 @@ match({ history, routes }, (error, redirect, props) => {
     const store = configureStore(Immutable.fromJS(state))
     const context = { insertCss: (styles, opts) => styles._insertCss(opts) }
 
-    props.onUpdate = function trackPageView() {
-      ReactGA.set({ page: window.location.pathname })
-      ReactGA.pageview(window.location.pathname)
+    if (gaId) {
+      props.onUpdate = function trackPageView() {
+        ReactGA.set({ page: window.location.pathname })
+        ReactGA.pageview(window.location.pathname)
+      }
     }
 
     const renderApp = () =>
