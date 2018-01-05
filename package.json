@@ -85,7 +85,7 @@
     "sanitize.css": "^5.0.0",
     "serialize-javascript": "^1.4.0",
     "serve-favicon": "^2.4.3",
-    "ws": "^3.1.0"
+    "ws": "^4.0.0"
   },
   "devDependencies": {
     "@simonkberg/eslint-config-react": "^10.4.0",
