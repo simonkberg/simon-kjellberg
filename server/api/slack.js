@@ -9,7 +9,7 @@ const router = express.Router()
 const { SLACK_SLAP_TOKEN, SLACK_ETA_TOKEN, SLACK_ETA_CHANNEL } = process.env
 
 router.post('/slap', (req, res) => {
-  let { user_name: user, text, channel_id, token } = req.body
+  let { user_name: user, text, channel_id: channel, token } = req.body
 
   if (token !== SLACK_SLAP_TOKEN) {
     return res.end('Invalid token')
@@ -22,13 +22,15 @@ router.post('/slap', (req, res) => {
   }
 
   const payload = {
+    channel,
     text: `<@${user}> slaps <${target}> around a bit with a large trout`,
-    channel: channel_id,
     username: 'slapbot',
     icon_emoji: ':fish:',
   }
 
-  slackHook(payload).then(() => res.end()).catch(err => res.end(err))
+  slackHook(payload)
+    .then(() => res.end())
+    .catch(err => res.end(err))
 })
 
 router.post('/eta', (req, res) => {
@@ -56,7 +58,9 @@ router.post('/eta', (req, res) => {
     icon_emoji: clockEmoji(time),
   }
 
-  slackHook(payload).then(() => res.end()).catch(err => res.end(err))
+  slackHook(payload)
+    .then(() => res.end())
+    .catch(err => res.end(err))
 })
 
 module.exports = router

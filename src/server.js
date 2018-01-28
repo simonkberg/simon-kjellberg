@@ -20,7 +20,7 @@ export default () => {
       }
 
       if (props) {
-        const { locals: { state, webpack_asset, newrelic } } = res
+        const { locals: { state, webpack_asset: asset, newrelic } } = res
 
         const css = []
         const context = { insertCss: styles => css.push(styles._getCss()) }
@@ -38,7 +38,7 @@ export default () => {
           const html = htmlHelper(content, {
             css,
             store,
-            webpack_asset,
+            asset,
             newrelic,
           })
 
