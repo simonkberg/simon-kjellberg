@@ -1,7 +1,7 @@
 @import 'shared/styles/variables.css';
 
 .wrapper {
-  composes: clearfix from "shared/styles/helpers.css";
+  composes: clearfix from 'shared/styles/helpers.css';
   position: fixed;
   bottom: 0;
   left: 0;
@@ -22,7 +22,7 @@
 }
 
 .toggle {
-  composes: clearfix from "shared/styles/helpers.css";
+  composes: clearfix from 'shared/styles/helpers.css';
   position: absolute;
   z-index: 2;
   top: 0.5rem;
@@ -50,15 +50,15 @@
 }
 
 .toggleOpen {
-  composes: slack from "shared/styles/icons.css";
+  composes: slack from 'shared/styles/icons.css';
 }
 
 .toggleClose {
-  composes: close from "shared/styles/icons.css";
+  composes: close from 'shared/styles/icons.css';
 }
 
 .toggleText {
-  composes: hideText from "shared/styles/helpers.css";
+  composes: hideText from 'shared/styles/helpers.css';
 }
 
 .container {

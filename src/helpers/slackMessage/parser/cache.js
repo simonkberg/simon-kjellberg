@@ -17,7 +17,7 @@ export default class LRU {
     }
 
     return this
-  };
+  }
 
   get = key => {
     if (this.has(key)) {
@@ -28,7 +28,7 @@ export default class LRU {
 
       return value
     }
-  };
+  }
 
   clear = _ => this.map.clear()
 }

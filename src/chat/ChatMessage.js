@@ -18,8 +18,7 @@ export const ChatMessage = ({ message = {}, user = {}, styles }) => {
       </SlackMessage>{' '}
       {edited && <small className={styles.messageEdited}>(edited)</small>}
       {replies &&
-        replies.length > 0 &&
-        <ChatMessageThread id={ts} styles={styles} />}
+        replies.length > 0 && <ChatMessageThread id={ts} styles={styles} />}
     </li>
   )
 }

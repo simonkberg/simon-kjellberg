@@ -8,7 +8,7 @@ import Styles from './NotFound.css'
 const head = { title: '404' }
 const shrug = '\xAF_(\u30C4)_/\xAF'
 
-export const NotFound = ({ styles }) =>
+export const NotFound = ({ styles }) => (
   <div className={styles.notFound}>
     <Helmet {...head} />
     <h1>
@@ -16,6 +16,7 @@ export const NotFound = ({ styles }) =>
     </h1>
     <p>Not Found</p>
   </div>
+)
 
 NotFound.propTypes = {
   styles: PropTypes.object,

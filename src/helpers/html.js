@@ -1,14 +1,14 @@
 import Helmet from 'react-helmet'
 import { server } from 'helpers/isoState'
 
-export default (content, { css, store, webpack_asset, newrelic }) => {
+export default (content, { css, store, asset, newrelic }) => {
   const head = Helmet.rewind()
   const render = server(content, store.getState())
 
   const scripts = [
-    webpack_asset('manifest')['js'],
-    webpack_asset('vendor')['js'],
-    webpack_asset('client')['js'],
+    asset('manifest')['js'],
+    asset('vendor')['js'],
+    asset('client')['js'],
   ]
 
   const mapToPreload = href => `<link rel="preload" href="${href}" as="script">`

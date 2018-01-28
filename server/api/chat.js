@@ -50,9 +50,9 @@ function mapMessages({
   user,
   text,
   ts,
-  thread_ts,
+  thread_ts, // eslint-disable-line camelcase
   edited,
-  reply_count,
+  reply_count, // eslint-disable-line camelcase
   replies,
 }) {
   return {

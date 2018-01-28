@@ -1,5 +1,5 @@
-@import "./variables.css";
-@import "sanitize.css/sanitize.css";
+@import './variables.css';
+@import 'sanitize.css/sanitize.css';
 
 :root {
   overflow: auto;
@@ -55,7 +55,7 @@ code {
 
   &::before,
   &::after {
-    content: "`";
+    content: '`';
     color: var(--root-color);
   }
 
@@ -84,17 +84,17 @@ h3 {
 }
 
 h1::before {
-  content: "#";
+  content: '#';
   left: -1.5ch;
 }
 
 h2::before {
-  content: "##";
+  content: '##';
   left: -2.5ch;
 }
 
 h3::before {
-  content: "###";
+  content: '###';
   left: -3.5ch;
 }
 
@@ -113,7 +113,7 @@ ul {
     margin-left: -1.5ch;
 
     &::before {
-      content: "*";
+      content: '*';
       position: absolute;
       left: 0;
       top: 50%;

@@ -92,9 +92,9 @@ class ChatMessageList extends PureComponent {
     return (
       <div {...wrapper}>
         <ReactCSSTransitionGroup {...list}>
-          {messageIds.map(id =>
+          {messageIds.map(id => (
             <ChatMessage key={id} id={id} styles={styles} />
-          )}
+          ))}
         </ReactCSSTransitionGroup>
       </div>
     )
