@@ -7,12 +7,13 @@ import LandingStats from './LandingStats'
 import LandingLinks from './LandingLinks'
 import Styles from './Landing.css'
 
-export const Landing = ({ styles }) =>
+export const Landing = ({ styles }) => (
   <div className={styles.landing}>
     <LandingIntro />
     <LandingStats />
     <LandingLinks styles={styles} />
   </div>
+)
 
 Landing.propTypes = {
   styles: PropTypes.object,

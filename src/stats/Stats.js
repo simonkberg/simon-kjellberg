@@ -39,11 +39,7 @@ export class Stats extends PureComponent {
       return <Loader />
     }
 
-    return (
-      <ul>
-        {ids.map(id => <StatsItem key={id} id={id} />)}
-      </ul>
-    )
+    return <ul>{ids.map(id => <StatsItem key={id} id={id} />)}</ul>
   }
 }
 

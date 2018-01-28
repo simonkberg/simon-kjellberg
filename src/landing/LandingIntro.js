@@ -1,6 +1,6 @@
 import React from 'react'
 
-const LandingIntro = () =>
+const LandingIntro = () => (
   <div>
     <h1>
       Simon Kjellberg
@@ -12,5 +12,6 @@ const LandingIntro = () =>
       configurations and deployment procedures.
     </p>
   </div>
+)
 
 export default LandingIntro

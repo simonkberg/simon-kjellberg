@@ -155,9 +155,7 @@ export class Chat extends PureComponent {
     return (
       <div {...wrapper}>
         <button {...button}>
-          <span className={styles.toggleText}>
-            {open ? 'Close' : 'Open'}
-          </span>
+          <span className={styles.toggleText}>{open ? 'Close' : 'Open'}</span>
         </button>
         <div className={styles.container}>
           {!loading && <ChatMessageList {...this.props} />}

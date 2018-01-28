@@ -10,7 +10,10 @@ export function hashString(string) {
     return cache.get(string)
   }
 
-  const hash = string.split('').map(charToCharCode).reduce(hashReducer, 5381)
+  const hash = string
+    .split('')
+    .map(charToCharCode)
+    .reduce(hashReducer, 5381)
 
   cache.set(string, hash)
 

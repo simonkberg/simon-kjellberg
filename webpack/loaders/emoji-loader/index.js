@@ -1,6 +1,9 @@
 const convert = unicode => {
   if (unicode.indexOf('-') > -1) {
-    return unicode.split('-').map(part => convert(part)).join('')
+    return unicode
+      .split('-')
+      .map(part => convert(part))
+      .join('')
   }
 
   const char = parseInt(unicode, 16)
@@ -27,16 +30,17 @@ module.exports = function(source) {
         result[shortName] = {
           name,
           unicode: convert(name),
-          skins: Object.entries(
-            emoji.skin_variations || {}
-          ).reduce((acc, [key, skin]) => {
-            const name = skin.unified.toLowerCase()
-            const unicode = convert(name)
+          skins: Object.entries(emoji.skin_variations || {}).reduce(
+            (acc, [key, skin]) => {
+              const name = skin.unified.toLowerCase()
+              const unicode = convert(name)
 
-            acc[key.toLowerCase()] = { name, unicode }
+              acc[key.toLowerCase()] = { name, unicode }
 
-            return acc
-          }, {}),
+              return acc
+            },
+            {}
+          ),
         }
 
         return result

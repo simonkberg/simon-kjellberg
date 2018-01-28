@@ -6,15 +6,17 @@ const wakaTimeLink = {
   target: '_blank',
 }
 
-const LandingStats = () =>
+const LandingStats = () => (
   <div>
     <h2>
       currently writing
       <small>
-        {' '}(via <a {...wakaTimeLink}>wakatime.com</a>)
+        {' '}
+        (via <a {...wakaTimeLink}>wakatime.com</a>)
       </small>
     </h2>
     <Stats />
   </div>
+)
 
 export default LandingStats

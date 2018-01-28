@@ -18,12 +18,13 @@ const emailLink = {
   href: 'mailto:simon.kjellberg@gmail.com',
 }
 
-const Link = ({ styles, ...link }) =>
+const Link = ({ styles, ...link }) => (
   <small className={styles.linkWrapper}>
     [{link.title}](<a className={styles.link} {...link}>
       {link.href}
     </a>)
   </small>
+)
 
 Link.propTypes = {
   styles: PropTypes.object,
@@ -31,7 +32,7 @@ Link.propTypes = {
   href: PropTypes.string,
 }
 
-const LandingLinks = ({ styles }) =>
+const LandingLinks = ({ styles }) => (
   <div>
     <h2>links</h2>
     <p>
@@ -40,6 +41,7 @@ const LandingLinks = ({ styles }) =>
       <Link styles={styles} {...emailLink} />
     </p>
   </div>
+)
 
 LandingLinks.propTypes = {
   styles: PropTypes.object,
