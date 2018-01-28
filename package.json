@@ -15,33 +15,47 @@
     "build:prod": "NODE_ENV=production nyr build",
     "build": "node ./bin/compile.js",
     "dev": "nyr build:dev && nyr start:dev",
-    "format": "nyr prettier -- \"*.js\" \"{bin,server,src,webpack}/**/*.{js,css}\"",
     "lint:css:fix": "nyr lint:css -- --fix",
-    "lint:css": "stylelint \"src/**/*.css\"",
+    "lint:css": "stylelint '**/*.css'",
     "lint:fix": "nyr lint:css:fix && nyr lint:js:fix",
     "lint:js:fix": "nyr lint:js -- --fix",
-    "lint:js": "eslint bin/** server src webpack",
+    "lint:js": "eslint .",
     "lint": "nyr lint:css && nyr lint:js",
     "precommit": "lint-staged",
-    "prettier": "prettier --single-quote --no-semi --trailing-comma es5 --write",
+    "prettier:format": "prettier --write '**/*.{js,css,json,md}'",
+    "prettier:check": "prettier --list-different '**/*.{js,css,json,md}'",
     "prod": "nyr build:prod && nyr start:prod",
     "ssl": "node ./bin/ssl.js",
     "start:dev": "NODE_ENV=development nyr start",
     "start:prod": "NODE_ENV=production nyr start",
     "start": "node ./bin/serve.js",
-    "test": "nyr lint"
+    "test": "nyr lint && nyr prettier:check"
   },
   "lint-staged": {
-    "*.js": [
-      "nyr prettier",
-      "eslint --fix",
-      "git add"
-    ],
-    "*.css": [
-      "prettier",
-      "stylelint --fix"
-    ]
+    "*.js": ["prettier --write", "eslint --fix", "git add"],
+    "*.css": ["prettier --write", "stylelint --fix", "git add"],
+    "*.{md,json}": ["prettier --write", "git add"]
   },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false,
+    "trailingComma": "es5",
+    "proseWrap": "always"
+  },
+  "eslintConfig": {
+    "extends": ["@simonkberg/eslint-config", "@simonkberg/eslint-config/react"],
+    "globals": {
+      "__DEV__": false,
+      "__BROWSER__": false
+    },
+    "overrides": {
+      "files": "{bin,server,webpack}/**/*.js",
+      "env": {
+        "browser": false
+      }
+    }
+  },
+  "eslintIgnore": ["/build"],
   "dependencies": {
     "@slack/client": "^3.14.1",
     "async-cache": "^1.1.0",
@@ -88,7 +102,7 @@
     "ws": "^4.0.0"
   },
   "devDependencies": {
-    "@simonkberg/eslint-config-react": "^11.0.0",
+    "@simonkberg/eslint-config": "^8.0.1",
     "assets-webpack-plugin": "^3.5.1",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",

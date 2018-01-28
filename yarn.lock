@@ -60,12 +60,6 @@
   dependencies:
     nan "^2.4.0"
 
-"@simonkberg/eslint-config-react@^11.0.0":
-  version "11.0.0"
-  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config-react/-/eslint-config-react-11.0.0.tgz#e2ff869c708139d4288dbbd1b92bc373b80dd82b"
-  dependencies:
-    "@simonkberg/eslint-config" "^8.0.1"
-
 "@simonkberg/eslint-config@^8.0.1":
   version "8.0.1"
   resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-8.0.1.tgz#78dde9fa7a63673a53dfccba800ad3f3de5d09fa"
