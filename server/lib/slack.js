@@ -1,7 +1,6 @@
 const {
   RtmClient,
   WebClient,
-  MemoryDataStore,
   CLIENT_EVENTS,
   RTM_EVENTS,
   RTM_MESSAGE_SUBTYPES,
@@ -13,7 +12,8 @@ function rtm(token, opts = {}) {
     Object.assign(
       {
         logLevel: 'info',
-        dataStore: new MemoryDataStore({}),
+        dataStore: false,
+        useRtmConnect: true,
         autoReconnect: true,
         autoMark: true,
       },

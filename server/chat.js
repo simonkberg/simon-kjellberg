@@ -29,28 +29,28 @@ module.exports = function chatServer(server) {
   })
 
   rtm
-    .then(rtmClient => {
-      const chat = rtmClient.dataStore.getDMById(SLACK_CHAT_CHANNEL)
+    .then(rtmClient =>
+      web.conversations.info(SLACK_CHAT_CHANNEL).then(({ channel }) => {
+        rtmClient.on(RTM_EVENTS.MESSAGE, message => {
+          if (message.channel === channel.id) {
+            log(RTM_EVENTS.MESSAGE, message)
 
-      rtmClient.on(RTM_EVENTS.MESSAGE, message => {
-        if (message.channel === chat.id) {
-          log(RTM_EVENTS.MESSAGE, message)
-
-          if (message.text === '!clear') {
-            web.im
-              .history(chat.id)
-              .then(({ messages }) =>
-                messages.map(msg =>
-                  web.chat.delete(msg.ts, chat.id).catch(() => null)
+            if (message.text === '!clear') {
+              web.im
+                .history(channel.id)
+                .then(({ messages }) =>
+                  messages.map(msg =>
+                    web.chat.delete(msg.ts, channel.id).catch(() => null)
+                  )
                 )
-              )
-              .catch(() => null)
-          }
+                .catch(() => null)
+            }
 
-          wss.clients.forEach(client => sendMessage(client, message))
-        }
+            wss.clients.forEach(client => sendMessage(client, message))
+          }
+        })
       })
-    })
+    )
     .catch(err => console.error(err))
 
   return wss
