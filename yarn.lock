@@ -3258,7 +3258,7 @@ https-browserify@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/https-browserify/-/https-browserify-1.0.0.tgz#ec06c10e0a34c0f2faf199f7fd7fc78fffd03c73"
 
-https-proxy-agent@^0.3.5:
+https-proxy-agent@^0.3.6:
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-0.3.6.tgz#713fa38e5d353f50eb14a342febe29033ed1619b"
   dependencies:
@@ -4440,13 +4440,13 @@ negotiator@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.1.tgz#2b327184e8992101177b28563fb5e7102acd0ca9"
 
-newrelic@^2.2.2:
-  version "2.6.1"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-2.6.1.tgz#ebf490a290616b9002e18a5a0f250b8c6e3ae365"
+newrelic@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-3.0.0.tgz#d993069ee7877c343ecd96b6585f4d8d2dd66e64"
   dependencies:
     async "^2.1.4"
     concat-stream "^1.5.0"
-    https-proxy-agent "^0.3.5"
+    https-proxy-agent "^0.3.6"
     json-stringify-safe "^5.0.0"
     readable-stream "^2.1.4"
     semver "^5.3.0"
