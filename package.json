@@ -32,9 +32,20 @@
     "test": "nyr lint && nyr prettier:check"
   },
   "lint-staged": {
-    "*.js": ["prettier --write", "eslint --fix", "git add"],
-    "*.css": ["prettier --write", "stylelint --fix", "git add"],
-    "*.{md,json}": ["prettier --write", "git add"]
+    "*.js": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.css": [
+      "prettier --write",
+      "stylelint --fix",
+      "git add"
+    ],
+    "*.{md,json}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "prettier": {
     "singleQuote": true,
@@ -43,7 +54,10 @@
     "proseWrap": "always"
   },
   "eslintConfig": {
-    "extends": ["@simonkberg/eslint-config", "@simonkberg/eslint-config/react"],
+    "extends": [
+      "@simonkberg/eslint-config",
+      "@simonkberg/eslint-config/react"
+    ],
     "globals": {
       "__DEV__": false,
       "__BROWSER__": false
@@ -55,9 +69,11 @@
       }
     }
   },
-  "eslintIgnore": ["/build"],
+  "eslintIgnore": [
+    "/build"
+  ],
   "dependencies": {
-    "@slack/client": "^3.14.1",
+    "@slack/client": "^4.0.0",
     "async-cache": "^1.1.0",
     "body-parser": "^1.17.2",
     "chalk": "^2.1.0",
