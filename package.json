@@ -57,7 +57,7 @@
   },
   "eslintIgnore": ["/build"],
   "dependencies": {
-    "@slack/client": "^3.14.1",
+    "@slack/client": "^4.0.0",
     "async-cache": "^1.1.0",
     "body-parser": "^1.17.2",
     "chalk": "^2.1.0",
