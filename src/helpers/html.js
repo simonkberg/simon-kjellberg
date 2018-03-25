@@ -5,11 +5,7 @@ export default (content, { css, store, asset, newrelic }) => {
   const head = Helmet.rewind()
   const render = server(content, store.getState())
 
-  const scripts = [
-    asset('manifest')['js'],
-    asset('vendor')['js'],
-    asset('client')['js'],
-  ]
+  const scripts = [asset('client')['js']]
 
   const mapToPreload = href => `<link rel="preload" href="${href}" as="script">`
 

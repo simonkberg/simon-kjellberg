@@ -1,10 +1,6 @@
 const path = require('path')
 
-const {
-  DefinePlugin,
-  HotModuleReplacementPlugin,
-  optimize: { UglifyJsPlugin, ModuleConcatenationPlugin },
-} = require('webpack')
+const { DefinePlugin, HotModuleReplacementPlugin } = require('webpack')
 
 const paths = {}
 
@@ -44,15 +40,7 @@ function getPlugins(opts = {}) {
     }),
   ]
 
-  if (env === 'production') {
-    plugins.push(
-      new UglifyJsPlugin({
-        compress: { warnings: false },
-        output: { comments: false },
-      }),
-      new ModuleConcatenationPlugin()
-    )
-  } else {
+  if (env !== 'production') {
     plugins.push(new HotModuleReplacementPlugin())
   }
 
@@ -135,7 +123,9 @@ module.exports = exports = function sharedConfig(opts = {}) {
   const isDev = env !== 'production'
 
   const config = {
-    devtool: isDev ? 'cheap-module-source-map' : 'hidden-source-map',
+    mode: env,
+
+    devtool: isDev ? 'cheap-module-source-map' : 'source-map',
 
     output: {
       path: paths.build,

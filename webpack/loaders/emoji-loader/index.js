@@ -50,5 +50,5 @@ module.exports = function(source) {
 
   this.value = [result]
 
-  return `module.exports = ${JSON.stringify(result)};`
+  return JSON.stringify(result)
 }
