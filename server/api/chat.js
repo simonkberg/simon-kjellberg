@@ -7,7 +7,7 @@ const router = express.Router()
 const api = web(SLACK_API_TOKEN)
 
 router.get('/history', (req, res) => {
-  api.im.history(SLACK_CHAT_CHANNEL).then(
+  api.im.history({ channel: SLACK_CHAT_CHANNEL }).then(
     response => {
       response.messages = response.messages.map(mapMessages)
 
@@ -18,7 +18,7 @@ router.get('/history', (req, res) => {
 })
 
 router.get('/users/:id', (req, res) => {
-  api.users.info(req.params.id).then(
+  api.users.info({ id: req.params.id }).then(
     response => {
       response.users = [response.user].map(mapUsers)
 

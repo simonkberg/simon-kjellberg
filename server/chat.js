@@ -5,7 +5,6 @@ const randomName = require('./lib/randomName')
 const slack = require('./lib/slack')
 const log = debug('sk:chat')
 
-const { RTM_EVENTS, RTM_MESSAGE_SUBTYPES } = slack
 const { SLACK_API_TOKEN, SLACK_CHAT_CHANNEL } = process.env
 
 module.exports = function chatServer(server) {
@@ -21,7 +20,9 @@ module.exports = function chatServer(server) {
     ws.on('message', message => {
       log(`${username}: ${message}`)
 
-      web.chat.postMessage(SLACK_CHAT_CHANNEL, message, {
+      web.chat.postMessage({
+        channel: SLACK_CHAT_CHANNEL,
+        text: message,
         parse: 'full',
         username: username,
       })
@@ -30,26 +31,30 @@ module.exports = function chatServer(server) {
 
   rtm
     .then(rtmClient =>
-      web.conversations.info(SLACK_CHAT_CHANNEL).then(({ channel }) => {
-        rtmClient.on(RTM_EVENTS.MESSAGE, message => {
-          if (message.channel === channel.id) {
-            log(RTM_EVENTS.MESSAGE, message)
+      web.conversations
+        .info({ channel: SLACK_CHAT_CHANNEL })
+        .then(({ channel }) => {
+          rtmClient.on('message', message => {
+            if (message.channel === channel.id) {
+              log('message', message)
 
-            if (message.text === '!clear') {
-              web.im
-                .history(channel.id)
-                .then(({ messages }) =>
-                  messages.map(msg =>
-                    web.chat.delete(msg.ts, channel.id).catch(() => null)
+              if (message.text === '!clear') {
+                web.im
+                  .history({ channel: channel.id })
+                  .then(({ messages }) =>
+                    messages.map(msg =>
+                      web.chat
+                        .delete({ ts: msg.ts, channel: channel.id })
+                        .catch(() => null)
+                    )
                   )
-                )
-                .catch(() => null)
-            }
+                  .catch(() => null)
+              }
 
-            wss.clients.forEach(client => sendMessage(client, message))
-          }
+              wss.clients.forEach(client => sendMessage(client, message))
+            }
+          })
         })
-      })
     )
     .catch(err => console.error(err))
 
@@ -70,11 +75,11 @@ function sendMessage(client, params) {
 
   payload.edited = !!params.edited
 
-  if (payload.subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_DELETED) {
+  if (payload.subtype === 'message_deleted') {
     payload.ts = params.deleted_ts
   }
 
-  if (payload.subtype === RTM_MESSAGE_SUBTYPES.MESSAGE_CHANGED) {
+  if (payload.subtype === 'message_changed') {
     const message = Object.assign({}, params.previous_message, params.message)
 
     Object.assign(
