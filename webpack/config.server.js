@@ -4,12 +4,7 @@ const sharedConfig = require('./config.shared')
 const { paths } = sharedConfig
 
 module.exports = function serverConfig(opts = {}) {
-  opts = Object.assign(
-    {
-      env: process.env.NODE_ENV,
-    },
-    opts
-  )
+  opts = Object.assign({ env: process.env.NODE_ENV }, opts)
 
   const config = sharedConfig(opts)
 
@@ -32,10 +27,6 @@ module.exports = function serverConfig(opts = {}) {
     },
 
     performance: false,
-
-    resolve: Object.assign({}, config.resolve, {
-      mainFields: ['module', 'jesnext:main', 'main'],
-    }),
 
     node: {
       __filename: true,
