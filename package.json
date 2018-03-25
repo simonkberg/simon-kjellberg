@@ -135,7 +135,7 @@
     "url-loader": "^1.0.1",
     "webpack": "^3.7.1",
     "webpack-bundle-analyzer": "^2.9.0",
-    "webpack-dev-middleware": "^2.0.4",
+    "webpack-dev-middleware": "^3.0.0",
     "webpack-hot-middleware": "^2.18.2"
   }
 }
