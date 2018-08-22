@@ -96,7 +96,7 @@
     "request": "^2.81.0",
     "reselect": "^3.0.1",
     "resize-observer-polyfill": "^1.4.2",
-    "sanitize.css": "^5.0.0",
+    "sanitize.css": "^7.0.0",
     "serialize-javascript": "^1.4.0",
     "serve-favicon": "^2.4.3",
     "ws": "^5.1.0"
