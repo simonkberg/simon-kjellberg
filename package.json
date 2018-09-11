@@ -64,7 +64,7 @@
     "classnames": "^2.2.4",
     "compression": "^1.7.0",
     "cookie-parser": "^1.4.3",
-    "debug": "^3.1.0",
+    "debug": "^4.0.0",
     "dotenv": "^5.0.1",
     "emoji-datasource": "^4.0.0",
     "express": "^4.16.2",
