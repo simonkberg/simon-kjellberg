@@ -1,1 +1,3 @@
-/build
+flow-typed
+.next
+**/__generated__/*.js

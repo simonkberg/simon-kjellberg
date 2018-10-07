@@ -1,28 +1,28 @@
 'use strict'
 
+const env = process.env.BABEL_ENV || process.env.NODE_ENV
+
 module.exports = {
-  compact: false,
   presets: [
     [
-      'env',
+      'next/babel',
       {
-        targets: {
-          node: 'current',
-          browsers: 'last 2 versions',
-          uglify: true,
+        'preset-env': {
+          modules: env === 'test' ? 'cjs' : false,
         },
-        modules: false,
-        useBuiltIns: true,
       },
     ],
-    'react',
-    'stage-0',
+    '@babel/preset-flow',
   ],
-  env: {
-    production: {
-      presets: ['react-optimize'],
-      plugins: ['transform-react-remove-prop-types'],
-    },
-  },
-  plugins: ['react-hot-loader/babel'],
+  plugins: [
+    ['@babel/plugin-proposal-optional-chaining', { loose: true }],
+    ['@babel/plugin-proposal-nullish-coalescing-operator', { loose: true }],
+    [
+      'babel-plugin-emotion',
+      {
+        sourceMap: env !== 'production',
+        autoLabel: env !== 'production',
+      },
+    ],
+  ],
 }

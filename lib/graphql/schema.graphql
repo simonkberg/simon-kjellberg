@@ -1,0 +1,102 @@
+type Chat {
+  history: [ChatMessage!]!
+}
+
+type ChatMessage {
+  edited: Boolean
+  replies: [ChatMessageReply!]
+  reply_count: Int
+  subtype: String
+  text: String!
+  thread_ts: ID
+  ts: ID!
+  type: String!
+  user: ChatUser!
+  username: String
+}
+
+type ChatMessageReply {
+  edited: Boolean
+  reply_count: Int
+  subtype: String
+  text: String!
+  thread_ts: ID
+  ts: ID!
+  type: String!
+  user: ChatUser!
+  username: String
+}
+
+union ChatMessageOrReply = ChatMessage | ChatMessageReply
+
+type ChatUser {
+  id: ID
+  name: String!
+  color: String!
+}
+
+input PostChatMessageInput {
+  text: String!
+}
+
+type PostChatMessagePayload {
+  chatMessage: ChatMessage
+}
+
+type ChatMessageAddedPayload {
+  chatMessage: ChatMessageOrReply!
+}
+
+type ChatMessageEditedPayload {
+  chatMessage: ChatMessageOrReply!
+}
+
+type ChatMessageDeletedPayload {
+  chatMessage: ChatMessageOrReply!
+}
+
+type WakaTime {
+  stats: [WakaTimeStats!]!
+  activity: [WakaTimeActivity!]!
+}
+
+type WakaTimeStats {
+  name: String!
+  percent: Float!
+}
+
+type WakaTimeActivity {
+  grand_total: WakaTimeActivityGrandTotal!
+  range: WakaTimeActivityRange!
+}
+
+type WakaTimeActivityGrandTotal {
+  digital: String!
+  hours: Int!
+  minutes: Int!
+  text: String!
+  total_seconds: Int!
+}
+
+type WakaTimeActivityRange {
+  date: String!
+  end: String!
+  start: String!
+  text: String!
+  timezone: String!
+}
+
+type Query {
+  chat: Chat!
+  wakaTime: WakaTime!
+}
+
+type Mutation {
+  postChatMessage(input: PostChatMessageInput!): PostChatMessagePayload
+}
+
+type Subscription {
+  chatMessageAdded: ChatMessageAddedPayload!
+  chatMessageEdited: ChatMessageEditedPayload!
+  chatMessageDeleted: ChatMessageDeletedPayload!
+}

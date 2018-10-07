@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Header /> 1`] = `
+.emotion-6 {
+  color: #fff;
+  background: #000;
+  margin-bottom: 1.45rem;
+}
+
+.emotion-4 {
+  margin: 0 auto;
+  max-width: 35rem;
+  padding: 1.45rem 1.0875rem;
+}
+
+.emotion-2 {
+  font-size: 1rem;
+  font-weight: bold;
+  margin: 0;
+  text-transform: lowercase;
+}
+
+.emotion-0 {
+  color: #fff;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+<header
+  className="emotion-6 emotion-7"
+>
+  <div
+    className="emotion-4 emotion-5"
+  >
+    <h1
+      className="emotion-2 emotion-3"
+    >
+      <a
+        className="emotion-0 emotion-1"
+        href="/"
+        onClick={[Function]}
+      >
+        #!/
+        Site Title
+      </a>
+    </h1>
+  </div>
+</header>
+`;

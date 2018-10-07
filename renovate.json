@@ -1,6 +1,3 @@
 {
-  "extends": [
-    "config:base"
-  ],
-  "pinVersions": false
+  "extends": ["config:base"]
 }

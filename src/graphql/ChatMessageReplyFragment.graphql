@@ -1,0 +1,10 @@
+fragment ChatMessageReply on ChatMessageReply {
+  ts
+  thread_ts
+  text
+  user {
+    name
+    color
+  }
+  edited
+}

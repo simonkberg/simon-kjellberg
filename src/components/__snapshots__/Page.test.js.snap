@@ -1,0 +1,24 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Page /> 1`] = `
+.emotion-2 {
+  font: 100%/1.5 Iosevka,monospace;
+}
+
+.emotion-0 {
+  margin: 0 auto;
+  padding: 0 0.9375rem 1.875rem;
+  padding-top: 0;
+}
+
+<div
+  className="emotion-2 emotion-3"
+>
+  <Header
+    siteTitle="Simon Kjellberg"
+  />
+  <div
+    className="emotion-0 emotion-1"
+  />
+</div>
+`;

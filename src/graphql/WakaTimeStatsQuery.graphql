@@ -1,0 +1,8 @@
+query WakaTimeStatsQuery {
+  wakaTime {
+    stats {
+      name
+      percent
+    }
+  }
+}

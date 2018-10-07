@@ -1,0 +1,13 @@
+subscription ChatMessageDeletedSubscription {
+  chatMessageDeleted {
+    chatMessage {
+      ... on ChatMessage {
+        ts
+      }
+      ... on ChatMessageReply {
+        ts
+        thread_ts
+      }
+    }
+  }
+}
