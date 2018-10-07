@@ -1,0 +1,15 @@
+#import './ChatMessageFragment.graphql'
+#import './ChatMessageReplyFragment.graphql'
+
+subscription ChatMessageEditedSubscription {
+  chatMessageEdited {
+    chatMessage {
+      ... on ChatMessage {
+        ...ChatMessage
+      }
+      ... on ChatMessageReply {
+        ...ChatMessageReply
+      }
+    }
+  }
+}

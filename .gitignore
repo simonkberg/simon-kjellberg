@@ -1,6 +1,4 @@
-*.pid
-*.log
 /node_modules
-/build
-/ssl
-.env
+/.next
+/.env
+yarn-error.log

@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`UnorderedList 1`] = `
+.emotion-8 {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 1.5ch;
+}
+
+.emotion-0 {
+  position: relative;
+}
+
+.emotion-0::before {
+  content: '*';
+  position: absolute;
+  left: -1.5ch;
+}
+
+.emotion-0 > .emotion-9 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+<ul
+  className="emotion-8 emotion-9"
+>
+  <li
+    className="emotion-0 emotion-1"
+  >
+    Foo
+  </li>
+  <li
+    className="emotion-0 emotion-1"
+  >
+    Bar
+  </li>
+  <li
+    className="emotion-0 emotion-1"
+  >
+    <ul
+      className="emotion-8 emotion-9"
+    >
+      Baz
+      <li
+        className="emotion-0 emotion-1"
+      >
+        Qux
+      </li>
+      <li
+        className="emotion-0 emotion-1"
+      >
+        Quux
+      </li>
+    </ul>
+  </li>
+</ul>
+`;

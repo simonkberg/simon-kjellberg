@@ -1,0 +1,22 @@
+[ignore]
+<PROJECT_ROOT>/node_modules/jsonlint/test/fails/.*
+
+[include]
+
+[libs]
+
+[lints]
+
+[options]
+emoji=true
+esproposal.optional_chaining=enable
+esproposal.nullish_coalescing=enable
+experimental.const_params=true
+module.use_strict=true
+
+module.name_mapper.extension='graphql' -> '<PROJECT_ROOT>/flow/stub/graphql.js'
+module.name_mapper.extension='gql' -> '<PROJECT_ROOT>/flow/stub/graphql.js'
+module.name_mapper.extension='ico' -> '<PROJECT_ROOT>/flow/stub/url-loader.js'
+
+
+[strict]

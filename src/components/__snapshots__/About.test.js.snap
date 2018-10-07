@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<About /> 1`] = `
+<section>
+  <Heading
+    level="2"
+  >
+    About
+  </Heading>
+  <p>
+    Fullstack web developer, specialized in React, Node.js, and GraphQL, with a strong focus on building scalable frontend architecture.
+  </p>
+</section>
+`;

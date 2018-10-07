@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Loader /> 1`] = `
+.emotion-6 {
+  position: relative;
+  display: block;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.emotion-0 {
+  display: inline-block;
+  width: 1ch;
+  height: 1ch;
+  margin-right: 0.75ch;
+  border-radius: 100%;
+  background-color: currentColor;
+  will-change: transform;
+  -webkit-animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+
+.emotion-2 {
+  display: inline-block;
+  width: 1ch;
+  height: 1ch;
+  margin-right: 0.75ch;
+  border-radius: 100%;
+  background-color: currentColor;
+  will-change: transform;
+  -webkit-animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+.emotion-4 {
+  display: inline-block;
+  width: 1ch;
+  height: 1ch;
+  margin-right: 0.75ch;
+  border-radius: 100%;
+  background-color: currentColor;
+  will-change: transform;
+  -webkit-animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  animation: animation-14jvyip-bounce 1.4s infinite ease-in-out both;
+  -webkit-animation-delay: 0;
+  animation-delay: 0;
+}
+
+<div
+  className="emotion-6 emotion-7"
+>
+  <span
+    className="emotion-0 emotion-1"
+  />
+  <span
+    className="emotion-2 emotion-3"
+  />
+  <span
+    className="emotion-4 emotion-5"
+  />
+</div>
+`;

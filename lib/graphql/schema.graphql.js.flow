@@ -1,0 +1,107 @@
+/* eslint-disable */
+
+export type Chat = {|
+  +__typename: 'Chat',
+  +history: $ReadOnlyArray<ChatMessage>,
+|}
+export type ChatMessage = {|
+  +__typename: 'ChatMessage',
+  +edited: boolean | null,
+  +replies: $ReadOnlyArray<ChatMessageReply> | null,
+  +reply_count: number | null,
+  +subtype: string | null,
+  +text: string,
+  +thread_ts: string | null,
+  +ts: string,
+  +type: string,
+  +user: ChatUser,
+  +username: string | null,
+|}
+export type ChatMessageReply = {|
+  +__typename: 'ChatMessageReply',
+  +edited: boolean | null,
+  +reply_count: number | null,
+  +subtype: string | null,
+  +text: string,
+  +thread_ts: string | null,
+  +ts: string,
+  +type: string,
+  +user: ChatUser,
+  +username: string | null,
+|}
+export type ChatMessageOrReply = ChatMessage | ChatMessageReply
+export type ChatUser = {|
+  +__typename: 'ChatUser',
+  +id: string | null,
+  +name: string,
+  +color: string,
+|}
+export type PostChatMessageInput = {|
+  __typename: 'PostChatMessageInput',
+  text: string,
+|}
+export type PostChatMessagePayload = {|
+  +__typename: 'PostChatMessagePayload',
+  +chatMessage: ChatMessage | null,
+|}
+export type ChatMessageAddedPayload = {|
+  +__typename: 'ChatMessageAddedPayload',
+  +chatMessage: ChatMessageOrReply,
+|}
+export type ChatMessageEditedPayload = {|
+  +__typename: 'ChatMessageEditedPayload',
+  +chatMessage: ChatMessageOrReply,
+|}
+export type ChatMessageDeletedPayload = {|
+  +__typename: 'ChatMessageDeletedPayload',
+  +chatMessage: ChatMessageOrReply,
+|}
+export type WakaTime = {|
+  +__typename: 'WakaTime',
+  +stats: $ReadOnlyArray<WakaTimeStats>,
+  +activity: $ReadOnlyArray<WakaTimeActivity>,
+|}
+export type WakaTimeStats = {|
+  +__typename: 'WakaTimeStats',
+  +name: string,
+  +percent: number,
+|}
+export type WakaTimeActivity = {|
+  +__typename: 'WakaTimeActivity',
+  +grand_total: WakaTimeActivityGrandTotal,
+  +range: WakaTimeActivityRange,
+|}
+export type WakaTimeActivityGrandTotal = {|
+  +__typename: 'WakaTimeActivityGrandTotal',
+  +digital: string,
+  +hours: number,
+  +minutes: number,
+  +text: string,
+  +total_seconds: number,
+|}
+export type WakaTimeActivityRange = {|
+  +__typename: 'WakaTimeActivityRange',
+  +date: string,
+  +end: string,
+  +start: string,
+  +text: string,
+  +timezone: string,
+|}
+export type Query = {|
+  +__typename: 'Query',
+  +chat: Chat,
+  +wakaTime: WakaTime,
+|}
+export type Mutation = {|
+  +__typename: 'Mutation',
+  +postChatMessage: PostChatMessagePayload | null,
+|}
+export type MutationPostChatMessageArgument = {|
+  input: PostChatMessageInput,
+|}
+export type Subscription = {|
+  +__typename: 'Subscription',
+  +chatMessageAdded: ChatMessageAddedPayload,
+  +chatMessageEdited: ChatMessageEditedPayload,
+  +chatMessageDeleted: ChatMessageDeletedPayload,
+|}
