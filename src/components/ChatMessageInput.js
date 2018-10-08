@@ -65,6 +65,7 @@ const ChatMessageInput = ({ input, onInputChange, onSubmit }: Props) => (
                 ? input
                 : 'You appear to be offline. Reconnect to chat 😎💬'
             }
+            placeholder="Write a message..."
             onChange={onInputChange}
             disabled={!online}
           />
