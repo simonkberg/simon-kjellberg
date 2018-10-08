@@ -13,10 +13,10 @@ module.exports = withOffline({
       'Fullstack web developer, specialized in React, Node.js, and GraphQL, with a strong focus on building scalable frontend architecture.',
   },
   workboxOpts: {
-    exclude: [/\.woff$/],
+    exclude: [/\.woff$/, /\.map$/, /^manifest.*\.js(?:on)?$/],
     globPatterns: ['static/**/*'],
     globDirectory: '.',
-    runtimeCaching: [{ urlPattern: /^https?.*/, handler: 'networkFirst' }],
+    runtimeCaching: [{ urlPattern: /\/.*?/, handler: 'networkFirst' }],
   },
   webpack: (config, options) => ({
     ...config,
