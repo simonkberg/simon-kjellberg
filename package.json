@@ -70,7 +70,7 @@
     "react-emotion": "9.2.12",
     "react-spring": "5.9.2",
     "recompose": "0.30.0",
-    "sanitize.css": "7.0.3",
+    "sanitize.css": "8.0.0",
     "screenfull": "3.3.3",
     "styled-tools": "1.5.1",
     "subscriptions-transport-ws": "0.9.15",
