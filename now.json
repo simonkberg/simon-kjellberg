@@ -15,7 +15,8 @@
     "SLACK_TOKEN": "@slack-token",
     "SLACK_CHANNEL": "@slack-channel",
     "ENGINE_API_KEY": "@engine-api-key",
-    "REDIS_URL": "@redis-url"
+    "REDIS_URL": "@redis-url",
+    "SESSION_KEY": "@session-key"
   },
   "scale": {
     "bru1": {
