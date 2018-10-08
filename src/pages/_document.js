@@ -26,7 +26,7 @@ export default class Document extends NextDocument {
     return (
       <html lang="en">
         <Head>
-          <link rel="manifest" content="/manifest.json" />
+          <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#000000" />
           <meta
             name="viewport"
