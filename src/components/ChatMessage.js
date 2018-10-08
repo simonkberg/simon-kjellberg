@@ -42,6 +42,15 @@ const Message = styled('div')`
     padding-left: 1ch;
     border-left: 0.5ch solid ${theme('quote.border')};
   }
+
+  a {
+    color: ${theme('color.muted')};
+    text-decoration: underline;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
 `
 
 const EditedLabel = styled('small')`
