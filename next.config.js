@@ -1,6 +1,7 @@
 'use strict'
 
 const withOffline = require('next-offline')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 
 module.exports = withOffline({
   distDir: '../.next',
@@ -68,6 +69,19 @@ module.exports = withOffline({
 
             return plugin
           }),
+    },
+    plugins: [
+      ...config.plugins,
+      new BundleAnalyzerPlugin({
+        reportFilename: 'report.html',
+        analyzerMode: 'static',
+        openAnalyzer: false,
+        logLevel: 'warn',
+      }),
+    ],
+    node: {
+      ...config.node,
+      Buffer: false,
     },
   }),
 })

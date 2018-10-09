@@ -22,3 +22,13 @@ jobs:
           key: v1-dependencies-{{ arch }}-{{ checksum "yarn.lock" }}
 
       - run: yarn test
+
+      - run: yarn build
+
+      - store_artifacts:
+          path: .next/report.html
+          destination: client/report.html
+
+      - store_artifacts:
+          path: .next/server/report.html
+          destination: server/report.html
