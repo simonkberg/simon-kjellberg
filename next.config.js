@@ -1,7 +1,6 @@
 'use strict'
 
 const withOffline = require('next-offline')
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 
 module.exports = withOffline({
   distDir: '../.next',
@@ -19,69 +18,73 @@ module.exports = withOffline({
     globDirectory: '.',
     runtimeCaching: [{ urlPattern: /\/.*?/, handler: 'networkFirst' }],
   },
-  webpack: (config, options) => ({
-    ...config,
-    async entry() {
-      const entry = await config.entry()
-      const urlPolyfill = require.resolve('url-polyfill')
-      const mainEntry = entry['main.js']
+  webpack: (config, options) => {
+    const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 
-      if (mainEntry && !mainEntry.includes(urlPolyfill)) {
-        mainEntry.unshift(urlPolyfill)
-      }
+    return {
+      ...config,
+      async entry() {
+        const entry = await config.entry()
+        const urlPolyfill = require.resolve('url-polyfill')
+        const mainEntry = entry['main.js']
 
-      return entry
-    },
-    devtool: options.dev ? config.devtool : 'source-map',
-    module: {
-      ...config.module,
-      rules: [
-        ...config.module.rules,
-        {
-          test: /\.css$/,
-          loader: require.resolve('raw-loader'),
-        },
-        {
-          test: /\.(woff2?|ico|png)$/,
-          loader: require.resolve('url-loader'),
-          options: {
-            limit: 1000,
-            publicPath: '/_next/static/assets/',
-            outputPath: 'static/assets/',
-            name: '[name].[hash:8].[ext]',
+        if (mainEntry && !mainEntry.includes(urlPolyfill)) {
+          mainEntry.unshift(urlPolyfill)
+        }
+
+        return entry
+      },
+      devtool: options.dev ? config.devtool : 'source-map',
+      module: {
+        ...config.module,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.css$/,
+            loader: require.resolve('raw-loader'),
           },
-        },
-        {
-          test: /\.(graphql|gql)$/,
-          loader: require.resolve('graphql-tag/loader'),
-        },
-      ],
-    },
-    optimization: {
-      ...config.optimization,
-      minimizer: options.dev
-        ? config.optimization.minimizer
-        : config.optimization.minimizer &&
-          config.optimization.minimizer.map(plugin => {
-            if (plugin.constructor.name === 'TerserPlugin') {
-              plugin.options.sourceMap = true
-            }
+          {
+            test: /\.(woff2?|ico|png)$/,
+            loader: require.resolve('url-loader'),
+            options: {
+              limit: 1000,
+              publicPath: '/_next/static/assets/',
+              outputPath: 'static/assets/',
+              name: '[name].[hash:8].[ext]',
+            },
+          },
+          {
+            test: /\.(graphql|gql)$/,
+            loader: require.resolve('graphql-tag/loader'),
+          },
+        ],
+      },
+      optimization: {
+        ...config.optimization,
+        minimizer: options.dev
+          ? config.optimization.minimizer
+          : config.optimization.minimizer &&
+            config.optimization.minimizer.map(plugin => {
+              if (plugin.constructor.name === 'TerserPlugin') {
+                plugin.options.sourceMap = true
+              }
 
-            return plugin
-          }),
-    },
-    plugins: [
-      ...config.plugins,
-      new BundleAnalyzerPlugin({
-        reportFilename: 'report.html',
-        analyzerMode: 'static',
-        openAnalyzer: false,
-        logLevel: 'warn',
-      }),
-    ],
-    node: {
-      ...config.node,
-      Buffer: false,
-    },
-  }),
+              return plugin
+            }),
+      },
+      plugins: [
+        ...config.plugins,
+        new BundleAnalyzerPlugin({
+          reportFilename: 'report.html',
+          analyzerMode: 'static',
+          openAnalyzer: false,
+          logLevel: 'warn',
+        }),
+      ],
+      node: {
+        ...config.node,
+        Buffer: false,
+      },
+    }
+  },
 })
