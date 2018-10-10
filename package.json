@@ -99,7 +99,7 @@
     "prettier": "1.14.3",
     "raw-loader": "0.5.1",
     "react-test-renderer": "16.5.2",
-    "url-loader": "1.1.1",
+    "url-loader": "1.1.2",
     "webpack-bundle-analyzer": "3.0.2"
   }
 }
