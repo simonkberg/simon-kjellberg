@@ -2,7 +2,7 @@
   "public": true,
   "type": "docker",
   "features": {
-    "cloud": "v1"
+    "cloud": "v2"
   },
   "alias": [
     "simonkjellberg.com",
