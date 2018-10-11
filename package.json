@@ -52,7 +52,7 @@
     "emotion": "9.2.12",
     "emotion-server": "9.2.12",
     "emotion-theming": "9.2.9",
-    "express": "4.16.3",
+    "express": "4.16.4",
     "express-session": "1.15.6",
     "graphql": "14.0.2",
     "graphql-tag": "2.10.0",
