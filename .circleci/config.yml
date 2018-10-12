@@ -32,6 +32,8 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ arch }}-{{ checksum "yarn.lock" }}
 
+      - run: yarn bsb:build
+
       - run: yarn test
 
       - run: yarn build

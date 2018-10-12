@@ -5,7 +5,7 @@ import { useSprings, animated } from 'react-spring'
 import withWakaTimeStats, {
   type WakaTimeStatsProps,
 } from '../utils/withWakaTimeStats'
-import Loader from './Loader'
+import Loader from './Loader.bs'
 import * as UnorderedList from './UnorderedList'
 
 const AnimatedListItem = UnorderedList.ListItem.withComponent(animated('li'))

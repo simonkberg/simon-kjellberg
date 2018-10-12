@@ -1,8 +1,8 @@
 // @flow strict
 import * as React from 'react'
 
-import Heading from './Heading'
-import Link from './Link'
+import Heading from './Heading.bs'
+import Link from './Link.bs'
 import * as UnorderedList from './UnorderedList'
 
 const Chat = () => (

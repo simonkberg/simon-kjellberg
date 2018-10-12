@@ -1,0 +1,14 @@
+{
+  "name": "simon-kjellberg",
+  "namespace": true,
+  "sources": [{ "dir": "src", "subdirs": true }],
+  "bs-dependencies": ["reason-react", "bs-css"],
+  "reason": { "react-jsx": 2 },
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "bsc-flags": ["-bs-super-errors"],
+  "refmt": 3
+}

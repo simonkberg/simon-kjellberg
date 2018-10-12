@@ -2,6 +2,7 @@ import * as React from 'react'
 import getConfig from 'next/config'
 import NextDocument, { Head, Main, NextScript } from 'next/document'
 import { oneLineTrim } from 'common-tags'
+import { extractCritical } from 'emotion-server-v9'
 
 const { serverRuntimeConfig } = getConfig()
 
@@ -23,8 +24,9 @@ export default class Document extends NextDocument {
             .getBrowserTimingHeader()
             .replace(/^<script[\s]*[^>]*>([\s\S]*)<\/[\s]*script[\s]*>$/, '$1')
         : undefined
+    const styles = extractCritical(page.html)
 
-    return { ...page, fragmentTypes, browserTimingHeader }
+    return { ...page, ...styles, fragmentTypes, browserTimingHeader }
   }
 
   render() {
@@ -46,6 +48,7 @@ export default class Document extends NextDocument {
             />
           )}
           <script dangerouslySetInnerHTML={{ __html: gtmScript }} />
+          <style dangerouslySetInnerHTML={{ __html: this.props.css }} />
         </Head>
         <body>
           <noscript>
@@ -59,6 +62,13 @@ export default class Document extends NextDocument {
             />
           </noscript>
           <Main />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.__EMOTION_CRITICAL_CSS_IDS__ = ${JSON.stringify(
+                this.props.ids
+              )};`,
+            }}
+          />
           <script
             dangerouslySetInnerHTML={{
               __html: `window.__FRAGMENT_TYPES__ = ${JSON.stringify(

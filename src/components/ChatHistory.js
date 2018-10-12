@@ -17,7 +17,7 @@ import withChatHistory, {
 import useScrollPreserver from '../hooks/useScrollPreserver'
 import * as UnorderedList from './UnorderedList'
 import ChatMessage from './ChatMessage'
-import Loader from './Loader'
+import Loader from './Loader.bs'
 
 const Wrapper = styled('div')`
   display: flex;
