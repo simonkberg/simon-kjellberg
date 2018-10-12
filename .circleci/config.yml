@@ -25,6 +25,8 @@ jobs:
 
       - run: yarn build
 
+      - run: yarn bundlesize
+
       - store_artifacts:
           path: .next/report.html
           destination: client/report.html
@@ -32,3 +34,10 @@ jobs:
       - store_artifacts:
           path: .next/server/report.html
           destination: server/report.html
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - build:
+          context: org-global
