@@ -1,11 +1,12 @@
 import * as React from 'react'
 import getConfig from 'next/config'
 import NextDocument, { Head, Main, NextScript } from 'next/document'
+import { oneLineTrim } from 'common-tags'
 import { extractCritical } from 'emotion-server'
 
 const { serverRuntimeConfig } = getConfig()
 
-const gtmScript = `
+const gtmScript = oneLineTrim`
   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
