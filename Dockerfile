@@ -17,4 +17,4 @@ ENV PORT 3000
 ENV NODE_ENV production
 COPY --from=base /app .
 EXPOSE $PORT
-CMD ["node", "index.js", "serve"]
+CMD ["node", "scripts/serve.js"]
