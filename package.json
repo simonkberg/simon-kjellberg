@@ -6,15 +6,14 @@
   "repository": "https://github.com/simonkberg/simon-kjellberg",
   "license": "MIT",
   "author": "Simon Kjellberg <simon.kjellberg@gmail.com> (https://simonkjellberg.com)",
-  "main": "index.js",
   "scripts": {
     "build": "next build src",
     "eslint:check": "eslint .",
     "eslint:fix": "eslint . --fix",
     "prettier:check": "prettier --list-different '**/*.{js,json,md}'",
     "prettier:format": "prettier --write '**/*.{js,json,md,ya?ml}'",
-    "start": "nodemon index.js start",
-    "serve": "node index.js serve",
+    "start": "nodemon scripts/start.js",
+    "serve": "node scripts/serve.js",
     "test": "flow check && yarn eslint:check && yarn prettier:check && jest"
   },
   "husky": {
