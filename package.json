@@ -89,7 +89,7 @@
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",
     "screenfull": "3.3.3",
-    "styled-tools": "1.5.1",
+    "styled-tools": "1.5.2",
     "subscriptions-transport-ws": "0.9.15",
     "url-polyfill": "1.1.0"
   },
