@@ -20,6 +20,7 @@ const withChatHistory = <Props: {}>(
 
   const WithChatHistory = baseProps =>
     chatHistoryFactory({
+      ssr: false,
       query: chatHistoryQuery,
       children: props => baseFactory({ ...baseProps, ...props }),
     })

@@ -1,11 +1,13 @@
 // @flow strict
 import * as React from 'react'
 import getConfig from 'next/config'
+import dynamic from 'next/dynamic'
 import Page from '../components/Page'
 import About from '../components/About'
 import Stats from '../components/Stats'
-import Chat from '../components/Chat'
 import Links from '../components/Links'
+
+const Chat = dynamic(() => import('../components/Chat'))
 
 const {
   publicRuntimeConfig: { siteTitle, siteDescription },

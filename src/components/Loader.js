@@ -17,7 +17,7 @@ const bounce = keyframes`
 const Container = styled('div')`
   position: relative;
   display: block;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   text-align: left;
 `
 
