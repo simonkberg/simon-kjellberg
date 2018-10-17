@@ -28,6 +28,7 @@ export default class Document extends NextDocument {
       <html lang="en">
         <Head>
           <link rel="manifest" href="/manifest.json" />
+          <link rel="shortcut icon" href="/favicon.ico" />
           <meta name="theme-color" content="#000000" />
           <meta
             name="viewport"

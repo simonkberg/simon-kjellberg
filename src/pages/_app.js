@@ -16,7 +16,6 @@ import iosevkaBoldWoff2 from '../assets/iosevka-ss08-bold.woff2'
 import iosevkaBoldItalicWoff from '../assets/iosevka-ss08-bolditalic.woff'
 import iosevkaBoldItalicWoff2 from '../assets/iosevka-ss08-bolditalic.woff2'
 import facebookShareImage from '../assets/share.png'
-import favicon from '../assets/favicon.ico'
 import { NetworkStatusProvider } from '../components/NetworkStatus'
 import ensureTrailingSlash from '../utils/ensureTrailingSlash'
 import withApollo from '../utils/withApollo'
@@ -94,7 +93,6 @@ class App extends NextApp {
             content={facebookShareImage}
             key="og:image"
           />
-          <link rel="shortcut icon" href={favicon} key="shortcut icon" />
           <link rel="canonical" href={canonicalUrl} key="canonical" />
           <link
             rel="preload"
