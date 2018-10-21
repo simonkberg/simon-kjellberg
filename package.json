@@ -80,7 +80,7 @@
     "morgan": "1.9.1",
     "next": "7.0.2",
     "next-offline": "3.0.2",
-    "polished": "2.2.0",
+    "polished": "2.3.0",
     "prop-types": "15.6.2",
     "react": "16.5.2",
     "react-apollo": "2.2.4",
