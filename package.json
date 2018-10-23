@@ -55,7 +55,7 @@
     "apollo-link-http": "1.5.5",
     "apollo-link-ws": "1.0.9",
     "apollo-server-express": "2.1.0",
-    "apollo-utilities": "1.0.22",
+    "apollo-utilities": "1.0.23",
     "common-tags": "1.8.0",
     "compression": "1.7.3",
     "connect-redis": "3.4.0",
