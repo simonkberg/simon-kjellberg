@@ -20,6 +20,7 @@ module.exports = withOffline({
   },
   webpack: (config, options) => {
     const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+    const PacktrackerPlugin = require('@packtracker/webpack-plugin')
 
     return {
       ...config,
@@ -79,6 +80,14 @@ module.exports = withOffline({
           analyzerMode: 'static',
           openAnalyzer: false,
           logLevel: 'warn',
+        }),
+        new PacktrackerPlugin({
+          project_token: process.env.PACKTRACKER_PROJECT_TOKEN,
+          upload:
+            process.env.PACKTRACKER_PROJECT_TOKEN != null &&
+            process.env.CI === 'true' &&
+            options.dev === false &&
+            options.isServer === false,
         }),
       ],
       node: {
