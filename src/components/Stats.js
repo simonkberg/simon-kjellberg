@@ -1,16 +1,10 @@
 // @flow strict
 import * as React from 'react'
-import { theme } from 'styled-tools'
-import styled from 'react-emotion'
 
 import Heading from './Heading'
+import Subtitle from './Subtitle'
 import Link from './Link'
 import StatsList from './StatsList'
-
-const Subtitle = styled('small')`
-  color: ${theme('color.muted')};
-  font-weight: normal;
-`
 
 const Stats = () => (
   <section>
