@@ -1,14 +1,45 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<About /> 1`] = `
+.emotion-0 {
+  font-weight: normal;
+}
+
+.emotion-2 {
+  color: inherit;
+  -webkit-text-decoration: underline;
+  text-decoration: underline;
+}
+
+.emotion-2:hover {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
 <section>
   <Heading
     level="2"
   >
-    About
+    About 
+    <small
+      className="emotion-0 emotion-1"
+    >
+      (Location: Stockholm, Sweden)
+    </small>
   </Heading>
   <p>
     Fullstack web developer, specialized in React, Node.js, and GraphQL, with a strong focus on building scalable frontend architecture.
+  </p>
+  <p>
+    Working as a consultant via my own company,
+     
+    <a
+      className="emotion-2 emotion-3"
+      href="https://shebang.consulting"
+    >
+      Shebang
+    </a>
+    .
   </p>
 </section>
 `;
