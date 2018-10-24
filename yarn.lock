@@ -856,12 +856,12 @@
   resolved "https://registry.yarnpkg.com/@emotion/utils/-/utils-0.8.2.tgz#576ff7fb1230185b619a75d258cbc98f0867a8dc"
   integrity sha512-rLu3wcBWH4P5q1CGoSSH/i9hrXs7SlbRLkoq9IGuoPYNGQvDJ3pt/wmOM+XgYjIDRMVIdkUWt0RsfzF50JfnCw==
 
-"@packtracker/webpack-plugin@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-1.0.1.tgz#42e7880214d16562486a4c3d7c67da6f4e56ca2b"
-  integrity sha512-VIQSJULFCmLcNVwRCe5dtal++PSPaG7Ny3L1nt3dlkyUQb092+XRbGA4mVmZvBXnZmLviA1ZzoCzfcXExfEjDg==
+"@packtracker/webpack-plugin@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-1.1.0.tgz#36566b8eb2bd7fe121404f614c097b8ee61756f8"
+  integrity sha512-vWitpcKzgX7sBh+yAzX1A5Uf+Zjg3a2UTJDA+g513dyeNnPWE1JgaNLDQMtKcW5rDygnKP4jA1W50Y7QzAOgOQ==
   dependencies:
-    tiny-json-http "^7.0.0"
+    tiny-json-http "^7.0.1"
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
@@ -8997,10 +8997,10 @@ timers-browserify@^2.0.4:
   dependencies:
     setimmediate "^1.0.4"
 
-tiny-json-http@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/tiny-json-http/-/tiny-json-http-7.0.0.tgz#1b1240efa591cd0faa5845f844694e79563ac2a2"
-  integrity sha512-g3S2RiSmoZDJOMDTX6uj8GjVsiH4s0W0tb1YKYARoP4cosgIb4CB2i7Cdzn9UJqOrI1b1aNK+cgScPx4TwolQg==
+tiny-json-http@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/tiny-json-http/-/tiny-json-http-7.0.1.tgz#775247b4a193fb291f3c908af6b6571cb68d5550"
+  integrity sha512-xmn6YBparUjGrd3ktCSFXP/PCvmsfTlrKNOJE/jbCfhpJtA/FVjqEZO+W1cqkMUrQt5N52TazOtapNdJp6ieRA==
 
 tmp@^0.0.33:
   version "0.0.33"
