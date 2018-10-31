@@ -1,6 +1,14 @@
 [ignore]
 <PROJECT_ROOT>/node_modules/jsonlint/test/fails/.*
 
+[untyped]
+<PROJECT_ROOT>/node_modules/polished/.*
+<PROJECT_ROOT>/node_modules/graphql/utilities/buildASTSchema.js.flow
+
+[declarations]
+<PROJECT_ROOT>/node_modules/polished/.*
+<PROJECT_ROOT>/node_modules/graphql/utilities/buildASTSchema.js.flow
+
 [include]
 
 [libs]
