@@ -105,13 +105,14 @@ const messageThreadMap = message => style => (
     <UnorderedList.List>
       <Transition
         native
-        keys={message.replies ? message.replies.map(messageKeyMap) : undefined}
+        items={message.replies ?? []}
+        keys={messageKeyMap}
         initial={{ opacity: 0, x: 0 }}
         from={{ opacity: 0, x: -100 }}
         enter={{ opacity: 1, x: 0 }}
         leave={{ opacity: 0, x: 100 }}
       >
-        {message.replies ? message.replies.map(messageRepliesMap) : undefined}
+        {messageRepliesMap}
       </Transition>
     </UnorderedList.List>
   </AnimatedListItem>
@@ -137,13 +138,14 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
                 <Transition
                   native
                   // $FlowFixMe: Type refinement is lost somehow
-                  keys={data.chat.history.map(messageKeyMap)}
+                  items={data.chat.history}
+                  keys={messageKeyMap}
                   initial={{ opacity: 0, x: 0 }}
                   from={{ opacity: 0, x: -100 }}
                   enter={{ opacity: 1, x: 0 }}
                   leave={{ opacity: 0, x: 100 }}
                 >
-                  {data.chat.history.map(messageThreadMap)}
+                  {messageThreadMap}
                 </Transition>
               )}
           </Content>
