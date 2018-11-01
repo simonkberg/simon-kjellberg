@@ -1,5 +1,6 @@
 // @flow strict
 import * as React from 'react'
+import nextTick from '../utils/nextTick'
 
 type Props = {
   children: <T: React.ElementType>(ref: {
@@ -14,7 +15,9 @@ export default class ScrollPreserver extends React.Component<Props> {
     const el = this.ref.current
 
     if (el != null) {
-      el.scrollTop = el.scrollHeight
+      nextTick(() => {
+        el.scrollTop = el.scrollHeight
+      })
     }
   }
 
@@ -22,7 +25,11 @@ export default class ScrollPreserver extends React.Component<Props> {
     const el = this.ref.current
 
     if (el != null) {
-      return el.scrollHeight - el.scrollTop
+      const { scrollTop, scrollHeight, clientHeight } = el
+
+      if (scrollTop < scrollHeight - clientHeight) {
+        return scrollHeight - scrollTop
+      }
     }
 
     return null
@@ -35,8 +42,14 @@ export default class ScrollPreserver extends React.Component<Props> {
   ) {
     const el = this.ref.current
 
-    if (snapshot != null && el != null) {
-      el.scrollTop = el.scrollHeight - snapshot
+    if (el != null) {
+      if (snapshot != null) {
+        el.scrollTop = el.scrollHeight - snapshot
+      } else {
+        nextTick(() => {
+          el.scrollTop = el.scrollHeight
+        })
+      }
     }
   }
 
