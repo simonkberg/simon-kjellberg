@@ -132,22 +132,20 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
       <ScrollPreserver>
         {ref => (
           <Content innerRef={ref}>
-            {data != null &&
-              data.chat != null &&
-              data.chat.history != null && (
-                <Transition
-                  native
-                  // $FlowFixMe: Type refinement is lost somehow
-                  items={data.chat.history}
-                  keys={messageKeyMap}
-                  initial={{ opacity: 0, x: 0 }}
-                  from={{ opacity: 0, x: -100 }}
-                  enter={{ opacity: 1, x: 0 }}
-                  leave={{ opacity: 0, x: 100 }}
-                >
-                  {messageThreadMap}
-                </Transition>
-              )}
+            {data != null && data.chat != null && data.chat.history != null && (
+              <Transition
+                native
+                // $FlowFixMe: Type refinement is lost somehow
+                items={data.chat.history}
+                keys={messageKeyMap}
+                initial={{ opacity: 0, x: 0 }}
+                from={{ opacity: 0, x: -100 }}
+                enter={{ opacity: 1, x: 0 }}
+                leave={{ opacity: 0, x: 100 }}
+              >
+                {messageThreadMap}
+              </Transition>
+            )}
           </Content>
         )}
       </ScrollPreserver>
