@@ -18,8 +18,8 @@ export class NetworkStatusProvider extends React.Component<Props, State> {
       this.props.initialValue != null
         ? this.props.initialValue
         : typeof navigator !== 'undefined'
-          ? navigator.onLine
-          : true,
+        ? navigator.onLine
+        : true,
   }
 
   componentDidMount() {
