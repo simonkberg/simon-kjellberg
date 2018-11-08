@@ -947,6 +947,11 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.0.tgz#139d8e112acd52c9e27d6b112d46c8dd5826a360"
   integrity sha512-hQIs22Qfb2LLRQ+7X1sJcRMjQE102ehKO3JwzI5x4Dpz75sRNAtDm5Eb48cTbVB7zNSGMillFRO9jt8wfoPczQ==
 
+"@emotion/weak-memoize@^10.0.0-really-unsafe-please-do-not-use.2":
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-10.0.0-really-unsafe-please-do-not-use.2.tgz#2534902de4680f65aebdaf3d54ce3a653aa20c39"
+  integrity sha512-E2/raMllWVc0Nd4RC/4cd1FldSi6ZZr0W3SXkBJbTVe0SvOZGZ5E6/zDsDgD0UZ2kyYkG41Y0ZqJd51AZwqYXw==
+
 "@packtracker/webpack-plugin@1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-1.1.2.tgz#5355d909e75df4cac93ad9b68cf275908bbc7c76"
@@ -2158,23 +2163,7 @@ babel-messages@^6.23.0:
   dependencies:
     babel-runtime "^6.22.0"
 
-babel-plugin-emotion@10.0.0-beta.8:
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/babel-plugin-emotion/-/babel-plugin-emotion-10.0.0-beta.8.tgz#33a3be8c54e3f7cfcbccebafd50bd372a6600857"
-  integrity sha512-duFeS9F9lYKq2teiRQDC3UZt/KVnnlLHbsv6RMlkVbbZ0cJH7rbNrxgWErPh57xJOKCI/PgqJMphr14+PQ0obA==
-  dependencies:
-    "@babel/helper-module-imports" "^7.0.0"
-    "@emotion/hash" "^0.7.0"
-    "@emotion/memoize" "^0.7.0"
-    "@emotion/serialize" "^0.10.3"
-    babel-plugin-macros "^2.0.0"
-    babel-plugin-syntax-jsx "^6.18.0"
-    convert-source-map "^1.5.0"
-    escape-string-regexp "^1.0.5"
-    find-root "^1.1.0"
-    source-map "^0.5.7"
-
-babel-plugin-emotion@^10.0.0-beta.8, babel-plugin-emotion@^10.0.0-really-unsafe-please-do-not-use.2:
+babel-plugin-emotion@10.0.0-really-unsafe-please-do-not-use.2, babel-plugin-emotion@^10.0.0-beta.8, babel-plugin-emotion@^10.0.0-really-unsafe-please-do-not-use.2:
   version "10.0.0-really-unsafe-please-do-not-use.2"
   resolved "https://registry.yarnpkg.com/babel-plugin-emotion/-/babel-plugin-emotion-10.0.0-really-unsafe-please-do-not-use.2.tgz#7479dcc73b33ceb6b49857360ae7891298b0a157"
   integrity sha512-giGEFIIZfSDOtIfQN9m4foE829D6Pu5ZbEyuYfcKb+I0rFRe5s3d0oU72FxDnh8wRwH8Sr/vFUEV+8MUNMGhGw==
@@ -3580,14 +3569,13 @@ emojis-list@^2.0.0:
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-2.1.0.tgz#4daa4d9db00f9819880c79fa457ae5b09a1fd389"
   integrity sha1-TapNnbAPmBmIDHn6RXrlsJof04k=
 
-emotion-theming@10.0.0-beta.8:
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/emotion-theming/-/emotion-theming-10.0.0-beta.8.tgz#973641c91431b08c0b1afd2279b2fffe92124ff0"
-  integrity sha512-Hks/0uBo641PNIWksMNzHeU/IePWBbDky/JMcPcWJ/nVcLY+wj5N7QANfrC5MFCF0bjJHZitI2PnevrpEXovOA==
+emotion-theming@10.0.0-really-unsafe-please-do-not-use.2:
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/emotion-theming/-/emotion-theming-10.0.0-really-unsafe-please-do-not-use.2.tgz#d33b3e73f7b2fec28efab0103f6cb0c99b9ea026"
+  integrity sha512-xgcvCmw5xKi4MQQqnRzxDqPeAlKkZl9oQRVAIeHcGeY4JIPY/KKwu4/wgLf0kBNxxHyP8sxpO6sLd8LhrcL5OA==
   dependencies:
-    "@emotion/weak-memoize" "^0.2.0"
+    "@emotion/weak-memoize" "^10.0.0-really-unsafe-please-do-not-use.2"
     hoist-non-react-statics "^2.3.1"
-    object-assign "^4.1.1"
 
 encodeurl@~1.0.1, encodeurl@~1.0.2:
   version "1.0.2"
@@ -5717,15 +5705,14 @@ jest-each@^23.6.0:
     chalk "^2.0.1"
     pretty-format "^23.6.0"
 
-jest-emotion@10.0.0-beta.8:
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/jest-emotion/-/jest-emotion-10.0.0-beta.8.tgz#445c728f3332376fa22a0d9c8112fece380e535d"
-  integrity sha512-/ZqPo4eThHsE1s9i4L4VUxQ5aeYvcfuWtEWS386X2KUSG8xVGLWvbAg62WfnT2t+1rN4Ul4fRMIFzTAwYijxiw==
+jest-emotion@10.0.0-really-unsafe-please-do-not-use.2:
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/jest-emotion/-/jest-emotion-10.0.0-really-unsafe-please-do-not-use.2.tgz#6b90993c7d374992997e4c4aae63aedbace2f239"
+  integrity sha512-xIzuggdJ5qJCqpKi/s9pzHNRHTyxzCPjB1QvyLidXurFCGZb6uAw3ntGGu1N7xHiPAkMXiFOjx9Z4AggJK+svA==
   dependencies:
     "@types/jest" "^23.0.2"
     chalk "^2.4.1"
     css "^2.2.1"
-    object-assign "^4.1.1"
 
 jest-environment-jsdom@^23.4.0:
   version "23.4.0"
