@@ -2,7 +2,7 @@
 import * as React from 'react'
 import HTTPStatus from 'http-status'
 import getConfig from 'next/config'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 
 import type { NextContext } from '../types'
 import Page from '../components/Page'

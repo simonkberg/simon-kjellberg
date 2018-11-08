@@ -17,12 +17,6 @@ module.exports = {
   plugins: [
     ['@babel/plugin-proposal-optional-chaining', { loose: true }],
     ['@babel/plugin-proposal-nullish-coalescing-operator', { loose: true }],
-    [
-      'babel-plugin-emotion',
-      {
-        sourceMap: env !== 'production',
-        autoLabel: env !== 'production',
-      },
-    ],
+    'babel-plugin-emotion',
   ],
 }

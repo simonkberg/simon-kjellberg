@@ -2,13 +2,11 @@
 
 'use strict'
 
-const { createSerializer, createMatchers } = require('jest-emotion')
-const emotion = require('emotion')
+const { matchers } = require('jest-emotion')
 const { setConfig } = require('next/config')
 const nextConfig = require('./next.config.js')
 
-expect.addSnapshotSerializer(createSerializer(emotion))
-expect.extend(createMatchers(emotion))
+expect.extend(matchers)
 
 setConfig({
   serverRuntimeConfig: nextConfig.serverRuntimeConfig,

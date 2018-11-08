@@ -1,5 +1,5 @@
 // @flow strict
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 
 const Link = styled('a')`
   color: inherit;

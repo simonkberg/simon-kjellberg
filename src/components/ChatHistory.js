@@ -1,6 +1,6 @@
 // @flow strict
 import * as React from 'react'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
 import compose from 'recompose/compose'
 import lifecycle from 'recompose/lifecycle'
@@ -131,7 +131,7 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
     <Wrapper>
       <ScrollPreserver>
         {ref => (
-          <Content innerRef={ref}>
+          <Content ref={ref}>
             {data != null && data.chat != null && data.chat.history != null && (
               <Transition
                 native

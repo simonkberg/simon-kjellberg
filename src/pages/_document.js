@@ -2,7 +2,6 @@ import * as React from 'react'
 import getConfig from 'next/config'
 import NextDocument, { Head, Main, NextScript } from 'next/document'
 import { oneLineTrim } from 'common-tags'
-import { extractCritical } from 'emotion-server'
 
 const { serverRuntimeConfig } = getConfig()
 
@@ -18,9 +17,8 @@ export default class Document extends NextDocument {
   static getInitialProps({ req, renderPage }) {
     const { fragmentTypes } = req
     const page = renderPage()
-    const styles = extractCritical(page.html)
 
-    return { ...page, ...styles, fragmentTypes }
+    return { ...page, fragmentTypes }
   }
 
   render() {
@@ -34,7 +32,6 @@ export default class Document extends NextDocument {
             name="viewport"
             content="width=device-width, initial-scale=1, shrink-to-fit=no"
           />
-          <style dangerouslySetInnerHTML={{ __html: this.props.css }} />
           <script dangerouslySetInnerHTML={{ __html: gtmScript }} />
         </Head>
         <body>
@@ -49,13 +46,6 @@ export default class Document extends NextDocument {
             />
           </noscript>
           <Main />
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `window.__EMOTION_CRITICAL_CSS_IDS__ = ${JSON.stringify(
-                this.props.ids
-              )};`,
-            }}
-          />
           <script
             dangerouslySetInnerHTML={{
               __html: `window.__FRAGMENT_TYPES__ = ${JSON.stringify(

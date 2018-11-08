@@ -1,7 +1,7 @@
 // @flow strict
 import * as React from 'react'
 import Head from 'next/head'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
 
 import Header from './Header'

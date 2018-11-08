@@ -1,7 +1,7 @@
 // @flow strict
 import * as React from 'react'
 import Link from 'next/link'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 
 const Wrapper = styled('header')`
   color: #fff;
