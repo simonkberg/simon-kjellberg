@@ -7,4 +7,5 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
     '^.+\\.(woff2?|ico)$': '<rootDir>/jest/fileTransformer.js',
   },
+  snapshotSerializers: ['jest-emotion'],
 }

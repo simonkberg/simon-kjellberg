@@ -1,5 +1,5 @@
 // @flow strict
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
 
 export const List = styled('ul')`

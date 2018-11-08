@@ -1,7 +1,8 @@
 // @flow strict
 import * as React from 'react'
 import screenfull from 'screenfull'
-import styled, { css } from 'react-emotion'
+import styled from '@emotion/styled'
+import { css } from '@emotion/core'
 import { theme, withProp } from 'styled-tools'
 import { darken } from 'polished'
 
@@ -132,7 +133,7 @@ const onClickMaximize = () => {
 }
 
 const Terminal = ({ children }: Props) => (
-  <Window innerRef={windowRef}>
+  <Window ref={windowRef}>
     <WindowTopbar>
       <WindowControlClose />
       <WindowControlMinimize />

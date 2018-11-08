@@ -1,6 +1,6 @@
 // @flow strict
 import { theme } from 'styled-tools'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 
 const Subtitle = styled('small')`
   color: ${theme('color.muted')};

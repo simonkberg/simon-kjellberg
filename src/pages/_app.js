@@ -2,7 +2,7 @@
 import * as React from 'react'
 import NextApp, { Container } from 'next/app'
 import Head from 'next/head'
-import { hydrate, injectGlobal } from 'react-emotion'
+import { Global, css } from '@emotion/core'
 import { ApolloProvider } from 'react-apollo'
 import { ThemeProvider } from 'emotion-theming'
 import sanitize from 'sanitize.css'
@@ -21,7 +21,7 @@ import ensureTrailingSlash from '../utils/ensureTrailingSlash'
 import withApollo from '../utils/withApollo'
 import theme from '../theme'
 
-injectGlobal`
+const globalStyles = css`
   ${sanitize};
 
   @font-face {
@@ -71,20 +71,12 @@ class App extends NextApp {
     return { ...appProps, canonicalUrl }
   }
 
-  componentDidMount() {
-    if (
-      typeof window !== 'undefined' &&
-      window.__EMOTION_CRITICAL_CSS_IDS__ != null
-    ) {
-      hydrate(window.__EMOTION_CRITICAL_CSS_IDS__)
-    }
-  }
-
   render() {
     const { Component, pageProps, apolloClient, canonicalUrl } = this.props
 
     return (
       <Container>
+        <Global styles={globalStyles} />
         <Head>
           <meta property="og:type" content="website" key="og:type" />
           <meta property="og:url" content={canonicalUrl} key="og:url" />

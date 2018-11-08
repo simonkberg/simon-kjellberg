@@ -1,6 +1,6 @@
 // @flow strict
 import * as React from 'react'
-import styled from 'react-emotion'
+import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
 import compose from 'recompose/compose'
 import withState from 'recompose/withState'
