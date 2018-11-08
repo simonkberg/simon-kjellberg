@@ -802,35 +802,25 @@
     lodash "^4.17.10"
     to-fast-properties "^2.0.0"
 
-"@emotion/cache@^10.0.0-beta.8":
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-10.0.0-beta.8.tgz#c797c52c24a8594657345d1e23cb4acc9c97660b"
-  integrity sha512-NztdHnMZO+YclR8ZCsLnr1MSoFCuG5RtN49stiU5OJ6g89e367jyotVTfBS7h5HSuUlP1Q3VYd164Ie0QCSZbQ==
+"@emotion/cache@^10.0.0-really-unsafe-please-do-not-use.2":
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-10.0.0-really-unsafe-please-do-not-use.2.tgz#61adbc835461bfb68dac045a94b43aa6154a061e"
+  integrity sha512-8x7AXlXmvUZiRZ2f6TNa9tDjkPkzcY+WAUh1GmotSGHLIsOoUei6welAY19wyv63EWSx5N+WVzQo5a4+/wXApA==
   dependencies:
-    "@emotion/sheet" "^0.9.1"
-    "@emotion/stylis" "^0.8.0"
-    "@emotion/utils" "^0.11.0"
-    "@emotion/weak-memoize" "^0.2.0"
+    "@emotion/sheet" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/stylis" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/utils" "^10.0.0-really-unsafe-please-do-not-use.2"
 
-"@emotion/core@10.0.0-beta.8":
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.0.0-beta.8.tgz#f83d7d09b8e1be611bfbeae726bfd114d903a628"
-  integrity sha512-uCye4BZYkVcZVoJ9WA21Ze7DPem45MOMdsbxBvSXRG1jWUYHwvGDgv+KEm6xUejwqAErP4nUZM+UYdE7FcFUww==
+"@emotion/core@10.0.0-really-unsafe-please-do-not-use.2":
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/@emotion/core/-/core-10.0.0-really-unsafe-please-do-not-use.2.tgz#cb8c0fb4f48c7c592cf17959b45a9d0090d639d0"
+  integrity sha512-bwYncE6aGdLoKNgkpe500XZYZ4GyVn1Bm2kK3pUFHuQyQizhhRQreXF4RqYMXolfyLSPnPvJPJu60lbGlmZbQQ==
   dependencies:
-    "@emotion/cache" "^10.0.0-beta.8"
-    "@emotion/css" "^10.0.0-beta.8"
-    "@emotion/serialize" "^0.10.3"
-    "@emotion/sheet" "^0.9.1"
-    "@emotion/utils" "^0.11.0"
-
-"@emotion/css@^10.0.0-beta.8":
-  version "10.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/@emotion/css/-/css-10.0.0-beta.8.tgz#524b06142cb5e0b2c82611c28ea3a4e1f944e9bb"
-  integrity sha512-/uZd54XIlUXB5jo6N8tG2E1x1bbMHlGQzsr9BIb5XXFElg3Cyf+bXkF76t5IdRgB4MIUZISmPYTJlKDZgxUmZg==
-  dependencies:
-    "@emotion/serialize" "^0.10.3"
-    "@emotion/utils" "^0.11.0"
-    babel-plugin-emotion "^10.0.0-beta.8"
+    "@emotion/cache" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/css" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/serialize" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/sheet" "^10.0.0-really-unsafe-please-do-not-use.2"
+    "@emotion/utils" "^10.0.0-really-unsafe-please-do-not-use.2"
 
 "@emotion/css@^10.0.0-really-unsafe-please-do-not-use.2":
   version "10.0.0-really-unsafe-please-do-not-use.2"
@@ -889,10 +879,10 @@
     "@emotion/unitless" "^10.0.0-really-unsafe-please-do-not-use.2"
     "@emotion/utils" "^10.0.0-really-unsafe-please-do-not-use.2"
 
-"@emotion/sheet@^0.9.1":
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/@emotion/sheet/-/sheet-0.9.1.tgz#3565a09991ac5e6f8c9bae9ba117743607d4f2bb"
-  integrity sha512-OvbOXQp+bSQB34Esl11VB1H29Mp2ViaQMMcAp/BOXtvnjPzQ0+piXzqNktmSz11mBLKBvkZwQXawDch1+Z4bGw==
+"@emotion/sheet@^10.0.0-really-unsafe-please-do-not-use.2":
+  version "10.0.0-really-unsafe-please-do-not-use.2"
+  resolved "https://registry.yarnpkg.com/@emotion/sheet/-/sheet-10.0.0-really-unsafe-please-do-not-use.2.tgz#b02e3f5f936afde281a52e703e7564c8e764b6a9"
+  integrity sha512-kB6F1eGxRKTDKY/FDjnfgKMOkOmML2rGg5KJ16Yc8Po6yj4ZX6+ZyBfk9DF/MxvYkN7EGzmOSHZInTkW/+h8lA==
 
 "@emotion/styled-base@^10.0.0-beta.8":
   version "10.0.0-beta.8"
@@ -911,11 +901,6 @@
   dependencies:
     "@emotion/styled-base" "^10.0.0-beta.8"
     babel-plugin-emotion "^10.0.0-beta.8"
-
-"@emotion/stylis@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@emotion/stylis/-/stylis-0.8.0.tgz#7f7e6c039274c481482a5169d718405bf0bf2207"
-  integrity sha512-zDf8swgEFyHlBucaQffZvu3P9b6l8pYnnuRBsgAXiq2nRMU+svPSJ+T+dIEc6d0SuFpvJ4t6+wTRwLJ8aXX3XQ==
 
 "@emotion/stylis@^10.0.0-really-unsafe-please-do-not-use.2":
   version "10.0.0-really-unsafe-please-do-not-use.2"
