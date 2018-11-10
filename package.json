@@ -110,7 +110,7 @@
     "jest-emotion": "10.0.0-beta.8",
     "lint-staged": "8.0.4",
     "nodemon": "1.18.6",
-    "prettier": "1.15.1",
+    "prettier": "1.15.2",
     "raw-loader": "0.5.1",
     "react-test-renderer": "16.6.1",
     "url-loader": "1.1.2",
