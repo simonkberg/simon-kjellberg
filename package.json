@@ -79,9 +79,9 @@
     "next-offline": "3.0.4",
     "polished": "2.3.0",
     "prop-types": "15.6.2",
-    "react": "16.6.1",
+    "react": "16.6.3",
     "react-apollo": "2.3.0",
-    "react-dom": "16.6.1",
+    "react-dom": "16.6.3",
     "react-spring": "6.1.8",
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",
@@ -112,7 +112,7 @@
     "nodemon": "1.18.6",
     "prettier": "1.15.2",
     "raw-loader": "0.5.1",
-    "react-test-renderer": "16.6.1",
+    "react-test-renderer": "16.6.3",
     "url-loader": "1.1.2",
     "webpack-bundle-analyzer": "3.0.3"
   }
