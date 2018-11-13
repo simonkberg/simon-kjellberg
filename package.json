@@ -76,7 +76,7 @@
     "minimist": "1.2.0",
     "morgan": "1.9.1",
     "next": "7.0.2",
-    "next-offline": "3.0.4",
+    "next-offline": "3.0.10",
     "polished": "2.3.0",
     "prop-types": "15.6.2",
     "react": "16.6.3",
