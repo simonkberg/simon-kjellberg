@@ -92,7 +92,7 @@
     "url-polyfill": "1.1.0"
   },
   "devDependencies": {
-    "@babel/core": "7.1.5",
+    "@babel/core": "7.1.6",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.0.0",
     "@babel/plugin-proposal-optional-chaining": "7.0.0",
     "@babel/preset-flow": "7.0.0",
