@@ -59,7 +59,7 @@ const globalStyles = css`
 
 class App extends NextApp {
   static async getInitialProps(ctx: $FlowFixMe) {
-    const appProps = NextApp.getInitialProps(ctx)
+    const appProps = await NextApp.getInitialProps(ctx)
     const { req } = ctx.ctx
 
     const canonicalUrl = ensureTrailingSlash(
