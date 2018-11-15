@@ -14,8 +14,6 @@ module.exports = withOffline({
   },
   workboxOpts: {
     exclude: [/\.woff$/, /\.map$/, /^manifest.*\.js(?:on)?$/],
-    globPatterns: ['static/**/*'],
-    globDirectory: '.',
     runtimeCaching: [{ urlPattern: /\/.*?/, handler: 'networkFirst' }],
   },
   webpack: (config, options) => {

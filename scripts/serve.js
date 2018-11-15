@@ -8,7 +8,7 @@ const perf = require('../lib/perf')
 
 perf.mark('boot start')
 
-const next = require('next')
+const next = require('next-server')
 const options = require('../lib/options')
 const createServer = require('../lib/createServer')
 
