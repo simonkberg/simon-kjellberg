@@ -13,6 +13,9 @@ const Container = styled('div')`
   margin: 0 auto;
   max-width: 35rem;
   padding: 1.45rem 1.0875rem;
+  padding-top: max(1.45rem, env(safe-area-inset-top));
+  padding-left: max(1.0875rem, env(safe-area-inset-left));
+  padding-right: max(1.0875rem, env(safe-area-inset-right));
 `
 
 const Title = styled('h1')`

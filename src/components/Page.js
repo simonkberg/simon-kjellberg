@@ -15,7 +15,9 @@ const Content = styled('div')`
   margin: 0 auto;
   max-width: ${theme('page.maxWidth')};
   padding: 0 0.9375rem 1.875rem;
-  padding-top: 0;
+  padding-left: max(0.9375rem, env(safe-area-inset-left));
+  padding-right: max(0.9375rem, env(safe-area-inset-left));
+  padding-bottom: max(1.875rem, env(safe-area-inset-bottom));
 `
 
 type Props = {
