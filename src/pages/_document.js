@@ -30,7 +30,7 @@ export default class Document extends NextDocument {
           <meta name="theme-color" content="#000000" />
           <meta
             name="viewport"
-            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
           />
           <script dangerouslySetInnerHTML={{ __html: gtmScript }} />
         </Head>
