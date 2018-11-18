@@ -1,6 +1,6 @@
 FROM mhart/alpine-node:10 as base
 WORKDIR /app
-ENV YARN_VERSION 1.10.1
+ENV YARN_VERSION 1.12.3
 RUN apk add --no-cache curl make gcc g++ python
 RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
 ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:$PATH"
