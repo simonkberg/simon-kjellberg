@@ -4,10 +4,21 @@ jobs:
     docker:
       - image: circleci/node:10
 
+    environment:
+      YARN_VERSION: 1.12.3
+
     working_directory: ~/repo
 
     steps:
       - checkout
+
+      - run:
+          name: Upgrade yarn
+          command: |
+            if [[ $(yarn --version) != "${YARN_VERSION}" ]]; then
+              curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version ${YARN_VERSION}
+              echo 'export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"' >> $BASH_ENV
+            fi
 
       - restore_cache:
           keys:
