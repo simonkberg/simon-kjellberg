@@ -76,7 +76,7 @@
     "memoize-one": "4.0.3",
     "minimist": "1.2.0",
     "morgan": "1.9.1",
-    "next-offline": "3.1.0",
+    "next-offline": "3.2.1",
     "next-server": "7.0.2-canary.25",
     "opn": "5.4.0",
     "polished": "2.3.0",
