@@ -3,7 +3,7 @@
 'use strict'
 
 const { matchers } = require('jest-emotion')
-const { setConfig } = require('next/config')
+const { setConfig } = require('next-server/config')
 const nextConfig = require('./next.config.js')
 
 expect.extend(matchers)
