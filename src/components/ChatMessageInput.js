@@ -9,7 +9,7 @@ import withHandlers from 'recompose/withHandlers'
 import withPostChatMessage, {
   type PostChatMessageProps,
 } from '../utils/withPostChatMessage'
-import { NetworkStatusConsumer } from './NetworkStatus'
+import useNetworkStatus from '../hooks/useNetworkStatus'
 
 type Props = {
   input: string,
@@ -54,26 +54,24 @@ const Input = styled('input')`
   }
 `
 
-const ChatMessageInput = ({ input, onInputChange, onSubmit }: Props) => (
-  <Form onSubmit={onSubmit}>
-    <InputWrapper>
-      <NetworkStatusConsumer>
-        {online => (
-          <Input
-            value={
-              online
-                ? input
-                : 'You appear to be offline. Reconnect to chat 😎💬'
-            }
-            placeholder="Write a message..."
-            onChange={onInputChange}
-            disabled={!online}
-          />
-        )}
-      </NetworkStatusConsumer>
-    </InputWrapper>
-  </Form>
-)
+const ChatMessageInput = ({ input, onInputChange, onSubmit }: Props) => {
+  const online = useNetworkStatus()
+
+  return (
+    <Form onSubmit={onSubmit}>
+      <InputWrapper>
+        <Input
+          value={
+            online ? input : 'You appear to be offline. Reconnect to chat 😎💬'
+          }
+          placeholder="Write a message..."
+          onChange={onInputChange}
+          disabled={!online}
+        />
+      </InputWrapper>
+    </Form>
+  )
+}
 
 const enhance = compose(
   withPostChatMessage,

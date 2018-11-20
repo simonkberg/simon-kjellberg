@@ -14,10 +14,10 @@ import withChatHistory, {
   type ChatHistoryProps,
 } from '../utils/withChatHistory'
 
+import useScrollPreserver from '../hooks/useScrollPreserver'
 import * as UnorderedList from './UnorderedList'
 import ChatMessage from './ChatMessage'
 import Loader from './Loader'
-import ScrollPreserver from './ScrollPreserver'
 
 const Wrapper = styled('div')`
   display: flex;
@@ -119,6 +119,8 @@ const messageThreadMap = message => style => (
 )
 
 const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
+  const ref = useScrollPreserver()
+
   if (loading) {
     return <Loader />
   }
@@ -129,26 +131,22 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
 
   return (
     <Wrapper>
-      <ScrollPreserver>
-        {ref => (
-          <Content ref={ref}>
-            {data != null && data.chat != null && data.chat.history != null && (
-              <Transition
-                native
-                // $FlowFixMe: Type refinement is lost somehow
-                items={data.chat.history}
-                keys={messageKeyMap}
-                initial={{ opacity: 0, x: 0 }}
-                from={{ opacity: 0, x: -100 }}
-                enter={{ opacity: 1, x: 0 }}
-                leave={{ opacity: 0, x: 100 }}
-              >
-                {messageThreadMap}
-              </Transition>
-            )}
-          </Content>
+      <Content ref={ref}>
+        {data != null && data.chat != null && data.chat.history != null && (
+          <Transition
+            native
+            // $FlowFixMe: Type refinement is lost somehow
+            items={data.chat.history}
+            keys={messageKeyMap}
+            initial={{ opacity: 0, x: 0 }}
+            from={{ opacity: 0, x: -100 }}
+            enter={{ opacity: 1, x: 0 }}
+            leave={{ opacity: 0, x: 100 }}
+          >
+            {messageThreadMap}
+          </Transition>
         )}
-      </ScrollPreserver>
+      </Content>
     </Wrapper>
   )
 }

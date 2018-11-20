@@ -16,7 +16,6 @@ import iosevkaBoldWoff2 from '../assets/iosevka-ss08-bold.woff2'
 import iosevkaBoldItalicWoff from '../assets/iosevka-ss08-bolditalic.woff'
 import iosevkaBoldItalicWoff2 from '../assets/iosevka-ss08-bolditalic.woff2'
 import facebookShareImage from '../assets/share.png'
-import { NetworkStatusProvider } from '../components/NetworkStatus'
 import ensureTrailingSlash from '../utils/ensureTrailingSlash'
 import withApollo from '../utils/withApollo'
 import theme from '../theme'
@@ -121,9 +120,7 @@ class App extends NextApp {
         </Head>
         <ApolloProvider client={apolloClient}>
           <ThemeProvider theme={theme}>
-            <NetworkStatusProvider>
-              <Component {...pageProps} />
-            </NetworkStatusProvider>
+            <Component {...pageProps} />
           </ThemeProvider>
         </ApolloProvider>
       </Container>

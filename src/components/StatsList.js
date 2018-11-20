@@ -38,8 +38,7 @@ const StatsList = ({ loading, error, data }: WakaTimeStatsProps) => {
         >
           {value => (
             <UnorderedList.ListItem>
-              {stat.name} ({value.percent.toFixed(2)}
-              %)
+              {stat.name} ({value.percent.toFixed(2)}%)
             </UnorderedList.ListItem>
           )}
         </Spring>
