@@ -110,7 +110,7 @@
     "husky": "1.2.0",
     "jest": "23.6.0",
     "jest-emotion": "10.0.0-beta.13",
-    "lint-staged": "8.0.5",
+    "lint-staged": "8.1.0",
     "next": "7.0.2-canary.26",
     "nodemon": "1.18.6",
     "prettier": "1.15.2",
