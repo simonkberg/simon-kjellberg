@@ -983,10 +983,10 @@
   dependencies:
     any-observable "^0.3.0"
 
-"@simonkberg/eslint-config@10.1.0":
-  version "10.1.0"
-  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-10.1.0.tgz#1361ddab5b24a8851783e5ed510784d42ad1faa1"
-  integrity sha512-Tyt8MJ3EyL7id/MLLFAzPIu2OdpFFOinxahP8fLFD7ssM8pWHeXo7r6zJaHz8epIOUWPO8s7H18CPC41t6ZJ6Q==
+"@simonkberg/eslint-config@10.2.1":
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-10.2.1.tgz#07fc0b395a7ed5e6c36fbf83b46f88e3ae5a39c7"
+  integrity sha512-j0ipZ+v26xT9YTq3bwdJZ5QnCAJV9ieOO8fUX+S6az0N/YeHHiF3J4jq0O7RrffR/s7lxHIK6KRSpBV/IjF3Qw==
   dependencies:
     babel-eslint "^10.0.1"
     eslint-config-prettier "^3.1.0"
@@ -994,9 +994,10 @@
     eslint-config-standard-react "^7.0.2"
     eslint-plugin-flowtype "^3.1.1"
     eslint-plugin-import "^2.14.0"
-    eslint-plugin-node "^7.0.0"
+    eslint-plugin-node "^7.0.1"
     eslint-plugin-promise "^4.0.1"
     eslint-plugin-react "^7.11.1"
+    eslint-plugin-react-hooks "^0.0.0"
     eslint-plugin-standard "^4.0.0"
 
 "@slack/client@4.8.0":
@@ -3591,7 +3592,7 @@ eslint-plugin-import@^2.14.0:
     read-pkg-up "^2.0.0"
     resolve "^1.6.0"
 
-eslint-plugin-node@^7.0.0:
+eslint-plugin-node@^7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-node/-/eslint-plugin-node-7.0.1.tgz#a6e054e50199b2edd85518b89b4e7b323c9f36db"
   integrity sha512-lfVw3TEqThwq0j2Ba/Ckn2ABdwmL5dkOgAux1rvOk6CO7A6yGyPI2+zIxN6FyNkp1X1X/BSvKOceD6mBWSj4Yw==
@@ -3607,6 +3608,11 @@ eslint-plugin-promise@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-promise/-/eslint-plugin-promise-4.0.1.tgz#2d074b653f35a23d1ba89d8e976a985117d1c6a2"
   integrity sha512-Si16O0+Hqz1gDHsys6RtFRrW7cCTB6P7p3OJmKp3Y3dxpQE2qwOA7d3xnV+0mBmrPoi0RBnxlCKvqu70te6wjg==
+
+eslint-plugin-react-hooks@^0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-0.0.0.tgz#9988f14082a159931c3dfa9ba699130457da927a"
+  integrity sha512-SXyU7C3E8AJbXKMdb10P/zHazcxzfuWR5OFwAVZKXVU7P/H56NLszVG6WdQBo9Pt80FfnPXtUGGbWhs3/98N4w==
 
 eslint-plugin-react@^7.11.1:
   version "7.11.1"
