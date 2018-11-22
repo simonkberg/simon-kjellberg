@@ -7,7 +7,7 @@
   "license": "MIT",
   "author": "Simon Kjellberg <simon.kjellberg@gmail.com> (https://simonkjellberg.com)",
   "scripts": {
-    "build": "next build src",
+    "build": "node scripts/build.js",
     "eslint:check": "eslint .",
     "eslint:fix": "eslint . --fix",
     "prettier:check": "prettier --list-different '**/*.{js,json,md}'",
@@ -107,6 +107,7 @@
     "eslint": "5.9.0",
     "file-loader": "2.0.0",
     "flow-bin": "0.86.0",
+    "fs-extra": "7.0.1",
     "husky": "1.2.0",
     "jest": "23.6.0",
     "jest-emotion": "10.0.0-beta.13",
