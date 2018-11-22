@@ -8,13 +8,14 @@ const opn = require('opn')
 const next = require('next')
 const options = require('../lib/options')
 const createServer = require('../lib/createServer')
+const config = require('../app.config')
 
 /*::
 import type { Options } from '../lib/options'
 */
 
 module.exports = options(async (opts /*: Options */) => {
-  const app = next({ dev: true, dir: './src' })
+  const app = next({ dev: true, dir: config.src })
   const server = await createServer(app)
 
   server.listen(opts.port, opts.host, undefined, () => {

@@ -1,16 +1,17 @@
 'use strict'
 
+const path = require('path')
 const withOffline = require('next-offline')
+const app = require('./app.config')
 
 module.exports = withOffline({
-  distDir: '../.next',
+  distDir: path.relative(app.src, app.dest),
   serverRuntimeConfig: {
-    gtmId: process.env.GTM_ID,
+    gtmId: app.gtmId,
   },
   publicRuntimeConfig: {
-    siteTitle: 'Simon Kjellberg',
-    siteDescription:
-      'Fullstack web developer, specialized in React, Node.js, and GraphQL, with a strong focus on building scalable frontend architecture.',
+    siteTitle: app.title,
+    siteDescription: app.description,
   },
   workboxOpts: {
     exclude: [/\.woff$/, /\.map$/, /^manifest.*\.js(?:on)?$/],
