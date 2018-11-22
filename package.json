@@ -84,7 +84,7 @@
     "react": "16.7.0-alpha.2",
     "react-apollo": "2.3.1",
     "react-dom": "16.7.0-alpha.2",
-    "react-spring": "6.1.8",
+    "react-spring": "6.1.9",
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",
     "screenfull": "3.3.3",
