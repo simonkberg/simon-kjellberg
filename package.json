@@ -85,7 +85,6 @@
     "react": "16.7.0-alpha.2",
     "react-apollo": "2.3.1",
     "react-dom": "16.7.0-alpha.2",
-    "react-dom-fragment": "0.6.0",
     "react-spring": "6.1.9",
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",

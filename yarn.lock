@@ -1208,11 +1208,6 @@
   resolved "https://registry.yarnpkg.com/@tyriar/fibonacci-heap/-/fibonacci-heap-2.0.8.tgz#819fdff85fb559790539ff8a347c246777b4011c"
   integrity sha512-yujW2S09dkH3uBUiTR5GtMni7LgQS2bSm1ezjugyUzuzM7JUkNvNRMwUL7/bee8gv812zhw1Yw/aIzL47UbTVQ==
 
-"@ungap/essential-map@^0.1.7":
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/@ungap/essential-map/-/essential-map-0.1.7.tgz#466b181c299f825b1d853901ee88f3ce302b7c71"
-  integrity sha512-zkugZ6xxu0tHHTOfoce5B7ax2anIRP7hGIwKh5MEWH5mWPNXLigxEubkKv5WLUsFELCdKaMfjdqfI0H0/tLhpw==
-
 "@webassemblyjs/ast@1.7.11":
   version "1.7.11"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.7.11.tgz#b988582cafbb2b095e8b556526f30c90d057cace"
@@ -3354,13 +3349,6 @@ domain-browser@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/domain-browser/-/domain-browser-1.2.0.tgz#3d31f50191a6749dd1375a7f522e823d42e54eda"
   integrity sha512-jnjyiM6eRyZl2H+W8Q/zLMA481hzi0eszAaBUzIVnmYVDBbnLxVNnfu1HgEBvCbL+71FrxMl3E6lpKH7Ge3OXA==
-
-domdiff@^2.0.0:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/domdiff/-/domdiff-2.0.2.tgz#c63535384d8d1f5954d36049a9d6a770d8a50dcb"
-  integrity sha512-xmQ4u3GRmd/RDMynLkHkGYcoKIFMWf8E7hqN4osTh/MbB47Fa2IqLkywpqBxOSp/OciCkt1Ny/oDQcLuABGx0A==
-  dependencies:
-    "@ungap/essential-map" "^0.1.7"
 
 domexception@^1.0.1:
   version "1.0.1"
@@ -7747,13 +7735,6 @@ react-apollo@2.3.1:
     lodash.flowright "^3.5.0"
     lodash.isequal "^4.5.0"
     prop-types "^15.6.0"
-
-react-dom-fragment@0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/react-dom-fragment/-/react-dom-fragment-0.6.0.tgz#d2b25678dff64f02c3459f7ed551a57c28d96b4b"
-  integrity sha512-IVV7UVrxols7+6FyjYm5ZQvhMgH5rxU251BbdIC/Hu3wB28HKOZkZfqgfx5kZ/0H0T8FGYHWk6hqpyW8H/1Jwg==
-  dependencies:
-    domdiff "^2.0.0"
 
 react-dom@16.7.0-alpha.2:
   version "16.7.0-alpha.2"
