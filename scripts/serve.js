@@ -2,6 +2,11 @@
 
 'use strict'
 
+require('dotenv').config()
+
+const newrelic =
+  process.env.NEW_RELIC_LICENSE_KEY != null ? require('newrelic') : undefined
+
 process.env.NODE_ENV = 'production'
 
 const perf = require('../lib/perf')
@@ -19,7 +24,7 @@ import type { Options } from '../lib/options'
 
 module.exports = options(async (opts /*: Options */) => {
   const app = next({ dev: false, dir: config.src })
-  const server = await createServer(app)
+  const server = await createServer(app, { newrelic })
 
   server.listen(opts.port, opts.host, undefined, () => {
     perf.mark('boot end')

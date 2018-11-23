@@ -2,6 +2,8 @@
 
 'use strict'
 
+require('dotenv').config()
+
 process.env.NODE_ENV = 'development'
 
 const opn = require('opn')
