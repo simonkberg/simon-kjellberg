@@ -15,10 +15,16 @@ const gtmScript = oneLineTrim`
 
 export default class Document extends NextDocument {
   static getInitialProps({ req, renderPage }) {
-    const { fragmentTypes } = req
+    const { fragmentTypes, newrelic } = req
     const page = renderPage()
+    const browserTimingHeader =
+      newrelic != null
+        ? newrelic
+            .getBrowserTimingHeader()
+            .replace(/^<script[\s]*[^>]*>([\s\S]*)<\/[\s]*script[\s]*>$/, '$1')
+        : undefined
 
-    return { ...page, fragmentTypes }
+    return { ...page, fragmentTypes, browserTimingHeader }
   }
 
   render() {
@@ -32,6 +38,13 @@ export default class Document extends NextDocument {
             name="viewport"
             content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
           />
+          {this.props.browserTimingHeader != null && (
+            <script
+              dangerouslySetInnerHTML={{
+                __html: this.props.browserTimingHeader,
+              }}
+            />
+          )}
           <script dangerouslySetInnerHTML={{ __html: gtmScript }} />
         </Head>
         <body>

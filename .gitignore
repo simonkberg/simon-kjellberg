@@ -2,3 +2,4 @@
 /.next
 /.env
 yarn-error.log
+newrelic_agent.log

@@ -16,7 +16,8 @@
     "SLACK_CHANNEL": "@slack-channel",
     "ENGINE_API_KEY": "@engine-api-key",
     "REDIS_URL": "@redis-url",
-    "SESSION_KEY": "@session-key"
+    "SESSION_KEY": "@session-key",
+    "NEW_RELIC_LICENSE_KEY": "@new-relic-license-key"
   },
   "scale": {
     "bru1": {
