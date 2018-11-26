@@ -77,7 +77,7 @@
     "morgan": "1.9.1",
     "ms": "2.1.1",
     "newrelic": "4.11.0",
-    "next-offline": "3.2.1",
+    "next-offline": "3.2.2",
     "next-server": "7.0.2-canary.27",
     "opn": "5.4.0",
     "polished": "2.3.0",
