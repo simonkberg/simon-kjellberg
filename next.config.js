@@ -23,17 +23,6 @@ module.exports = withOffline({
 
     return {
       ...config,
-      async entry() {
-        const entry = await config.entry()
-        const urlPolyfill = require.resolve('url-polyfill')
-        const mainEntry = entry['main.js']
-
-        if (mainEntry && !mainEntry.includes(urlPolyfill)) {
-          mainEntry.unshift(urlPolyfill)
-        }
-
-        return entry
-      },
       devtool: options.dev ? config.devtool : 'source-map',
       module: {
         ...config.module,
