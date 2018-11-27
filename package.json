@@ -92,7 +92,7 @@
     "serve-favicon": "2.5.0",
     "styled-tools": "1.6.0",
     "subscriptions-transport-ws": "0.9.15",
-    "url-polyfill": "1.1.0"
+    "url-polyfill": "1.1.1"
   },
   "devDependencies": {
     "@babel/core": "7.1.6",
