@@ -3,9 +3,9 @@ import * as React from 'react'
 import nextTick from '../utils/nextTick'
 
 const useScrollPreserver = () => {
-  const ref = (React: $FlowFixMe).useRef()
+  const ref = React.useRef<HTMLElement>()
 
-  ;(React: $FlowFixMe).useLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     const el = ref.current
 
     if (el != null) {

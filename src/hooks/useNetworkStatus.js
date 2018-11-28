@@ -6,9 +6,9 @@ const useNetworkStatus = (
     ? navigator.onLine
     : true
 ) => {
-  const [value, setValue] = (React: $FlowFixMe).useState(initialValue)
+  const [value, setValue] = React.useState(initialValue)
 
-  ;(React: $FlowFixMe).useEffect(() => {
+  React.useEffect(() => {
     const onOnline = () => setValue(true)
     const onOffline = () => setValue(false)
 
