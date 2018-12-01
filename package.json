@@ -46,8 +46,8 @@
     "last 2 Samsung versions"
   ],
   "dependencies": {
-    "@emotion/core": "10.0.0",
-    "@emotion/styled": "10.0.0",
+    "@emotion/core": "10.0.1",
+    "@emotion/styled": "10.0.1",
     "@slack/client": "4.8.0",
     "apollo-cache-inmemory": "1.3.11",
     "apollo-client": "2.4.7",
@@ -63,7 +63,7 @@
     "dataloader": "1.4.0",
     "dotenv": "6.1.0",
     "emoji-datasource": "4.1.0",
-    "emotion-theming": "10.0.0",
+    "emotion-theming": "10.0.1",
     "express": "4.16.4",
     "graphql": "14.0.2",
     "graphql-tag": "2.10.0",
@@ -110,7 +110,7 @@
     "fs-extra": "7.0.1",
     "husky": "1.2.0",
     "jest": "23.6.0",
-    "jest-emotion": "10.0.0",
+    "jest-emotion": "10.0.1",
     "lint-staged": "8.1.0",
     "next": "7.0.2-canary.27",
     "nodemon": "1.18.7",
