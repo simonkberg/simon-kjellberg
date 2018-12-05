@@ -4762,13 +4762,6 @@ hoek@4.x.x:
   resolved "https://registry.yarnpkg.com/hoek/-/hoek-4.2.1.tgz#9634502aa12c445dd5a7c5734b572bb8738aacbb"
   integrity sha512-QLg82fGkfnJ/4iy1xZ81/9SIJiq1NGFUMGs6ParyjBZr6jW2Ufj/snDqTHixNlHdPNwN2RLVD0Pi3igeK9+JfA==
 
-hoist-non-react-statics@3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.0.1.tgz#fba3e7df0210eb9447757ca1a7cb607162f0a364"
-  integrity sha512-1kXwPsOi0OGQIZNVMPvgWJ9tSnGMiMfJdihqEzrPEXlHOBh9AAHXX/QYmAJTXztnz/K+PQ8ryCb4eGaN6HlGbQ==
-  dependencies:
-    react-is "^16.3.2"
-
 hoist-non-react-statics@^2.3.1:
   version "2.5.5"
   resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-2.5.5.tgz#c5903cf409c0dfd908f388e619d86b9c1174cb47"
@@ -4820,11 +4813,6 @@ html-entities@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-1.2.1.tgz#0df29351f0721163515dfb9e5543e5f6eed5162f"
   integrity sha1-DfKTUfByEWNRXfueVUPl9u7VFi8=
-
-htmlescape@1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/htmlescape/-/htmlescape-1.1.1.tgz#3a03edc2214bca3b66424a3e7959349509cb0351"
-  integrity sha1-OgPtwiFLyjtmQko+eVk0lQnLA1E=
 
 http-errors@1.6.3, http-errors@~1.6.2, http-errors@~1.6.3:
   version "1.6.3"
@@ -6694,18 +6682,14 @@ next-offline@3.2.2:
     webpack "^4.19.1"
     workbox-webpack-plugin "3.6.3"
 
-next-server@7.0.2-canary.27:
-  version "7.0.2-canary.27"
-  resolved "https://registry.yarnpkg.com/next-server/-/next-server-7.0.2-canary.27.tgz#9eeb79da7828e141950e5a90f24c211b8748620c"
-  integrity sha512-cNibq+RiXePCbieCcWHxuYJMVoImIOXuP3S56aaePe1zKJC+7GkdHlO4OG6wk1d6lIk8hIrayiCal+1ZSkYNFQ==
+next-server@7.0.2-canary.41:
+  version "7.0.2-canary.41"
+  resolved "https://registry.yarnpkg.com/next-server/-/next-server-7.0.2-canary.41.tgz#f53985fe04cefea4d8f53d1e96428b015d664063"
+  integrity sha512-o4W7lPN71XwW6S0xphtI3rmy9geGH9l7az00rc0EfipIz57FteCJkWkHT4ya1z6HfhBlfrVdppS1sPBgLFiNaQ==
   dependencies:
-    "@babel/runtime-corejs2" "7.1.2"
-    ansi-html "0.0.7"
     etag "1.8.1"
     find-up "3.0.0"
     fresh "0.5.2"
-    hoist-non-react-statics "3.0.1"
-    htmlescape "1.1.1"
     path-to-regexp "2.1.0"
     prop-types "15.6.2"
     send "0.16.1"
