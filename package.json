@@ -61,7 +61,7 @@
     "cookie-session": "2.0.0-beta.3",
     "cross-fetch": "2.2.3",
     "dataloader": "1.4.0",
-    "dotenv": "6.1.0",
+    "dotenv": "6.2.0",
     "emoji-datasource": "4.1.0",
     "emotion-theming": "10.0.2",
     "express": "4.16.4",
