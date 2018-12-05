@@ -4,6 +4,7 @@ const { resolve } = require('path')
 
 module.exports = {
   src: resolve('src'),
+  lib: resolve('lib'),
   dest: resolve('.next'),
   title: 'Simon Kjellberg',
   description:
