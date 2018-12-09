@@ -46,10 +46,45 @@ const createInMemoryCache = fragmentTypes =>
 const createHttpLink = (uri, options) =>
   new HttpLink({ uri, fetch, ...options })
 
+const createWebSocketLink = (uri, options) =>
+  new WebSocketLink({ uri, options: { reconnect: true, ...options } })
+
 const splitSubscriptions = ({ query }) => {
   const { kind, operation } = getMainDefinition(query)
 
   return kind === 'OperationDefinition' && operation === 'subscription'
+}
+
+const createLinks = (props: Props) => {
+  if (!process.browser) {
+    return createHttpLink(props.apolloUrls.graphql, {
+      headers: { cookie: props.cookie },
+    })
+  }
+
+  const apolloUrls = getApolloUrls()
+
+  return split(
+    splitSubscriptions,
+    createWebSocketLink(apolloUrls.subscription),
+    createHttpLink(apolloUrls.graphql, { credentials: 'include' })
+  )
+}
+
+const createClient = (props: Props) => {
+  const link = createLinks(props)
+  const cache = createInMemoryCache(props.fragmentTypes)
+
+  if (props.apolloState) {
+    cache.restore(props.apolloState)
+  }
+
+  return new ApolloClient({
+    ssrMode: !process.browser,
+    // $FlowFixMe
+    link,
+    cache,
+  })
 }
 
 export default (App: $FlowFixMe) =>
@@ -62,13 +97,10 @@ export default (App: $FlowFixMe) =>
 
       if (!process.browser) {
         const cookie = ctx.ctx.req.headers.cookie
-        const apolloClient = new ApolloClient({
-          ssrMode: true,
-          // $FlowFixMe
-          link: createHttpLink(apolloUrls.graphql.toString(), {
-            headers: { cookie },
-          }),
-          cache: createInMemoryCache(fragmentTypes),
+        const apolloClient = createClient({
+          apolloUrls,
+          fragmentTypes,
+          cookie,
         })
 
         await getDataFromTree(
@@ -94,38 +126,7 @@ export default (App: $FlowFixMe) =>
       return { ...appProps, apolloUrls, fragmentTypes }
     }
 
-    apolloClient: ApolloClient<*> = this.apolloClient
-
-    constructor(props: Props) {
-      super(props)
-
-      const apolloUrls = !process.browser ? props.apolloUrls : getApolloUrls()
-      const cache = createInMemoryCache(props.fragmentTypes).restore(
-        props.apolloState || {}
-      )
-
-      const link = !process.browser
-        ? createHttpLink(apolloUrls.graphql, {
-            headers: { cookie: props.cookie },
-          })
-        : split(
-            splitSubscriptions,
-            new WebSocketLink({
-              uri: apolloUrls.subscription,
-              options: { reconnect: true },
-            }),
-            createHttpLink(apolloUrls.graphql, {
-              credentials: 'include',
-            })
-          )
-
-      this.apolloClient = new ApolloClient({
-        ssrMode: !process.browser,
-        // $FlowFixMe
-        link,
-        cache,
-      })
-    }
+    apolloClient: ApolloClient<*> = createClient(this.props)
 
     render() {
       const {
