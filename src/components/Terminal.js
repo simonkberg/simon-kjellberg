@@ -126,9 +126,9 @@ type Props = {
 
 const windowRef = React.createRef()
 
-const onClickMaximize = () => {
+const onClickMaximize = async () => {
   if (screenfull.enabled) {
-    screenfull.toggle(windowRef.current)
+    await screenfull.toggle(windowRef.current)
   }
 }
 
