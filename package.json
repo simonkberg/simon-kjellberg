@@ -103,7 +103,7 @@
     "babel-jest": "23.6.0",
     "babel-plugin-emotion": "10.0.5",
     "chokidar": "2.0.4",
-    "eslint": "5.10.0",
+    "eslint": "5.11.0",
     "file-loader": "2.0.0",
     "flow-bin": "0.89.0",
     "fs-extra": "7.0.1",
