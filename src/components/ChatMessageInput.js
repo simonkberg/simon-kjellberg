@@ -13,7 +13,6 @@ import useNetworkStatus from '../hooks/useNetworkStatus'
 
 type Props = {
   input: string,
-  setInput: (input: string) => void,
   onInputChange: <T>(event: SyntheticEvent<T>) => void,
   onSubmit: <T>(event: SyntheticEvent<T>) => void,
   ...$Exact<PostChatMessageProps>,
