@@ -89,7 +89,7 @@
     "sanitize.css": "8.0.0",
     "screenfull": "4.0.0",
     "serve-favicon": "2.5.0",
-    "styled-tools": "1.7.0",
+    "styled-tools": "1.7.1",
     "subscriptions-transport-ws": "0.9.15"
   },
   "devDependencies": {
