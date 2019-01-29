@@ -82,7 +82,7 @@
     "polished": "2.3.3",
     "prop-types": "15.6.2",
     "react": "16.8.0-alpha.1",
-    "react-apollo": "2.4.0",
+    "react-apollo": "2.4.1",
     "react-dom": "16.8.0-alpha.1",
     "react-spring": "7.2.10",
     "recompose": "0.30.0",
