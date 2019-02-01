@@ -1740,29 +1740,36 @@ apollo-link-dedup@^1.0.0:
   dependencies:
     apollo-link "^1.2.6"
 
-apollo-link-http-common@^0.2.8:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/apollo-link-http-common/-/apollo-link-http-common-0.2.8.tgz#c6deedfc2739db8b11013c3c2d2ccd657152941f"
-  integrity sha512-gGmXZN8mr7e9zjopzKQfZ7IKnh8H12NxBDzvp9nXI3U82aCVb72p+plgoYLcpMY8w6krvoYjgicFmf8LO20TCQ==
+apollo-link-http-common@^0.2.9:
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/apollo-link-http-common/-/apollo-link-http-common-0.2.9.tgz#137d4e51530fbf34742af0a3f312551e6fc98e5a"
+  integrity sha512-OhXtOnCPcX/SCHq/kIHpXHwPb5AoyY8B8uYxBWZOBBkLB3nGsxhyRhcE+kgVExwA50j0WqYVM7OrO534XKcpCQ==
   dependencies:
-    apollo-link "^1.2.6"
+    apollo-link "^1.2.7"
 
-apollo-link-http@1.5.9:
-  version "1.5.9"
-  resolved "https://registry.yarnpkg.com/apollo-link-http/-/apollo-link-http-1.5.9.tgz#9046f5640a94c8a8b508a39e0f2c628b781baecc"
-  integrity sha512-9tJy2zGm4Cm/1ycScDNZJe51dgnTSfKx7pKIgPZmcxkdDpgUY2DZitDH6ZBv4yp9z8MC9Xr9wgwc29s6hcadUQ==
+apollo-link-http@1.5.10:
+  version "1.5.10"
+  resolved "https://registry.yarnpkg.com/apollo-link-http/-/apollo-link-http-1.5.10.tgz#c2027e407f23c43fe870cce15af6ce009eeab92a"
+  integrity sha512-/0IcpZ8cWbSg+MKOMpYLZwKbitnQ6Qs2+ZN4W0o61EFv3bjFRodMdKvQLid2XOEQpgaDU2lZXqXeweuxnUN1wA==
   dependencies:
-    apollo-link "^1.2.6"
-    apollo-link-http-common "^0.2.8"
+    apollo-link "^1.2.7"
+    apollo-link-http-common "^0.2.9"
 
-apollo-link-ws@1.0.12:
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/apollo-link-ws/-/apollo-link-ws-1.0.12.tgz#e343bb0c071f2db0ae147a2327f03cc1740d0c2d"
-  integrity sha512-BjbskhfuuIgk9e4XHdrqmjxkY+RkD1tuerrs4PLiPTkJYcQrvA8t27lGBSrDUKHWH4esCdhQF1UhKPwhlouEHw==
+apollo-link-ws@1.0.13:
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/apollo-link-ws/-/apollo-link-ws-1.0.13.tgz#ecee5267ae99a7e9f6c5ebf9938657e90e0c10ce"
+  integrity sha512-RoR38aujeTdhNaOqjB3+zcfynvHRp5Kd8CzSU+XQLzw/Z3/PrzJmSYr+UrbZXbKjaJhBbzxW9aGYCxqQ2bGyxA==
   dependencies:
-    apollo-link "^1.2.6"
+    apollo-link "^1.2.7"
 
-apollo-link@1.2.6, apollo-link@^1.0.0, apollo-link@^1.2.3, apollo-link@^1.2.6:
+apollo-link@1.2.7, apollo-link@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/apollo-link/-/apollo-link-1.2.7.tgz#d3aa8a310ff9dd8f995936faa7205cad380d29a0"
+  integrity sha512-GXHBF5KTb9xndOnHPo6Z4uxjjs8Ce7R+kkm5MXFPMeDEa7QzBOGgAe9/zudWDPjSD0OtYJ20wyY+5R0MYq+lCQ==
+  dependencies:
+    zen-observable-ts "^0.8.14"
+
+apollo-link@^1.0.0, apollo-link@^1.2.3, apollo-link@^1.2.6:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/apollo-link/-/apollo-link-1.2.6.tgz#d9b5676d79c01eb4e424b95c7171697f6ad2b8da"
   integrity sha512-sUNlA20nqIF3gG3F8eyMD+mO80fmf3dPZX+GUOs3MI9oZR8ug09H3F0UsWJMcpEg6h55Yy5wZ+BMmAjrbenF/Q==
@@ -9897,6 +9904,13 @@ zen-observable-ts@^0.8.13:
   version "0.8.13"
   resolved "https://registry.yarnpkg.com/zen-observable-ts/-/zen-observable-ts-0.8.13.tgz#ae1fd77c84ef95510188b1f8bca579d7a5448fc2"
   integrity sha512-WDb8SM0tHCb6c0l1k60qXWlm1ok3zN9U4VkLdnBKQwIYwUoB9psH7LIFgR+JVCCMmBxUgOjskIid8/N02k/2Bg==
+  dependencies:
+    zen-observable "^0.8.0"
+
+zen-observable-ts@^0.8.14:
+  version "0.8.14"
+  resolved "https://registry.yarnpkg.com/zen-observable-ts/-/zen-observable-ts-0.8.14.tgz#b443aa83f80d268030160c594c55ec34a45b3583"
+  integrity sha512-yAkb3KkXFa0Dx5A7CvQC0Gj8ycixrLmbr2UZjHgS4FlV5bFwP5artbJTJepETO/DKKfLJ2JVAZrrmNJ4APjdmA==
   dependencies:
     zen-observable "^0.8.0"
 
