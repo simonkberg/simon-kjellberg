@@ -10,6 +10,7 @@ import ChatMessageInput from './ChatMessageInput'
 const ChatWrapper = styled('div')`
   display: flex;
   flex-direction: column;
+  max-height: inherit;
 `
 
 const Chat = () => (

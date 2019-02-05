@@ -24,6 +24,7 @@ const Wrapper = styled('div')`
   flex-direction: column;
   flex: 1 1 auto;
   position: relative;
+  overflow: hidden;
 
   &::before,
   &::after {
