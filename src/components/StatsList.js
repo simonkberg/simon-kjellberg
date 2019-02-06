@@ -1,12 +1,34 @@
 // @flow strict
 import * as React from 'react'
-import { Spring } from 'react-spring'
+import { useSprings, animated } from 'react-spring'
 
 import withWakaTimeStats, {
   type WakaTimeStatsProps,
 } from '../utils/withWakaTimeStats'
 import Loader from './Loader'
 import * as UnorderedList from './UnorderedList'
+
+const AnimatedListItem = UnorderedList.ListItem.withComponent(animated('li'))
+
+const StatsListItems = ({ stats }) => {
+  const springs = useSprings(
+    stats.length,
+    stats.map(item => ({
+      from: { percent: 0 },
+      to: { percent: item.percent },
+    }))
+  )
+
+  return springs.map((props, index) => {
+    const { name } = stats[index]
+
+    return (
+      <AnimatedListItem key={name}>
+        {props.percent.interpolate(n => `${name} (${n.toFixed(2)}%)`)}
+      </AnimatedListItem>
+    )
+  })
+}
 
 const StatsList = ({ loading, error, data }: WakaTimeStatsProps) => {
   if (loading) {
@@ -30,19 +52,7 @@ const StatsList = ({ loading, error, data }: WakaTimeStatsProps) => {
 
   return (
     <UnorderedList.List>
-      {data.wakaTime.stats.map(stat => (
-        <Spring
-          key={stat.name}
-          from={{ percent: 0 }}
-          to={{ percent: stat.percent }}
-        >
-          {value => (
-            <UnorderedList.ListItem>
-              {stat.name} ({value.percent.toFixed(2)}%)
-            </UnorderedList.ListItem>
-          )}
-        </Spring>
-      ))}
+      <StatsListItems stats={data.wakaTime.stats} />
     </UnorderedList.List>
   )
 }
