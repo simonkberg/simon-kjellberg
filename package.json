@@ -81,9 +81,9 @@
     "opn": "5.4.0",
     "polished": "2.3.3",
     "prop-types": "15.6.2",
-    "react": "16.8.0-alpha.1",
+    "react": "16.8.0",
     "react-apollo": "2.4.1",
-    "react-dom": "16.8.0-alpha.1",
+    "react-dom": "16.8.0",
     "react-spring": "7.2.10",
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",
@@ -114,7 +114,7 @@
     "nodemon": "1.18.9",
     "prettier": "1.16.4",
     "raw-loader": "1.0.0",
-    "react-test-renderer": "16.8.0-alpha.1",
+    "react-test-renderer": "16.8.0",
     "url-loader": "1.1.2",
     "webpack-bundle-analyzer": "3.0.3"
   }
