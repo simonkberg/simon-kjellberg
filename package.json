@@ -54,7 +54,7 @@
     "apollo-link": "1.2.8",
     "apollo-link-http": "1.5.11",
     "apollo-link-ws": "1.0.14",
-    "apollo-server-express": "2.3.3",
+    "apollo-server-express": "2.4.0",
     "apollo-utilities": "1.1.2",
     "common-tags": "1.8.0",
     "compression": "1.7.3",
