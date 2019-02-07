@@ -5,7 +5,7 @@ import { theme } from 'styled-tools'
 import compose from 'recompose/compose'
 import lifecycle from 'recompose/lifecycle'
 import withHandlers from 'recompose/withHandlers'
-import { Transition, animated } from 'react-spring'
+import { useTransition, animated } from 'react-spring'
 
 import subscribeToChatMessageAdded from '../utils/subscribeToChatMessageAdded'
 import subscribeToChatMessageEdited from '../utils/subscribeToChatMessageEdited'
@@ -82,42 +82,50 @@ const messageKeyMap = message => message.ts
 
 const translateXInterpolation = x => `translateX(${x}%)`
 
-const messageRepliesMap = reply => style => (
-  <AnimatedListItem
-    key={reply.ts}
-    style={{
-      opacity: style.opacity,
-      transform: style.x.interpolate(translateXInterpolation),
-    }}
-  >
-    <ChatMessage {...reply} />
-  </AnimatedListItem>
-)
+const ChatHistoryMessageReplies = ({ messages }) => {
+  const transitions = useTransition(messages, messageKeyMap, {
+    initial: { opacity: 0, x: 0 },
+    from: { opacity: 0, x: -100 },
+    enter: { opacity: 1, x: 0 },
+    leave: { opacity: 0, x: 100 },
+  })
 
-const messageThreadMap = message => style => (
-  <AnimatedListItem
-    key={message.ts}
-    style={{
-      opacity: style.opacity,
-      transform: style.x.interpolate(translateXInterpolation),
-    }}
-  >
-    <ChatMessage {...message} />
-    <UnorderedList.List>
-      <Transition
-        native
-        items={message.replies ?? []}
-        keys={messageKeyMap}
-        initial={{ opacity: 0, x: 0 }}
-        from={{ opacity: 0, x: -100 }}
-        enter={{ opacity: 1, x: 0 }}
-        leave={{ opacity: 0, x: 100 }}
-      >
-        {messageRepliesMap}
-      </Transition>
-    </UnorderedList.List>
-  </AnimatedListItem>
-)
+  return transitions.map(({ item, key, props }) => (
+    <AnimatedListItem
+      key={key}
+      style={{
+        opacity: props.opacity,
+        transform: props.x.interpolate(translateXInterpolation),
+      }}
+    >
+      <ChatMessage {...item} />
+    </AnimatedListItem>
+  ))
+}
+
+const ChatHistoryMessageThreads = ({ messages }) => {
+  const transitions = useTransition(messages, messageKeyMap, {
+    initial: { opacity: 0, x: 0 },
+    from: { opacity: 0, x: -100 },
+    enter: { opacity: 1, x: 0 },
+    leave: { opacity: 0, x: 100 },
+  })
+
+  return transitions.map(({ item, key, props }) => (
+    <AnimatedListItem
+      key={key}
+      style={{
+        opacity: props.opacity,
+        transform: props.x.interpolate(translateXInterpolation),
+      }}
+    >
+      <ChatMessage {...item} />
+      <UnorderedList.List>
+        <ChatHistoryMessageReplies messages={item.replies ?? []} />
+      </UnorderedList.List>
+    </AnimatedListItem>
+  ))
+}
 
 const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
   const ref = useScrollPreserver()
@@ -134,18 +142,7 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
     <Wrapper>
       <Content ref={ref}>
         {data != null && data.chat != null && data.chat.history != null && (
-          <Transition
-            native
-            // $FlowFixMe: Type refinement is lost somehow
-            items={data.chat.history}
-            keys={messageKeyMap}
-            initial={{ opacity: 0, x: 0 }}
-            from={{ opacity: 0, x: -100 }}
-            enter={{ opacity: 1, x: 0 }}
-            leave={{ opacity: 0, x: 100 }}
-          >
-            {messageThreadMap}
-          </Transition>
+          <ChatHistoryMessageThreads messages={data.chat.history} />
         )}
       </Content>
     </Wrapper>
