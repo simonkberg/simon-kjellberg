@@ -2,6 +2,7 @@
 import * as React from 'react'
 import NextApp, { Container } from 'next/app'
 import Head from 'next/head'
+import { hydrate } from 'emotion-v9'
 import { Global, css } from '@emotion/core'
 import { ApolloProvider } from 'react-apollo'
 import { ThemeProvider } from 'emotion-theming'
@@ -68,6 +69,15 @@ class App extends NextApp {
     )
 
     return { ...appProps, canonicalUrl }
+  }
+
+  componentDidMount() {
+    if (
+      typeof window !== 'undefined' &&
+      window.__EMOTION_CRITICAL_CSS_IDS__ != null
+    ) {
+      hydrate(window.__EMOTION_CRITICAL_CSS_IDS__)
+    }
   }
 
   render() {

@@ -1,5 +1,7 @@
 /node_modules
 /.next
 /.env
+/.merlin
+/lib/bs
 yarn-error.log
 newrelic_agent.log

@@ -9,6 +9,7 @@ process.env.NODE_ENV = 'production'
 const fs = require('fs-extra')
 const path = require('path')
 const minimist = require('minimist')
+const execa = require('execa')
 const build = require('next/dist/build').default
 const graphql = require('graphql')
 const getFragmentTypes = require('../lib/getFragmentTypes')
@@ -56,6 +57,7 @@ const extractFragmentTypes = async (schemaPath, fragmentTypesPath) => {
 
 module.exports = options(async ({ lambdas, schemaPath, fragmentTypesPath }) => {
   await fs.remove(config.dest)
+  await execa('bsb', ['-make-world'])
   await Promise.all([
     extractFragmentTypes(schemaPath, fragmentTypesPath),
     build(config.src, null, lambdas),

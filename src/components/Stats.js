@@ -1,10 +1,10 @@
 // @flow strict
 import * as React from 'react'
 
-import Heading from './Heading'
-import Subtitle from './Subtitle'
-import Link from './Link'
+import Heading from './Heading.bs'
+import Subtitle from './Subtitle.bs'
 import StatsList from './StatsList'
+import Link from './Link.bs'
 
 const Stats = () => (
   <section>

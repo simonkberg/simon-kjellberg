@@ -3,9 +3,11 @@
 const path = require('path')
 const withOffline = require('next-offline')
 const app = require('./app.config')
+const bsconfig = require('./bsconfig')
 
 module.exports = withOffline({
   distDir: path.relative(app.src, app.dest),
+  pageExtensions: ['js', 'bs.js'],
   serverRuntimeConfig: {
     gtmId: app.gtmId,
   },
@@ -18,12 +20,40 @@ module.exports = withOffline({
     runtimeCaching: [{ urlPattern: /\/.*?/, handler: 'networkFirst' }],
   },
   webpack: (config, options) => {
+    const resolve = require('resolve')
     const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
     const PacktrackerPlugin = require('@packtracker/webpack-plugin')
+
+    const bsDependencies = bsconfig['bs-dependencies'].map(
+      name => new RegExp(`node_modules/${name}`)
+    )
+
+    bsDependencies.push(/node_modules\/bs-platform/)
 
     return {
       ...config,
       devtool: options.dev ? config.devtool : 'source-map',
+      externals: options.isServer
+        ? (context, request, callback) => {
+            const [nextExternals] = config.externals
+
+            resolve(
+              request,
+              { basedir: options.dir, preserveSymlinks: true },
+              (err, res) => {
+                if (err) {
+                  return callback()
+                }
+
+                if (bsDependencies.some(dep => res.match(dep))) {
+                  return callback()
+                }
+
+                return nextExternals(context, request, callback)
+              }
+            )
+          }
+        : config.externals,
       module: {
         ...config.module,
         rules: [

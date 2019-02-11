@@ -1,12 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<About /> 1`] = `
-.emotion-0 {
-  font-weight: normal;
-}
-
 .emotion-2 {
-  color: inherit;
+  color: currentColor;
   -webkit-text-decoration: underline;
   text-decoration: underline;
 }
@@ -16,25 +12,45 @@ exports[`<About /> 1`] = `
   text-decoration: none;
 }
 
+.emotion-1 {
+  position: relative;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 1.5ch;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.emotion-1::before {
+  position: absolute;
+  left: -1.5ch;
+  content: ">";
+  color: #c0c0c0;
+}
+
+.emotion-0 {
+  color: #c0c0c0;
+  font-weight: 400;
+}
+
 <section>
-  <Heading
-    level="2"
+  <h2
+    className="emotion-1"
   >
     About 
     <small
-      className="emotion-0 emotion-1"
+      className="emotion-0"
     >
       (Location: Stockholm, Sweden)
     </small>
-  </Heading>
+  </h2>
   <p>
     Fullstack web developer, specialized in React, Node.js, and GraphQL, with a strong focus on building scalable frontend architecture.
   </p>
   <p>
-    Working as a consultant via my own company,
-     
+    Working as a consultant via my own company, 
     <a
-      className="emotion-2 emotion-3"
+      className="emotion-2"
       href="https://shebang.consulting"
     >
       Shebang

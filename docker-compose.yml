@@ -1,0 +1,7 @@
+version: '2.1'
+services:
+  web:
+    build: .
+    ports:
+      - ${PORT:-3000}:3000
+    env_file: .env
