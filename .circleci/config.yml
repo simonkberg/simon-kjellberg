@@ -5,7 +5,7 @@ jobs:
       - image: circleci/node:10
 
     environment:
-      YARN_VERSION: 1.12.3
+      YARN_VERSION: 1.13.0
 
     working_directory: ~/repo
 
