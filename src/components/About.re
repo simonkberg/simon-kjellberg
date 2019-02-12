@@ -7,14 +7,14 @@ let make = _children => {
   render: _self =>
     <section>
       <Heading level=`Level2>
-        {str("About ")}
-        <Subtitle> {str("(Location: Stockholm, Sweden)")} </Subtitle>
+        {"About " |> str}
+        <Subtitle> {"(Location: Stockholm, Sweden)" |> str} </Subtitle>
       </Heading>
       <p> {config##publicRuntimeConfig##siteDescription} </p>
       <p>
-        {str("Working as a consultant via my own company, ")}
-        <Link href="https://shebang.consulting"> {str("Shebang")} </Link>
-        {str(".")}
+        {"Working as a consultant via my own company, " |> str}
+        <Link href="https://shebang.consulting"> {"Shebang" |> str} </Link>
+        {"." |> str}
       </p>
     </section>,
 };

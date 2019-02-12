@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Header /> 1`] = `
-.emotion-6 {
+.emotion-3 {
   color: #fff;
-  background: #000;
+  background-color: #000;
   margin-bottom: 1.45rem;
 }
 
-.emotion-4 {
+.emotion-2 {
   margin: 0 auto;
   max-width: 35rem;
   padding: 1.45rem 1.0875rem;
@@ -16,10 +16,10 @@ exports[`<Header /> 1`] = `
   padding-right: max(1.0875rem,env(safe-area-inset-right));
 }
 
-.emotion-2 {
+.emotion-1 {
   font-size: 1rem;
-  font-weight: bold;
-  margin: 0;
+  font-weight: 700;
+  margin: 0px;
   text-transform: lowercase;
 }
 
@@ -30,21 +30,20 @@ exports[`<Header /> 1`] = `
 }
 
 <header
-  className="emotion-6 emotion-7"
+  className="emotion-3"
 >
   <div
-    className="emotion-4 emotion-5"
+    className="emotion-2"
   >
     <h1
-      className="emotion-2 emotion-3"
+      className="emotion-1"
     >
       <a
-        className="emotion-0 emotion-1"
+        className="emotion-0"
         href="/"
         onClick={[Function]}
       >
-        #!/
-        Site Title
+        #!/Site Title
       </a>
     </h1>
   </div>

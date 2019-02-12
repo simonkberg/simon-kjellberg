@@ -48,14 +48,23 @@ var maxWidth = Css.rem(35.0);
 
 var Page = /* module */[/* maxWidth */maxWidth];
 
+var color = colors_001;
+
+var backgroundColor = colors_000;
+
+var Header = /* module */[
+  /* color */color,
+  /* backgroundColor */backgroundColor
+];
+
 var width = Css.rem(0.2);
 
-var color = colors_002;
+var color$1 = colors_002;
 
 var redius = Css.rem(0.1);
 
 var Thumb = /* module */[
-  /* color */color,
+  /* color */color$1,
   /* redius */redius
 ];
 
@@ -67,30 +76,30 @@ var Scrollbar = /* module */[
   /* Track */Track
 ];
 
-var backgroundColor = Css.hex("0d1f2d");
+var backgroundColor$1 = Css.hex("0d1f2d");
 
-var Window = /* module */[/* backgroundColor */backgroundColor];
+var Window = /* module */[/* backgroundColor */backgroundColor$1];
 
-var backgroundColor$1 = Css.hex("e0e8f0");
+var backgroundColor$2 = Css.hex("e0e8f0");
 
 var height = Css.rem(1.875);
 
 var Topbar = /* module */[
-  /* backgroundColor */backgroundColor$1,
+  /* backgroundColor */backgroundColor$2,
   /* height */height
 ];
 
-var backgroundColor$2 = Css.hex("ff6057");
+var backgroundColor$3 = Css.hex("ff6057");
 
-var Close = /* module */[/* backgroundColor */backgroundColor$2];
+var Close = /* module */[/* backgroundColor */backgroundColor$3];
 
-var backgroundColor$3 = Css.hex("ffbd2e");
+var backgroundColor$4 = Css.hex("ffbd2e");
 
-var Minimize = /* module */[/* backgroundColor */backgroundColor$3];
+var Minimize = /* module */[/* backgroundColor */backgroundColor$4];
 
-var backgroundColor$4 = Css.hex("27c93f");
+var backgroundColor$5 = Css.hex("27c93f");
 
-var Maximize = /* module */[/* backgroundColor */backgroundColor$4];
+var Maximize = /* module */[/* backgroundColor */backgroundColor$5];
 
 var Controls = /* module */[
   /* Close */Close,
@@ -98,16 +107,16 @@ var Controls = /* module */[
   /* Maximize */Maximize
 ];
 
-var color$1 = Css.hex("f4faff");
+var color$2 = Css.hex("f4faff");
 
 var maxHeight = Css.rem(25.0);
 
 var Content = /* module */[
-  /* color */color$1,
+  /* color */color$2,
   /* maxHeight */maxHeight
 ];
 
-var Temrinal = /* module */[
+var Terminal = /* module */[
   /* Window */Window,
   /* Topbar */Topbar,
   /* Controls */Controls,
@@ -142,8 +151,9 @@ export {
   Color ,
   Background ,
   Page ,
+  Header ,
   Scrollbar ,
-  Temrinal ,
+  Terminal ,
   Code ,
   Quote ,
   

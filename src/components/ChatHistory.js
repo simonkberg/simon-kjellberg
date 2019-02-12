@@ -15,7 +15,8 @@ import withChatHistory, {
 } from '../utils/withChatHistory'
 
 import useScrollPreserver from '../hooks/useScrollPreserver'
-import * as UnorderedList from './UnorderedList'
+import UnorderedList from './UnorderedList.bs'
+import UnorderedListItem from './UnorderedListItem.bs'
 import ChatMessage from './ChatMessage'
 import Loader from './Loader.bs'
 
@@ -56,7 +57,11 @@ const Wrapper = styled('div')`
   }
 `
 
-const Content = styled(UnorderedList.List)`
+const UnorderedListWithRef = React.forwardRef((props, ref) => (
+  <UnorderedList {...props} innerRef={ref} />
+))
+
+const Content = styled(UnorderedListWithRef)`
   margin: 0;
   padding: 0.625rem 0;
   overflow-y: auto;
@@ -76,7 +81,7 @@ const Content = styled(UnorderedList.List)`
   }
 `
 
-const AnimatedListItem = UnorderedList.ListItem.withComponent(animated('li'))
+const AnimatedListItem = animated(UnorderedListItem)
 
 const messageKeyMap = message => message.ts
 
@@ -120,9 +125,9 @@ const ChatHistoryMessageThreads = ({ messages }) => {
       }}
     >
       <ChatMessage {...item} />
-      <UnorderedList.List>
+      <UnorderedList>
         <ChatHistoryMessageReplies messages={item.replies ?? []} />
-      </UnorderedList.List>
+      </UnorderedList>
     </AnimatedListItem>
   ))
 }

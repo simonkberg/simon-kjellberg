@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import Page from '../components/Page'
 import About from '../components/About.bs'
 import Stats from '../components/Stats'
-import Links from '../components/Links'
+import Links from '../components/Links.bs'
 
 const Chat = dynamic(() => import('../components/Chat'))
 
