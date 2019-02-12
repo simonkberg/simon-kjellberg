@@ -3481,7 +3481,7 @@ emojis-list@^2.0.0:
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-2.1.0.tgz#4daa4d9db00f9819880c79fa457ae5b09a1fd389"
   integrity sha1-TapNnbAPmBmIDHn6RXrlsJof04k=
 
-"emotion-server-v9@npm:emotion-server@9.2.12", "emotion-server@npm:emotion-server@9.2.12":
+"emotion-server-v9@npm:emotion-server@9.2.12":
   version "9.2.12"
   resolved "https://registry.yarnpkg.com/emotion-server/-/emotion-server-9.2.12.tgz#aaaaa04843108943d1ce5a796e0bc40b06a3223e"
   integrity sha512-Bhjdl7eNoIeiAVa2QPP5d+1nP/31SiO/K1P/qI9cdXCydg91NwGYmteqhhge8u7PF8fLGTEVQfcPwj21815eBw==
@@ -3497,7 +3497,7 @@ emotion-theming@10.0.7:
     hoist-non-react-statics "^2.3.1"
     object-assign "^4.1.1"
 
-"emotion-v9@npm:emotion@9.2.12", emotion@^9.2.12, "emotion@npm:emotion@9.2.12":
+"emotion-v9@npm:emotion@9.2.12", emotion@^9.2.12:
   version "9.2.12"
   resolved "https://registry.yarnpkg.com/emotion/-/emotion-9.2.12.tgz#53925aaa005614e65c6e43db8243c843574d1ea9"
   integrity sha512-hcx7jppaI8VoXxIWEhxpDW7I+B4kq9RNzQLmsrF6LY8BGKqe2N+gFAQr0EfuFucFlPs2A9HM4+xNj4NeqEWIOQ==
@@ -5523,7 +5523,7 @@ jest-each@^24.0.0:
     jest-util "^24.0.0"
     pretty-format "^24.0.0"
 
-"jest-emotion-v9@npm:jest-emotion@9.2.11", "jest-emotion@npm:jest-emotion@9.2.11":
+"jest-emotion-v9@npm:jest-emotion@9.2.11":
   version "9.2.11"
   resolved "https://registry.yarnpkg.com/jest-emotion/-/jest-emotion-9.2.11.tgz#de1e5974f1a6e636fa87c631dd58f988ed8311f9"
   integrity sha512-+u7I9lQg14LIW0g4i6D5ez+AUJks1K1P76e38hfbnv0uPph2z5yjN150BSsMQxHuoZZB1fKZmtEdrRPIqlUkGg==
@@ -5531,6 +5531,16 @@ jest-each@^24.0.0:
     "@types/jest" "^23.0.2"
     chalk "^2.4.1"
     css "^2.2.1"
+
+jest-emotion@10.0.7:
+  version "10.0.7"
+  resolved "https://registry.yarnpkg.com/jest-emotion/-/jest-emotion-10.0.7.tgz#c882f6e201cf62c025245f863b8e5ff473d2cef0"
+  integrity sha512-uR6KIw/jnlqVOFBHpeRMirpnWggnUluqzKYSmlp/TpoNaRxSYTGj9+RVrS7kngtyFyn0F0rOJ73CaPRuxL5ebg==
+  dependencies:
+    "@types/jest" "^23.0.2"
+    chalk "^2.4.1"
+    css "^2.2.1"
+    object-assign "^4.1.1"
 
 jest-environment-jsdom@^24.0.0:
   version "24.0.0"
