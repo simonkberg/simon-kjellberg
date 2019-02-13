@@ -51,7 +51,7 @@
   "dependencies": {
     "@emotion/core": "10.0.7",
     "@emotion/styled": "10.0.7",
-    "@slack/client": "4.8.0",
+    "@slack/client": "4.9.0",
     "apollo-cache-inmemory": "1.4.2",
     "apollo-client": "2.4.12",
     "apollo-link": "1.2.8",
