@@ -32,6 +32,11 @@ module Page = {
   let maxWidth = rem(35.0);
 };
 
+module Header = {
+  let color = colors.white;
+  let backgroundColor = colors.black;
+};
+
 module Scrollbar = {
   let width = rem(0.2);
 
@@ -45,7 +50,7 @@ module Scrollbar = {
   };
 };
 
-module Temrinal = {
+module Terminal = {
   module Window = {
     let backgroundColor = hex("0d1f2d");
   };

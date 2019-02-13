@@ -6,9 +6,10 @@ import withWakaTimeStats, {
   type WakaTimeStatsProps,
 } from '../utils/withWakaTimeStats'
 import Loader from './Loader.bs'
-import * as UnorderedList from './UnorderedList'
+import UnorderedList from './UnorderedList.bs'
+import UnorderedListItem from './UnorderedListItem.bs'
 
-const AnimatedListItem = UnorderedList.ListItem.withComponent(animated('li'))
+const AnimatedListItem = animated(UnorderedListItem)
 
 const StatsListItems = ({ stats }) => {
   const springs = useSprings(
@@ -51,9 +52,9 @@ const StatsList = ({ loading, error, data }: WakaTimeStatsProps) => {
   }
 
   return (
-    <UnorderedList.List>
+    <UnorderedList>
       <StatsListItems stats={data.wakaTime.stats} />
-    </UnorderedList.List>
+    </UnorderedList>
   )
 }
 export default withWakaTimeStats(StatsList)

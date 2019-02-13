@@ -4,7 +4,7 @@ import Head from 'next/head'
 import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
 
-import Header from './Header'
+import Header from './Header.bs'
 
 const Wrapper = styled('div')`
   font: 100%/1.5 Iosevka, monospace;

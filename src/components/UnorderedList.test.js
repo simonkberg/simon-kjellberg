@@ -1,22 +1,23 @@
 // @flow strict
 import * as React from 'react'
 import renderer from 'react-test-renderer'
-import * as UnorderedList from './UnorderedList'
+import UnorderedList from './UnorderedList.bs'
+import UnorderedListItem from './UnorderedListItem.bs'
 
 test('UnorderedList', () => {
   const tree = renderer
     .create(
-      <UnorderedList.List>
-        <UnorderedList.ListItem>Foo</UnorderedList.ListItem>
-        <UnorderedList.ListItem>Bar</UnorderedList.ListItem>
-        <UnorderedList.ListItem>
-          <UnorderedList.List>
+      <UnorderedList>
+        <UnorderedListItem>Foo</UnorderedListItem>
+        <UnorderedListItem>Bar</UnorderedListItem>
+        <UnorderedListItem>
+          <UnorderedList>
             Baz
-            <UnorderedList.ListItem>Qux</UnorderedList.ListItem>
-            <UnorderedList.ListItem>Quux</UnorderedList.ListItem>
-          </UnorderedList.List>
-        </UnorderedList.ListItem>
-      </UnorderedList.List>
+            <UnorderedListItem>Qux</UnorderedListItem>
+            <UnorderedListItem>Quux</UnorderedListItem>
+          </UnorderedList>
+        </UnorderedListItem>
+      </UnorderedList>
     )
     .toJSON()
   expect(tree).toMatchSnapshot()
