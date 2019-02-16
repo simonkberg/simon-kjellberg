@@ -1,5 +1,5 @@
-// flow-typed signature: 6834361f8e8bf3189282ec9320206060
-// flow-typed version: e3b214ebb0/apollo-client_v2.x.x/flow_>=v0.57.x
+// flow-typed signature: 776993e5b435ca317429cf5d829e25b4
+// flow-typed version: cdb18a28cf/apollo-client_v2.x.x/flow_>=v0.57.x
 
 declare module "apollo-client" {
   /**
@@ -514,7 +514,7 @@ declare module "apollo-client" {
     toKey: () => string;
   }
 
-  declare type FetchResult<
+  declare export type FetchResult<
     C = { [key: string]: any },
     E = { [key: string]: any }
   > = ExecutionResult<C> & { extension?: E, context?: C };

@@ -19,7 +19,7 @@ declare type express$RequestParams = {
   [param: string]: string
 };
 
-declare class express$Request extends http$IncomingMessage mixins express$RequestResponseBase {
+declare class express$Request extends http$IncomingMessage<> mixins express$RequestResponseBase {
   baseUrl: string;
   body: mixed;
   cookies: { [cookie: string]: string };
@@ -182,7 +182,7 @@ declare class express$Router extends express$Route {
   ): this;
   use(path: string, router: express$Router): this;
   handle(
-    req: http$IncomingMessage,
+    req: http$IncomingMessage<>,
     res: http$ServerResponse,
     next: express$NextFunction
   ): void;
@@ -196,7 +196,7 @@ declare class express$Router extends express$Route {
     ) => mixed
   ): void;
   (
-    req: http$IncomingMessage,
+    req: http$IncomingMessage<>,
     res: http$ServerResponse,
     next?: ?express$NextFunction
   ): void;
@@ -244,13 +244,13 @@ declare class express$Application extends express$Router mixins events$EventEmit
     callback: express$RenderCallback
   ): void;
   handle(
-    req: http$IncomingMessage,
+    req: http$IncomingMessage<>,
     res: http$ServerResponse,
     next?: ?express$NextFunction
   ): void;
   // callable signature is not inherited
   (
-    req: http$IncomingMessage,
+    req: http$IncomingMessage<>,
     res: http$ServerResponse,
     next?: ?express$NextFunction
   ): void;

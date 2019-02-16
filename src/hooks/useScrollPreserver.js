@@ -3,7 +3,7 @@ import * as React from 'react'
 import nextTick from '../utils/nextTick'
 
 const useScrollPreserver = () => {
-  const ref = React.useRef<HTMLElement>()
+  const ref = React.useRef<HTMLElement | null>(null)
 
   React.useLayoutEffect(() => {
     const el = ref.current
