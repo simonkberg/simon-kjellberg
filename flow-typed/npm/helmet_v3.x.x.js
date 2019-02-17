@@ -1,7 +1,7 @@
 // flow-typed signature: 8f71a139ed8ba2cc270e0b6f1008f924
 // flow-typed version: f62f6c2f4b/helmet_v3.x.x/flow_>=v0.38.x
 
-declare type Middleware = (req: http$IncomingMessage, res: http$ServerResponse, next: (err?: ?Error) => mixed) => mixed;
+declare type Middleware = (req: http$IncomingMessage<>, res: http$ServerResponse, next: (err?: ?Error) => mixed) => mixed;
 
 declare type helmet$XssFilterOptions = {
   setOnOldIE?: boolean;
@@ -15,7 +15,7 @@ declare type helmet$HstsOptions = {
   maxAge?: number;
   includeSubDomains?: boolean;
   preload?: boolean;
-  setIf?: (req: http$IncomingMessage, res: http$ServerResponse) => boolean;
+  setIf?: (req: http$IncomingMessage<>, res: http$ServerResponse) => boolean;
 }
 
 declare type helmet$HpkpOptions = {
@@ -24,7 +24,7 @@ declare type helmet$HpkpOptions = {
   includeSubDomains?: boolean;
   reportUri?: string;
   reportOnly?: boolean;
-  setIf?: (req: http$IncomingMessage, res: http$ServerResponse) => boolean;
+  setIf?: (req: http$IncomingMessage<>, res: http$ServerResponse) => boolean;
 }
 
 declare type helmet$hidePoweredByOptions = {
