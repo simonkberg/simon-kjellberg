@@ -3,7 +3,7 @@ import * as React from 'react'
 import styled from '@emotion/styled'
 
 import Heading from './Heading.bs'
-import Terminal from './Terminal'
+import Terminal from './Terminal.bs'
 import ChatHistory from './ChatHistory'
 import ChatMessageInput from './ChatMessageInput'
 
