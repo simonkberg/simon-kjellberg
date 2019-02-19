@@ -1,5 +1,7 @@
 let str = ReasonReact.string;
 
+let dangerousHtml: string => Js.t('a) = html => {"__html": html};
+
 let (>>=) = (value, fn) =>
   switch (value) {
   | Some(value) => fn(value)
