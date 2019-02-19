@@ -95,7 +95,7 @@
     "reason-react": "0.5.3",
     "recompose": "0.30.0",
     "sanitize.css": "8.0.0",
-    "screenfull": "4.0.0",
+    "screenfull": "4.0.1",
     "serve-favicon": "2.5.0",
     "styled-tools": "1.7.1",
     "subscriptions-transport-ws": "0.9.15"
