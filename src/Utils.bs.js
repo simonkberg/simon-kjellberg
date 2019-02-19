@@ -14,6 +14,12 @@ function str(prim) {
   return prim;
 }
 
+function dangerousHtml(html) {
+  return {
+          __html: html
+        };
+}
+
 function $great$great$eq(value, fn) {
   if (value !== undefined) {
     return Curry._1(fn, Caml_option.valFromOption(value));
@@ -137,6 +143,7 @@ function color_of_string(s) {
 
 export {
   str ,
+  dangerousHtml ,
   $great$great$eq ,
   $pipe$unknown ,
   cn ,

@@ -5,7 +5,7 @@ import getConfig from 'next/config'
 import styled from '@emotion/styled'
 
 import type { NextContext } from '../types'
-import Page from '../components/Page'
+import Page from '../components/Page.bs'
 
 const {
   publicRuntimeConfig: { siteTitle },
