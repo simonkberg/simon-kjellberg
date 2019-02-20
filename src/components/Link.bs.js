@@ -2,6 +2,7 @@
 
 import * as Css from "bs-css/src/Css.js";
 import * as ReactDOMRe from "reason-react/src/ReactDOMRe.js";
+import * as Caml_option from "bs-platform/lib/es6/caml_option.js";
 import * as ReasonReact from "reason-react/src/ReasonReact.js";
 
 var styles = Css.style(/* :: */[
@@ -20,7 +21,7 @@ var styles = Css.style(/* :: */[
 
 var component = ReasonReact.statelessComponent("Link");
 
-function make(href, children) {
+function make(href, target, rel, children) {
   return /* record */[
           /* debugName */component[/* debugName */0],
           /* reactClassInternal */component[/* reactClassInternal */1],
@@ -32,10 +33,17 @@ function make(href, children) {
           /* willUpdate */component[/* willUpdate */7],
           /* shouldUpdate */component[/* shouldUpdate */8],
           /* render */(function (_self) {
-              return ReactDOMRe.createElementVariadic("a", {
-                          className: styles,
-                          href: href
-                        }, children);
+              var tmp = {
+                className: styles,
+                href: href
+              };
+              if (rel !== undefined) {
+                tmp.rel = Caml_option.valFromOption(rel);
+              }
+              if (target !== undefined) {
+                tmp.target = Caml_option.valFromOption(target);
+              }
+              return ReactDOMRe.createElementVariadic("a", Caml_option.some(tmp), children);
             }),
           /* initialState */component[/* initialState */10],
           /* retainedProps */component[/* retainedProps */11],
@@ -45,7 +53,7 @@ function make(href, children) {
 }
 
 var $$default = ReasonReact.wrapReasonForJs(component, (function (jsProps) {
-        return make(jsProps.href, jsProps.children);
+        return make(jsProps.href, Caml_option.nullable_to_opt(jsProps.target), Caml_option.nullable_to_opt(jsProps.rel), jsProps.children);
       }));
 
 export {

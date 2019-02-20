@@ -9,12 +9,17 @@ let styles =
 
 let component = ReasonReact.statelessComponent("Link");
 
-let make = (~href, children) => {
+let make = (~href, ~target=?, ~rel=?, children) => {
   ...component,
-  render: _self => <a href className=styles> ...children </a>,
+  render: _self => <a href ?target ?rel className=styles> ...children </a>,
 };
 
 let default =
   ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(~href=jsProps##href, jsProps##children)
+    make(
+      ~href=jsProps##href,
+      ~target=?Js.Nullable.toOption(jsProps##target),
+      ~rel=?Js.Nullable.toOption(jsProps##rel),
+      jsProps##children,
+    )
   );
