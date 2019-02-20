@@ -30,7 +30,7 @@ function make(_children) {
               return React.createElement("section", undefined, ReasonReact.element(undefined, undefined, Heading$SimonKjellberg.make(/* Level2 */-656133554, /* array */[
                                   "About ",
                                   ReasonReact.element(undefined, undefined, Subtitle$SimonKjellberg.make(/* array */["(Location: Stockholm, Sweden)"]))
-                                ])), React.createElement("p", undefined, config.publicRuntimeConfig.siteDescription), React.createElement("p", undefined, "Working as a consultant via my own company, ", ReasonReact.element(undefined, undefined, Link$SimonKjellberg.make("https://shebang.consulting", /* array */["Shebang"])), "."));
+                                ])), React.createElement("p", undefined, config.publicRuntimeConfig.siteDescription), React.createElement("p", undefined, "Working as a consultant via my own company, ", ReasonReact.element(undefined, undefined, Link$SimonKjellberg.make("https://shebang.consulting", undefined, undefined, /* array */["Shebang"])), "."));
             }),
           /* initialState */component[/* initialState */10],
           /* retainedProps */component[/* retainedProps */11],

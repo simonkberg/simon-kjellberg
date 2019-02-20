@@ -42,7 +42,7 @@ module Styles = {
 
 let component = ReasonReact.statelessComponent("Loader");
 
-let make = () => {
+let make = _children => {
   ...component,
   render: _self =>
     <div className=Styles.container>

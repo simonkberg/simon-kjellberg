@@ -126,7 +126,7 @@ var Styles = /* module */[
 
 var component = ReasonReact.statelessComponent("Loader");
 
-function make(param) {
+function make(_children) {
   return /* record */[
           /* debugName */component[/* debugName */0],
           /* reactClassInternal */component[/* reactClassInternal */1],

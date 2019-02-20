@@ -5,10 +5,10 @@ import * as ReasonReact from "reason-react/src/ReasonReact.js";
 import * as Link$SimonKjellberg from "./Link.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 import * as Heading$SimonKjellberg from "./Heading.bs.js";
-import * as UnorderedList$SimonKjellberg from "./UnorderedList.bs.js";
-import * as UnorderedListItem$SimonKjellberg from "./UnorderedListItem.bs.js";
+import * as Subtitle$SimonKjellberg from "./Subtitle.bs.js";
+import * as StatsList$SimonKjellberg from "./StatsList.bs.js";
 
-var component = ReasonReact.statelessComponent("Links");
+var component = ReasonReact.statelessComponent("Stats");
 
 function make(_children) {
   return /* record */[
@@ -22,10 +22,14 @@ function make(_children) {
           /* willUpdate */component[/* willUpdate */7],
           /* shouldUpdate */component[/* shouldUpdate */8],
           /* render */(function (_self) {
-              return React.createElement("section", undefined, ReasonReact.element(undefined, undefined, Heading$SimonKjellberg.make(/* Level2 */-656133554, /* array */[Utils$SimonKjellberg.str("Links")])), ReasonReact.element(undefined, undefined, UnorderedList$SimonKjellberg.make(undefined, undefined, /* array */[
-                                  ReasonReact.element(undefined, undefined, UnorderedListItem$SimonKjellberg.make(undefined, undefined, /* array */[ReasonReact.element(undefined, undefined, Link$SimonKjellberg.make("https://github.com/simonkberg", undefined, undefined, /* array */[Utils$SimonKjellberg.str("GitHub")]))])),
-                                  ReasonReact.element(undefined, undefined, UnorderedListItem$SimonKjellberg.make(undefined, undefined, /* array */[ReasonReact.element(undefined, undefined, Link$SimonKjellberg.make("https://linkedin.com/in/simonkjellberg", undefined, undefined, /* array */[Utils$SimonKjellberg.str("LinkedIn")]))]))
-                                ])));
+              return React.createElement("section", undefined, ReasonReact.element(undefined, undefined, Heading$SimonKjellberg.make(/* Level2 */-656133554, /* array */[
+                                  Utils$SimonKjellberg.str("Currently writing "),
+                                  ReasonReact.element(undefined, undefined, Subtitle$SimonKjellberg.make(/* array */[
+                                            Utils$SimonKjellberg.str("(Via "),
+                                            ReasonReact.element(undefined, undefined, Link$SimonKjellberg.make("https://wakatime.com/@simonkberg", "_blank", "noopener noreferrer", /* array */[Utils$SimonKjellberg.str("WakaTime")])),
+                                            Utils$SimonKjellberg.str(")")
+                                          ]))
+                                ])), ReasonReact.element(undefined, undefined, StatsList$SimonKjellberg.make(/* array */[])));
             }),
           /* initialState */component[/* initialState */10],
           /* retainedProps */component[/* retainedProps */11],
@@ -34,8 +38,8 @@ function make(_children) {
         ];
 }
 
-var $$default = ReasonReact.wrapReasonForJs(component, (function (_jsProps) {
-        return make(/* array */[]);
+var $$default = ReasonReact.wrapReasonForJs(component, (function (jsProps) {
+        return make(jsProps.children);
       }));
 
 export {
