@@ -33,4 +33,5 @@ action "Build" {
   needs = ["Install"]
   runs = "yarn"
   args = "build"
+  secrets = ["PACKTRACKER_PROJECT_TOKEN"]
 }
