@@ -1,0 +1,23 @@
+{
+  "name": "simon-kjellberg",
+  "scripts": {},
+  "env": {
+    "GTM_ID": "GTM-P3HX5HW",
+    "SLACK_TOKEN": {
+      "required": true
+    },
+    "SLACK_CHANNEL": {
+      "required": true
+    },
+    "ENGINE_API_KEY": {
+      "required": true
+    },
+    "REDIS_URL": {
+      "required": true
+    }
+  },
+  "formation": {},
+  "addons": [],
+  "buildpacks": [],
+  "stack": "container"
+}
