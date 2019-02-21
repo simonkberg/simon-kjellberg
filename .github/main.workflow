@@ -34,4 +34,7 @@ action "Build" {
   runs = "yarn"
   args = "build"
   secrets = ["PACKTRACKER_PROJECT_TOKEN"]
+  env = {
+    CI = "true"
+  }
 }
