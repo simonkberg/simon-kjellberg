@@ -132,9 +132,18 @@ const ChatHistoryMessageThreads = ({ messages }) => {
   ))
 }
 
-const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
+// eslint-disable-next-line react/prop-types
+const ChatHistoryContent = ({ messages }) => {
   const ref = useScrollPreserver()
 
+  return (
+    <Content ref={ref}>
+      <ChatHistoryMessageThreads messages={messages} />
+    </Content>
+  )
+}
+
+const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
   if (loading) {
     return <Loader />
   }
@@ -145,11 +154,9 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
 
   return (
     <Wrapper>
-      <Content ref={ref}>
-        {data != null && data.chat != null && data.chat.history != null && (
-          <ChatHistoryMessageThreads messages={data.chat.history} />
-        )}
-      </Content>
+      {data != null && data.chat != null && data.chat.history != null && (
+        <ChatHistoryContent messages={data.chat.history} />
+      )}
     </Wrapper>
   )
 }
