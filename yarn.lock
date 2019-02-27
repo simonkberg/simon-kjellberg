@@ -1104,14 +1104,13 @@
     react-apollo "^2.4.1"
     subscriptions-transport-ws "^0.9.15"
 
-"@slack/client@4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@slack/client/-/client-4.9.0.tgz#35245f053c9e572d7b5a1e546627aeab2d7d7c0c"
-  integrity sha512-1M23/RXWOen9miake8B6LVdb6VjZby3dQf4u9Prk/k66NuCxgGfAmXgsMhLMq4S9QJp9wBYH/DajI7fZgy1o5g==
+"@slack/client@4.10.0":
+  version "4.10.0"
+  resolved "https://registry.yarnpkg.com/@slack/client/-/client-4.10.0.tgz#aead144a235d377b5e46c7438edc9733d8c11a09"
+  integrity sha512-NQNfSUhnx1rzFOIjH+oSbt+7M187GTJvXuRfVMm26yLKEMaYQGTVWrIXSlxnc+V4V9T7IqKMNFdk9qltATn0gw==
   dependencies:
     "@types/form-data" "^2.2.1"
     "@types/is-stream" "^1.1.0"
-    "@types/loglevel" "^1.5.3"
     "@types/node" ">=6.0.0"
     "@types/p-cancelable" "^0.3.0"
     "@types/p-queue" "^2.3.1"
@@ -1123,7 +1122,6 @@
     finity "^0.5.4"
     form-data "^2.3.1"
     is-stream "^1.1.0"
-    loglevel "^1.6.1"
     object.entries "^1.0.4"
     object.getownpropertydescriptors "^2.0.3"
     object.values "^1.0.4"
@@ -1202,11 +1200,6 @@
   version "23.3.14"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.14.tgz#37daaf78069e7948520474c87b80092ea912520a"
   integrity sha512-Q5hTcfdudEL2yOmluA1zaSyPbzWPmJ3XfSWeP3RyoYvS9hnje1ZyagrZOuQ6+1nQC1Gw+7gap3pLNL3xL6UBug==
-
-"@types/loglevel@^1.5.3":
-  version "1.5.4"
-  resolved "https://registry.yarnpkg.com/@types/loglevel/-/loglevel-1.5.4.tgz#6e296bf20d9f6b0a3274cfb01a918f1d634e4c32"
-  integrity sha512-8dx4ckP0vndJeN+iKZwdGiapLqFjVQ3JLOt92uqK0C63acs5NcPLbUOpfXCJkKVRjZLBQjw8NIGNBSsnatFnFQ==
 
 "@types/long@^4.0.0":
   version "4.0.0"
@@ -6412,11 +6405,6 @@ log-update@^2.3.0:
     ansi-escapes "^3.0.0"
     cli-cursor "^2.0.0"
     wrap-ansi "^3.0.1"
-
-loglevel@^1.6.1:
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.6.1.tgz#e0fc95133b6ef276cdc8887cdaf24aa6f156f8fa"
-  integrity sha1-4PyVEztu8nbNyIh82vJKpvFW+Po=
 
 long@^4.0.0:
   version "4.0.0"
