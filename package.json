@@ -52,7 +52,7 @@
     "@emotion/core": "10.0.7",
     "@emotion/styled": "10.0.7",
     "@simonkberg/reason-apollo": "0.15.3",
-    "@slack/client": "4.9.0",
+    "@slack/client": "4.10.0",
     "apollo-cache-inmemory": "1.5.0",
     "apollo-client": "2.5.0",
     "apollo-link": "1.2.8",
