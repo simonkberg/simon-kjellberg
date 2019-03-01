@@ -87,7 +87,7 @@
     "next": "8.0.3",
     "next-offline": "3.3.6",
     "opn": "5.4.0",
-    "polished": "3.0.0",
+    "polished": "3.0.1",
     "prop-types": "15.7.2",
     "react": "16.8.3",
     "react-apollo": "2.5.1",
