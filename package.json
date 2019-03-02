@@ -129,7 +129,7 @@
     "react-test-renderer": "16.8.3",
     "resolve": "1.10.0",
     "url-loader": "1.1.2",
-    "webpack-bundle-analyzer": "3.0.4"
+    "webpack-bundle-analyzer": "3.1.0"
   },
   "resolutions": {
     "apollo-cache-inmemory": "1.5.1",
