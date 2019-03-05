@@ -14,7 +14,7 @@ import withChatHistory, {
   type ChatHistoryProps,
 } from '../utils/withChatHistory'
 
-import useScrollPreserver from '../hooks/useScrollPreserver'
+import ScrollPreserver from './ScrollPreserver'
 import UnorderedList from './UnorderedList.bs'
 import UnorderedListItem from './UnorderedListItem.bs'
 import ChatMessage from './ChatMessage'
@@ -132,17 +132,6 @@ const ChatHistoryMessageThreads = ({ messages }) => {
   ))
 }
 
-// eslint-disable-next-line react/prop-types
-const ChatHistoryContent = ({ messages }) => {
-  const ref = useScrollPreserver()
-
-  return (
-    <Content ref={ref}>
-      <ChatHistoryMessageThreads messages={messages} />
-    </Content>
-  )
-}
-
 const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
   if (loading) {
     return <Loader />
@@ -155,7 +144,14 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
   return (
     <Wrapper>
       {data != null && data.chat != null && data.chat.history != null && (
-        <ChatHistoryContent messages={data.chat.history} />
+        <ScrollPreserver>
+          {ref => (
+            <Content ref={ref}>
+              {/* $FlowFixMe: Type refinement is lost */}
+              <ChatHistoryMessageThreads messages={data.chat.history} />
+            </Content>
+          )}
+        </ScrollPreserver>
       )}
     </Wrapper>
   )
