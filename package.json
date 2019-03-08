@@ -130,21 +130,5 @@
     "resolve": "1.10.0",
     "url-loader": "1.1.2",
     "webpack-bundle-analyzer": "3.1.0"
-  },
-  "resolutions": {
-    "apollo-cache-inmemory": "1.5.1",
-    "apollo-client": "2.5.1",
-    "apollo-link": "1.2.9",
-    "apollo-link-context": "1.0.14",
-    "apollo-link-error": "1.1.7",
-    "apollo-link-http": "1.5.12",
-    "apollo-link-ws": "1.0.15",
-    "apollo-server-express": "2.4.8",
-    "apollo-upload-client": "10.0.0",
-    "apollo-utilities": "1.2.1",
-    "graphql": "14.1.1",
-    "graphql-tag": "2.10.1",
-    "react-apollo": "2.5.2",
-    "subscriptions-transport-ws": "0.9.15"
   }
 }
