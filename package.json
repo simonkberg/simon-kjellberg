@@ -66,7 +66,7 @@
     "cookie-session": "2.0.0-beta.3",
     "cross-fetch": "3.0.1",
     "dataloader": "1.4.0",
-    "dotenv": "6.2.0",
+    "dotenv": "7.0.0",
     "emoji-datasource": "4.1.0",
     "emotion-server-v9": "npm:emotion-server@9.2.12",
     "emotion-theming": "10.0.9",
