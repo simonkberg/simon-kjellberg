@@ -8188,10 +8188,10 @@ react-lifecycles-compat@^3.0.2:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
-react-spring@8.0.16:
-  version "8.0.16"
-  resolved "https://registry.yarnpkg.com/react-spring/-/react-spring-8.0.16.tgz#cda145456cb66687afcc49050ed691e0eb2826d7"
-  integrity sha512-vsqvO8bl6mvq/DZp4Mq4YVf/ef0e6uJePy6uzZlK3bcE2CqLmsU+30qC1nX8aNQGbsWZvswYx2k69S+WmrQvQQ==
+react-spring@8.0.18:
+  version "8.0.18"
+  resolved "https://registry.yarnpkg.com/react-spring/-/react-spring-8.0.18.tgz#f6fa09ab5acdeb37618c0e340d59830171b95c33"
+  integrity sha512-gb1Rtsnez2gxIHtbrbwQsAjE4ir/62m+gI+eT+1E0Uky5L1PbLccbywRIdIpK3W5jiNmU6OlEazVk0tfI8pZrA==
   dependencies:
     "@babel/runtime" "^7.3.1"
 
