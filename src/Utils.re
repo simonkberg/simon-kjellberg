@@ -38,13 +38,13 @@ let rgb_of_string = s =>
 
 let string_of_rgba = (r, g, b, a) =>
   "rgba("
-  ++ string_of_int(r)
+  ++ Js.Int.toString(r)
   ++ ", "
   ++ string_of_int(g)
   ++ ", "
   ++ string_of_int(b)
   ++ ", "
-  ++ string_of_float(a)
+  ++ Js.Float.toString(a)
   ++ ")";
 
 let rgba_of_string = s =>
@@ -93,7 +93,7 @@ let string_of_hsla = (h, s, l, a) =>
   ++ "%, "
   ++ string_of_int(l)
   ++ "%, "
-  ++ string_of_float(a)
+  ++ Js.Float.toString(a)
   ++ ")";
 
 let hsla_of_string = s =>
