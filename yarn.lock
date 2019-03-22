@@ -7051,10 +7051,10 @@ newrelic@5.6.1:
   optionalDependencies:
     "@newrelic/native-metrics" "^4.0.0"
 
-next-offline@3.3.6:
-  version "3.3.6"
-  resolved "https://registry.yarnpkg.com/next-offline/-/next-offline-3.3.6.tgz#3e35ad59d489c641a4d5745f5b06ce45faa53a42"
-  integrity sha512-hBlGTaWqv9xJf3c4WqjAfb6jO3+Rdfw42p9PQeQlsnO8G0bCg7GUxFebKDcK/b4scFFgmnvp4UNPt1vyMbpQgw==
+next-offline@3.3.7:
+  version "3.3.7"
+  resolved "https://registry.yarnpkg.com/next-offline/-/next-offline-3.3.7.tgz#99e57d61c70071ec3241567db574251c988605e8"
+  integrity sha512-Xsfs6Xnu4Vdt9cgDVGv79uMJzqczDEz5gk0lpFbADFNQl7TcZHXcRyUvYguVGxVB3QR13amAkbeVA+1j8iJt3w==
   dependencies:
     clean-webpack-plugin "^0.1.19"
     copy-webpack-plugin "~4.5.2"
