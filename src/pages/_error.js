@@ -1,6 +1,5 @@
 // @flow strict
 import * as React from 'react'
-import HTTPStatus from 'http-status'
 import getConfig from 'next/config'
 import styled from '@emotion/styled'
 
@@ -10,6 +9,13 @@ import Page from '../components/Page.bs'
 const {
   publicRuntimeConfig: { siteTitle },
 } = getConfig()
+
+const statusCodes = {
+  '400': 'Bad Request',
+  '404': 'This page could not be found',
+  '500': 'Internal Server Error',
+  '501': 'Not Implemented',
+}
 
 const Title = styled('h1')`
   font-size: 1rem;
@@ -35,10 +41,8 @@ export default class Error extends React.Component<Props> {
   render() {
     const { statusCode } = this.props
     const title =
-      statusCode === 404
-        ? 'This page could not be found'
-        : (statusCode && HTTPStatus[statusCode]) ||
-          'An unexpected error has occurred'
+      (statusCode && statusCodes[statusCode]) ||
+      'An unexpected error has occurred'
 
     return (
       <Page
