@@ -1,5 +1,5 @@
-// flow-typed signature: 207bac286d971cad7615b09aa20d4acf
-// flow-typed version: bb849ae672/express_v4.16.x/flow_>=v0.32.x
+// flow-typed signature: 164dcf1c9105e51cb17a374a807146a7
+// flow-typed version: c7f4cf7a4d/express_v4.16.x/flow_>=v0.93.x
 
 import * as http from "http";
 import type { Socket } from "net";
@@ -19,7 +19,7 @@ declare type express$RequestParams = {
   [param: string]: string
 };
 
-declare class express$Request extends http$IncomingMessage<> mixins express$RequestResponseBase {
+declare class express$Request extends http$IncomingMessage mixins express$RequestResponseBase {
   baseUrl: string;
   body: mixed;
   cookies: { [cookie: string]: string };
@@ -120,13 +120,13 @@ declare class express$Response extends http$ServerResponse mixins express$Reques
 declare type express$NextFunction = (err?: ?Error | "route") => mixed;
 declare type express$Middleware =
   | ((
-      req: $Subtype<express$Request>,
+      req: express$Request,
       res: express$Response,
       next: express$NextFunction
     ) => mixed)
   | ((
       error: Error,
-      req: $Subtype<express$Request>,
+      req: express$Request,
       res: express$Response,
       next: express$NextFunction
     ) => mixed);
@@ -189,7 +189,7 @@ declare class express$Router extends express$Route {
   param(
     param: string,
     callback: (
-      req: $Subtype<express$Request>,
+      req: express$Request,
       res: express$Response,
       next: express$NextFunction,
       id: string

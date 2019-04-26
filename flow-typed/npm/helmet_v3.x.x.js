@@ -1,5 +1,5 @@
-// flow-typed signature: 8f71a139ed8ba2cc270e0b6f1008f924
-// flow-typed version: f62f6c2f4b/helmet_v3.x.x/flow_>=v0.38.x
+// flow-typed signature: d2ee6474528524b6bb53f6a19d71d73e
+// flow-typed version: 1a0e0eaf18/helmet_v3.x.x/flow_>=v0.93.x
 
 declare type Middleware = (req: http$IncomingMessage<>, res: http$ServerResponse, next: (err?: ?Error) => mixed) => mixed;
 
