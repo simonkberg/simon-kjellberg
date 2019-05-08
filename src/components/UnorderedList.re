@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 open Utils;
 
 let styles =
@@ -11,21 +13,21 @@ let styles =
     ])
   );
 
-let component = ReasonReact.statelessComponent("UnorderedList");
-
-let make = (~className=?, ~innerRef=?, children) => {
-  ...component,
-  render: _self =>
-    <ul className={cn([styles, className |? ""])} ref=?innerRef>
-      ...children
-    </ul>,
+[@react.component]
+let make = (~className="", ~innerRef=?, ~children) => {
+  <ul className={cn([styles, className])} ref=?innerRef> children </ul>;
 };
 
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(
-      ~className=?Js.Nullable.toOption(jsProps##className),
-      ~innerRef=?Js.Nullable.toOption(jsProps##innerRef),
-      jsProps##children,
-    )
-  );
+let default = make;
+
+module Jsx2 = {
+  let component = ReasonReact.statelessComponent(__MODULE__);
+  let make = (~className=?, ~innerRef=?, children) => {
+    let children = React.array(children);
+    ReasonReactCompat.wrapReactForReasonReact(
+      make,
+      makeProps(~className?, ~innerRef?, ~children, ()),
+      children,
+    );
+  };
+};

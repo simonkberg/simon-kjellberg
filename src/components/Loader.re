@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 module Styles = {
   open Css;
 
@@ -40,16 +42,19 @@ module Styles = {
   let point3 = merge([point, style([animationDelay(0)])]);
 };
 
-let component = ReasonReact.statelessComponent("Loader");
-
-let make = _children => {
-  ...component,
-  render: _self =>
-    <div className=Styles.container>
-      <span className=Styles.point1 />
-      <span className=Styles.point2 />
-      <span className=Styles.point3 />
-    </div>,
+[@react.component]
+let make = () => {
+  <div className=Styles.container>
+    <span className=Styles.point1 />
+    <span className=Styles.point2 />
+    <span className=Styles.point3 />
+  </div>;
 };
 
-let default = ReasonReact.wrapReasonForJs(~component, make);
+let default = make;
+
+module Jsx2 = {
+  let component = ReasonReact.statelessComponent(__MODULE__);
+  let make = children =>
+    ReasonReactCompat.wrapReactForReasonReact(make, makeProps(), children);
+};

@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 open Utils;
 
 let styles =
@@ -17,19 +19,12 @@ let styles =
     ])
   );
 
-let component = ReasonReact.statelessComponent("UnorderedListItem");
-
-let make = (~className=?, ~style=?, children) => {
-  ...component,
-  render: _self =>
-    <li className={cn([styles, className |? ""])} ?style> ...children </li>,
-};
-
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(
-      ~className=?Js.Nullable.toOption(jsProps##className),
-      ~style=?Js.Nullable.toOption(jsProps##style),
-      jsProps##children,
-    )
+[@react.component]
+let make =
+  forwardDOMRef((~className=?, ~style=?, ~children, domRef) =>
+    <li className={cn([styles, className |? ""])} ?style ref=?domRef>
+      children
+    </li>
   );
+
+let default = make;

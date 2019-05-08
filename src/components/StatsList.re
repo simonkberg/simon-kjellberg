@@ -34,7 +34,7 @@ let make = _children => {
     <WakaTimeStatsQuery>
       ...{({result}) =>
         switch (result) {
-        | Loading => <Loader />
+        | Loading => <Loader.Jsx2 />
         | Error(_error) =>
           <p> {"Stats are temporarily unavailable :(" |> str} </p>
         | Data(response) =>
@@ -47,9 +47,9 @@ let make = _children => {
               </em>
             </p>;
           } else {
-            <UnorderedList>
-              <StatsListItems stats={response##wakaTime##stats} />
-            </UnorderedList>;
+            <UnorderedList.Jsx2>
+              <StatsListItems stats=response##wakaTime##stats />
+            </UnorderedList.Jsx2>;
           }
         }
       }
@@ -58,3 +58,13 @@ let make = _children => {
 
 let default =
   ReasonReact.wrapReasonForJs(~component, jsProps => make(jsProps##children));
+
+module Jsx3 = {
+  /**
+   * This is a wrapper created to let this component be used from the new React api.
+   * Please convert this component to a [@react.component] function and then remove this wrapping code.
+   */
+  let make =
+    ReasonReactCompat.wrapReasonReactForReact(~component, () => make());
+  [@bs.obj] external makeProps: unit => unit = "";
+};

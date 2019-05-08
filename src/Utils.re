@@ -1,6 +1,17 @@
-let str = ReasonReact.string;
+let str = React.string;
 
 let dangerousHtml: string => Js.t('a) = html => {"__html": html};
+
+let forwardDOMRef:
+  (('props, option(ReactDOMRe.domRef)) => React.element) =>
+  React.component('props) =
+  fn =>
+    React.forwardRef((props, ref_) =>
+      fn(
+        props,
+        ref_->Js.Nullable.toOption->Belt.Option.map(ReactDOMRe.Ref.domRef),
+      )
+    );
 
 let (>>=) = (value, fn) =>
   switch (value) {
