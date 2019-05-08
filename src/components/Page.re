@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 open Utils;
 
 module Styles = {
@@ -34,29 +36,21 @@ module Styles = {
 };
 let component = ReasonReact.statelessComponent("Link");
 
-let make = (~siteTitle="Simon Kjellberg", ~siteDescription="", children) => {
-  ...component,
-  render: _self =>
-    <div className=Styles.wrapper>
-      <Next.Head>
-        <title> {siteTitle |> str} </title>
-        <meta property="og:title" content=siteDescription />
-        <meta
-          name="description"
-          property="og:description"
-          content=siteDescription
-        />
-      </Next.Head>
-      <Header siteTitle />
-      <div className=Styles.content> ...children </div>
-    </div>,
+[@react.component]
+let make = (~siteTitle="Simon Kjellberg", ~siteDescription="", ~children) => {
+  <div className=Styles.wrapper>
+    <Next.Head>
+      <title> {siteTitle |> str} </title>
+      <meta property="og:title" content=siteTitle />
+      <meta
+        name="description"
+        property="og:description"
+        content=siteDescription
+      />
+    </Next.Head>
+    <Header siteTitle />
+    <div className=Styles.content> children </div>
+  </div>;
 };
 
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(
-      ~siteTitle=jsProps##siteTitle,
-      ~siteDescription=jsProps##siteDescription,
-      jsProps##children,
-    )
-  );
+let default = make;

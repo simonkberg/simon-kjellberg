@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 let styles =
   Css.(
     style([
@@ -16,42 +18,22 @@ let styles =
     ])
   );
 
-let component = ReasonReact.statelessComponent("Heading");
-
-let make = (~level, children) => {
-  ...component,
-  render: _self =>
-    ReactDOMRe.createElementVariadic(
-      "h"
-      ++ (
-        switch (level) {
-        | `Level1 => "1"
-        | `Level2 => "2"
-        | `Level3 => "3"
-        | `Level4 => "4"
-        | `Level5 => "5"
-        | `Level6 => "6"
-        | _ => "1"
-        }
-      ),
-      ~props=ReactDOMRe.props(~className=styles, ()),
-      children,
-    ),
+[@react.component]
+let make = (~level, ~children) => {
+  switch (level) {
+  | `Level1 => <h1 className=styles> children </h1>
+  | `Level2 => <h2 className=styles> children </h2>
+  | `Level3 => <h3 className=styles> children </h3>
+  | `Level4 => <h4 className=styles> children </h4>
+  | `Level5 => <h5 className=styles> children </h5>
+  | `Level6 => <h6 className=styles> children </h6>
+  };
 };
 
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(
-      ~level=
-        switch (jsProps##level) {
-        | "1" => `Level1
-        | "2" => `Level2
-        | "3" => `Level3
-        | "4" => `Level4
-        | "5" => `Level5
-        | "6" => `Level6
-        | _ => `Level1
-        },
-      jsProps##children,
-    )
-  );
+let default = make;
+let level1 = `Level1;
+let level2 = `Level2;
+let level3 = `Level3;
+let level4 = `Level4;
+let level5 = `Level5;
+let level6 = `Level6;

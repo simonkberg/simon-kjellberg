@@ -1,48 +1,28 @@
 module Link = {
-  [@bs.module "next/link"] external link: ReasonReact.reactClass = "default";
-  let make =
-      (
-        ~href=?,
-        ~_as=?,
-        ~prefetch: option(bool)=?,
-        ~replace: option(bool)=?,
-        ~shallow: option(bool)=?,
-        ~passHref: option(bool)=?,
-        children,
-      ) =>
-    ReasonReact.wrapJsForReason(
-      ~reactClass=link,
-      ~props=
-        Js.Undefined.{
-          "href": fromOption(href),
-          "as": fromOption(_as),
-          "prefetch": fromOption(prefetch),
-          "replace": fromOption(replace),
-          "shallow": fromOption(shallow),
-          "passHref": fromOption(passHref),
-        },
-      children,
-    );
+  [@bs.module "next/link"] [@react.component]
+  external make:
+    (
+      ~href: 'href=?,
+      ~_as: 'as_=?,
+      ~prefetch: bool=?,
+      ~replace: bool=?,
+      ~shallow: bool=?,
+      ~passHref: bool=?,
+      ~children: 'children=?
+    ) =>
+    React.element =
+    "default";
 };
 
 module Head = {
-  [@bs.module "next/head"] external head: ReasonReact.reactClass = "default";
-  let make = children =>
-    ReasonReact.wrapJsForReason(
-      ~reactClass=head,
-      ~props=Js.Obj.empty(),
-      children,
-    );
+  [@bs.module "next/head"] [@react.component]
+  external make: (~children: 'children=?) => React.element = "default";
 };
 
 module Error = {
-  [@bs.module "next/error"] external error: ReasonReact.reactClass = "default";
-  let make = (~statusCode: int, children) =>
-    ReasonReact.wrapJsForReason(
-      ~reactClass=error,
-      ~props={"statusCode": statusCode},
-      children,
-    );
+  [@bs.module "next/error"] [@react.component]
+  external make: (~statusCode: int, ~children: 'children=?) => React.element =
+    "default";
 };
 
 module Config = {

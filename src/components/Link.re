@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 let styles =
   Css.(
     style([
@@ -7,19 +9,7 @@ let styles =
     ])
   );
 
-let component = ReasonReact.statelessComponent("Link");
-
-let make = (~href, ~target=?, ~rel=?, children) => {
-  ...component,
-  render: _self => <a href ?target ?rel className=styles> ...children </a>,
+[@react.component]
+let make = (~href, ~target=?, ~rel=?, ~children) => {
+  <a href ?target ?rel className=styles> children </a>;
 };
-
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps =>
-    make(
-      ~href=jsProps##href,
-      ~target=?Js.Nullable.toOption(jsProps##target),
-      ~rel=?Js.Nullable.toOption(jsProps##rel),
-      jsProps##children,
-    )
-  );
