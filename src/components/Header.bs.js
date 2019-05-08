@@ -25,14 +25,17 @@ var container = Css.style(/* :: */[
         /* :: */[
           Css.padding2(Css.rem(1.45), Css.rem(1.0875)),
           /* :: */[
-            Css.unsafe("padding-top", "max(1.45rem, env(safe-area-inset-top))"),
-            /* :: */[
-              Css.unsafe("padding-left", "max(1.0875rem, env(safe-area-inset-left))"),
-              /* :: */[
-                Css.unsafe("padding-right", "max(1.0875rem, env(safe-area-inset-right))"),
-                /* [] */0
-              ]
-            ]
+            Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-top))", Css.style(/* :: */[
+                      Css.unsafe("padding-top", "max(env(safe-area-inset-top), 1.45rem)"),
+                      /* :: */[
+                        Css.unsafe("padding-left", "max(env(safe-area-inset-left), 1.0875rem)"),
+                        /* :: */[
+                          Css.unsafe("padding-right", "max(env(safe-area-inset-right), 1.0875rem)"),
+                          /* [] */0
+                        ]
+                      ]
+                    ])),
+            /* [] */0
           ]
         ]
       ]

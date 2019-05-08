@@ -15,9 +15,17 @@ module Styles = {
       margin2(~v=`zero, ~h=`auto),
       maxWidth(rem(35.0)),
       padding2(~v=rem(1.45), ~h=rem(1.0875)),
-      unsafe("padding-top", "max(1.45rem, env(safe-area-inset-top))"),
-      unsafe("padding-left", "max(1.0875rem, env(safe-area-inset-left))"),
-      unsafe("padding-right", "max(1.0875rem, env(safe-area-inset-right))"),
+      unsafe(
+        "@supports(padding: max(0px)) and (padding: env(safe-area-inset-top))",
+        style([
+          unsafe("padding-top", "max(env(safe-area-inset-top), 1.45rem)"),
+          unsafe("padding-left", "max(env(safe-area-inset-left), 1.0875rem)"),
+          unsafe(
+            "padding-right",
+            "max(env(safe-area-inset-right), 1.0875rem)",
+          ),
+        ]),
+      ),
     ]);
 
   let title =
