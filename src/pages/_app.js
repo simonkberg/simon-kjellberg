@@ -87,6 +87,11 @@ class App extends NextApp {
       <Container>
         <Global styles={globalStyles} />
         <Head>
+          <meta
+            name="viewport"
+            key="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
+          />
           <meta property="og:type" content="website" key="og:type" />
           <meta property="og:url" content={canonicalUrl} key="og:url" />
           <meta

@@ -16,9 +16,20 @@ module Styles = {
       margin2(~v=`zero, ~h=`auto),
       maxWidth(Theme.Page.maxWidth),
       padding3(~top=`zero, ~h=rem(0.9375), ~bottom=rem(1.875)),
-      unsafe("padding-left", "max(0.9375rem, env(safe-area-inset-left))"),
-      unsafe("padding-right", "max(0.9375rem, env(safe-area-inset-left))"),
-      unsafe("padding-bottom", "max(1.875rem, env(safe-area-inset-bottom))"),
+      unsafe(
+        "@supports(padding: max(0px)) and (padding: env(safe-area-inset-bottom))",
+        style([
+          unsafe("padding-left", "max(env(safe-area-inset-left), 0.9375rem)"),
+          unsafe(
+            "padding-right",
+            "max(env(safe-area-inset-right), 0.9375rem)",
+          ),
+          unsafe(
+            "padding-bottom",
+            "max(env(safe-area-inset-bottom), 1.875rem)",
+          ),
+        ]),
+      ),
     ]);
 };
 let component = ReasonReact.statelessComponent("Link");
