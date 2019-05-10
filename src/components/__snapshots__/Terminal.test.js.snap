@@ -115,23 +115,23 @@ exports[`<Terminal /> 1`] = `
   position: relative;
   color: #f4faff;
   max-height: 25rem;
-  margin: 0 1.25rem;
+  margin: 0 0.625rem;
 }
 
 .emotion-5:fullscreen .emotion-4 {
-  max-height: none;
+  max-height: calc(100vh - 1.875rem);
 }
 
 .emotion-5:-ms-fullscreen .emotion-4 {
-  max-height: none;
+  max-height: calc(100vh - 1.875rem);
 }
 
 .emotion-5:-moz-full-screen .emotion-4 {
-  max-height: none;
+  max-height: calc(100vh - 1.875rem);
 }
 
 .emotion-5:-webkit-full-screen .emotion-4 {
-  max-height: none;
+  max-height: calc(100vh - 1.875rem);
 }
 
 <div

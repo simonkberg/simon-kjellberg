@@ -3,7 +3,6 @@
 import * as Css from "bs-css/src/Css.js";
 import * as React from "react";
 import * as Head from "next/head";
-import * as ReasonReact from "reason-react/src/ReasonReact.js";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 import * as Header$SimonKjellberg from "./Header.bs.js";
@@ -53,8 +52,6 @@ var Styles = /* module */[
   /* content */content
 ];
 
-var component = ReasonReact.statelessComponent("Link");
-
 function Page(Props) {
   var match = Props.siteTitle;
   var siteTitle = match !== undefined ? match : "Simon Kjellberg";
@@ -85,7 +82,6 @@ var $$default = Page;
 
 export {
   Styles ,
-  component ,
   make ,
   $$default ,
   $$default as default,

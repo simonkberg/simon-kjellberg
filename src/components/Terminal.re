@@ -1,3 +1,5 @@
+[@bs.config {jsx: 3}];
+
 module Styles = {
   open Css;
 
@@ -87,7 +89,9 @@ module Styles = {
       ]),
     ]);
 
-  let windowContentFullscreen = [maxHeight(`none)];
+  let windowContentFullscreen = [
+    maxHeight(Calc.(-)(vh(100.), Theme.Terminal.Topbar.height)),
+  ];
 
   let windowContent =
     style([
@@ -96,7 +100,7 @@ module Styles = {
       position(`relative),
       color(Theme.Terminal.Content.color),
       maxHeight(Theme.Terminal.Content.maxHeight),
-      margin2(~v=`zero, ~h=rem(1.25)),
+      margin2(~v=`zero, ~h=rem(0.625)),
       selector("." ++ window ++ ":fullscreen &", windowContentFullscreen),
       selector("." ++ window ++ ":-ms-fullscreen &", windowContentFullscreen),
       selector(
@@ -110,48 +114,32 @@ module Styles = {
     ]);
 };
 
-type state = {windowRef: ref(option(Dom.element))};
+[@react.component]
+let make = (~children) => {
+  let windowRef = React.useRef(Js.Nullable.null);
+  let handleClickMaximize =
+    React.useCallback1(
+      _ =>
+        if (Screenfull.enabled) {
+          switch (windowRef->React.Ref.current->Js.Nullable.toOption) {
+          | Some(r) => Screenfull.toggle(r) |> ignore
+          | None => ()
+          };
+        },
+      [|windowRef|],
+    );
 
-type action =
-  | Unused;
-
-let setWindowRef = (windowRef, {ReasonReact.state}) => {
-  state.windowRef := Js.Nullable.toOption(windowRef);
+  <div className=Styles.window ref={ReactDOMRe.Ref.domRef(windowRef)}>
+    <div className=Styles.windowTopbar>
+      <button className=Styles.windowControlClose />
+      <button className=Styles.windowControlMinimize />
+      <button
+        className=Styles.windowControlMaximize
+        onClick=handleClickMaximize
+      />
+    </div>
+    <div className=Styles.windowContent> children </div>
+  </div>;
 };
 
-let handleClickMaximize = (_event, {ReasonReact.state}) =>
-  if (Screenfull.enabled) {
-    switch (state.windowRef^) {
-    | Some(r) => Screenfull.toggle(r) |> ignore
-    | None => ()
-    };
-  } else {
-    ();
-  };
-
-let component = ReasonReact.reducerComponent("Subtitle");
-
-let make = children => {
-  ...component,
-  initialState: () => {windowRef: ref(None)},
-  reducer: (action, _state) => {
-    switch (action) {
-    | Unused => ReasonReact.NoUpdate
-    };
-  },
-  render: self =>
-    <div className=Styles.window ref={self.handle(setWindowRef)}>
-      <div className=Styles.windowTopbar>
-        <button className=Styles.windowControlClose />
-        <button className=Styles.windowControlMinimize />
-        <button
-          className=Styles.windowControlMaximize
-          onClick={self.handle(handleClickMaximize)}
-        />
-      </div>
-      <div className=Styles.windowContent> ...children </div>
-    </div>,
-};
-
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps => make(jsProps##children));
+let default = make;
