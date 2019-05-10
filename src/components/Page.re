@@ -34,7 +34,6 @@ module Styles = {
       ),
     ]);
 };
-let component = ReasonReact.statelessComponent("Link");
 
 [@react.component]
 let make = (~siteTitle="Simon Kjellberg", ~siteDescription="", ~children) => {
