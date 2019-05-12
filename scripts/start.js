@@ -6,7 +6,7 @@ require('dotenv').config()
 
 process.env.NODE_ENV = 'development'
 
-const opn = require('opn')
+const open = require('open')
 const next = require('next')
 const execa = require('execa')
 const options = require('../lib/options')
@@ -25,6 +25,6 @@ module.exports = options(async (opts /*: Options */) => {
   server.listen(opts.port, opts.host, undefined, () => {
     const url = `http://localhost:${opts.port}`
     console.log(`🚀 Ready on ${url}`)
-    opn(url, { wait: false })
+    open(url)
   })
 })
