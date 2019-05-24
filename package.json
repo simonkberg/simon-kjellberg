@@ -73,7 +73,7 @@
     "emotion-v9": "npm:emotion@9.2.12",
     "execa": "1.0.0",
     "express": "4.17.0",
-    "graphql": "14.3.0",
+    "graphql": "14.3.1",
     "graphql-tag": "2.10.1",
     "helmet": "3.18.0",
     "invariant": "2.2.4",
