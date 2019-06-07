@@ -81,7 +81,7 @@
     "lru-cache": "5.1.1",
     "minimist": "1.2.0",
     "morgan": "1.9.1",
-    "ms": "2.1.1",
+    "ms": "2.1.2",
     "newrelic": "5.9.1",
     "next": "8.1.0",
     "next-offline": "4.0.2",
