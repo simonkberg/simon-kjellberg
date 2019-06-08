@@ -49,9 +49,7 @@ export default class Document extends NextDocument {
         <body>
           <noscript>
             <iframe
-              src={`https://www.googletagmanager.com/ns.html?id=${
-                serverRuntimeConfig.gtmId
-              }`}
+              src={`https://www.googletagmanager.com/ns.html?id=${serverRuntimeConfig.gtmId}`}
               height="0"
               width="0"
               style={{ display: 'none', visibility: 'hidden' }}
