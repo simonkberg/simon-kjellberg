@@ -1868,6 +1868,13 @@
     "@types/node" "^12.0.2"
     tslib "^1.9.3"
 
+"@wry/equality@^0.1.2":
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/@wry/equality/-/equality-0.1.9.tgz#b13e18b7a8053c6858aa6c85b54911fb31e3a909"
+  integrity sha512-mB6ceGjpMGz1ZTza8HYnrPGos2mC6So4NhS1PtZ8s4Qt0K7fBiIGhpSxUbQmhwcSWE3no+bYxmI2OL6KuXYmoQ==
+  dependencies:
+    tslib "^1.9.3"
+
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@xtuc/ieee754/-/ieee754-1.2.0.tgz#eef014a3145ae477a1cbc00cd1e552336dceb790"
@@ -2073,34 +2080,34 @@ apollo-cache-control@0.7.1:
     apollo-server-env "2.4.0"
     graphql-extensions "0.7.1"
 
-apollo-cache-inmemory@1.6.0, apollo-cache-inmemory@^1.4.3:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/apollo-cache-inmemory/-/apollo-cache-inmemory-1.6.0.tgz#a106cdc520f0a043be2575372d5dbb7e4790254c"
-  integrity sha512-Mr86ucMsXnRH9YRvcuuy6kc3dtyRBuVSo8gdxp2sJVuUAtvQ6r/8E+ok2qX84em9ZBAYxoyvPnKeShhvcKiiDw==
+apollo-cache-inmemory@1.6.2, apollo-cache-inmemory@^1.4.3:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/apollo-cache-inmemory/-/apollo-cache-inmemory-1.6.2.tgz#bbf2e4e1eacdf82b2d526f5c2f3b37e5acee3c5e"
+  integrity sha512-AyCl3PGFv5Qv1w4N9vlg63GBPHXgMCekZy5mhlS042ji0GW84uTySX+r3F61ZX3+KM1vA4m9hQyctrEGiv5XjQ==
   dependencies:
-    apollo-cache "^1.3.0"
-    apollo-utilities "^1.3.0"
+    apollo-cache "^1.3.2"
+    apollo-utilities "^1.3.2"
     optimism "^0.9.0"
     ts-invariant "^0.4.0"
     tslib "^1.9.3"
 
-apollo-cache@1.3.0, apollo-cache@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/apollo-cache/-/apollo-cache-1.3.0.tgz#de5c907cbd329440c9b0aafcbe8436391b9e6142"
-  integrity sha512-voPlvSIDA2pY3+7QwtXPs7o5uSNAVjUKwimyHWoiW0MIZtPxawtOV/Y+BL85R227JqcjPic1El+QToVR8l4ytQ==
+apollo-cache@1.3.2, apollo-cache@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/apollo-cache/-/apollo-cache-1.3.2.tgz#df4dce56240d6c95c613510d7e409f7214e6d26a"
+  integrity sha512-+KA685AV5ETEJfjZuviRTEImGA11uNBp/MJGnaCvkgr+BYRrGLruVKBv6WvyFod27WEB2sp7SsG8cNBKANhGLg==
   dependencies:
-    apollo-utilities "^1.3.0"
+    apollo-utilities "^1.3.2"
     tslib "^1.9.3"
 
-apollo-client@2.6.0, apollo-client@^2.4.13:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/apollo-client/-/apollo-client-2.6.0.tgz#9b66c04cd96d622cd72f92e584e7403c17532831"
-  integrity sha512-Z6oSD45vyw6maktMABXTaJliWdFJy4ihZGxbRh7rY65RWNz0HSm3IX66shLavdNqd4lpOcVuAufJl+w8u6RhLQ==
+apollo-client@2.6.2, apollo-client@^2.4.13:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/apollo-client/-/apollo-client-2.6.2.tgz#03b6af651e09b6e413e486ddc87464c85bd6e514"
+  integrity sha512-oks1MaT5x7gHcPeC8vPC1UzzsKaEIC0tye+jg72eMDt5OKc7BobStTeS/o2Ib3e0ii40nKxGBnMdl/Xa/p56Yg==
   dependencies:
     "@types/zen-observable" "^0.8.0"
-    apollo-cache "1.3.0"
+    apollo-cache "1.3.2"
     apollo-link "^1.0.0"
-    apollo-utilities "1.3.0"
+    apollo-utilities "1.3.2"
     symbol-observable "^1.0.2"
     ts-invariant "^0.4.0"
     tslib "^1.9.3"
@@ -2289,11 +2296,12 @@ apollo-upload-client@^10.0.0:
     apollo-link-http-common "^0.2.13"
     extract-files "^5.0.1"
 
-apollo-utilities@1.3.0, apollo-utilities@^1.0.1, apollo-utilities@^1.1.3, apollo-utilities@^1.2.1, apollo-utilities@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/apollo-utilities/-/apollo-utilities-1.3.0.tgz#9803724c07ac94ca11dc26397edb58735d2b0211"
-  integrity sha512-wQjV+FdWcTWmWUFlChG5rS0vHKy5OsXC6XlV9STRstQq6VbXANwHy6DHnTEQAfLXWAbNcPgBu+nBUpR3dFhwrA==
+apollo-utilities@1.3.2, apollo-utilities@^1.0.1, apollo-utilities@^1.1.3, apollo-utilities@^1.2.1, apollo-utilities@^1.3.0, apollo-utilities@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/apollo-utilities/-/apollo-utilities-1.3.2.tgz#8cbdcf8b012f664cd6cb5767f6130f5aed9115c9"
+  integrity sha512-JWNHj8XChz7S4OZghV6yc9FNnzEXj285QYp/nLNh943iObycI5GTDO3NGR9Dth12LRrSFMeDOConPfPln+WGfg==
   dependencies:
+    "@wry/equality" "^0.1.2"
     fast-json-stable-stringify "^2.0.0"
     ts-invariant "^0.4.0"
     tslib "^1.9.3"
@@ -4467,46 +4475,10 @@ expect@^24.8.0:
     jest-message-util "^24.8.0"
     jest-regex-util "^24.3.0"
 
-express@4.17.1:
+express@4.17.1, express@^4.16.3:
   version "4.17.1"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.1.tgz#4491fc38605cf51f8629d39c2b5d026f98a4c134"
   integrity sha512-mHJ9O79RqluphRrcw2X/GTh3k9tVv8YcoyY4Kkh4WDMUYKRZUq0h1o0w2rrrxBqM7VoeUVqgb27xlEMXTnYt4g==
-  dependencies:
-    accepts "~1.3.7"
-    array-flatten "1.1.1"
-    body-parser "1.19.0"
-    content-disposition "0.5.3"
-    content-type "~1.0.4"
-    cookie "0.4.0"
-    cookie-signature "1.0.6"
-    debug "2.6.9"
-    depd "~1.1.2"
-    encodeurl "~1.0.2"
-    escape-html "~1.0.3"
-    etag "~1.8.1"
-    finalhandler "~1.1.2"
-    fresh "0.5.2"
-    merge-descriptors "1.0.1"
-    methods "~1.1.2"
-    on-finished "~2.3.0"
-    parseurl "~1.3.3"
-    path-to-regexp "0.1.7"
-    proxy-addr "~2.0.5"
-    qs "6.7.0"
-    range-parser "~1.2.1"
-    safe-buffer "5.1.2"
-    send "0.17.1"
-    serve-static "1.14.1"
-    setprototypeof "1.1.1"
-    statuses "~1.5.0"
-    type-is "~1.6.18"
-    utils-merge "1.0.1"
-    vary "~1.1.2"
-
-express@^4.16.3:
-  version "4.17.0"
-  resolved "https://registry.yarnpkg.com/express/-/express-4.17.0.tgz#288af62228a73f4c8ea2990ba3b791bb87cd4438"
-  integrity sha512-1Z7/t3Z5ZnBG252gKUPyItc4xdeaA0X934ca2ewckAsVsw9EG71i++ZHZPYnus8g/s5Bty8IMpSVEuRkmwwPRQ==
   dependencies:
     accepts "~1.3.7"
     array-flatten "1.1.1"
@@ -7106,12 +7078,12 @@ ms@2.0.0:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
   integrity sha1-VgiurfwAvmwpAd9fmGF4jeDVl8g=
 
-ms@2.1.1, ms@^2.1.1:
+ms@2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
   integrity sha512-tgp+dl5cGk28utYktBsrFqA7HKgrhgPsg6Z/EfhWI4gl1Hwq8B/GmY/0oXZ6nF8hDVesS/FpnYaD/kOWhYQvyg==
 
-ms@2.1.2:
+ms@2.1.2, ms@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
@@ -8724,17 +8696,10 @@ resolve@1.1.7:
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.1.7.tgz#203114d82ad2c5ed9e8e0411b3932875e889e97b"
   integrity sha1-IDEU2CrSxe2ejgQRs5ModeiJ6Xs=
 
-resolve@1.11.1:
+resolve@1.11.1, resolve@^1.10.0, resolve@^1.10.1, resolve@^1.11.0, resolve@^1.3.2, resolve@^1.5.0, resolve@^1.8.1:
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.11.1.tgz#ea10d8110376982fef578df8fc30b9ac30a07a3e"
   integrity sha512-vIpgF6wfuJOZI7KKKSP+HmiKggadPQAdsp5HiC1mvqnfp0gF1vdwgBWZIdrVft9pgqoMFQN+R7BSWZiBxx+BBw==
-  dependencies:
-    path-parse "^1.0.6"
-
-resolve@^1.10.0, resolve@^1.10.1, resolve@^1.11.0, resolve@^1.3.2, resolve@^1.5.0, resolve@^1.8.1:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.11.0.tgz#4014870ba296176b86343d50b60f3b50609ce232"
-  integrity sha512-WL2pBDjqT6pGUNSUzMw00o4T7If+z4H2x3Gz893WoUQ5KW8Vr9txp00ykiP16VBaZF5+j/OcXJHZ9+PCvdiDKw==
   dependencies:
     path-parse "^1.0.6"
 
