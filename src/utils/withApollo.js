@@ -37,6 +37,7 @@ const dataIdFromObject = result => {
 
 const createInMemoryCache = fragmentTypes =>
   new InMemoryCache({
+    freezeResults: true,
     fragmentMatcher: new IntrospectionFragmentMatcher({
       introspectionQueryResultData: fragmentTypes,
     }),
@@ -80,6 +81,7 @@ const createClient = (props: Props) => {
   }
 
   return new ApolloClient({
+    assumeImmutableResults: true,
     ssrMode: !process.browser,
     // $FlowFixMe
     link,
