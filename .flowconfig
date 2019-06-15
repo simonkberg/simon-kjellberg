@@ -1,5 +1,6 @@
 [ignore]
 <PROJECT_ROOT>/node_modules/jsonlint/test/fails/.*
+<PROJECT_ROOT>/node_modules/.cache/.*
 
 [untyped]
 <PROJECT_ROOT>/node_modules/polished/.*
