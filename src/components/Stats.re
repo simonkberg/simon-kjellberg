@@ -1,5 +1,3 @@
-[@bs.config {jsx: 3}];
-
 open Utils;
 
 [@react.component]
@@ -18,7 +16,7 @@ let make = () =>
         {")" |> str}
       </Subtitle>
     </Heading>
-    <StatsList.Jsx3 />
+    <StatsList />
   </section>;
 
 let default = make;

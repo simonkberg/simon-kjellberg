@@ -18,7 +18,7 @@ function Stats(Props) {
                           target: "_blank",
                           rel: "noopener noreferrer",
                           children: Utils$SimonKjellberg.str("WakaTime")
-                        }), Utils$SimonKjellberg.str(")"))), React.createElement(StatsList$SimonKjellberg.Jsx3[/* make */0], { }));
+                        }), Utils$SimonKjellberg.str(")"))), React.createElement(StatsList$SimonKjellberg.make, { }));
 }
 
 var make = Stats;
