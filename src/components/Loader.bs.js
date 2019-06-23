@@ -2,8 +2,6 @@
 
 import * as Css from "bs-css/src/Css.js";
 import * as React from "react";
-import * as ReasonReact from "reason-react/src/ReasonReact.js";
-import * as ReasonReactCompat from "reason-react/src/ReasonReactCompat.js";
 
 var bounce = Css.keyframes(/* :: */[
       /* tuple */[
@@ -137,27 +135,15 @@ function Loader(Props) {
                 }));
 }
 
-var component = ReasonReact.statelessComponent("Loader-SimonKjellberg");
-
-function make(children) {
-  return ReasonReactCompat.wrapReactForReasonReact(Loader, { }, children);
-}
-
-var Jsx2 = /* module */[
-  /* component */component,
-  /* make */make
-];
-
-var make$1 = Loader;
+var make = Loader;
 
 var $$default = Loader;
 
 export {
   Styles ,
-  make$1 as make,
+  make ,
   $$default ,
   $$default as default,
-  Jsx2 ,
   
 }
 /* bounce Not a pure module */

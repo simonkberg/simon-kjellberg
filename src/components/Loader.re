@@ -1,5 +1,3 @@
-[@bs.config {jsx: 3}];
-
 module Styles = {
   open Css;
 
@@ -52,9 +50,3 @@ let make = () => {
 };
 
 let default = make;
-
-module Jsx2 = {
-  let component = ReasonReact.statelessComponent(__MODULE__);
-  let make = children =>
-    ReasonReactCompat.wrapReactForReasonReact(make, makeProps(), children);
-};

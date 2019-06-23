@@ -1,14 +1,8 @@
 open Utils;
 
 module StatsListItems = {
-  [@bs.module "./StatsListItems"]
-  external statsListItems: ReasonReact.reactClass = "default";
-  let make = (~stats, children) =>
-    ReasonReact.wrapJsForReason(
-      ~reactClass=statsListItems,
-      ~props={"stats": stats},
-      children,
-    );
+  [@bs.module "./StatsListItems.js"] [@react.component]
+  external make: (~stats: 'stats) => React.element = "default";
 };
 
 module WakaTimeStats = [%graphql
@@ -26,46 +20,30 @@ module WakaTimeStats = [%graphql
 
 module WakaTimeStatsQuery = ReasonApollo.CreateQuery(WakaTimeStats);
 
-let component = ReasonReact.statelessComponent("Stats");
-
-let make = _children =>
-  ReasonReact.{
-    ...component,
-    render: _self =>
-      <WakaTimeStatsQuery>
-        ...{({WakaTimeStatsQuery.result, _}) =>
-          switch (result) {
-          | ReasonApolloTypes.Loading => <Loader.Jsx2 />
-          | ReasonApolloTypes.Error(_error) =>
-            <p> {"Stats are temporarily unavailable :(" |> str} </p>
-          | ReasonApolloTypes.Data(response) =>
-            if (response##wakaTime##stats |> Array.length == 0) {
-              <p>
-                <em>
-                  {"Oops! Looks like the plugins is broken, or maybe I'm on vacation?"
-                   ++ "Nevertheless, the language statistics are currently empty."
-                   |> str}
-                </em>
-              </p>;
-            } else {
-              <UnorderedList.Jsx2>
-                <StatsListItems stats=response##wakaTime##stats />
-              </UnorderedList.Jsx2>;
-            }
-          }
+[@react.component]
+let make = () =>
+  <WakaTimeStatsQuery>
+    ...{({WakaTimeStatsQuery.result, _}) =>
+      switch (result) {
+      | ReasonApolloTypes.Loading => <Loader />
+      | ReasonApolloTypes.Error(_error) =>
+        <p> {"Stats are temporarily unavailable :(" |> str} </p>
+      | ReasonApolloTypes.Data(response) =>
+        if (response##wakaTime##stats |> Array.length == 0) {
+          <p>
+            <em>
+              {"Oops! Looks like the plugins is broken, or maybe I'm on vacation?"
+               ++ "Nevertheless, the language statistics are currently empty."
+               |> str}
+            </em>
+          </p>;
+        } else {
+          <UnorderedList>
+            <StatsListItems stats=response##wakaTime##stats />
+          </UnorderedList>;
         }
-      </WakaTimeStatsQuery>,
-  };
+      }
+    }
+  </WakaTimeStatsQuery>;
 
-let default =
-  ReasonReact.wrapReasonForJs(~component, jsProps => make(jsProps##children));
-
-module Jsx3 = {
-  /**
-   * This is a wrapper created to let this component be used from the new React api.
-   * Please convert this component to a [@react.component] function and then remove this wrapping code.
-   */
-  let make =
-    ReasonReactCompat.wrapReasonReactForReact(~component, () => make());
-  [@bs.obj] external makeProps: unit => unit = "";
-};
+let default = make;
