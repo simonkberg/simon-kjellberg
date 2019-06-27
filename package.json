@@ -110,7 +110,7 @@
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "24.8.0",
     "babel-plugin-emotion": "10.0.14",
-    "bs-platform": "5.0.4",
+    "bs-platform": "5.0.5",
     "chokidar": "3.0.1",
     "eslint": "5.16.0",
     "file-loader": "4.0.0",
