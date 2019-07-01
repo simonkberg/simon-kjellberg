@@ -1,6 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Loader /> 1`] = `
+@keyframes animation-0 {
+  0% {
+    -webkit-transform: scale(0,0);
+    -ms-transform: scale(0,0);
+    transform: scale(0,0);
+  }
+
+  40% {
+    -webkit-transform: scale(1,1);
+    -ms-transform: scale(1,1);
+    transform: scale(1,1);
+  }
+
+  80% {
+    -webkit-transform: scale(0,0);
+    -ms-transform: scale(0,0);
+    transform: scale(0,0);
+  }
+
+  100% {
+    -webkit-transform: scale(0,0);
+    -ms-transform: scale(0,0);
+    transform: scale(0,0);
+  }
+}
+
 .emotion-3 {
   position: relative;
   display: block;
@@ -16,8 +42,8 @@ exports[`<Loader /> 1`] = `
   border-radius: 100%;
   background-color: currentColor;
   will-change: transform;
-  -webkit-animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
-  animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
+  -webkit-animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
+  animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
   -webkit-animation-delay: -320ms;
   animation-delay: -320ms;
 }
@@ -30,8 +56,8 @@ exports[`<Loader /> 1`] = `
   border-radius: 100%;
   background-color: currentColor;
   will-change: transform;
-  -webkit-animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
-  animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
+  -webkit-animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
+  animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
   -webkit-animation-delay: -160ms;
   animation-delay: -160ms;
 }
@@ -44,8 +70,8 @@ exports[`<Loader /> 1`] = `
   border-radius: 100%;
   background-color: currentColor;
   will-change: transform;
-  -webkit-animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
-  animation: animation-1kr0zyd 1400ms ease-in-out 0ms infinite normal both running;
+  -webkit-animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
+  animation: animation-0 1400ms ease-in-out 0ms infinite normal both running;
   -webkit-animation-delay: 0ms;
   animation-delay: 0ms;
 }

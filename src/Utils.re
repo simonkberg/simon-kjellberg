@@ -27,6 +27,26 @@ let (|?) = (value, default) =>
 
 let cn = cns => cns->Belt.List.keep(x => x !== "")->String.concat(" ", _);
 
+let string_of_float = Js.Float.toString;
+
+let string_of_int = Js.Int.toString;
+
+let string_of_angle =
+  fun
+  | `deg(x) => string_of_float(x) ++ "deg"
+  | `rad(x) => string_of_float(x) ++ "rad"
+  | `grad(x) => string_of_float(x) ++ "grad"
+  | `turn(x) => string_of_float(x) ++ "turn";
+
+let string_of_percent =
+  fun
+  | `percent(x) => string_of_float(x) ++ "%";
+
+let string_of_alpha =
+  fun
+  | `num(f) => Js.Float.toString(f)
+  | `percent(p) => Js.Float.toString(p) ++ "%";
+
 let string_of_rgb = (r, g, b) =>
   "rgb("
   ++ string_of_int(r)
@@ -49,13 +69,13 @@ let rgb_of_string = s =>
 
 let string_of_rgba = (r, g, b, a) =>
   "rgba("
-  ++ Js.Int.toString(r)
+  ++ string_of_int(r)
   ++ ", "
   ++ string_of_int(g)
   ++ ", "
   ++ string_of_int(b)
   ++ ", "
-  ++ Js.Float.toString(a)
+  ++ string_of_float(a)
   ++ ")";
 
 let rgba_of_string = s =>
@@ -77,34 +97,33 @@ let rgba_of_string = s =>
 
 let string_of_hsl = (h, s, l) =>
   "hsl("
-  ++ string_of_int(h)
+  ++ string_of_angle(h)
   ++ ", "
-  ++ string_of_int(s)
-  ++ "%, "
-  ++ string_of_int(l)
-  ++ "%"
+  ++ string_of_percent(s)
+  ++ ", "
+  ++ string_of_percent(l)
   ++ ")";
 
 let hsl_of_string = s =>
   switch (Js.String.match([%re "/^hsl\\((\\d+), ?(\\d+)%, ?(\\d+)%\\)/"], s)) {
   | Some(re) =>
     Css.hsl(
-      int_of_string(re[1]),
-      int_of_string(re[2]),
-      int_of_string(re[3]),
+      `deg(float_of_string(re[1])),
+      float_of_string(re[2]),
+      float_of_string(re[3]),
     )
   | _ => Js.Exn.raiseError("Invalid formatted value")
   };
 
 let string_of_hsla = (h, s, l, a) =>
   "hsla("
-  ++ string_of_int(h)
+  ++ string_of_angle(h)
   ++ ", "
-  ++ string_of_int(s)
-  ++ "%, "
-  ++ string_of_int(l)
-  ++ "%, "
-  ++ Js.Float.toString(a)
+  ++ string_of_percent(s)
+  ++ ", "
+  ++ string_of_percent(l)
+  ++ ", "
+  ++ string_of_alpha(a)
   ++ ")";
 
 let hsla_of_string = s =>
@@ -116,10 +135,10 @@ let hsla_of_string = s =>
   ) {
   | Some(re) =>
     Css.hsla(
-      int_of_string(re[1]),
-      int_of_string(re[2]),
-      int_of_string(re[3]),
-      float_of_string(re[4]),
+      `deg(float_of_string(re[1])),
+      float_of_string(re[2]),
+      float_of_string(re[3]),
+      `percent(float_of_string(re[4])),
     )
   | _ => Js.Exn.raiseError("Invalid formatted value")
   };

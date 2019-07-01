@@ -25,7 +25,7 @@ module Styles = {
       marginRight(ch(0.75)),
       borderRadius(pct(100.0)),
       backgroundColor(`currentColor),
-      unsafe("will-change", "transform"),
+      unsafe("willChange", "transform"),
       animation(
         ~duration=1400,
         ~iterationCount=`infinite,

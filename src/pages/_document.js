@@ -1,8 +1,10 @@
 import * as React from 'react'
 import getConfig from 'next/config'
 import NextDocument, { Head, Main, NextScript } from 'next/document'
+import { cache } from 'emotion'
+import { CacheProvider } from '@emotion/core'
 import { oneLineTrim } from 'common-tags'
-import { extractCritical } from 'emotion-server-v9'
+import { extractCritical } from 'emotion-server'
 
 const { serverRuntimeConfig } = getConfig()
 
@@ -55,7 +57,9 @@ export default class Document extends NextDocument {
               style={{ display: 'none', visibility: 'hidden' }}
             />
           </noscript>
-          <Main />
+          <CacheProvider cache={cache}>
+            <Main />
+          </CacheProvider>
           <script
             dangerouslySetInnerHTML={{
               __html: `window.__EMOTION_CRITICAL_CSS_IDS__ = ${JSON.stringify(

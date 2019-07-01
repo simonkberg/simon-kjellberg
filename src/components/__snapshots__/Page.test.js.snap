@@ -24,7 +24,7 @@ exports[`<Page /> 1`] = `
 .emotion-1 {
   font-size: 1rem;
   font-weight: 700;
-  margin: 0px;
+  margin: 0;
   text-transform: lowercase;
 }
 

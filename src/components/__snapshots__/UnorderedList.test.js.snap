@@ -3,7 +3,7 @@
 exports[`UnorderedList 1`] = `
 .emotion-4 {
   list-style-type: none;
-  padding: 0px;
+  padding: 0;
   margin-top: 1em;
   margin-bottom: 1em;
   margin-left: 1.5ch;
@@ -21,8 +21,8 @@ exports[`UnorderedList 1`] = `
 }
 
 .emotion-0 > .emotion-4 {
-  margin-top: 0px;
-  margin-bottom: 0px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 <ul
