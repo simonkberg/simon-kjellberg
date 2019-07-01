@@ -2,7 +2,7 @@
 import * as React from 'react'
 import NextApp, { Container } from 'next/app'
 import Head from 'next/head'
-import { hydrate } from 'emotion-v9'
+import { hydrate } from 'emotion'
 import { Global, css } from '@emotion/core'
 import { ApolloProvider } from 'react-apollo'
 import { ThemeProvider } from 'emotion-theming'

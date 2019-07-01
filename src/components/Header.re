@@ -18,10 +18,10 @@ module Styles = {
       unsafe(
         "@supports(padding: max(0px)) and (padding: env(safe-area-inset-top))",
         style([
-          unsafe("padding-top", "max(env(safe-area-inset-top), 1.45rem)"),
-          unsafe("padding-left", "max(env(safe-area-inset-left), 1.0875rem)"),
+          unsafe("paddingTop", "max(env(safe-area-inset-top), 1.45rem)"),
+          unsafe("paddingLeft", "max(env(safe-area-inset-left), 1.0875rem)"),
           unsafe(
-            "padding-right",
+            "paddingRight",
             "max(env(safe-area-inset-right), 1.0875rem)",
           ),
         ]),

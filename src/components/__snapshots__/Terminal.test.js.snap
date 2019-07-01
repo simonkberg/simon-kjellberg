@@ -18,22 +18,22 @@ exports[`<Terminal /> 1`] = `
 
 .emotion-5:fullscreen {
   height: 100%;
-  margin: 0px;
+  margin: 0;
 }
 
 .emotion-5:-ms-fullscreen {
   height: 100%;
-  margin: 0px;
+  margin: 0;
 }
 
 .emotion-5:-moz-full-screen {
   height: 100%;
-  margin: 0px;
+  margin: 0;
 }
 
 .emotion-5:-webkit-full-screen {
   height: 100%;
-  margin: 0px;
+  margin: 0;
 }
 
 .emotion-3 {
@@ -48,7 +48,7 @@ exports[`<Terminal /> 1`] = `
   display: inline-block;
   width: 0.75rem;
   height: 0.75rem;
-  padding: 0px;
+  padding: 0;
   margin-top: 0.625rem;
   margin-right: 0.25rem;
   border-radius: 0.5rem;
@@ -68,7 +68,7 @@ exports[`<Terminal /> 1`] = `
   display: inline-block;
   width: 0.75rem;
   height: 0.75rem;
-  padding: 0px;
+  padding: 0;
   margin-top: 0.625rem;
   margin-right: 0.25rem;
   border-radius: 0.5rem;
@@ -88,7 +88,7 @@ exports[`<Terminal /> 1`] = `
   display: inline-block;
   width: 0.75rem;
   height: 0.75rem;
-  padding: 0px;
+  padding: 0;
   margin-top: 0.625rem;
   margin-right: 0.25rem;
   border-radius: 0.5rem;

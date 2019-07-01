@@ -68,7 +68,7 @@ var point = Css.style(/* :: */[
               /* :: */[
                 Css.backgroundColor(/* currentColor */292050538),
                 /* :: */[
-                  Css.unsafe("will-change", "transform"),
+                  Css.unsafe("willChange", "transform"),
                   /* :: */[
                     Css.animation(1400, undefined, undefined, /* easeInOut */-960651557, /* both */-1055160191, undefined, /* infinite */-630647084, bounce),
                     /* [] */0

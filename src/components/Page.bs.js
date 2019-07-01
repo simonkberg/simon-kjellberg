@@ -32,11 +32,11 @@ var content = Css.style(/* :: */[
           Css.padding3(/* zero */-789508312, Css.rem(0.9375), Css.rem(1.875)),
           /* :: */[
             Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-bottom))", Css.style(/* :: */[
-                      Css.unsafe("padding-left", "max(env(safe-area-inset-left), 0.9375rem)"),
+                      Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 0.9375rem)"),
                       /* :: */[
-                        Css.unsafe("padding-right", "max(env(safe-area-inset-right), 0.9375rem)"),
+                        Css.unsafe("paddingRight", "max(env(safe-area-inset-right), 0.9375rem)"),
                         /* :: */[
-                          Css.unsafe("padding-bottom", "max(env(safe-area-inset-bottom), 1.875rem)"),
+                          Css.unsafe("paddingBottom", "max(env(safe-area-inset-bottom), 1.875rem)"),
                           /* [] */0
                         ]
                       ]

@@ -51,8 +51,43 @@ function cn(cns) {
   return $$String.concat(" ", __x);
 }
 
+function string_of_float(prim) {
+  return prim.toString();
+}
+
+function string_of_int(prim) {
+  return prim.toString();
+}
+
+function string_of_angle(param) {
+  var variant = param[0];
+  if (variant >= 4995526) {
+    if (variant >= 5690837) {
+      return param[1].toString() + "rad";
+    } else {
+      return param[1].toString() + "deg";
+    }
+  } else if (variant >= -855250051) {
+    return param[1].toString() + "turn";
+  } else {
+    return param[1].toString() + "grad";
+  }
+}
+
+function string_of_percent(param) {
+  return param[1].toString() + "%";
+}
+
+function string_of_alpha(param) {
+  if (param[0] >= 5496390) {
+    return param[1].toString();
+  } else {
+    return param[1].toString() + "%";
+  }
+}
+
 function string_of_rgb(r, g, b) {
-  return "rgb(" + (String(r) + (", " + (String(g) + (", " + (String(b) + ")")))));
+  return "rgb(" + (r.toString() + (", " + (g.toString() + (", " + (b.toString() + ")")))));
 }
 
 function rgb_of_string(s) {
@@ -65,7 +100,7 @@ function rgb_of_string(s) {
 }
 
 function string_of_rgba(r, g, b, a) {
-  return "rgba(" + (r.toString() + (", " + (String(g) + (", " + (String(b) + (", " + (a.toString() + ")")))))));
+  return "rgba(" + (r.toString() + (", " + (g.toString() + (", " + (b.toString() + (", " + (a.toString() + ")")))))));
 }
 
 function rgba_of_string(s) {
@@ -78,26 +113,35 @@ function rgba_of_string(s) {
 }
 
 function string_of_hsl(h, s, l) {
-  return "hsl(" + (String(h) + (", " + (String(s) + ("%, " + (String(l) + "%)")))));
+  return "hsl(" + (string_of_angle(h) + (", " + (string_of_percent(s) + (", " + (string_of_percent(l) + ")")))));
 }
 
 function hsl_of_string(s) {
   var match = s.match((/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/));
   if (match !== null) {
-    return Css.hsl(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)));
+    return Css.hsl(/* `deg */[
+                4995526,
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 1))
+              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 3)));
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
 }
 
 function string_of_hsla(h, s, l, a) {
-  return "hsla(" + (String(h) + (", " + (String(s) + ("%, " + (String(l) + ("%, " + (a.toString() + ")")))))));
+  return "hsla(" + (string_of_angle(h) + (", " + (string_of_percent(s) + (", " + (string_of_percent(l) + (", " + (string_of_alpha(a) + ")")))))));
 }
 
 function hsla_of_string(s) {
   var match = s.match((/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/));
   if (match !== null) {
-    return Css.hsla(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 4)));
+    return Css.hsla(/* `deg */[
+                4995526,
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 1))
+              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 3)), /* `percent */[
+                -119887163,
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 4))
+              ]);
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -157,6 +201,11 @@ export {
   $great$great$eq ,
   $pipe$unknown ,
   cn ,
+  string_of_float ,
+  string_of_int ,
+  string_of_angle ,
+  string_of_percent ,
+  string_of_alpha ,
   string_of_rgb ,
   rgb_of_string ,
   string_of_rgba ,
