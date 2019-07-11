@@ -47,6 +47,7 @@ exports[`<Header /> 1`] = `
         className="emotion-0"
         href="/"
         onClick={[Function]}
+        onMouseEnter={[Function]}
       >
         #!/Site Title
       </a>
