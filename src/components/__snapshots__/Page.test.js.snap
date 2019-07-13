@@ -71,6 +71,7 @@ exports[`<Page /> 1`] = `
           className="emotion-0"
           href="/"
           onClick={[Function]}
+          onMouseEnter={[Function]}
         >
           #!/Simon Kjellberg
         </a>
