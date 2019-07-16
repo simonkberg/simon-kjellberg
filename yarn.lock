@@ -1161,10 +1161,10 @@
   dependencies:
     methods "^1.1.2"
 
-"@packtracker/webpack-plugin@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-2.1.0.tgz#57c1020c0d5d353f688d21b85c723d577a31f0e5"
-  integrity sha512-H5UddXmJDsKEiVTAOEGiL3LVhj4A/q4LPrXSUXJFCaKRcHGGhO+nfzTiLgewbV3cQdPDGNbtyN9ZFiHMe8Y9bg==
+"@packtracker/webpack-plugin@2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-2.1.2.tgz#edf1efd59dd44f3cc4ed2715a90f438464eb58d1"
+  integrity sha512-SD4PHWgTwGnM3Qil0GB5SFpl+MHoTIP8p48Z7VQH1jMkkSrO+xT0YFG8B+XNjcUOp609cvEHjghpNnSlCdXULQ==
   dependencies:
     lodash "^4.17.11"
     minimist "^1.2.0"
