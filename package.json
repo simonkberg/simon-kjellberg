@@ -75,7 +75,7 @@
     "express": "4.17.1",
     "graphql": "14.4.2",
     "graphql-tag": "2.10.1",
-    "helmet": "3.19.0",
+    "helmet": "3.20.0",
     "invariant": "2.2.4",
     "ioredis": "4.11.2",
     "lru-cache": "5.1.1",
