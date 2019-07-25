@@ -126,7 +126,7 @@ function StatsList(Props) {
                   } else if (result.tag) {
                     var response = result[0];
                     if (response.wakaTime.stats.length === 0) {
-                      return React.createElement("p", undefined, React.createElement("em", undefined, Utils$SimonKjellberg.str("Oops! Looks like the plugins is broken, or maybe I'm on vacation?Nevertheless, the language statistics are currently empty.")));
+                      return React.createElement("p", undefined, React.createElement("em", undefined, Utils$SimonKjellberg.str("Oops! Looks like the language statistics are currently empty. " + "I\'m probably on vacation 🌴 (or something is broken).")));
                     } else {
                       return React.createElement(UnorderedList$SimonKjellberg.make, {
                                   children: React.createElement(make, {
@@ -135,7 +135,7 @@ function StatsList(Props) {
                                 });
                     }
                   } else {
-                    return React.createElement("p", undefined, Utils$SimonKjellberg.str("Stats are temporarily unavailable :("));
+                    return React.createElement("p", undefined, Utils$SimonKjellberg.str("Language statistics are temporarily unavailable :("));
                   }
                 })
             });

@@ -27,13 +27,13 @@ let make = () =>
       switch (result) {
       | ReasonApolloTypes.Loading => <Loader />
       | ReasonApolloTypes.Error(_error) =>
-        <p> {"Stats are temporarily unavailable :(" |> str} </p>
+        <p> {"Language statistics are temporarily unavailable :(" |> str} </p>
       | ReasonApolloTypes.Data(response) =>
         if (response##wakaTime##stats |> Array.length == 0) {
           <p>
             <em>
-              {"Oops! Looks like the plugins is broken, or maybe I'm on vacation?"
-               ++ "Nevertheless, the language statistics are currently empty."
+              {"Oops! Looks like the language statistics are currently empty. "
+               ++ {js|I'm probably on vacation 🌴 (or something is broken).|js}
                |> str}
             </em>
           </p>;
