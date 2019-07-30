@@ -127,6 +127,6 @@
     "react-test-renderer": "16.8.6",
     "resolve": "1.11.1",
     "url-loader": "2.1.0",
-    "webpack-bundle-analyzer": "3.4.0"
+    "webpack-bundle-analyzer": "3.4.1"
   }
 }
