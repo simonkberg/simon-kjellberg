@@ -7217,10 +7217,10 @@ neo-async@^2.5.0, neo-async@^2.6.0:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-newrelic@5.10.0:
-  version "5.10.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-5.10.0.tgz#ff09c706a34514c69dc58ac4e52443ea8de3edc8"
-  integrity sha512-nXAPcNDwkKs9B3Sh2z7EMLNKMEqfC7Rqlm8yuStYK8AnqI491AnJrArTKw/P6OZpxI0MqLIM1cIVIbFVvdL53Q==
+newrelic@5.11.0:
+  version "5.11.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-5.11.0.tgz#51dc124867f9f8ef4bf797143319c2d28c4c1eb7"
+  integrity sha512-KGWYdQkCIovYW8rtKE1aVu7Sl44xEGHtqXsSuInVWJJyfbI9KN0ZjnZUzdUA7SHlMM6XrW+TPY0bphSjUV2kWw==
   dependencies:
     "@newrelic/koa" "^1.0.8"
     "@newrelic/superagent" "^1.0.2"
