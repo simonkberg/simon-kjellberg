@@ -114,4 +114,7 @@ module.exports = withOffline({
       },
     }
   },
+  experimental: {
+    modern: true,
+  },
 })
