@@ -113,7 +113,7 @@
     "bs-platform": "5.0.6",
     "chokidar": "3.0.2",
     "eslint": "6.1.0",
-    "file-loader": "4.1.0",
+    "file-loader": "4.2.0",
     "flow-bin": "0.104.0",
     "fs-extra": "8.1.0",
     "graphql_ppx": "0.2.8",
