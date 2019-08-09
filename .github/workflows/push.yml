@@ -1,0 +1,31 @@
+on: push
+name: Test & Build
+jobs:
+  bucklescript:
+    name: Bucklescript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Bucklescript
+        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+        with:
+          entrypoint: yarn
+          args: bsb:build
+      - name: Install
+        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+        with:
+          entrypoint: yarn
+          args: install
+      - name: Test
+        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+        with:
+          entrypoint: yarn
+          args: test
+      - name: Build
+        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+        env:
+          CI: 'true'
+          PACKTRACKER_PROJECT_TOKEN: ${{ secrets.PACKTRACKER_PROJECT_TOKEN }}
+        with:
+          entrypoint: yarn
+          args: build
