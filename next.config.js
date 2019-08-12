@@ -101,6 +101,10 @@ module.exports = withOffline({
         }),
         new PacktrackerPlugin({
           project_token: process.env.PACKTRACKER_PROJECT_TOKEN,
+          branch:
+            process.env.GITHUB_REF != null
+              ? process.env.GITHUB_REF.replace('refs/heads/', '')
+              : undefined,
           upload:
             process.env.PACKTRACKER_PROJECT_TOKEN != null &&
             process.env.CI === 'true' &&
