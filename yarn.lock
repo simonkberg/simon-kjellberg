@@ -1200,16 +1200,16 @@
     "@nodelib/fs.scandir" "2.1.1"
     fastq "^1.6.0"
 
-"@packtracker/webpack-plugin@2.1.2":
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-2.1.2.tgz#edf1efd59dd44f3cc4ed2715a90f438464eb58d1"
-  integrity sha512-SD4PHWgTwGnM3Qil0GB5SFpl+MHoTIP8p48Z7VQH1jMkkSrO+xT0YFG8B+XNjcUOp609cvEHjghpNnSlCdXULQ==
+"@packtracker/webpack-plugin@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@packtracker/webpack-plugin/-/webpack-plugin-2.2.0.tgz#eee3e6aa23971208f33c7bd254ccf1b05df0b889"
+  integrity sha512-nue8/tGvqs2iecUfDiujTUs+1lpjtMOqxyehs5Iiot2GVqpL13JAImSRTBfeIPQYQxkSY8EwOabKl+jksYsrBg==
   dependencies:
-    lodash "^4.17.11"
+    lodash "^4.17.15"
     minimist "^1.2.0"
     omit-deep "^0.3.0"
-    tiny-json-http "^7.0.2"
-    webpack-bundle-analyzer "^3.3.2"
+    tiny-json-http "^7.1.2"
+    webpack-bundle-analyzer "^3.4.1"
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
@@ -9708,7 +9708,7 @@ timers-browserify@^2.0.4:
   dependencies:
     setimmediate "^1.0.4"
 
-tiny-json-http@^7.0.2:
+tiny-json-http@^7.1.2:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/tiny-json-http/-/tiny-json-http-7.1.2.tgz#620e189849bab08992ec23fada7b48c7c61637b4"
   integrity sha512-XB9Bu+ohdQso6ziPFNVqK+pcTt0l8BSRkW/CCBq0pUVlLxcYDsorpo7ae5yPhu2CF1xYgJuKVLF7cfOGeLCTlA==
@@ -10163,7 +10163,7 @@ webidl-conversions@^4.0.2:
   resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-4.0.2.tgz#a855980b1f0b6b359ba1d5d9fb39ae941faa63ad"
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
-webpack-bundle-analyzer@3.4.1, webpack-bundle-analyzer@^3.3.2:
+webpack-bundle-analyzer@3.4.1, webpack-bundle-analyzer@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/webpack-bundle-analyzer/-/webpack-bundle-analyzer-3.4.1.tgz#430544c7ba1631baccf673475ca8300cb74a3c47"
   integrity sha512-Bs8D/1zF+17lhqj2OYmzi7HEVYqEVxu7lCO9Ff8BwajenOU0vAwEoV8e4ICCPNZAcqR1PCR/7o2SkW+cnCmF0A==
