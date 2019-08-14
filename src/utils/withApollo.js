@@ -1,7 +1,7 @@
 // @flow strict
 import * as React from 'react'
 import { ApolloClient } from 'apollo-client'
-import { getDataFromTree } from 'react-apollo'
+import { getDataFromTree } from '@apollo/react-ssr'
 import { split } from 'apollo-link'
 import { HttpLink } from 'apollo-link-http'
 import { WebSocketLink } from 'apollo-link-ws'
