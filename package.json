@@ -49,7 +49,7 @@
     "last 2 Samsung versions"
   ],
   "dependencies": {
-    "@emotion/core": "10.0.15",
+    "@emotion/core": "10.0.16",
     "@emotion/styled": "10.0.15",
     "@simonkberg/reason-apollo": "0.16.3",
     "@slack/client": "5.0.2",
@@ -109,7 +109,7 @@
     "@simonkberg/eslint-config": "16.0.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "24.9.0",
-    "babel-plugin-emotion": "10.0.15",
+    "babel-plugin-emotion": "10.0.16",
     "bs-platform": "5.1.0",
     "chokidar": "3.0.2",
     "eslint": "6.1.0",
