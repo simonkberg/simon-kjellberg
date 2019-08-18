@@ -66,7 +66,7 @@ const updateQuery = (prev, { subscriptionData }) => {
   return prev
 }
 
-const subscribeToChatMessageAdded = ({ subscribeToMore }: $FlowFixMe) => () =>
+const subscribeToChatMessageAdded = (subscribeToMore: $FlowFixMe) =>
   subscribeToMore({ document: chatMessageAddedSubscription, updateQuery })
 
 export default subscribeToChatMessageAdded

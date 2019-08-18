@@ -2,21 +2,9 @@
 import * as React from 'react'
 import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
-import compose from 'recompose/compose'
-import withState from 'recompose/withState'
-import withHandlers from 'recompose/withHandlers'
 
-import withPostChatMessage, {
-  type PostChatMessageProps,
-} from '../utils/withPostChatMessage'
+import usePostChatMessage from '../hooks/usePostChatMessage'
 import useNetworkStatus from '../hooks/useNetworkStatus'
-
-type Props = {
-  input: string,
-  onInputChange: <T>(event: SyntheticEvent<T>) => void,
-  onSubmit: <T>(event: SyntheticEvent<T>) => void,
-  ...$Exact<PostChatMessageProps>,
-}
 
 const Form = styled('form')`
   flex: 0 0 auto;
@@ -53,31 +41,15 @@ const Input = styled('input')`
   }
 `
 
-const ChatMessageInput = ({ input, onInputChange, onSubmit }: Props) => {
-  const online = useNetworkStatus()
-
-  return (
-    <Form onSubmit={onSubmit}>
-      <InputWrapper>
-        <Input
-          value={
-            online ? input : 'You appear to be offline. Reconnect to chat 😎💬'
-          }
-          placeholder="Write a message..."
-          onChange={onInputChange}
-          disabled={!online}
-        />
-      </InputWrapper>
-    </Form>
+const ChatMessageInput = () => {
+  const [input, setInput] = React.useState('')
+  const [postChatMessage] = usePostChatMessage()
+  const handleInputChange = React.useCallback(
+    event => setInput(event.target.value),
+    []
   )
-}
-
-const enhance = compose(
-  withPostChatMessage,
-  withState('input', 'setInput', ''),
-  withHandlers({
-    onInputChange: ({ setInput }) => event => setInput(event.target.value),
-    onSubmit: ({ input, setInput, postChatMessage }) => event => {
+  const handleFormSubmit = React.useCallback(
+    event => {
       event.preventDefault()
 
       const text = input.trim()
@@ -87,7 +59,24 @@ const enhance = compose(
         setInput('')
       }
     },
-  })
-)
+    [input, postChatMessage]
+  )
+  const online = useNetworkStatus()
 
-export default enhance(ChatMessageInput)
+  return (
+    <Form onSubmit={handleFormSubmit}>
+      <InputWrapper>
+        <Input
+          value={
+            online ? input : 'You appear to be offline. Reconnect to chat 😎💬'
+          }
+          placeholder="Write a message..."
+          onChange={handleInputChange}
+          disabled={!online}
+        />
+      </InputWrapper>
+    </Form>
+  )
+}
+
+export default ChatMessageInput

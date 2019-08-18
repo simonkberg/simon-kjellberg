@@ -2,17 +2,9 @@
 import * as React from 'react'
 import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
-import compose from 'recompose/compose'
-import lifecycle from 'recompose/lifecycle'
-import withHandlers from 'recompose/withHandlers'
 import { useTransition, animated } from 'react-spring'
 
-import subscribeToChatMessageAdded from '../utils/subscribeToChatMessageAdded'
-import subscribeToChatMessageEdited from '../utils/subscribeToChatMessageEdited'
-import subscribeToChatMessageDeleted from '../utils/subscribeToChatMessageDeleted'
-import withChatHistory, {
-  type ChatHistoryProps,
-} from '../utils/withChatHistory'
+import useChatHistory from '../hooks/useChatHistory'
 
 import ScrollPreserver from './ScrollPreserver'
 import UnorderedList from './UnorderedList.bs'
@@ -132,7 +124,9 @@ const ChatHistoryMessageThreads = ({ messages }) => {
   ))
 }
 
-const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
+const ChatHistory = () => {
+  const { loading, error, data } = useChatHistory()
+
   if (loading) {
     return <Loader />
   }
@@ -147,7 +141,6 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
         <ScrollPreserver>
           {ref => (
             <Content ref={ref}>
-              {/* $FlowFixMe: Type refinement is lost */}
               <ChatHistoryMessageThreads messages={data.chat.history} />
             </Content>
           )}
@@ -157,20 +150,4 @@ const ChatHistory = ({ loading, error, data }: ChatHistoryProps) => {
   )
 }
 
-const enhance = compose(
-  withChatHistory,
-  withHandlers({
-    subscribeToChatMessageAdded,
-    subscribeToChatMessageEdited,
-    subscribeToChatMessageDeleted,
-  }),
-  lifecycle({
-    componentDidMount() {
-      this.props.subscribeToChatMessageAdded()
-      this.props.subscribeToChatMessageEdited()
-      this.props.subscribeToChatMessageDeleted()
-    },
-  })
-)
-
-export default enhance(ChatHistory)
+export default ChatHistory

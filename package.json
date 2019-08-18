@@ -49,6 +49,7 @@
     "last 2 Samsung versions"
   ],
   "dependencies": {
+    "@apollo/react-ssr": "3.0.1",
     "@emotion/core": "10.0.16",
     "@emotion/styled": "10.0.15",
     "@simonkberg/reason-apollo": "0.16.3",
@@ -89,11 +90,10 @@
     "polished": "3.4.1",
     "prop-types": "15.7.2",
     "react": "16.9.0",
-    "react-apollo": "2.5.8",
+    "react-apollo": "3.0.1",
     "react-dom": "16.9.0",
     "react-spring": "8.0.27",
     "reason-react": "0.7.0",
-    "recompose": "0.30.0",
     "sanitize.css": "11.0.0",
     "screenfull": "4.2.1",
     "serve-favicon": "2.5.0",
@@ -130,6 +130,7 @@
     "webpack-bundle-analyzer": "3.4.1"
   },
   "resolutions": {
-    "graphql_ppx/**/mem": "4.3.0"
+    "graphql_ppx/**/mem": "4.3.0",
+    "@simonkberg/reason-apollo/react-apollo": "3.0.0"
   }
 }
