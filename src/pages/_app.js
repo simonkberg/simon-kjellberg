@@ -19,7 +19,7 @@ import iosevkaBoldItalicWoff2 from '../assets/iosevka-ss08-bolditalic.woff2'
 import facebookShareImage from '../assets/share.png'
 import ensureTrailingSlash from '../utils/ensureTrailingSlash'
 import withApollo from '../utils/withApollo'
-import theme from '../theme'
+import Theme from '../Theme.bs'
 
 const globalStyles = css`
   ${sanitize};
@@ -134,7 +134,7 @@ class App extends NextApp {
           />
         </Head>
         <ApolloProvider client={apolloClient}>
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={Theme}>
             <Component {...pageProps} />
           </ThemeProvider>
         </ApolloProvider>

@@ -1,4 +1,5 @@
 open Css;
+open Utils;
 
 type colors = {
   black: color,
@@ -23,9 +24,8 @@ module Color = {
 };
 
 module Background = {
-  let primary = colors.black;
-  let secondary = colors.white;
-  let muted = colors.silver;
+  let primary = colors.white;
+  let secondary = colors.black;
 };
 
 module Page = {
@@ -42,7 +42,7 @@ module Scrollbar = {
 
   module Thumb = {
     let color = colors.silver;
-    let redius = rem(0.1);
+    let radius = rem(0.1);
   };
 
   module Track = {
@@ -91,3 +91,68 @@ module Code = {
 module Quote = {
   let border = colors.whitesmoke;
 };
+
+let theme = {
+  "color": {
+    "primary": string_of_color(Color.primary),
+    "secondary": string_of_color(Color.secondary),
+    "muted": string_of_color(Color.muted),
+  },
+  "background": {
+    "primary": string_of_color(Background.primary),
+    "secondary": string_of_color(Background.secondary),
+  },
+  "page": {
+    "maxWidth": string_of_dimension(Page.maxWidth),
+  },
+  "scrollbar": {
+    "width": string_of_dimension(Scrollbar.width),
+    "thumb": {
+      "color": string_of_color(Scrollbar.Thumb.color),
+      "radius": string_of_dimension(Scrollbar.Thumb.radius),
+    },
+    "track": {
+      "color": string_of_color(Scrollbar.Track.color),
+    },
+  },
+  "terminal": {
+    "window": {
+      "backgroundColor": string_of_color(Terminal.Window.backgroundColor),
+    },
+    "topbar": {
+      "backgroundColor": string_of_color(Terminal.Topbar.backgroundColor),
+      "height": string_of_dimension(Terminal.Topbar.height),
+    },
+    "controls": {
+      "close": {
+        "backgroundColor":
+          string_of_color(Terminal.Controls.Close.backgroundColor),
+      },
+      "minimize": {
+        "backgroundColor":
+          string_of_color(Terminal.Controls.Minimize.backgroundColor),
+      },
+      "maximize": {
+        "backgroundColor":
+          string_of_color(Terminal.Controls.Maximize.backgroundColor),
+      },
+    },
+    "content": {
+      "color": string_of_color(Terminal.Content.color),
+      "maxHeight": string_of_dimension(Terminal.Content.maxHeight),
+    },
+  },
+  "code": {
+    "color": {
+      "inline": string_of_color(Code.Color.inline),
+      "block": string_of_color(Code.Color.block),
+    },
+    "background": string_of_color(Code.background),
+    "border": string_of_color(Code.border),
+  },
+  "quote": {
+    "border": string_of_color(Quote.border),
+  },
+};
+
+let default = theme;

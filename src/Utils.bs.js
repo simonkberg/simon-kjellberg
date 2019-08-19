@@ -194,6 +194,213 @@ function color_of_string(s) {
   }
 }
 
+function string_of_length(param) {
+  if (typeof param === "number") {
+    return "0";
+  } else {
+    var variant = param[0];
+    if (variant >= 22632) {
+      if (variant >= 25096) {
+        if (variant >= 26433) {
+          if (variant >= 5691738) {
+            return param[1].toString() + "rem";
+          } else {
+            return param[1].toString() + "vw";
+          }
+        } else if (variant >= 26418) {
+          return param[1].toString() + "vh";
+        } else {
+          return param[1].toString() + "px";
+        }
+      } else if (variant >= 24416) {
+        if (variant >= 25092) {
+          return param[1].toString() + "pt";
+        } else {
+          return param[1].toString() + "mm";
+        }
+      } else if (variant >= 22643) {
+        return param[1].toString() + "ex";
+      } else {
+        return param[1].toString() + "em";
+      }
+    } else if (variant >= -833470756) {
+      if (variant >= 22181) {
+        if (variant >= 22186) {
+          return param[1].toString() + "cm";
+        } else {
+          return param[1].toString() + "ch";
+        }
+      } else if (variant >= -119887163) {
+        return param[1].toString() + "%";
+      } else {
+        return param[1].toString() + "vmin";
+      }
+    } else if (variant !== -1040484748) {
+      if (variant >= -833472530) {
+        return param[1].toString() + "vmax";
+      } else {
+        var match = param[1];
+        if (match[0] >= 5745024) {
+          return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
+        } else {
+          return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
+        }
+      }
+    } else {
+      return param[1].toString() + "px";
+    }
+  }
+}
+
+function string_of_minmax(param) {
+  if (typeof param === "number") {
+    if (param >= -550577721) {
+      if (param >= 60557045) {
+        return "max-content";
+      } else {
+        return "min-content";
+      }
+    } else if (param >= -789508312) {
+      return "0";
+    } else {
+      return "auto";
+    }
+  } else {
+    var variant = param[0];
+    if (variant >= 22643) {
+      if (variant >= 25096) {
+        if (variant >= 26433) {
+          if (variant >= 5691738) {
+            return param[1].toString() + "rem";
+          } else {
+            return param[1].toString() + "vw";
+          }
+        } else if (variant >= 26418) {
+          return param[1].toString() + "vh";
+        } else {
+          return param[1].toString() + "px";
+        }
+      } else if (variant >= 24416) {
+        if (variant >= 25092) {
+          return param[1].toString() + "pt";
+        } else {
+          return param[1].toString() + "mm";
+        }
+      } else if (variant >= 22860) {
+        return param[1].toString() + "fr";
+      } else {
+        return param[1].toString() + "ex";
+      }
+    } else if (variant >= -119887163) {
+      if (variant >= 22186) {
+        if (variant >= 22632) {
+          return param[1].toString() + "em";
+        } else {
+          return param[1].toString() + "cm";
+        }
+      } else if (variant >= 22181) {
+        return param[1].toString() + "ch";
+      } else {
+        return param[1].toString() + "%";
+      }
+    } else if (variant >= -833472530) {
+      if (variant >= -833470756) {
+        return param[1].toString() + "vmin";
+      } else {
+        return param[1].toString() + "vmax";
+      }
+    } else if (variant >= -1040484748) {
+      return param[1].toString() + "px";
+    } else {
+      var match = param[1];
+      if (match[0] >= 5745024) {
+        return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
+      } else {
+        return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
+      }
+    }
+  }
+}
+
+function string_of_dimension(param) {
+  if (typeof param === "number") {
+    if (param !== -922086728) {
+      if (param >= -550577721) {
+        if (param >= 60557045) {
+          return "max-content";
+        } else {
+          return "min-content";
+        }
+      } else if (param >= -789508312) {
+        return "0";
+      } else {
+        return "auto";
+      }
+    } else {
+      return "none";
+    }
+  } else {
+    var variant = param[0];
+    if (variant >= 22632) {
+      if (variant >= 25092) {
+        if (variant !== 25096) {
+          if (variant >= 26433) {
+            if (variant >= 5691738) {
+              return param[1].toString() + "rem";
+            } else {
+              return param[1].toString() + "vw";
+            }
+          } else if (variant >= 26418) {
+            return param[1].toString() + "vh";
+          } else {
+            return param[1].toString() + "pt";
+          }
+        } else {
+          return param[1].toString() + "px";
+        }
+      } else if (variant >= 22860) {
+        if (variant >= 24416) {
+          return param[1].toString() + "mm";
+        } else {
+          return param[1].toString() + "fr";
+        }
+      } else if (variant >= 22643) {
+        return param[1].toString() + "ex";
+      } else {
+        return param[1].toString() + "em";
+      }
+    } else if (variant >= -754859950) {
+      if (variant >= 22181) {
+        if (variant >= 22186) {
+          return param[1].toString() + "cm";
+        } else {
+          return param[1].toString() + "ch";
+        }
+      } else if (variant >= -119887163) {
+        return param[1].toString() + "%";
+      } else {
+        var match = param[1];
+        return "minmax(" + (string_of_minmax(match[0]) + ("," + (string_of_minmax(match[1]) + ")")));
+      }
+    } else if (variant >= -833472530) {
+      if (variant >= -833470756) {
+        return param[1].toString() + "vmin";
+      } else {
+        return param[1].toString() + "vmax";
+      }
+    } else if (variant >= -1040484748) {
+      return param[1].toString() + "px";
+    } else {
+      var match$1 = param[1];
+      if (match$1[0] >= 5745024) {
+        return "calc(" + (string_of_length(match$1[1]) + (" - " + (string_of_length(match$1[2]) + ")")));
+      } else {
+        return "calc(" + (string_of_length(match$1[1]) + (" + " + (string_of_length(match$1[2]) + ")")));
+      }
+    }
+  }
+}
+
 export {
   str ,
   dangerousHtml ,
@@ -216,6 +423,9 @@ export {
   hsla_of_string ,
   string_of_color ,
   color_of_string ,
+  string_of_length ,
+  string_of_minmax ,
+  string_of_dimension ,
   
 }
 /* Css Not a pure module */

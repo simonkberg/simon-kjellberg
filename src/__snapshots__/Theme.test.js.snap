@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`theme 1`] = `
+exports[`Theme 1`] = `
 Object {
   "background": Object {
     "primary": "#fff",
