@@ -5,6 +5,26 @@ const withOffline = require('next-offline')
 const app = require('./app.config')
 const bsconfig = require('./bsconfig')
 
+const getPacktrackerConfig = () => {
+  if (process.env.GITHUB_EVENT_PATH) {
+    const event = require(process.env.GITHUB_EVENT_PATH)
+
+    return {
+      fail_build: true,
+      branch: event.ref.replace('refs/heads/', ''),
+      author: event.head_commit.author.email,
+      message: event.head_commit.message,
+      commit: process.env.GITHUB_SHA,
+      committed_at: Math.floor(
+        new Date(event.head_commit.timestamp).getTime() / 1000
+      ),
+      prior_commit: event.before,
+    }
+  }
+
+  return null
+}
+
 module.exports = withOffline({
   distDir: path.relative(app.src, app.dest),
   pageExtensions: ['js', 'bs.js'],
@@ -100,11 +120,8 @@ module.exports = withOffline({
           logLevel: 'warn',
         }),
         new PacktrackerPlugin({
+          ...getPacktrackerConfig(),
           project_token: process.env.PACKTRACKER_PROJECT_TOKEN,
-          branch:
-            process.env.GITHUB_REF != null
-              ? process.env.GITHUB_REF.replace('refs/heads/', '')
-              : undefined,
           upload:
             process.env.PACKTRACKER_PROJECT_TOKEN != null &&
             process.env.CI === 'true' &&
