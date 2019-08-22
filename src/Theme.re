@@ -84,12 +84,12 @@ module Code = {
     let block = colors.black;
   };
 
-  let background = colors.whitesmoke;
-  let border = colors.silver;
+  let backgroundColor = colors.whitesmoke;
+  let borderColor = colors.silver;
 };
 
 module Quote = {
-  let border = colors.whitesmoke;
+  let borderColor = colors.whitesmoke;
 };
 
 let theme = {
@@ -147,11 +147,11 @@ let theme = {
       "inline": string_of_color(Code.Color.inline),
       "block": string_of_color(Code.Color.block),
     },
-    "background": string_of_color(Code.background),
-    "border": string_of_color(Code.border),
+    "background": string_of_color(Code.backgroundColor),
+    "border": string_of_color(Code.borderColor),
   },
   "quote": {
-    "border": string_of_color(Quote.border),
+    "border": string_of_color(Quote.borderColor),
   },
 };
 

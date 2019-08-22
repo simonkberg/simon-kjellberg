@@ -7,7 +7,7 @@ import About from '../components/About.bs'
 import Stats from '../components/Stats.bs'
 import Links from '../components/Links.bs'
 
-const Chat = dynamic(() => import('../components/Chat'))
+const Chat = dynamic(() => import('../components/Chat.bs'))
 
 const {
   publicRuntimeConfig: { siteTitle, siteDescription },

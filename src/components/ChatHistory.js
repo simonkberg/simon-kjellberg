@@ -9,7 +9,7 @@ import useChatHistory from '../hooks/useChatHistory'
 import ScrollPreserver from './ScrollPreserver'
 import UnorderedList from './UnorderedList.bs'
 import UnorderedListItem from './UnorderedListItem.bs'
-import ChatMessage from './ChatMessage'
+import ChatMessage from './ChatMessage.bs'
 import Loader from './Loader.bs'
 
 const Wrapper = styled('div')`
