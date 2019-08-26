@@ -131,6 +131,6 @@
   },
   "resolutions": {
     "graphql_ppx/**/mem": "4.3.0",
-    "@simonkberg/reason-apollo/react-apollo": "3.0.0"
+    "@simonkberg/reason-apollo/react-apollo": "3.0.1"
   }
 }
