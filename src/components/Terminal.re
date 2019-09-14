@@ -118,7 +118,7 @@ let make = (~children) => {
   let handleClickMaximize =
     React.useCallback1(
       _ =>
-        if (Screenfull.enabled) {
+        if (Screenfull.isEnabled) {
           switch (windowRef->React.Ref.current->Js.Nullable.toOption) {
           | Some(r) => Screenfull.toggle(r) |> ignore
           | None => ()
