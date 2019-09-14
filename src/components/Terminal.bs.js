@@ -208,7 +208,7 @@ function Terminal(Props) {
   var children = Props.children;
   var windowRef = React.useRef(null);
   var handleClickMaximize = React.useCallback((function (param) {
-          if (Screenfull.enabled) {
+          if (Screenfull.isEnabled) {
             var match = windowRef.current;
             if (match == null) {
               return /* () */0;
