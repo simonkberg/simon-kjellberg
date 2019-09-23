@@ -2954,10 +2954,10 @@ browserslist@^4.6.0, browserslist@^4.6.6:
     electron-to-chromium "^1.3.247"
     node-releases "^1.1.29"
 
-bs-css@10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/bs-css/-/bs-css-10.0.0.tgz#75c12f197656c3a81ee8073a39c0840105a28bd4"
-  integrity sha512-cVdoju1jRSnoTplvnSYRT1S2fHn7H8uarawv5zbZ1czr/dkCw53vgCsXcc6SV77AcZpqnlYlmbYI7YfHbtbiaQ==
+bs-css@10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/bs-css/-/bs-css-10.0.1.tgz#75d12ff4f8127027085e02a9839bffd9f4c7f0fe"
+  integrity sha512-VXOCznoY1UnI86P/UKEEvuIH2UlYt+djzpCyAixhm6US8piNEv7bdFh9iYNWjm58PDwlXd84BRQEnQKZ4ZNGYA==
   dependencies:
     emotion "^10.0.7"
 
