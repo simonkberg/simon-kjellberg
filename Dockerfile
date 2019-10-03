@@ -1,14 +1,12 @@
 FROM node:10 as base
 WORKDIR /app
-ENV YARN_VERSION 1.17.3
-RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
-ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:$PATH"
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json yarn.lock .yarnrc ./
+COPY .yarn ./.yarn
+RUN yarn install --frozen-lockfile --offline
 COPY . ./
 RUN yarn build
-RUN yarn install --production --ignore-scripts --prefer-offline
-
+RUN yarn install --production --ignore-scripts --offline
+RUN rm -r .yarn
 
 FROM node:10-alpine
 WORKDIR /app

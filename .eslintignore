@@ -1,3 +1,4 @@
 /.next
+/.yarn
 /flow-typed
 /**/*.bs.js

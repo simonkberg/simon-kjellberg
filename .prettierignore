@@ -1,5 +1,5 @@
-flow-typed
-.next
-lib/bs
-**/__generated__/*.js
-**/*.bs.js
+/.next
+/.yarn
+/flow-typed
+/lib/bs
+/**/*.bs.js
