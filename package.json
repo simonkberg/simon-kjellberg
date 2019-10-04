@@ -72,7 +72,7 @@
     "emotion": "10.0.17",
     "emotion-server": "10.0.17",
     "emotion-theming": "10.0.19",
-    "execa": "2.0.4",
+    "execa": "2.0.5",
     "express": "4.17.1",
     "graphql": "14.5.8",
     "graphql-tag": "2.10.1",
