@@ -10,8 +10,13 @@ let make = () => {
     </Heading>
     <p> {config##publicRuntimeConfig##siteDescription} </p>
     <p>
-      {"Working as a consultant via my own company, " |> str}
-      <Link href="https://shebang.consulting"> {"Shebang" |> str} </Link>
+      {"Working as a web engineer at " |> str}
+      <Link
+        href="https://twitter.com/SpotifyEng"
+        target="_blank"
+        rel="noopener noreferrer">
+        {"Spotify" |> str}
+      </Link>
       {"." |> str}
     </p>
   </section>;

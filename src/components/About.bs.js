@@ -18,9 +18,11 @@ function About(Props) {
                   children: null
                 }, "About ", React.createElement(Subtitle$SimonKjellberg.make, {
                       children: "(Location: Stockholm, Sweden)"
-                    })), React.createElement("p", undefined, config.publicRuntimeConfig.siteDescription), React.createElement("p", undefined, "Working as a consultant via my own company, ", React.createElement(Link$SimonKjellberg.make, {
-                      href: "https://shebang.consulting",
-                      children: "Shebang"
+                    })), React.createElement("p", undefined, config.publicRuntimeConfig.siteDescription), React.createElement("p", undefined, "Working as a web engineer at ", React.createElement(Link$SimonKjellberg.make, {
+                      href: "https://twitter.com/SpotifyEng",
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      children: "Spotify"
                     }), "."));
 }
 
