@@ -1,6 +1,6 @@
 // @flow strict
 import * as React from 'react'
-import NextApp, { Container } from 'next/app'
+import NextApp from 'next/app'
 import Head from 'next/head'
 import { hydrate } from 'emotion'
 import { Global, css } from '@emotion/core'
@@ -84,7 +84,7 @@ class App extends NextApp {
     const { Component, pageProps, apolloClient, canonicalUrl } = this.props
 
     return (
-      <Container>
+      <>
         <Global styles={globalStyles} />
         <Head>
           <meta
@@ -138,7 +138,7 @@ class App extends NextApp {
             <Component {...pageProps} />
           </ThemeProvider>
         </ApolloProvider>
-      </Container>
+      </>
     )
   }
 }

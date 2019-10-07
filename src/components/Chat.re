@@ -15,7 +15,7 @@ let styles =
     style([
       display(`flex),
       flexDirection(`column),
-      unsafe("max-height", "inherit"),
+      unsafe("maxHeight", "inherit"),
     ])
   );
 
