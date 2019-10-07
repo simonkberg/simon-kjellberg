@@ -127,7 +127,7 @@ function ChatMessage(Props) {
                   }
                 }), edited ? React.createElement("small", {
                     className: editedLabel
-                  }, Utils$SimonKjellberg.str("edited")) : null);
+                  }, Utils$SimonKjellberg.str(" (edited) ")) : null);
 }
 
 var make = ChatMessage;

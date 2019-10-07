@@ -70,7 +70,7 @@ let make = (~user, ~text, ~edited=false) => {
     </span>
     <div className=Styles.message dangerouslySetInnerHTML={"__html": text} />
     {edited
-       ? <small className=Styles.editedLabel> {"edited" |> str} </small>
+       ? <small className=Styles.editedLabel> {" (edited) " |> str} </small>
        : ReasonReact.null}
   </>;
 };
