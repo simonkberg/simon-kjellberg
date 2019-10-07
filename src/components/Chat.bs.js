@@ -21,7 +21,7 @@ var styles = Css.style(/* :: */[
       /* :: */[
         Css.flexDirection(/* column */-963948842),
         /* :: */[
-          Css.unsafe("max-height", "inherit"),
+          Css.unsafe("maxHeight", "inherit"),
           /* [] */0
         ]
       ]
