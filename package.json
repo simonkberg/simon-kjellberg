@@ -50,7 +50,7 @@
   ],
   "dependencies": {
     "@apollo/react-ssr": "3.1.2",
-    "@emotion/core": "10.0.20",
+    "@emotion/core": "10.0.21",
     "@emotion/styled": "10.0.17",
     "@simonkberg/reason-apollo": "0.16.3",
     "@slack/client": "5.0.2",
@@ -109,7 +109,7 @@
     "@simonkberg/eslint-config": "18.1.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "24.9.0",
-    "babel-plugin-emotion": "10.0.20",
+    "babel-plugin-emotion": "10.0.21",
     "bs-platform": "5.0.6",
     "chokidar": "3.2.1",
     "eslint": "6.5.1",
