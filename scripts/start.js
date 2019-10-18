@@ -25,6 +25,6 @@ module.exports = options(async (opts /*: Options */) => {
   server.listen(opts.port, opts.host, undefined, () => {
     const url = `http://localhost:${opts.port}`
     console.log(`🚀 Ready on ${url}`)
-    open(url)
+    open(url, { url: true })
   })
 })
