@@ -6,21 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: Install
-        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+      - name: Setup Node
+        uses: actions/setup-node@v1.1.0
         with:
-          entrypoint: yarn
-          args: install
+          node-version: '12'
+      - name: Install
+        run: yarn install --frozen-lockfile
       - name: Build
-        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+        run: yarn build
         env:
           CI: 'true'
           PACKTRACKER_PROJECT_TOKEN: ${{ secrets.PACKTRACKER_PROJECT_TOKEN }}
-        with:
-          entrypoint: yarn
-          args: build
       - name: Test
-        uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
-        with:
-          entrypoint: yarn
-          args: test
+        run: yarn test
