@@ -6,6 +6,7 @@ import { theme } from 'styled-tools'
 import usePostChatMessage from '../hooks/usePostChatMessage'
 import useNetworkStatus from '../hooks/useNetworkStatus'
 
+// $FlowFixMe: tagged templates don't support generics
 const Form = styled('form')`
   flex: 0 0 auto;
 `

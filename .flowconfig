@@ -3,16 +3,16 @@
 <PROJECT_ROOT>/node_modules/.cache/.*
 
 [untyped]
-<PROJECT_ROOT>/node_modules/polished/.*
-<PROJECT_ROOT>/node_modules/@emotion/.*
-<PROJECT_ROOT>/node_modules/emotion-theming/.*
-<PROJECT_ROOT>/node_modules/graphql/utilities/buildASTSchema.js.flow
+<PROJECT_ROOT>/node_modules/graphql/utilities/extendSchema.js.flow
+<PROJECT_ROOT>/node_modules/polished/lib/shorthands/position.js.flow
+<PROJECT_ROOT>/node_modules/@emotion/cache/src/index.js
+<PROJECT_ROOT>/node_modules/emotion-theming/src/theme-provider.js
 
 [declarations]
-<PROJECT_ROOT>/node_modules/polished/.*
-<PROJECT_ROOT>/node_modules/@emotion/.*
-<PROJECT_ROOT>/node_modules/emotion-theming/.*
-<PROJECT_ROOT>/node_modules/graphql/utilities/buildASTSchema.js.flow
+<PROJECT_ROOT>/node_modules/graphql/utilities/extendSchema.js.flow
+<PROJECT_ROOT>/node_modules/polished/lib/shorthands/position.js.flow
+<PROJECT_ROOT>/node_modules/@emotion/cache/src/index.js
+<PROJECT_ROOT>/node_modules/emotion-theming/src/theme-provider.js
 
 [include]
 

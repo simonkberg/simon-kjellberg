@@ -1,5 +1,5 @@
-// flow-typed signature: e60dc0f96d7d55734050073860bea369
-// flow-typed version: de4764766b/common-tags_v1.4.x/flow_>=v0.25.x
+// flow-typed signature: e2df7e76a470a8c8f0e8b3a776513cbf
+// flow-typed version: c6154227d1/common-tags_v1.4.x/flow_>=v0.104.x
 
 /**
  * @flow
@@ -13,7 +13,8 @@ declare module "common-tags" {
 
   declare type TemplateTransformer = {
     onSubstitution?: (substitution: string, resultSoFar: string) => string,
-    onEndResult?: (endResult: string) => string
+    onEndResult?: (endResult: string) => string,
+    ...
   };
 
   // Built-in tagged template literals
@@ -62,7 +63,8 @@ declare module "common-tags" {
 
   declare export var inlineArrayTransformer: (opts?: {
     separator?: string,
-    conjunction?: string
+    conjunction?: string,
+    ...
   }) => TemplateTransformer;
 
   declare export var splitStringTransformer: (
