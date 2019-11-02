@@ -12,6 +12,7 @@ import UnorderedListItem from './UnorderedListItem.bs'
 import ChatMessage from './ChatMessage.bs'
 import Loader from './Loader.bs'
 
+// $FlowFixMe: tagged templates don't support generics
 const Wrapper = styled('div')`
   display: flex;
   flex-direction: column;

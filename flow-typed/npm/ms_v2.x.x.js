@@ -1,11 +1,12 @@
-// flow-typed signature: f116e8640d65663fbd0f4e1f2a472787
-// flow-typed version: 1165abc018/ms_v2.x.x/flow_>=v0.25.0
+// flow-typed signature: 4633dcce5cdb3222c541e8982b89cd18
+// flow-typed version: c6154227d1/ms_v2.x.x/flow_>=v0.104.x
 
 declare module 'ms' {
-  declare type Options = {long?: boolean};
+  declare type Options = { long?: boolean, ... };
   
   declare module.exports: {
-    (val: string, options?: Options): number;
-    (val: number, options?: Options): string;
+    (val: string, options?: Options): number,
+    (val: number, options?: Options): string,
+    ...
   };
 }

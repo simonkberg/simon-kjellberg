@@ -1,5 +1,5 @@
-// flow-typed signature: aabff1126ddc67fe1e0d9ac53a4e890d
-// flow-typed version: da30fe6876/morgan_v1.x.x/flow_>=v0.25.x
+// flow-typed signature: efec52dc084b9d98dbb41fda30d67a54
+// flow-typed version: c6154227d1/morgan_v1.x.x/flow_>=v0.104.x
 
 /* @flow */
 import type { Middleware, $Request, $Response } from "express";
