@@ -114,7 +114,7 @@
     "chokidar": "3.3.0",
     "eslint": "6.6.0",
     "file-loader": "4.2.0",
-    "flow-bin": "0.111.3",
+    "flow-bin": "0.112.0",
     "fs-extra": "8.1.0",
     "graphql_ppx": "0.2.8",
     "husky": "3.0.9",
