@@ -1,12 +1,13 @@
 open Css;
+open Css_AtomicTypes;
 open Utils;
 
 type colors = {
-  black: color,
-  white: color,
-  silver: color,
-  whitesmoke: color,
-  firebrick: color,
+  black: Color.t,
+  white: Color.t,
+  silver: Color.t,
+  whitesmoke: Color.t,
+  firebrick: Color.t,
 };
 
 let colors = {
