@@ -35,10 +35,6 @@ module.exports = withOffline({
     siteTitle: app.title,
     siteDescription: app.description,
   },
-  workboxOpts: {
-    exclude: [/\.woff$/, /\.map$/, /^manifest.*\.js(?:on)?$/],
-    runtimeCaching: [{ urlPattern: /\/.*?/, handler: 'networkFirst' }],
-  },
   webpack: (config, options) => {
     const resolve = require('resolve')
     const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
