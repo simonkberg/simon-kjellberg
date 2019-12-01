@@ -112,7 +112,7 @@
     "babel-plugin-emotion": "10.0.23",
     "bs-platform": "5.2.1",
     "chokidar": "3.3.0",
-    "eslint": "6.7.1",
+    "eslint": "6.7.2",
     "file-loader": "5.0.2",
     "flow-bin": "0.112.0",
     "fs-extra": "8.1.0",
