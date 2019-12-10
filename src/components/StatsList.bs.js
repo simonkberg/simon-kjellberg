@@ -4,6 +4,7 @@ import * as React from "react";
 import * as Js_exn from "bs-platform/lib/es6/js_exn.js";
 import * as Js_dict from "bs-platform/lib/es6/js_dict.js";
 import * as Js_json from "bs-platform/lib/es6/js_json.js";
+import * as Js_option from "bs-platform/lib/es6/js_option.js";
 import * as Caml_option from "bs-platform/lib/es6/caml_option.js";
 import * as ReasonApollo from "@simonkberg/reason-apollo/src/ReasonApollo.bs.js";
 import * as StatsListItemsJs from "./StatsListItems.js";
@@ -20,66 +21,45 @@ var StatsListItems = {
 var ppx_printed_query = "query WakaTimeStatsQuery  {\nwakaTime  {\nstats  {\nname  \npercent  \n}\n\n}\n\n}\n";
 
 function parse(value) {
-  var match = Js_json.decodeObject(value);
+  var value$1 = Js_option.getExn(Js_json.decodeObject(value));
+  var match = Js_dict.get(value$1, "wakaTime");
+  var tmp;
   if (match !== undefined) {
-    var match$1 = Js_dict.get(Caml_option.valFromOption(match), "wakaTime");
-    var tmp;
-    if (match$1 !== undefined) {
-      var match$2 = Js_json.decodeObject(Caml_option.valFromOption(match$1));
-      if (match$2 !== undefined) {
-        var match$3 = Js_dict.get(Caml_option.valFromOption(match$2), "stats");
-        var tmp$1;
-        if (match$3 !== undefined) {
-          var value$1 = Caml_option.valFromOption(match$3);
-          var match$4 = Js_json.decodeArray(value$1);
-          tmp$1 = match$4 !== undefined ? match$4.map((function (value) {
-                    var match = Js_json.decodeObject(value);
-                    if (match !== undefined) {
-                      var value$1 = Caml_option.valFromOption(match);
-                      var match$1 = Js_dict.get(value$1, "name");
-                      var tmp;
-                      if (match$1 !== undefined) {
-                        var value$2 = Caml_option.valFromOption(match$1);
-                        var match$2 = Js_json.decodeString(value$2);
-                        tmp = match$2 !== undefined ? match$2 : Js_exn.raiseError("graphql_ppx: Expected string, got " + JSON.stringify(value$2));
-                      } else {
-                        tmp = Js_exn.raiseError("graphql_ppx: Field name on type WakaTimeStats is missing");
-                      }
-                      var match$3 = Js_dict.get(value$1, "percent");
-                      var tmp$1;
-                      if (match$3 !== undefined) {
-                        var value$3 = Caml_option.valFromOption(match$3);
-                        var match$4 = Js_json.decodeNumber(value$3);
-                        tmp$1 = match$4 !== undefined ? match$4 : Js_exn.raiseError("graphql_ppx: Expected float, got " + JSON.stringify(value$3));
-                      } else {
-                        tmp$1 = Js_exn.raiseError("graphql_ppx: Field percent on type WakaTimeStats is missing");
-                      }
-                      return {
-                              name: tmp,
-                              percent: tmp$1
-                            };
-                    } else {
-                      return Js_exn.raiseError("graphql_ppx: Object is not a value");
-                    }
-                  })) : Js_exn.raiseError("graphql_ppx: Expected array, got " + JSON.stringify(value$1));
-        } else {
-          tmp$1 = Js_exn.raiseError("graphql_ppx: Field stats on type WakaTime is missing");
-        }
-        tmp = {
-          stats: tmp$1
-        };
-      } else {
-        tmp = Js_exn.raiseError("graphql_ppx: Object is not a value");
-      }
-    } else {
-      tmp = Js_exn.raiseError("graphql_ppx: Field wakaTime on type Query is missing");
-    }
-    return {
-            wakaTime: tmp
-          };
+    var value$2 = Js_option.getExn(Js_json.decodeObject(Caml_option.valFromOption(match)));
+    var match$1 = Js_dict.get(value$2, "stats");
+    tmp = {
+      stats: match$1 !== undefined ? Js_option.getExn(Js_json.decodeArray(Caml_option.valFromOption(match$1))).map((function (value) {
+                var value$1 = Js_option.getExn(Js_json.decodeObject(value));
+                var match = Js_dict.get(value$1, "name");
+                var tmp;
+                if (match !== undefined) {
+                  var value$2 = Caml_option.valFromOption(match);
+                  var match$1 = Js_json.decodeString(value$2);
+                  tmp = match$1 !== undefined ? match$1 : Js_exn.raiseError("graphql_ppx: Expected string, got " + JSON.stringify(value$2));
+                } else {
+                  tmp = Js_exn.raiseError("graphql_ppx: Field name on type WakaTimeStats is missing");
+                }
+                var match$2 = Js_dict.get(value$1, "percent");
+                var tmp$1;
+                if (match$2 !== undefined) {
+                  var value$3 = Caml_option.valFromOption(match$2);
+                  var match$3 = Js_json.decodeNumber(value$3);
+                  tmp$1 = match$3 !== undefined ? match$3 : Js_exn.raiseError("graphql_ppx: Expected float, got " + JSON.stringify(value$3));
+                } else {
+                  tmp$1 = Js_exn.raiseError("graphql_ppx: Field percent on type WakaTimeStats is missing");
+                }
+                return {
+                        name: tmp,
+                        percent: tmp$1
+                      };
+              })) : Js_exn.raiseError("graphql_ppx: Field stats on type WakaTime is missing")
+    };
   } else {
-    return Js_exn.raiseError("graphql_ppx: Object is not a value");
+    tmp = Js_exn.raiseError("graphql_ppx: Field wakaTime on type Query is missing");
   }
+  return {
+          wakaTime: tmp
+        };
 }
 
 function make$1(param) {
@@ -98,6 +78,20 @@ function makeWithVariables(param) {
         };
 }
 
+function makeVariables(param) {
+  return null;
+}
+
+function definition_002(graphql_ppx_use_json_variables_fn) {
+  return 0;
+}
+
+var definition = /* tuple */[
+  parse,
+  ppx_printed_query,
+  definition_002
+];
+
 function ret_type(f) {
   return { };
 }
@@ -110,6 +104,8 @@ var WakaTimeStats = {
   parse: parse,
   make: make$1,
   makeWithVariables: makeWithVariables,
+  makeVariables: makeVariables,
+  definition: definition,
   ret_type: ret_type,
   MT_Ret: MT_Ret
 };
@@ -122,7 +118,7 @@ var WakaTimeStatsQuery = ReasonApollo.CreateQuery({
 function StatsList(Props) {
   return React.createElement(WakaTimeStatsQuery.make, {
               children: (function (param) {
-                  var result = param[/* result */0];
+                  var result = param.result;
                   if (typeof result === "number") {
                     return React.createElement(Loader$SimonKjellberg.make, { });
                   } else if (result.tag) {

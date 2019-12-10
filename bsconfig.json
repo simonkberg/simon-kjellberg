@@ -3,7 +3,7 @@
   "namespace": true,
   "sources": [{ "dir": "src", "subdirs": true }],
   "bs-dependencies": ["reason-react", "@simonkberg/reason-apollo", "bs-css"],
-  "ppx-flags": ["graphql_ppx/ppx"],
+  "ppx-flags": ["@baransu/graphql_ppx_re/ppx6"],
   "reason": { "react-jsx": 3 },
   "package-specs": {
     "module": "es6",

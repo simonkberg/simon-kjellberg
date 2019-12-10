@@ -3,29 +3,29 @@
 import * as Css from "bs-css/src/Css.js";
 import * as Utils$SimonKjellberg from "./Utils.bs.js";
 
-var colors_000 = /* black */Css.hex("000");
+var colors_black = Css.hex("000");
 
-var colors_001 = /* white */Css.hex("fff");
+var colors_white = Css.hex("fff");
 
-var colors_002 = /* silver */Css.hex("c0c0c0");
+var colors_silver = Css.hex("c0c0c0");
 
-var colors_003 = /* whitesmoke */Css.hex("f5f5f5");
+var colors_whitesmoke = Css.hex("f5f5f5");
 
-var colors_004 = /* firebrick */Css.hex("b22222");
+var colors_firebrick = Css.hex("b22222");
 
-var colors = /* record */[
-  colors_000,
-  colors_001,
-  colors_002,
-  colors_003,
-  colors_004
-];
+var colors = {
+  black: colors_black,
+  white: colors_white,
+  silver: colors_silver,
+  whitesmoke: colors_whitesmoke,
+  firebrick: colors_firebrick
+};
 
-var primary = colors_000;
+var primary = colors_black;
 
-var secondary = colors_001;
+var secondary = colors_white;
 
-var muted = colors_002;
+var muted = colors_silver;
 
 var Color = {
   primary: primary,
@@ -33,9 +33,9 @@ var Color = {
   muted: muted
 };
 
-var primary$1 = colors_001;
+var primary$1 = colors_white;
 
-var secondary$1 = colors_000;
+var secondary$1 = colors_black;
 
 var Background = {
   primary: primary$1,
@@ -48,9 +48,9 @@ var Page = {
   maxWidth: maxWidth
 };
 
-var color = colors_001;
+var color = colors_white;
 
-var backgroundColor = colors_000;
+var backgroundColor = colors_black;
 
 var Header = {
   color: color,
@@ -59,7 +59,7 @@ var Header = {
 
 var width = Css.rem(0.2);
 
-var color$1 = colors_002;
+var color$1 = colors_silver;
 
 var radius = Css.rem(0.1);
 
@@ -133,18 +133,18 @@ var Terminal = {
   Content: Content
 };
 
-var inline = colors_004;
+var inline = colors_firebrick;
 
-var block = colors_000;
+var block = colors_black;
 
 var Color$1 = {
   inline: inline,
   block: block
 };
 
-var backgroundColor$6 = colors_003;
+var backgroundColor$6 = colors_whitesmoke;
 
-var borderColor = colors_002;
+var borderColor = colors_silver;
 
 var Code = {
   Color: Color$1,
@@ -152,7 +152,7 @@ var Code = {
   borderColor: borderColor
 };
 
-var borderColor$1 = colors_003;
+var borderColor$1 = colors_whitesmoke;
 
 var Quote = {
   borderColor: borderColor$1
