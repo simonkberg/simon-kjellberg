@@ -128,6 +128,14 @@ Object {
 }
 `;
 
+exports[`emojiData: abacus 1`] = `
+Object {
+  "name": "1f9ee",
+  "skins": null,
+  "string": "🧮",
+}
+`;
+
 exports[`emojiData: abc 1`] = `
 Object {
   "name": "1f524",
@@ -149,6 +157,14 @@ Object {
   "name": "1f251",
   "skins": null,
   "string": "🉑",
+}
+`;
+
+exports[`emojiData: adhesive_bandage 1`] = `
+Object {
+  "name": "1fa79",
+  "skins": null,
+  "string": "🩹",
 }
 `;
 
@@ -560,11 +576,99 @@ Object {
 }
 `;
 
+exports[`emojiData: artist 1`] = `
+Object {
+  "name": "1f9d1-200d-1f3a8",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f3a8",
+        "string": "🧑🏻‍🎨",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f3a8",
+        "string": "🧑🏼‍🎨",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f3a8",
+        "string": "🧑🏽‍🎨",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f3a8",
+        "string": "🧑🏾‍🎨",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f3a8",
+        "string": "🧑🏿‍🎨",
+      },
+    ],
+  ],
+  "string": "🧑‍🎨",
+}
+`;
+
 exports[`emojiData: astonished 1`] = `
 Object {
   "name": "1f632",
   "skins": null,
   "string": "😲",
+}
+`;
+
+exports[`emojiData: astronaut 1`] = `
+Object {
+  "name": "1f9d1-200d-1f680",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f680",
+        "string": "🧑🏻‍🚀",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f680",
+        "string": "🧑🏼‍🚀",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f680",
+        "string": "🧑🏽‍🚀",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f680",
+        "string": "🧑🏾‍🚀",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f680",
+        "string": "🧑🏿‍🚀",
+      },
+    ],
+  ],
+  "string": "🧑‍🚀",
 }
 `;
 
@@ -592,11 +696,27 @@ Object {
 }
 `;
 
+exports[`emojiData: auto_rickshaw 1`] = `
+Object {
+  "name": "1f6fa",
+  "skins": null,
+  "string": "🛺",
+}
+`;
+
 exports[`emojiData: avocado 1`] = `
 Object {
   "name": "1f951",
   "skins": null,
   "string": "🥑",
+}
+`;
+
+exports[`emojiData: axe 1`] = `
+Object {
+  "name": "1fa93",
+  "skins": null,
+  "string": "🪓",
 }
 `;
 
@@ -692,11 +812,27 @@ Object {
 }
 `;
 
+exports[`emojiData: badger 1`] = `
+Object {
+  "name": "1f9a1",
+  "skins": null,
+  "string": "🦡",
+}
+`;
+
 exports[`emojiData: badminton_racquet_and_shuttlecock 1`] = `
 Object {
   "name": "1f3f8",
   "skins": null,
   "string": "🏸",
+}
+`;
+
+exports[`emojiData: bagel 1`] = `
+Object {
+  "name": "1f96f",
+  "skins": null,
+  "string": "🥯",
 }
 `;
 
@@ -713,6 +849,146 @@ Object {
   "name": "1f956",
   "skins": null,
   "string": "🥖",
+}
+`;
+
+exports[`emojiData: bald_man 1`] = `
+Object {
+  "name": "1f468-200d-1f9b2",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9b2",
+        "string": "👨🏻‍🦲",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9b2",
+        "string": "👨🏼‍🦲",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9b2",
+        "string": "👨🏽‍🦲",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9b2",
+        "string": "👨🏾‍🦲",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9b2",
+        "string": "👨🏿‍🦲",
+      },
+    ],
+  ],
+  "string": "👨‍🦲",
+}
+`;
+
+exports[`emojiData: bald_person 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9b2",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9b2",
+        "string": "🧑🏻‍🦲",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9b2",
+        "string": "🧑🏼‍🦲",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9b2",
+        "string": "🧑🏽‍🦲",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9b2",
+        "string": "🧑🏾‍🦲",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9b2",
+        "string": "🧑🏿‍🦲",
+      },
+    ],
+  ],
+  "string": "🧑‍🦲",
+}
+`;
+
+exports[`emojiData: bald_woman 1`] = `
+Object {
+  "name": "1f469-200d-1f9b2",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9b2",
+        "string": "👩🏻‍🦲",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9b2",
+        "string": "👩🏼‍🦲",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9b2",
+        "string": "👩🏽‍🦲",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9b2",
+        "string": "👩🏾‍🦲",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9b2",
+        "string": "👩🏿‍🦲",
+      },
+    ],
+  ],
+  "string": "👩‍🦲",
+}
+`;
+
+exports[`emojiData: ballet_shoes 1`] = `
+Object {
+  "name": "1fa70",
+  "skins": null,
+  "string": "🩰",
 }
 `;
 
@@ -764,6 +1040,14 @@ Object {
 }
 `;
 
+exports[`emojiData: banjo 1`] = `
+Object {
+  "name": "1fa95",
+  "skins": null,
+  "string": "🪕",
+}
+`;
+
 exports[`emojiData: bank 1`] = `
 Object {
   "name": "1f3e6",
@@ -801,6 +1085,14 @@ Object {
   "name": "26be",
   "skins": null,
   "string": "⚾",
+}
+`;
+
+exports[`emojiData: basket 1`] = `
+Object {
+  "name": "1f9fa",
+  "skins": null,
+  "string": "🧺",
 }
 `;
 
@@ -1009,6 +1301,14 @@ Object {
   "name": "1f371",
   "skins": null,
   "string": "🍱",
+}
+`;
+
+exports[`emojiData: beverage_box 1`] = `
+Object {
+  "name": "1f9c3",
+  "skins": null,
+  "string": "🧃",
 }
 `;
 
@@ -1376,6 +1676,14 @@ Object {
 }
 `;
 
+exports[`emojiData: bone 1`] = `
+Object {
+  "name": "1f9b4",
+  "skins": null,
+  "string": "🦴",
+}
+`;
+
 exports[`emojiData: book 1`] = `
 Object {
   "name": "1f4d6",
@@ -1612,6 +1920,14 @@ Object {
 }
 `;
 
+exports[`emojiData: bricks 1`] = `
+Object {
+  "name": "1f9f1",
+  "skins": null,
+  "string": "🧱",
+}
+`;
+
 exports[`emojiData: bride_with_veil 1`] = `
 Object {
   "name": "1f470",
@@ -1672,6 +1988,14 @@ Object {
 }
 `;
 
+exports[`emojiData: briefs 1`] = `
+Object {
+  "name": "1fa72",
+  "skins": null,
+  "string": "🩲",
+}
+`;
+
 exports[`emojiData: broccoli 1`] = `
 Object {
   "name": "1f966",
@@ -1685,6 +2009,22 @@ Object {
   "name": "1f494",
   "skins": null,
   "string": "💔",
+}
+`;
+
+exports[`emojiData: broom 1`] = `
+Object {
+  "name": "1f9f9",
+  "skins": null,
+  "string": "🧹",
+}
+`;
+
+exports[`emojiData: brown_heart 1`] = `
+Object {
+  "name": "1f90e",
+  "skins": null,
+  "string": "🤎",
 }
 `;
 
@@ -1765,6 +2105,14 @@ Object {
   "name": "1f465",
   "skins": null,
   "string": "👥",
+}
+`;
+
+exports[`emojiData: butter 1`] = `
+Object {
+  "name": "1f9c8",
+  "skins": null,
+  "string": "🧈",
 }
 `;
 
@@ -2020,6 +2368,14 @@ Object {
 }
 `;
 
+exports[`emojiData: chair 1`] = `
+Object {
+  "name": "1fa91",
+  "skins": null,
+  "string": "🪑",
+}
+`;
+
 exports[`emojiData: champagne 1`] = `
 Object {
   "name": "1f37e",
@@ -2081,6 +2437,14 @@ Object {
   "name": "1f338",
   "skins": null,
   "string": "🌸",
+}
+`;
+
+exports[`emojiData: chess_pawn 1`] = `
+Object {
+  "name": "265f-fe0f",
+  "skins": null,
+  "string": "♟️",
 }
 `;
 
@@ -2604,6 +2968,14 @@ Object {
 }
 `;
 
+exports[`emojiData: cold_face 1`] = `
+Object {
+  "name": "1f976",
+  "skins": null,
+  "string": "🥶",
+}
+`;
+
 exports[`emojiData: cold_sweat 1`] = `
 Object {
   "name": "1f630",
@@ -2625,6 +2997,14 @@ Object {
   "name": "2604-fe0f",
   "skins": null,
   "string": "☄️",
+}
+`;
+
+exports[`emojiData: compass 1`] = `
+Object {
+  "name": "1f9ed",
+  "skins": null,
+  "string": "🧭",
 }
 `;
 
@@ -2744,6 +3124,50 @@ Object {
 }
 `;
 
+exports[`emojiData: cook 1`] = `
+Object {
+  "name": "1f9d1-200d-1f373",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f373",
+        "string": "🧑🏻‍🍳",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f373",
+        "string": "🧑🏼‍🍳",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f373",
+        "string": "🧑🏽‍🍳",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f373",
+        "string": "🧑🏾‍🍳",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f373",
+        "string": "🧑🏿‍🍳",
+      },
+    ],
+  ],
+  "string": "🧑‍🍳",
+}
+`;
+
 exports[`emojiData: cookie 1`] = `
 Object {
   "name": "1f36a",
@@ -2839,7 +3263,183 @@ Object {
 exports[`emojiData: couple 1`] = `
 Object {
   "name": "1f46b",
-  "skins": null,
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46b-1f3fb",
+        "string": "👫🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46b-1f3fc",
+        "string": "👫🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46b-1f3fd",
+        "string": "👫🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46b-1f3fe",
+        "string": "👫🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46b-1f3ff",
+        "string": "👫🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏻‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏻‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏻‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏻‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏼‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏼‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏼‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏼‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏽‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏽‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏽‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏽‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏾‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏾‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏾‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏾‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏿‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏿‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏿‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏿‍🤝‍👨🏾",
+      },
+    ],
+  ],
   "string": "👫",
 }
 `;
@@ -3040,6 +3640,14 @@ Object {
 }
 `;
 
+exports[`emojiData: cupcake 1`] = `
+Object {
+  "name": "1f9c1",
+  "skins": null,
+  "string": "🧁",
+}
+`;
+
 exports[`emojiData: cupid 1`] = `
 Object {
   "name": "1f498",
@@ -3053,6 +3661,138 @@ Object {
   "name": "1f94c",
   "skins": null,
   "string": "🥌",
+}
+`;
+
+exports[`emojiData: curly_haired_man 1`] = `
+Object {
+  "name": "1f468-200d-1f9b1",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9b1",
+        "string": "👨🏻‍🦱",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9b1",
+        "string": "👨🏼‍🦱",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9b1",
+        "string": "👨🏽‍🦱",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9b1",
+        "string": "👨🏾‍🦱",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9b1",
+        "string": "👨🏿‍🦱",
+      },
+    ],
+  ],
+  "string": "👨‍🦱",
+}
+`;
+
+exports[`emojiData: curly_haired_person 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9b1",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9b1",
+        "string": "🧑🏻‍🦱",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9b1",
+        "string": "🧑🏼‍🦱",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9b1",
+        "string": "🧑🏽‍🦱",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9b1",
+        "string": "🧑🏾‍🦱",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9b1",
+        "string": "🧑🏿‍🦱",
+      },
+    ],
+  ],
+  "string": "🧑‍🦱",
+}
+`;
+
+exports[`emojiData: curly_haired_woman 1`] = `
+Object {
+  "name": "1f469-200d-1f9b1",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9b1",
+        "string": "👩🏻‍🦱",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9b1",
+        "string": "👩🏼‍🦱",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9b1",
+        "string": "👩🏽‍🦱",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9b1",
+        "string": "👩🏾‍🦱",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9b1",
+        "string": "👩🏿‍🦱",
+      },
+    ],
+  ],
+  "string": "👩‍🦱",
 }
 `;
 
@@ -3220,6 +3960,138 @@ Object {
 }
 `;
 
+exports[`emojiData: deaf_man 1`] = `
+Object {
+  "name": "1f9cf-200d-2642-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cf-1f3fb-200d-2642-fe0f",
+        "string": "🧏🏻‍♂️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cf-1f3fc-200d-2642-fe0f",
+        "string": "🧏🏼‍♂️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cf-1f3fd-200d-2642-fe0f",
+        "string": "🧏🏽‍♂️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cf-1f3fe-200d-2642-fe0f",
+        "string": "🧏🏾‍♂️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cf-1f3ff-200d-2642-fe0f",
+        "string": "🧏🏿‍♂️",
+      },
+    ],
+  ],
+  "string": "🧏‍♂️",
+}
+`;
+
+exports[`emojiData: deaf_person 1`] = `
+Object {
+  "name": "1f9cf",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cf-1f3fb",
+        "string": "🧏🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cf-1f3fc",
+        "string": "🧏🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cf-1f3fd",
+        "string": "🧏🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cf-1f3fe",
+        "string": "🧏🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cf-1f3ff",
+        "string": "🧏🏿",
+      },
+    ],
+  ],
+  "string": "🧏",
+}
+`;
+
+exports[`emojiData: deaf_woman 1`] = `
+Object {
+  "name": "1f9cf-200d-2640-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cf-1f3fb-200d-2640-fe0f",
+        "string": "🧏🏻‍♀️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cf-1f3fc-200d-2640-fe0f",
+        "string": "🧏🏼‍♀️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cf-1f3fd-200d-2640-fe0f",
+        "string": "🧏🏽‍♀️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cf-1f3fe-200d-2640-fe0f",
+        "string": "🧏🏾‍♀️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cf-1f3ff-200d-2640-fe0f",
+        "string": "🧏🏿‍♀️",
+      },
+    ],
+  ],
+  "string": "🧏‍♀️",
+}
+`;
+
 exports[`emojiData: deciduous_tree 1`] = `
 Object {
   "name": "1f333",
@@ -3308,6 +4180,22 @@ Object {
 }
 `;
 
+exports[`emojiData: diving_mask 1`] = `
+Object {
+  "name": "1f93f",
+  "skins": null,
+  "string": "🤿",
+}
+`;
+
+exports[`emojiData: diya_lamp 1`] = `
+Object {
+  "name": "1fa94",
+  "skins": null,
+  "string": "🪔",
+}
+`;
+
 exports[`emojiData: dizzy 1`] = `
 Object {
   "name": "1f4ab",
@@ -3321,6 +4209,14 @@ Object {
   "name": "1f635",
   "skins": null,
   "string": "😵",
+}
+`;
+
+exports[`emojiData: dna 1`] = `
+Object {
+  "name": "1f9ec",
+  "skins": null,
+  "string": "🧬",
 }
 `;
 
@@ -3444,6 +4340,14 @@ Object {
 }
 `;
 
+exports[`emojiData: drop_of_blood 1`] = `
+Object {
+  "name": "1fa78",
+  "skins": null,
+  "string": "🩸",
+}
+`;
+
 exports[`emojiData: droplet 1`] = `
 Object {
   "name": "1f4a7",
@@ -3549,6 +4453,50 @@ Object {
   "name": "1f33e",
   "skins": null,
   "string": "🌾",
+}
+`;
+
+exports[`emojiData: ear_with_hearing_aid 1`] = `
+Object {
+  "name": "1f9bb",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9bb-1f3fb",
+        "string": "🦻🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9bb-1f3fc",
+        "string": "🦻🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9bb-1f3fd",
+        "string": "🦻🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9bb-1f3fe",
+        "string": "🦻🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9bb-1f3ff",
+        "string": "🦻🏿",
+      },
+    ],
+  ],
+  "string": "🦻",
 }
 `;
 
@@ -4004,6 +4952,50 @@ Object {
 }
 `;
 
+exports[`emojiData: factory_worker 1`] = `
+Object {
+  "name": "1f9d1-200d-1f3ed",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f3ed",
+        "string": "🧑🏻‍🏭",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f3ed",
+        "string": "🧑🏼‍🏭",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f3ed",
+        "string": "🧑🏽‍🏭",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f3ed",
+        "string": "🧑🏾‍🏭",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f3ed",
+        "string": "🧑🏿‍🏭",
+      },
+    ],
+  ],
+  "string": "🧑‍🏭",
+}
+`;
+
 exports[`emojiData: fairy 1`] = `
 Object {
   "name": "1f9da",
@@ -4048,6 +5040,14 @@ Object {
 }
 `;
 
+exports[`emojiData: falafel 1`] = `
+Object {
+  "name": "1f9c6",
+  "skins": null,
+  "string": "🧆",
+}
+`;
+
 exports[`emojiData: fallen_leaf 1`] = `
 Object {
   "name": "1f342",
@@ -4061,6 +5061,50 @@ Object {
   "name": "1f46a",
   "skins": null,
   "string": "👪",
+}
+`;
+
+exports[`emojiData: farmer 1`] = `
+Object {
+  "name": "1f9d1-200d-1f33e",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f33e",
+        "string": "🧑🏻‍🌾",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f33e",
+        "string": "🧑🏼‍🌾",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f33e",
+        "string": "🧑🏽‍🌾",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f33e",
+        "string": "🧑🏾‍🌾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f33e",
+        "string": "🧑🏿‍🌾",
+      },
+    ],
+  ],
+  "string": "🧑‍🌾",
 }
 `;
 
@@ -4241,6 +5285,94 @@ Object {
   "name": "2640-fe0f",
   "skins": null,
   "string": "♀️",
+}
+`;
+
+exports[`emojiData: female_superhero 1`] = `
+Object {
+  "name": "1f9b8-200d-2640-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b8-1f3fb-200d-2640-fe0f",
+        "string": "🦸🏻‍♀️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b8-1f3fc-200d-2640-fe0f",
+        "string": "🦸🏼‍♀️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b8-1f3fd-200d-2640-fe0f",
+        "string": "🦸🏽‍♀️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b8-1f3fe-200d-2640-fe0f",
+        "string": "🦸🏾‍♀️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b8-1f3ff-200d-2640-fe0f",
+        "string": "🦸🏿‍♀️",
+      },
+    ],
+  ],
+  "string": "🦸‍♀️",
+}
+`;
+
+exports[`emojiData: female_supervillain 1`] = `
+Object {
+  "name": "1f9b9-200d-2640-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b9-1f3fb-200d-2640-fe0f",
+        "string": "🦹🏻‍♀️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b9-1f3fc-200d-2640-fe0f",
+        "string": "🦹🏼‍♀️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b9-1f3fd-200d-2640-fe0f",
+        "string": "🦹🏽‍♀️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b9-1f3fe-200d-2640-fe0f",
+        "string": "🦹🏾‍♀️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b9-1f3ff-200d-2640-fe0f",
+        "string": "🦹🏿‍♀️",
+      },
+    ],
+  ],
+  "string": "🦹‍♀️",
 }
 `;
 
@@ -5253,6 +6385,66 @@ Object {
   "name": "1f692",
   "skins": null,
   "string": "🚒",
+}
+`;
+
+exports[`emojiData: fire_extinguisher 1`] = `
+Object {
+  "name": "1f9ef",
+  "skins": null,
+  "string": "🧯",
+}
+`;
+
+exports[`emojiData: firecracker 1`] = `
+Object {
+  "name": "1f9e8",
+  "skins": null,
+  "string": "🧨",
+}
+`;
+
+exports[`emojiData: firefighter 1`] = `
+Object {
+  "name": "1f9d1-200d-1f692",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f692",
+        "string": "🧑🏻‍🚒",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f692",
+        "string": "🧑🏼‍🚒",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f692",
+        "string": "🧑🏽‍🚒",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f692",
+        "string": "🧑🏾‍🚒",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f692",
+        "string": "🧑🏿‍🚒",
+      },
+    ],
+  ],
+  "string": "🧑‍🚒",
 }
 `;
 
@@ -7460,6 +8652,14 @@ Object {
 }
 `;
 
+exports[`emojiData: flamingo 1`] = `
+Object {
+  "name": "1f9a9",
+  "skins": null,
+  "string": "🦩",
+}
+`;
+
 exports[`emojiData: flashlight 1`] = `
 Object {
   "name": "1f526",
@@ -7508,6 +8708,14 @@ Object {
 }
 `;
 
+exports[`emojiData: flying_disc 1`] = `
+Object {
+  "name": "1f94f",
+  "skins": null,
+  "string": "🥏",
+}
+`;
+
 exports[`emojiData: flying_saucer 1`] = `
 Object {
   "name": "1f6f8",
@@ -7529,6 +8737,50 @@ Object {
   "name": "1f301",
   "skins": null,
   "string": "🌁",
+}
+`;
+
+exports[`emojiData: foot 1`] = `
+Object {
+  "name": "1f9b6",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b6-1f3fb",
+        "string": "🦶🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b6-1f3fc",
+        "string": "🦶🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b6-1f3fd",
+        "string": "🦶🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b6-1f3fe",
+        "string": "🦶🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b6-1f3ff",
+        "string": "🦶🏿",
+      },
+    ],
+  ],
+  "string": "🦶",
 }
 `;
 
@@ -7700,6 +8952,14 @@ Object {
 }
 `;
 
+exports[`emojiData: garlic 1`] = `
+Object {
+  "name": "1f9c4",
+  "skins": null,
+  "string": "🧄",
+}
+`;
+
 exports[`emojiData: gb 1`] = `
 Object {
   "name": "1f1ec-1f1e7",
@@ -7853,6 +9113,14 @@ Object {
   "name": "1f410",
   "skins": null,
   "string": "🐐",
+}
+`;
+
+exports[`emojiData: goggles 1`] = `
+Object {
+  "name": "1f97d",
+  "skins": null,
+  "string": "🥽",
 }
 `;
 
@@ -8053,6 +9321,14 @@ Object {
     ],
   ],
   "string": "💂",
+}
+`;
+
+exports[`emojiData: guide_dog 1`] = `
+Object {
+  "name": "1f9ae",
+  "skins": null,
+  "string": "🦮",
 }
 `;
 
@@ -8344,6 +9620,50 @@ Object {
 }
 `;
 
+exports[`emojiData: health_worker 1`] = `
+Object {
+  "name": "1f9d1-200d-2695-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-2695-fe0f",
+        "string": "🧑🏻‍⚕️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-2695-fe0f",
+        "string": "🧑🏼‍⚕️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-2695-fe0f",
+        "string": "🧑🏽‍⚕️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-2695-fe0f",
+        "string": "🧑🏾‍⚕️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-2695-fe0f",
+        "string": "🧑🏿‍⚕️",
+      },
+    ],
+  ],
+  "string": "🧑‍⚕️",
+}
+`;
+
 exports[`emojiData: hear_no_evil 1`] = `
 Object {
   "name": "1f649",
@@ -8528,6 +9848,30 @@ Object {
 }
 `;
 
+exports[`emojiData: hiking_boot 1`] = `
+Object {
+  "name": "1f97e",
+  "skins": null,
+  "string": "🥾",
+}
+`;
+
+exports[`emojiData: hindu_temple 1`] = `
+Object {
+  "name": "1f6d5",
+  "skins": null,
+  "string": "🛕",
+}
+`;
+
+exports[`emojiData: hippopotamus 1`] = `
+Object {
+  "name": "1f99b",
+  "skins": null,
+  "string": "🦛",
+}
+`;
+
 exports[`emojiData: hocho 1`] = `
 Object {
   "name": "1f52a",
@@ -8617,6 +9961,14 @@ Object {
   "name": "1f3e5",
   "skins": null,
   "string": "🏥",
+}
+`;
+
+exports[`emojiData: hot_face 1`] = `
+Object {
+  "name": "1f975",
+  "skins": null,
+  "string": "🥵",
 }
 `;
 
@@ -8760,6 +10112,14 @@ Object {
 }
 `;
 
+exports[`emojiData: ice_cube 1`] = `
+Object {
+  "name": "1f9ca",
+  "skins": null,
+  "string": "🧊",
+}
+`;
+
 exports[`emojiData: ice_hockey_stick_and_puck 1`] = `
 Object {
   "name": "1f3d2",
@@ -8821,6 +10181,14 @@ Object {
   "name": "1f4e8",
   "skins": null,
   "string": "📨",
+}
+`;
+
+exports[`emojiData: infinity 1`] = `
+Object {
+  "name": "267e-fe0f",
+  "skins": null,
+  "string": "♾️",
 }
 `;
 
@@ -8964,6 +10332,14 @@ Object {
 }
 `;
 
+exports[`emojiData: jigsaw 1`] = `
+Object {
+  "name": "1f9e9",
+  "skins": null,
+  "string": "🧩",
+}
+`;
+
 exports[`emojiData: joy 1`] = `
 Object {
   "name": "1f602",
@@ -8993,6 +10369,50 @@ Object {
   "name": "1f1ef-1f1f5",
   "skins": null,
   "string": "🇯🇵",
+}
+`;
+
+exports[`emojiData: judge 1`] = `
+Object {
+  "name": "1f9d1-200d-2696-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-2696-fe0f",
+        "string": "🧑🏻‍⚖️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-2696-fe0f",
+        "string": "🧑🏼‍⚖️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-2696-fe0f",
+        "string": "🧑🏽‍⚖️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-2696-fe0f",
+        "string": "🧑🏾‍⚖️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-2696-fe0f",
+        "string": "🧑🏿‍⚖️",
+      },
+    ],
+  ],
+  "string": "🧑‍⚖️",
 }
 `;
 
@@ -9045,6 +10465,14 @@ Object {
   "name": "1f54b",
   "skins": null,
   "string": "🕋",
+}
+`;
+
+exports[`emojiData: kangaroo 1`] = `
+Object {
+  "name": "1f998",
+  "skins": null,
+  "string": "🦘",
 }
 `;
 
@@ -9136,11 +10564,63 @@ Object {
 }
 `;
 
+exports[`emojiData: kite 1`] = `
+Object {
+  "name": "1fa81",
+  "skins": null,
+  "string": "🪁",
+}
+`;
+
 exports[`emojiData: kiwifruit 1`] = `
 Object {
   "name": "1f95d",
   "skins": null,
   "string": "🥝",
+}
+`;
+
+exports[`emojiData: kneeling_person 1`] = `
+Object {
+  "name": "1f9ce",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9ce-1f3fb",
+        "string": "🧎🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9ce-1f3fc",
+        "string": "🧎🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9ce-1f3fd",
+        "string": "🧎🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9ce-1f3fe",
+        "string": "🧎🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9ce-1f3ff",
+        "string": "🧎🏿",
+      },
+    ],
+  ],
+  "string": "🧎",
 }
 `;
 
@@ -9184,11 +10664,27 @@ Object {
 }
 `;
 
+exports[`emojiData: lab_coat 1`] = `
+Object {
+  "name": "1f97c",
+  "skins": null,
+  "string": "🥼",
+}
+`;
+
 exports[`emojiData: label 1`] = `
 Object {
   "name": "1f3f7-fe0f",
   "skins": null,
   "string": "🏷️",
+}
+`;
+
+exports[`emojiData: lacrosse 1`] = `
+Object {
+  "name": "1f94d",
+  "skins": null,
+  "string": "🥍",
 }
 `;
 
@@ -9216,11 +10712,107 @@ Object {
 }
 `;
 
+exports[`emojiData: large_blue_square 1`] = `
+Object {
+  "name": "1f7e6",
+  "skins": null,
+  "string": "🟦",
+}
+`;
+
+exports[`emojiData: large_brown_circle 1`] = `
+Object {
+  "name": "1f7e4",
+  "skins": null,
+  "string": "🟤",
+}
+`;
+
+exports[`emojiData: large_brown_square 1`] = `
+Object {
+  "name": "1f7eb",
+  "skins": null,
+  "string": "🟫",
+}
+`;
+
+exports[`emojiData: large_green_circle 1`] = `
+Object {
+  "name": "1f7e2",
+  "skins": null,
+  "string": "🟢",
+}
+`;
+
+exports[`emojiData: large_green_square 1`] = `
+Object {
+  "name": "1f7e9",
+  "skins": null,
+  "string": "🟩",
+}
+`;
+
+exports[`emojiData: large_orange_circle 1`] = `
+Object {
+  "name": "1f7e0",
+  "skins": null,
+  "string": "🟠",
+}
+`;
+
 exports[`emojiData: large_orange_diamond 1`] = `
 Object {
   "name": "1f536",
   "skins": null,
   "string": "🔶",
+}
+`;
+
+exports[`emojiData: large_orange_square 1`] = `
+Object {
+  "name": "1f7e7",
+  "skins": null,
+  "string": "🟧",
+}
+`;
+
+exports[`emojiData: large_purple_circle 1`] = `
+Object {
+  "name": "1f7e3",
+  "skins": null,
+  "string": "🟣",
+}
+`;
+
+exports[`emojiData: large_purple_square 1`] = `
+Object {
+  "name": "1f7ea",
+  "skins": null,
+  "string": "🟪",
+}
+`;
+
+exports[`emojiData: large_red_square 1`] = `
+Object {
+  "name": "1f7e5",
+  "skins": null,
+  "string": "🟥",
+}
+`;
+
+exports[`emojiData: large_yellow_circle 1`] = `
+Object {
+  "name": "1f7e1",
+  "skins": null,
+  "string": "🟡",
+}
+`;
+
+exports[`emojiData: large_yellow_square 1`] = `
+Object {
+  "name": "1f7e8",
+  "skins": null,
+  "string": "🟨",
 }
 `;
 
@@ -9253,6 +10845,14 @@ Object {
   "name": "1f606",
   "skins": null,
   "string": "😆",
+}
+`;
+
+exports[`emojiData: leafy_green 1`] = `
+Object {
+  "name": "1f96c",
+  "skins": null,
+  "string": "🥬",
 }
 `;
 
@@ -9345,6 +10945,50 @@ Object {
   "name": "21a9-fe0f",
   "skins": null,
   "string": "↩️",
+}
+`;
+
+exports[`emojiData: leg 1`] = `
+Object {
+  "name": "1f9b5",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b5-1f3fb",
+        "string": "🦵🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b5-1f3fc",
+        "string": "🦵🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b5-1f3fd",
+        "string": "🦵🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b5-1f3fe",
+        "string": "🦵🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b5-1f3ff",
+        "string": "🦵🏿",
+      },
+    ],
+  ],
+  "string": "🦵",
 }
 `;
 
@@ -9460,6 +11104,22 @@ Object {
 }
 `;
 
+exports[`emojiData: llama 1`] = `
+Object {
+  "name": "1f999",
+  "skins": null,
+  "string": "🦙",
+}
+`;
+
+exports[`emojiData: lobster 1`] = `
+Object {
+  "name": "1f99e",
+  "skins": null,
+  "string": "🦞",
+}
+`;
+
 exports[`emojiData: lock 1`] = `
 Object {
   "name": "1f512",
@@ -9489,6 +11149,14 @@ Object {
   "name": "27bf",
   "skins": null,
   "string": "➿",
+}
+`;
+
+exports[`emojiData: lotion_bottle 1`] = `
+Object {
+  "name": "1f9f4",
+  "skins": null,
+  "string": "🧴",
 }
 `;
 
@@ -9561,6 +11229,14 @@ Object {
   "name": "1f58c-fe0f",
   "skins": null,
   "string": "🖌️",
+}
+`;
+
+exports[`emojiData: luggage 1`] = `
+Object {
+  "name": "1f9f3",
+  "skins": null,
+  "string": "🧳",
 }
 `;
 
@@ -9637,6 +11313,14 @@ Object {
     ],
   ],
   "string": "🧙",
+}
+`;
+
+exports[`emojiData: magnet 1`] = `
+Object {
+  "name": "1f9f2",
+  "skins": null,
+  "string": "🧲",
 }
 `;
 
@@ -9825,6 +11509,94 @@ Object {
   "name": "2642-fe0f",
   "skins": null,
   "string": "♂️",
+}
+`;
+
+exports[`emojiData: male_superhero 1`] = `
+Object {
+  "name": "1f9b8-200d-2642-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b8-1f3fb-200d-2642-fe0f",
+        "string": "🦸🏻‍♂️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b8-1f3fc-200d-2642-fe0f",
+        "string": "🦸🏼‍♂️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b8-1f3fd-200d-2642-fe0f",
+        "string": "🦸🏽‍♂️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b8-1f3fe-200d-2642-fe0f",
+        "string": "🦸🏾‍♂️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b8-1f3ff-200d-2642-fe0f",
+        "string": "🦸🏿‍♂️",
+      },
+    ],
+  ],
+  "string": "🦸‍♂️",
+}
+`;
+
+exports[`emojiData: male_supervillain 1`] = `
+Object {
+  "name": "1f9b9-200d-2642-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b9-1f3fb-200d-2642-fe0f",
+        "string": "🦹🏻‍♂️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b9-1f3fc-200d-2642-fe0f",
+        "string": "🦹🏼‍♂️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b9-1f3fd-200d-2642-fe0f",
+        "string": "🦹🏽‍♂️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b9-1f3fe-200d-2642-fe0f",
+        "string": "🦹🏾‍♂️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b9-1f3ff-200d-2642-fe0f",
+        "string": "🦹🏿‍♂️",
+      },
+    ],
+  ],
+  "string": "🦹‍♂️",
 }
 `;
 
@@ -10807,7 +12579,183 @@ Object {
 exports[`emojiData: man_and_woman_holding_hands 1`] = `
 Object {
   "name": "1f46b",
-  "skins": null,
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46b-1f3fb",
+        "string": "👫🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46b-1f3fc",
+        "string": "👫🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46b-1f3fd",
+        "string": "👫🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46b-1f3fe",
+        "string": "👫🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46b-1f3ff",
+        "string": "👫🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏻‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏻‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏻‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏻‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏼‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏼‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏼‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏼‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏽‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏽‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏽‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏽‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏾‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏾‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏾‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏾‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏿‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏿‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏿‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏿‍🤝‍👨🏾",
+      },
+    ],
+  ],
   "string": "👫",
 }
 `;
@@ -10988,6 +12936,94 @@ Object {
 }
 `;
 
+exports[`emojiData: man_in_manual_wheelchair 1`] = `
+Object {
+  "name": "1f468-200d-1f9bd",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9bd",
+        "string": "👨🏻‍🦽",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9bd",
+        "string": "👨🏼‍🦽",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9bd",
+        "string": "👨🏽‍🦽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9bd",
+        "string": "👨🏾‍🦽",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9bd",
+        "string": "👨🏿‍🦽",
+      },
+    ],
+  ],
+  "string": "👨‍🦽",
+}
+`;
+
+exports[`emojiData: man_in_motorized_wheelchair 1`] = `
+Object {
+  "name": "1f468-200d-1f9bc",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9bc",
+        "string": "👨🏻‍🦼",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9bc",
+        "string": "👨🏼‍🦼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9bc",
+        "string": "👨🏽‍🦼",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9bc",
+        "string": "👨🏾‍🦼",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9bc",
+        "string": "👨🏿‍🦼",
+      },
+    ],
+  ],
+  "string": "👨‍🦼",
+}
+`;
+
 exports[`emojiData: man_in_steamy_room 1`] = `
 Object {
   "name": "1f9d6-200d-2642-fe0f",
@@ -11076,6 +13112,94 @@ Object {
 }
 `;
 
+exports[`emojiData: man_kneeling 1`] = `
+Object {
+  "name": "1f9ce-200d-2642-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9ce-1f3fb-200d-2642-fe0f",
+        "string": "🧎🏻‍♂️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9ce-1f3fc-200d-2642-fe0f",
+        "string": "🧎🏼‍♂️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9ce-1f3fd-200d-2642-fe0f",
+        "string": "🧎🏽‍♂️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9ce-1f3fe-200d-2642-fe0f",
+        "string": "🧎🏾‍♂️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9ce-1f3ff-200d-2642-fe0f",
+        "string": "🧎🏿‍♂️",
+      },
+    ],
+  ],
+  "string": "🧎‍♂️",
+}
+`;
+
+exports[`emojiData: man_standing 1`] = `
+Object {
+  "name": "1f9cd-200d-2642-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cd-1f3fb-200d-2642-fe0f",
+        "string": "🧍🏻‍♂️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cd-1f3fc-200d-2642-fe0f",
+        "string": "🧍🏼‍♂️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cd-1f3fd-200d-2642-fe0f",
+        "string": "🧍🏽‍♂️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cd-1f3fe-200d-2642-fe0f",
+        "string": "🧍🏾‍♂️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cd-1f3ff-200d-2642-fe0f",
+        "string": "🧍🏿‍♂️",
+      },
+    ],
+  ],
+  "string": "🧍‍♂️",
+}
+`;
+
 exports[`emojiData: man_with_gua_pi_mao 1`] = `
 Object {
   "name": "1f472",
@@ -11117,6 +13241,50 @@ Object {
     ],
   ],
   "string": "👲",
+}
+`;
+
+exports[`emojiData: man_with_probing_cane 1`] = `
+Object {
+  "name": "1f468-200d-1f9af",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9af",
+        "string": "👨🏻‍🦯",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9af",
+        "string": "👨🏼‍🦯",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9af",
+        "string": "👨🏽‍🦯",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9af",
+        "string": "👨🏾‍🦯",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9af",
+        "string": "👨🏿‍🦯",
+      },
+    ],
+  ],
+  "string": "👨‍🦯",
 }
 `;
 
@@ -12460,6 +14628,14 @@ Object {
 }
 `;
 
+exports[`emojiData: mango 1`] = `
+Object {
+  "name": "1f96d",
+  "skins": null,
+  "string": "🥭",
+}
+`;
+
 exports[`emojiData: mans_shoe 1`] = `
 Object {
   "name": "1f45e",
@@ -12473,6 +14649,14 @@ Object {
   "name": "1f570-fe0f",
   "skins": null,
   "string": "🕰️",
+}
+`;
+
+exports[`emojiData: manual_wheelchair 1`] = `
+Object {
+  "name": "1f9bd",
+  "skins": null,
+  "string": "🦽",
 }
 `;
 
@@ -12544,11 +14728,79 @@ Object {
 }
 `;
 
+exports[`emojiData: mate_drink 1`] = `
+Object {
+  "name": "1f9c9",
+  "skins": null,
+  "string": "🧉",
+}
+`;
+
 exports[`emojiData: meat_on_bone 1`] = `
 Object {
   "name": "1f356",
   "skins": null,
   "string": "🍖",
+}
+`;
+
+exports[`emojiData: mechanic 1`] = `
+Object {
+  "name": "1f9d1-200d-1f527",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f527",
+        "string": "🧑🏻‍🔧",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f527",
+        "string": "🧑🏼‍🔧",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f527",
+        "string": "🧑🏽‍🔧",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f527",
+        "string": "🧑🏾‍🔧",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f527",
+        "string": "🧑🏿‍🔧",
+      },
+    ],
+  ],
+  "string": "🧑‍🔧",
+}
+`;
+
+exports[`emojiData: mechanical_arm 1`] = `
+Object {
+  "name": "1f9be",
+  "skins": null,
+  "string": "🦾",
+}
+`;
+
+exports[`emojiData: mechanical_leg 1`] = `
+Object {
+  "name": "1f9bf",
+  "skins": null,
+  "string": "🦿",
 }
 `;
 
@@ -12589,6 +14841,190 @@ Object {
   "name": "1f4dd",
   "skins": null,
   "string": "📝",
+}
+`;
+
+exports[`emojiData: men_holding_hands 1`] = `
+Object {
+  "name": "1f46c",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46c-1f3fb",
+        "string": "👬🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46c-1f3fc",
+        "string": "👬🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46c-1f3fd",
+        "string": "👬🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46c-1f3fe",
+        "string": "👬🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46c-1f3ff",
+        "string": "👬🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏻‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏻‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏻‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏻‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏼‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏼‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏼‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏼‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏽‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏽‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏽‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏽‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏾‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏾‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏾‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏾‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏿‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏿‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏿‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏿‍🤝‍👨🏾",
+      },
+    ],
+  ],
+  "string": "👬",
 }
 `;
 
@@ -12748,6 +15184,14 @@ Object {
 }
 `;
 
+exports[`emojiData: microbe 1`] = `
+Object {
+  "name": "1f9a0",
+  "skins": null,
+  "string": "🦠",
+}
+`;
+
 exports[`emojiData: microphone 1`] = `
 Object {
   "name": "1f3a4",
@@ -12896,6 +15340,14 @@ Object {
 }
 `;
 
+exports[`emojiData: moon_cake 1`] = `
+Object {
+  "name": "1f96e",
+  "skins": null,
+  "string": "🥮",
+}
+`;
+
 exports[`emojiData: mortar_board 1`] = `
 Object {
   "name": "1f393",
@@ -12909,6 +15361,14 @@ Object {
   "name": "1f54c",
   "skins": null,
   "string": "🕌",
+}
+`;
+
+exports[`emojiData: mosquito 1`] = `
+Object {
+  "name": "1f99f",
+  "skins": null,
+  "string": "🦟",
 }
 `;
 
@@ -12977,6 +15437,14 @@ Object {
   "name": "1f6f5",
   "skins": null,
   "string": "🛵",
+}
+`;
+
+exports[`emojiData: motorized_wheelchair 1`] = `
+Object {
+  "name": "1f9bc",
+  "skins": null,
+  "string": "🦼",
 }
 `;
 
@@ -13289,6 +15757,14 @@ Object {
   "name": "1f922",
   "skins": null,
   "string": "🤢",
+}
+`;
+
+exports[`emojiData: nazar_amulet 1`] = `
+Object {
+  "name": "1f9ff",
+  "skins": null,
+  "string": "🧿",
 }
 `;
 
@@ -13628,6 +16104,50 @@ Object {
 }
 `;
 
+exports[`emojiData: office_worker 1`] = `
+Object {
+  "name": "1f9d1-200d-1f4bc",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f4bc",
+        "string": "🧑🏻‍💼",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f4bc",
+        "string": "🧑🏼‍💼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f4bc",
+        "string": "🧑🏽‍💼",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f4bc",
+        "string": "🧑🏾‍💼",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f4bc",
+        "string": "🧑🏿‍💼",
+      },
+    ],
+  ],
+  "string": "🧑‍💼",
+}
+`;
+
 exports[`emojiData: oil_drum 1`] = `
 Object {
   "name": "1f6e2-fe0f",
@@ -13928,6 +16448,22 @@ Object {
 }
 `;
 
+exports[`emojiData: one-piece_swimsuit 1`] = `
+Object {
+  "name": "1fa71",
+  "skins": null,
+  "string": "🩱",
+}
+`;
+
+exports[`emojiData: onion 1`] = `
+Object {
+  "name": "1f9c5",
+  "skins": null,
+  "string": "🧅",
+}
+`;
+
 exports[`emojiData: open_book 1`] = `
 Object {
   "name": "1f4d6",
@@ -14020,11 +16556,27 @@ Object {
 }
 `;
 
+exports[`emojiData: orangutan 1`] = `
+Object {
+  "name": "1f9a7",
+  "skins": null,
+  "string": "🦧",
+}
+`;
+
 exports[`emojiData: orthodox_cross 1`] = `
 Object {
   "name": "2626-fe0f",
   "skins": null,
   "string": "☦️",
+}
+`;
+
+exports[`emojiData: otter 1`] = `
+Object {
+  "name": "1f9a6",
+  "skins": null,
+  "string": "🦦",
 }
 `;
 
@@ -14049,6 +16601,14 @@ Object {
   "name": "1f402",
   "skins": null,
   "string": "🐂",
+}
+`;
+
+exports[`emojiData: oyster 1`] = `
+Object {
+  "name": "1f9aa",
+  "skins": null,
+  "string": "🦪",
 }
 `;
 
@@ -14160,11 +16720,27 @@ Object {
 }
 `;
 
+exports[`emojiData: parachute 1`] = `
+Object {
+  "name": "1fa82",
+  "skins": null,
+  "string": "🪂",
+}
+`;
+
 exports[`emojiData: parking 1`] = `
 Object {
   "name": "1f17f-fe0f",
   "skins": null,
   "string": "🅿️",
+}
+`;
+
+exports[`emojiData: parrot 1`] = `
+Object {
+  "name": "1f99c",
+  "skins": null,
+  "string": "🦜",
 }
 `;
 
@@ -14189,6 +16765,14 @@ Object {
   "name": "1f326-fe0f",
   "skins": null,
   "string": "🌦️",
+}
+`;
+
+exports[`emojiData: partying_face 1`] = `
+Object {
+  "name": "1f973",
+  "skins": null,
+  "string": "🥳",
 }
 `;
 
@@ -14229,6 +16813,14 @@ Object {
   "name": "1f351",
   "skins": null,
   "string": "🍑",
+}
+`;
+
+exports[`emojiData: peacock 1`] = `
+Object {
+  "name": "1f99a",
+  "skins": null,
+  "string": "🦚",
 }
 `;
 
@@ -14277,6 +16869,190 @@ Object {
   "name": "1f614",
   "skins": null,
   "string": "😔",
+}
+`;
+
+exports[`emojiData: people_holding_hands 1`] = `
+Object {
+  "name": "1f9d1-200d-1f91d-200d-1f9d1",
+  "skins": Array [
+    Array [
+      "1f3fb-1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f91d-200d-1f9d1-1f3fb",
+        "string": "🧑🏻‍🤝‍🧑🏻",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f91d-200d-1f9d1-1f3fc",
+        "string": "🧑🏻‍🤝‍🧑🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f91d-200d-1f9d1-1f3fd",
+        "string": "🧑🏻‍🤝‍🧑🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f91d-200d-1f9d1-1f3fe",
+        "string": "🧑🏻‍🤝‍🧑🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f91d-200d-1f9d1-1f3ff",
+        "string": "🧑🏻‍🤝‍🧑🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f91d-200d-1f9d1-1f3fb",
+        "string": "🧑🏼‍🤝‍🧑🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f91d-200d-1f9d1-1f3fc",
+        "string": "🧑🏼‍🤝‍🧑🏼",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f91d-200d-1f9d1-1f3fd",
+        "string": "🧑🏼‍🤝‍🧑🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f91d-200d-1f9d1-1f3fe",
+        "string": "🧑🏼‍🤝‍🧑🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f91d-200d-1f9d1-1f3ff",
+        "string": "🧑🏼‍🤝‍🧑🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f91d-200d-1f9d1-1f3fb",
+        "string": "🧑🏽‍🤝‍🧑🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f91d-200d-1f9d1-1f3fc",
+        "string": "🧑🏽‍🤝‍🧑🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f91d-200d-1f9d1-1f3fd",
+        "string": "🧑🏽‍🤝‍🧑🏽",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f91d-200d-1f9d1-1f3fe",
+        "string": "🧑🏽‍🤝‍🧑🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f91d-200d-1f9d1-1f3ff",
+        "string": "🧑🏽‍🤝‍🧑🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f91d-200d-1f9d1-1f3fb",
+        "string": "🧑🏾‍🤝‍🧑🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f91d-200d-1f9d1-1f3fc",
+        "string": "🧑🏾‍🤝‍🧑🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f91d-200d-1f9d1-1f3fd",
+        "string": "🧑🏾‍🤝‍🧑🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f91d-200d-1f9d1-1f3fe",
+        "string": "🧑🏾‍🤝‍🧑🏾",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f91d-200d-1f9d1-1f3ff",
+        "string": "🧑🏾‍🤝‍🧑🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f91d-200d-1f9d1-1f3fb",
+        "string": "🧑🏿‍🤝‍🧑🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f91d-200d-1f9d1-1f3fc",
+        "string": "🧑🏿‍🤝‍🧑🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f91d-200d-1f9d1-1f3fd",
+        "string": "🧑🏿‍🤝‍🧑🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f91d-200d-1f9d1-1f3fe",
+        "string": "🧑🏿‍🤝‍🧑🏾",
+      },
+    ],
+    Array [
+      "1f3ff-1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f91d-200d-1f9d1-1f3ff",
+        "string": "🧑🏿‍🤝‍🧑🏿",
+      },
+    ],
+  ],
+  "string": "🧑‍🤝‍🧑",
 }
 `;
 
@@ -14469,6 +17245,94 @@ Object {
     ],
   ],
   "string": "🧘",
+}
+`;
+
+exports[`emojiData: person_in_manual_wheelchair 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9bd",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9bd",
+        "string": "🧑🏻‍🦽",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9bd",
+        "string": "🧑🏼‍🦽",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9bd",
+        "string": "🧑🏽‍🦽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9bd",
+        "string": "🧑🏾‍🦽",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9bd",
+        "string": "🧑🏿‍🦽",
+      },
+    ],
+  ],
+  "string": "🧑‍🦽",
+}
+`;
+
+exports[`emojiData: person_in_motorized_wheelchair 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9bc",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9bc",
+        "string": "🧑🏻‍🦼",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9bc",
+        "string": "🧑🏼‍🦼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9bc",
+        "string": "🧑🏽‍🦼",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9bc",
+        "string": "🧑🏾‍🦼",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9bc",
+        "string": "🧑🏿‍🦼",
+      },
+    ],
+  ],
+  "string": "🧑‍🦼",
 }
 `;
 
@@ -14692,6 +17556,58 @@ Object {
 }
 `;
 
+exports[`emojiData: person_with_probing_cane 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9af",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9af",
+        "string": "🧑🏻‍🦯",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9af",
+        "string": "🧑🏼‍🦯",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9af",
+        "string": "🧑🏽‍🦯",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9af",
+        "string": "🧑🏾‍🦯",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9af",
+        "string": "🧑🏿‍🦯",
+      },
+    ],
+  ],
+  "string": "🧑‍🦯",
+}
+`;
+
+exports[`emojiData: petri_dish 1`] = `
+Object {
+  "name": "1f9eb",
+  "skins": null,
+  "string": "🧫",
+}
+`;
+
 exports[`emojiData: phone 1`] = `
 Object {
   "name": "260e-fe0f",
@@ -14748,11 +17664,107 @@ Object {
 }
 `;
 
+exports[`emojiData: pilot 1`] = `
+Object {
+  "name": "1f9d1-200d-2708-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-2708-fe0f",
+        "string": "🧑🏻‍✈️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-2708-fe0f",
+        "string": "🧑🏼‍✈️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-2708-fe0f",
+        "string": "🧑🏽‍✈️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-2708-fe0f",
+        "string": "🧑🏾‍✈️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-2708-fe0f",
+        "string": "🧑🏿‍✈️",
+      },
+    ],
+  ],
+  "string": "🧑‍✈️",
+}
+`;
+
+exports[`emojiData: pinching_hand 1`] = `
+Object {
+  "name": "1f90f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f90f-1f3fb",
+        "string": "🤏🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f90f-1f3fc",
+        "string": "🤏🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f90f-1f3fd",
+        "string": "🤏🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f90f-1f3fe",
+        "string": "🤏🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f90f-1f3ff",
+        "string": "🤏🏿",
+      },
+    ],
+  ],
+  "string": "🤏",
+}
+`;
+
 exports[`emojiData: pineapple 1`] = `
 Object {
   "name": "1f34d",
   "skins": null,
   "string": "🍍",
+}
+`;
+
+exports[`emojiData: pirate_flag 1`] = `
+Object {
+  "name": "1f3f4-200d-2620-fe0f",
+  "skins": null,
+  "string": "🏴‍☠️",
 }
 `;
 
@@ -14777,6 +17789,14 @@ Object {
   "name": "1f6d0",
   "skins": null,
   "string": "🛐",
+}
+`;
+
+exports[`emojiData: pleading_face 1`] = `
+Object {
+  "name": "1f97a",
+  "skins": null,
+  "string": "🥺",
 }
 `;
 
@@ -15304,6 +18324,14 @@ Object {
 }
 `;
 
+exports[`emojiData: probing_cane 1`] = `
+Object {
+  "name": "1f9af",
+  "skins": null,
+  "string": "🦯",
+}
+`;
+
 exports[`emojiData: punch 1`] = `
 Object {
   "name": "1f44a",
@@ -15401,6 +18429,14 @@ Object {
   "name": "1f407",
   "skins": null,
   "string": "🐇",
+}
+`;
+
+exports[`emojiData: raccoon 1`] = `
+Object {
+  "name": "1f99d",
+  "skins": null,
+  "string": "🦝",
 }
 `;
 
@@ -15744,6 +18780,22 @@ Object {
 }
 `;
 
+exports[`emojiData: razor 1`] = `
+Object {
+  "name": "1fa92",
+  "skins": null,
+  "string": "🪒",
+}
+`;
+
+exports[`emojiData: receipt 1`] = `
+Object {
+  "name": "1f9fe",
+  "skins": null,
+  "string": "🧾",
+}
+`;
+
 exports[`emojiData: recycle 1`] = `
 Object {
   "name": "267b-fe0f",
@@ -15765,6 +18817,146 @@ Object {
   "name": "1f534",
   "skins": null,
   "string": "🔴",
+}
+`;
+
+exports[`emojiData: red_envelope 1`] = `
+Object {
+  "name": "1f9e7",
+  "skins": null,
+  "string": "🧧",
+}
+`;
+
+exports[`emojiData: red_haired_man 1`] = `
+Object {
+  "name": "1f468-200d-1f9b0",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9b0",
+        "string": "👨🏻‍🦰",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9b0",
+        "string": "👨🏼‍🦰",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9b0",
+        "string": "👨🏽‍🦰",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9b0",
+        "string": "👨🏾‍🦰",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9b0",
+        "string": "👨🏿‍🦰",
+      },
+    ],
+  ],
+  "string": "👨‍🦰",
+}
+`;
+
+exports[`emojiData: red_haired_person 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9b0",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9b0",
+        "string": "🧑🏻‍🦰",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9b0",
+        "string": "🧑🏼‍🦰",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9b0",
+        "string": "🧑🏽‍🦰",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9b0",
+        "string": "🧑🏾‍🦰",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9b0",
+        "string": "🧑🏿‍🦰",
+      },
+    ],
+  ],
+  "string": "🧑‍🦰",
+}
+`;
+
+exports[`emojiData: red_haired_woman 1`] = `
+Object {
+  "name": "1f469-200d-1f9b0",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9b0",
+        "string": "👩🏻‍🦰",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9b0",
+        "string": "👩🏼‍🦰",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9b0",
+        "string": "👩🏽‍🦰",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9b0",
+        "string": "👩🏾‍🦰",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9b0",
+        "string": "👩🏿‍🦰",
+      },
+    ],
+  ],
+  "string": "👩‍🦰",
 }
 `;
 
@@ -15992,6 +19184,14 @@ Object {
 }
 `;
 
+exports[`emojiData: ringed_planet 1`] = `
+Object {
+  "name": "1fa90",
+  "skins": null,
+  "string": "🪐",
+}
+`;
+
 exports[`emojiData: robot_face 1`] = `
 Object {
   "name": "1f916",
@@ -16005,6 +19205,14 @@ Object {
   "name": "1f680",
   "skins": null,
   "string": "🚀",
+}
+`;
+
+exports[`emojiData: roll_of_paper 1`] = `
+Object {
+  "name": "1f9fb",
+  "skins": null,
+  "string": "🧻",
 }
 `;
 
@@ -16236,6 +19444,22 @@ Object {
 }
 `;
 
+exports[`emojiData: safety_pin 1`] = `
+Object {
+  "name": "1f9f7",
+  "skins": null,
+  "string": "🧷",
+}
+`;
+
+exports[`emojiData: safety_vest 1`] = `
+Object {
+  "name": "1f9ba",
+  "skins": null,
+  "string": "🦺",
+}
+`;
+
 exports[`emojiData: sagittarius 1`] = `
 Object {
   "name": "2650",
@@ -16257,6 +19481,14 @@ Object {
   "name": "1f376",
   "skins": null,
   "string": "🍶",
+}
+`;
+
+exports[`emojiData: salt 1`] = `
+Object {
+  "name": "1f9c2",
+  "skins": null,
+  "string": "🧂",
 }
 `;
 
@@ -16317,6 +19549,14 @@ Object {
     ],
   ],
   "string": "🎅",
+}
+`;
+
+exports[`emojiData: sari 1`] = `
+Object {
+  "name": "1f97b",
+  "skins": null,
+  "string": "🥻",
 }
 `;
 
@@ -16389,6 +19629,50 @@ Object {
   "name": "1f392",
   "skins": null,
   "string": "🎒",
+}
+`;
+
+exports[`emojiData: scientist 1`] = `
+Object {
+  "name": "1f9d1-200d-1f52c",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f52c",
+        "string": "🧑🏻‍🔬",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f52c",
+        "string": "🧑🏼‍🔬",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f52c",
+        "string": "🧑🏽‍🔬",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f52c",
+        "string": "🧑🏾‍🔬",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f52c",
+        "string": "🧑🏿‍🔬",
+      },
+    ],
+  ],
+  "string": "🧑‍🔬",
 }
 `;
 
@@ -16540,6 +19824,14 @@ Object {
 }
 `;
 
+exports[`emojiData: service_dog 1`] = `
+Object {
+  "name": "1f415-200d-1f9ba",
+  "skins": null,
+  "string": "🐕‍🦺",
+}
+`;
+
 exports[`emojiData: seven 1`] = `
 Object {
   "name": "0037-fe0f-20e3",
@@ -16668,6 +19960,14 @@ Object {
 }
 `;
 
+exports[`emojiData: shorts 1`] = `
+Object {
+  "name": "1fa73",
+  "skins": null,
+  "string": "🩳",
+}
+`;
+
 exports[`emojiData: shower 1`] = `
 Object {
   "name": "1f6bf",
@@ -16788,6 +20088,50 @@ Object {
 }
 `;
 
+exports[`emojiData: singer 1`] = `
+Object {
+  "name": "1f9d1-200d-1f3a4",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f3a4",
+        "string": "🧑🏻‍🎤",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f3a4",
+        "string": "🧑🏼‍🎤",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f3a4",
+        "string": "🧑🏽‍🎤",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f3a4",
+        "string": "🧑🏾‍🎤",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f3a4",
+        "string": "🧑🏿‍🎤",
+      },
+    ],
+  ],
+  "string": "🧑‍🎤",
+}
+`;
+
 exports[`emojiData: six 1`] = `
 Object {
   "name": "0036-fe0f-20e3",
@@ -16801,6 +20145,14 @@ Object {
   "name": "1f52f",
   "skins": null,
   "string": "🔯",
+}
+`;
+
+exports[`emojiData: skateboard 1`] = `
+Object {
+  "name": "1f6f9",
+  "skins": null,
+  "string": "🛹",
 }
 `;
 
@@ -16873,6 +20225,14 @@ Object {
   "name": "2620-fe0f",
   "skins": null,
   "string": "☠️",
+}
+`;
+
+exports[`emojiData: skunk 1`] = `
+Object {
+  "name": "1f9a8",
+  "skins": null,
+  "string": "🦨",
 }
 `;
 
@@ -17012,6 +20372,14 @@ Object {
 }
 `;
 
+exports[`emojiData: sloth 1`] = `
+Object {
+  "name": "1f9a5",
+  "skins": null,
+  "string": "🦥",
+}
+`;
+
 exports[`emojiData: small_airplane 1`] = `
 Object {
   "name": "1f6e9-fe0f",
@@ -17081,6 +20449,14 @@ Object {
   "name": "1f63a",
   "skins": null,
   "string": "😺",
+}
+`;
+
+exports[`emojiData: smiling_face_with_3_hearts 1`] = `
+Object {
+  "name": "1f970",
+  "skins": null,
+  "string": "🥰",
 }
 `;
 
@@ -17232,6 +20608,14 @@ Object {
 }
 `;
 
+exports[`emojiData: soap 1`] = `
+Object {
+  "name": "1f9fc",
+  "skins": null,
+  "string": "🧼",
+}
+`;
+
 exports[`emojiData: sob 1`] = `
 Object {
   "name": "1f62d",
@@ -17253,6 +20637,14 @@ Object {
   "name": "1f9e6",
   "skins": null,
   "string": "🧦",
+}
+`;
+
+exports[`emojiData: softball 1`] = `
+Object {
+  "name": "1f94e",
+  "skins": null,
+  "string": "🥎",
 }
 `;
 
@@ -17452,6 +20844,14 @@ Object {
 }
 `;
 
+exports[`emojiData: sponge 1`] = `
+Object {
+  "name": "1f9fd",
+  "skins": null,
+  "string": "🧽",
+}
+`;
+
 exports[`emojiData: spoon 1`] = `
 Object {
   "name": "1f944",
@@ -17489,6 +20889,50 @@ Object {
   "name": "2695-fe0f",
   "skins": null,
   "string": "⚕️",
+}
+`;
+
+exports[`emojiData: standing_person 1`] = `
+Object {
+  "name": "1f9cd",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cd-1f3fb",
+        "string": "🧍🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cd-1f3fc",
+        "string": "🧍🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cd-1f3fd",
+        "string": "🧍🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cd-1f3fe",
+        "string": "🧍🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cd-1f3ff",
+        "string": "🧍🏿",
+      },
+    ],
+  ],
+  "string": "🧍",
 }
 `;
 
@@ -17564,6 +21008,14 @@ Object {
 }
 `;
 
+exports[`emojiData: stethoscope 1`] = `
+Object {
+  "name": "1fa7a",
+  "skins": null,
+  "string": "🩺",
+}
+`;
+
 exports[`emojiData: stew 1`] = `
 Object {
   "name": "1f372",
@@ -17617,6 +21069,50 @@ Object {
   "name": "1f61c",
   "skins": null,
   "string": "😜",
+}
+`;
+
+exports[`emojiData: student 1`] = `
+Object {
+  "name": "1f9d1-200d-1f393",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f393",
+        "string": "🧑🏻‍🎓",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f393",
+        "string": "🧑🏼‍🎓",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f393",
+        "string": "🧑🏽‍🎓",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f393",
+        "string": "🧑🏾‍🎓",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f393",
+        "string": "🧑🏿‍🎓",
+      },
+    ],
+  ],
+  "string": "🧑‍🎓",
 }
 `;
 
@@ -17708,6 +21204,94 @@ Object {
 }
 `;
 
+exports[`emojiData: superhero 1`] = `
+Object {
+  "name": "1f9b8",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b8-1f3fb",
+        "string": "🦸🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b8-1f3fc",
+        "string": "🦸🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b8-1f3fd",
+        "string": "🦸🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b8-1f3fe",
+        "string": "🦸🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b8-1f3ff",
+        "string": "🦸🏿",
+      },
+    ],
+  ],
+  "string": "🦸",
+}
+`;
+
+exports[`emojiData: supervillain 1`] = `
+Object {
+  "name": "1f9b9",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9b9-1f3fb",
+        "string": "🦹🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9b9-1f3fc",
+        "string": "🦹🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9b9-1f3fd",
+        "string": "🦹🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9b9-1f3fe",
+        "string": "🦹🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9b9-1f3ff",
+        "string": "🦹🏿",
+      },
+    ],
+  ],
+  "string": "🦹",
+}
+`;
+
 exports[`emojiData: surfer 1`] = `
 Object {
   "name": "1f3c4",
@@ -17765,6 +21349,14 @@ Object {
   "name": "1f69f",
   "skins": null,
   "string": "🚟",
+}
+`;
+
+exports[`emojiData: swan 1`] = `
+Object {
+  "name": "1f9a2",
+  "skins": null,
+  "string": "🦢",
 }
 `;
 
@@ -17948,6 +21540,102 @@ Object {
 }
 `;
 
+exports[`emojiData: teacher 1`] = `
+Object {
+  "name": "1f9d1-200d-1f3eb",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f3eb",
+        "string": "🧑🏻‍🏫",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f3eb",
+        "string": "🧑🏼‍🏫",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f3eb",
+        "string": "🧑🏽‍🏫",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f3eb",
+        "string": "🧑🏾‍🏫",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f3eb",
+        "string": "🧑🏿‍🏫",
+      },
+    ],
+  ],
+  "string": "🧑‍🏫",
+}
+`;
+
+exports[`emojiData: technologist 1`] = `
+Object {
+  "name": "1f9d1-200d-1f4bb",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f4bb",
+        "string": "🧑🏻‍💻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f4bb",
+        "string": "🧑🏼‍💻",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f4bb",
+        "string": "🧑🏽‍💻",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f4bb",
+        "string": "🧑🏾‍💻",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f4bb",
+        "string": "🧑🏿‍💻",
+      },
+    ],
+  ],
+  "string": "🧑‍💻",
+}
+`;
+
+exports[`emojiData: teddy_bear 1`] = `
+Object {
+  "name": "1f9f8",
+  "skins": null,
+  "string": "🧸",
+}
+`;
+
 exports[`emojiData: telephone 1`] = `
 Object {
   "name": "260e-fe0f",
@@ -17985,6 +21673,14 @@ Object {
   "name": "26fa",
   "skins": null,
   "string": "⛺",
+}
+`;
+
+exports[`emojiData: test_tube 1`] = `
+Object {
+  "name": "1f9ea",
+  "skins": null,
+  "string": "🧪",
 }
 `;
 
@@ -18061,6 +21757,14 @@ Object {
   "name": "1f4ad",
   "skins": null,
   "string": "💭",
+}
+`;
+
+exports[`emojiData: thread 1`] = `
+Object {
+  "name": "1f9f5",
+  "skins": null,
+  "string": "🧵",
 }
 `;
 
@@ -18253,6 +21957,22 @@ Object {
   "name": "1f445",
   "skins": null,
   "string": "👅",
+}
+`;
+
+exports[`emojiData: toolbox 1`] = `
+Object {
+  "name": "1f9f0",
+  "skins": null,
+  "string": "🧰",
+}
+`;
+
+exports[`emojiData: tooth 1`] = `
+Object {
+  "name": "1f9b7",
+  "skins": null,
+  "string": "🦷",
 }
 `;
 
@@ -18491,7 +22211,183 @@ Object {
 exports[`emojiData: two_men_holding_hands 1`] = `
 Object {
   "name": "1f46c",
-  "skins": null,
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46c-1f3fb",
+        "string": "👬🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46c-1f3fc",
+        "string": "👬🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46c-1f3fd",
+        "string": "👬🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46c-1f3fe",
+        "string": "👬🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46c-1f3ff",
+        "string": "👬🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏻‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏻‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏻‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f468-1f3fb-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏻‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏼‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏼‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏼‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f468-1f3fc-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏼‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏽‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏽‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏽‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f468-1f3fd-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏽‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏾‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏾‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏾‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f468-1f3fe-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👨🏾‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👨🏿‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👨🏿‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👨🏿‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f468-1f3ff-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👨🏿‍🤝‍👨🏾",
+      },
+    ],
+  ],
   "string": "👬",
 }
 `;
@@ -18499,7 +22395,183 @@ Object {
 exports[`emojiData: two_women_holding_hands 1`] = `
 Object {
   "name": "1f46d",
-  "skins": null,
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46d-1f3fb",
+        "string": "👭🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46d-1f3fc",
+        "string": "👭🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46d-1f3fd",
+        "string": "👭🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46d-1f3fe",
+        "string": "👭🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46d-1f3ff",
+        "string": "👭🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏻‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏻‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏻‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏻‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏼‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏼‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏼‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏼‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏽‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏽‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏽‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏽‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏾‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏾‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏾‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏾‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏿‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏿‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏿‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏿‍🤝‍👩🏾",
+      },
+    ],
+  ],
   "string": "👭",
 }
 `;
@@ -18845,6 +22917,14 @@ Object {
   "name": "1f19a",
   "skins": null,
   "string": "🆚",
+}
+`;
+
+exports[`emojiData: waffle 1`] = `
+Object {
+  "name": "1f9c7",
+  "skins": null,
+  "string": "🧇",
 }
 `;
 
@@ -19208,6 +23288,146 @@ Object {
 }
 `;
 
+exports[`emojiData: white_haired_man 1`] = `
+Object {
+  "name": "1f468-200d-1f9b3",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f468-1f3fb-200d-1f9b3",
+        "string": "👨🏻‍🦳",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f468-1f3fc-200d-1f9b3",
+        "string": "👨🏼‍🦳",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f468-1f3fd-200d-1f9b3",
+        "string": "👨🏽‍🦳",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f468-1f3fe-200d-1f9b3",
+        "string": "👨🏾‍🦳",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f468-1f3ff-200d-1f9b3",
+        "string": "👨🏿‍🦳",
+      },
+    ],
+  ],
+  "string": "👨‍🦳",
+}
+`;
+
+exports[`emojiData: white_haired_person 1`] = `
+Object {
+  "name": "1f9d1-200d-1f9b3",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9d1-1f3fb-200d-1f9b3",
+        "string": "🧑🏻‍🦳",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9d1-1f3fc-200d-1f9b3",
+        "string": "🧑🏼‍🦳",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9d1-1f3fd-200d-1f9b3",
+        "string": "🧑🏽‍🦳",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9d1-1f3fe-200d-1f9b3",
+        "string": "🧑🏾‍🦳",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9d1-1f3ff-200d-1f9b3",
+        "string": "🧑🏿‍🦳",
+      },
+    ],
+  ],
+  "string": "🧑‍🦳",
+}
+`;
+
+exports[`emojiData: white_haired_woman 1`] = `
+Object {
+  "name": "1f469-200d-1f9b3",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9b3",
+        "string": "👩🏻‍🦳",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9b3",
+        "string": "👩🏼‍🦳",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9b3",
+        "string": "👩🏽‍🦳",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9b3",
+        "string": "👩🏾‍🦳",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9b3",
+        "string": "👩🏿‍🦳",
+      },
+    ],
+  ],
+  "string": "👩‍🦳",
+}
+`;
+
+exports[`emojiData: white_heart 1`] = `
+Object {
+  "name": "1f90d",
+  "skins": null,
+  "string": "🤍",
+}
+`;
+
 exports[`emojiData: white_large_square 1`] = `
 Object {
   "name": "2b1c",
@@ -19340,6 +23560,190 @@ Object {
 }
 `;
 
+exports[`emojiData: woman_and_man_holding_hands 1`] = `
+Object {
+  "name": "1f46b",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46b-1f3fb",
+        "string": "👫🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46b-1f3fc",
+        "string": "👫🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46b-1f3fd",
+        "string": "👫🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46b-1f3fe",
+        "string": "👫🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46b-1f3ff",
+        "string": "👫🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏻‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏻‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏻‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏻‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏼‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏼‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏼‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏼‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏽‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏽‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏽‍🤝‍👨🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏽‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏾‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏾‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏾‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f468-1f3ff",
+        "string": "👩🏾‍🤝‍👨🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fb",
+        "string": "👩🏿‍🤝‍👨🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fc",
+        "string": "👩🏿‍🤝‍👨🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fd",
+        "string": "👩🏿‍🤝‍👨🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f468-1f3fe",
+        "string": "👩🏿‍🤝‍👨🏾",
+      },
+    ],
+  ],
+  "string": "👫",
+}
+`;
+
 exports[`emojiData: woman_climbing 1`] = `
 Object {
   "name": "1f9d7-200d-2640-fe0f",
@@ -19428,6 +23832,94 @@ Object {
 }
 `;
 
+exports[`emojiData: woman_in_manual_wheelchair 1`] = `
+Object {
+  "name": "1f469-200d-1f9bd",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9bd",
+        "string": "👩🏻‍🦽",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9bd",
+        "string": "👩🏼‍🦽",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9bd",
+        "string": "👩🏽‍🦽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9bd",
+        "string": "👩🏾‍🦽",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9bd",
+        "string": "👩🏿‍🦽",
+      },
+    ],
+  ],
+  "string": "👩‍🦽",
+}
+`;
+
+exports[`emojiData: woman_in_motorized_wheelchair 1`] = `
+Object {
+  "name": "1f469-200d-1f9bc",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9bc",
+        "string": "👩🏻‍🦼",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9bc",
+        "string": "👩🏼‍🦼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9bc",
+        "string": "👩🏽‍🦼",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9bc",
+        "string": "👩🏾‍🦼",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9bc",
+        "string": "👩🏿‍🦼",
+      },
+    ],
+  ],
+  "string": "👩‍🦼",
+}
+`;
+
 exports[`emojiData: woman_in_steamy_room 1`] = `
 Object {
   "name": "1f9d6-200d-2640-fe0f",
@@ -19469,6 +23961,138 @@ Object {
     ],
   ],
   "string": "🧖‍♀️",
+}
+`;
+
+exports[`emojiData: woman_kneeling 1`] = `
+Object {
+  "name": "1f9ce-200d-2640-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9ce-1f3fb-200d-2640-fe0f",
+        "string": "🧎🏻‍♀️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9ce-1f3fc-200d-2640-fe0f",
+        "string": "🧎🏼‍♀️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9ce-1f3fd-200d-2640-fe0f",
+        "string": "🧎🏽‍♀️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9ce-1f3fe-200d-2640-fe0f",
+        "string": "🧎🏾‍♀️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9ce-1f3ff-200d-2640-fe0f",
+        "string": "🧎🏿‍♀️",
+      },
+    ],
+  ],
+  "string": "🧎‍♀️",
+}
+`;
+
+exports[`emojiData: woman_standing 1`] = `
+Object {
+  "name": "1f9cd-200d-2640-fe0f",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f9cd-1f3fb-200d-2640-fe0f",
+        "string": "🧍🏻‍♀️",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f9cd-1f3fc-200d-2640-fe0f",
+        "string": "🧍🏼‍♀️",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f9cd-1f3fd-200d-2640-fe0f",
+        "string": "🧍🏽‍♀️",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f9cd-1f3fe-200d-2640-fe0f",
+        "string": "🧍🏾‍♀️",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f9cd-1f3ff-200d-2640-fe0f",
+        "string": "🧍🏿‍♀️",
+      },
+    ],
+  ],
+  "string": "🧍‍♀️",
+}
+`;
+
+exports[`emojiData: woman_with_probing_cane 1`] = `
+Object {
+  "name": "1f469-200d-1f9af",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f469-1f3fb-200d-1f9af",
+        "string": "👩🏻‍🦯",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f469-1f3fc-200d-1f9af",
+        "string": "👩🏼‍🦯",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f469-1f3fd-200d-1f9af",
+        "string": "👩🏽‍🦯",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f469-1f3fe-200d-1f9af",
+        "string": "👩🏾‍🦯",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f469-1f3ff-200d-1f9af",
+        "string": "👩🏿‍🦯",
+      },
+    ],
+  ],
+  "string": "👩‍🦯",
 }
 `;
 
@@ -20752,6 +25376,14 @@ Object {
 }
 `;
 
+exports[`emojiData: womans_flat_shoe 1`] = `
+Object {
+  "name": "1f97f",
+  "skins": null,
+  "string": "🥿",
+}
+`;
+
 exports[`emojiData: womans_hat 1`] = `
 Object {
   "name": "1f452",
@@ -20760,11 +25392,203 @@ Object {
 }
 `;
 
+exports[`emojiData: women_holding_hands 1`] = `
+Object {
+  "name": "1f46d",
+  "skins": Array [
+    Array [
+      "1f3fb",
+      Object {
+        "name": "1f46d-1f3fb",
+        "string": "👭🏻",
+      },
+    ],
+    Array [
+      "1f3fc",
+      Object {
+        "name": "1f46d-1f3fc",
+        "string": "👭🏼",
+      },
+    ],
+    Array [
+      "1f3fd",
+      Object {
+        "name": "1f46d-1f3fd",
+        "string": "👭🏽",
+      },
+    ],
+    Array [
+      "1f3fe",
+      Object {
+        "name": "1f46d-1f3fe",
+        "string": "👭🏾",
+      },
+    ],
+    Array [
+      "1f3ff",
+      Object {
+        "name": "1f46d-1f3ff",
+        "string": "👭🏿",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fc",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏻‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fd",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏻‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fb-1f3fe",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏻‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fb-1f3ff",
+      Object {
+        "name": "1f469-1f3fb-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏻‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fb",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏼‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fd",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏼‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fc-1f3fe",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏼‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fc-1f3ff",
+      Object {
+        "name": "1f469-1f3fc-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏼‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fb",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏽‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fc",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏽‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fd-1f3fe",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏽‍🤝‍👩🏾",
+      },
+    ],
+    Array [
+      "1f3fd-1f3ff",
+      Object {
+        "name": "1f469-1f3fd-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏽‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fb",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏾‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fc",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏾‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3fe-1f3fd",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏾‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3fe-1f3ff",
+      Object {
+        "name": "1f469-1f3fe-200d-1f91d-200d-1f469-1f3ff",
+        "string": "👩🏾‍🤝‍👩🏿",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fb",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fb",
+        "string": "👩🏿‍🤝‍👩🏻",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fc",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fc",
+        "string": "👩🏿‍🤝‍👩🏼",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fd",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fd",
+        "string": "👩🏿‍🤝‍👩🏽",
+      },
+    ],
+    Array [
+      "1f3ff-1f3fe",
+      Object {
+        "name": "1f469-1f3ff-200d-1f91d-200d-1f469-1f3fe",
+        "string": "👩🏿‍🤝‍👩🏾",
+      },
+    ],
+  ],
+  "string": "👭",
+}
+`;
+
 exports[`emojiData: womens 1`] = `
 Object {
   "name": "1f6ba",
   "skins": null,
   "string": "🚺",
+}
+`;
+
+exports[`emojiData: woozy_face 1`] = `
+Object {
+  "name": "1f974",
+  "skins": null,
+  "string": "🥴",
 }
 `;
 
@@ -20852,6 +25676,22 @@ Object {
 }
 `;
 
+exports[`emojiData: yarn 1`] = `
+Object {
+  "name": "1f9f6",
+  "skins": null,
+  "string": "🧶",
+}
+`;
+
+exports[`emojiData: yawning_face 1`] = `
+Object {
+  "name": "1f971",
+  "skins": null,
+  "string": "🥱",
+}
+`;
+
 exports[`emojiData: yellow_heart 1`] = `
 Object {
   "name": "1f49b",
@@ -20873,6 +25713,14 @@ Object {
   "name": "262f-fe0f",
   "skins": null,
   "string": "☯️",
+}
+`;
+
+exports[`emojiData: yo-yo 1`] = `
+Object {
+  "name": "1fa80",
+  "skins": null,
+  "string": "🪀",
 }
 `;
 
