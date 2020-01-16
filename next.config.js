@@ -123,6 +123,8 @@ module.exports = withOffline({
             process.env.CI === 'true' &&
             options.dev === false &&
             options.isServer === false,
+          excludeAssets: assetName =>
+            assetName.endsWith('.js') ? assetName.endsWith('.module.js') : true,
         }),
       ],
       node: {
