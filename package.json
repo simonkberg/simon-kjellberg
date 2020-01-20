@@ -29,12 +29,10 @@
       "eslint --fix",
       "prettier --write",
       "jest --findRelatedTests",
-      "flow focus-check",
-      "git add"
+      "flow focus-check"
     ],
     "*.{json,md,ya?ml}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "browserslist": [
@@ -120,7 +118,7 @@
     "husky": "4.0.10",
     "jest": "24.9.0",
     "jest-emotion": "10.0.27",
-    "lint-staged": "9.5.0",
+    "lint-staged": "10.0.1",
     "nodemon": "2.0.2",
     "prettier": "1.19.1",
     "raw-loader": "4.0.0",
