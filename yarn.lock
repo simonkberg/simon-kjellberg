@@ -1321,10 +1321,10 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
-"@newrelic/aws-sdk@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@newrelic/aws-sdk/-/aws-sdk-1.0.0.tgz#9e109ba5f1d2fc96ce0547c18ee67216a13a633c"
-  integrity sha512-7stfRvWPQrNdVlrYgJX9hNZ3HMzTGVa5rxJVz5SJuNSi7ngUFGAmImKIbzyGnx3EzSMUsFLemHNcDradfn992w==
+"@newrelic/aws-sdk@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@newrelic/aws-sdk/-/aws-sdk-1.1.1.tgz#465ccd57a190b04b90aef5067e91ffdeb18e5c14"
+  integrity sha512-2ibXwCK7zZ7HDH5anus8l0ZksIMdxhqwyWmc6UHgqe4pyvT9Ush6K/IKvX3MTjjG9wYqovwSulHPCHtdk/IpSg==
 
 "@newrelic/koa@^3.0.0":
   version "3.0.0"
@@ -7541,12 +7541,12 @@ neo-async@^2.5.0, neo-async@^2.6.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-newrelic@6.2.0:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-6.2.0.tgz#7350cb470721bc9f41b98eebe55b6c4cc682c01a"
-  integrity sha512-xzWuZJPIMaPVHITuyUhb6uX+dRjBbs4RsyG0ia7UesKVUORbwX2lyJ6XqiqSQhIw2HnhpAuIBjKmHuR2Rw40WA==
+newrelic@6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-6.3.0.tgz#db45a4b16ec77468350a5a74253b1464a2a0f254"
+  integrity sha512-YOSu5/DH6SA4LKIsbONczxvzFc5KAGKuehbuaxQRcYl5Erk9n4zuUPCaNqaV6ei87aUmMwK9PuVtc0/bKf8NZw==
   dependencies:
-    "@newrelic/aws-sdk" "^1.0.0"
+    "@newrelic/aws-sdk" "^1.1.1"
     "@newrelic/koa" "^3.0.0"
     "@newrelic/superagent" "^2.0.0"
     "@tyriar/fibonacci-heap" "^2.0.7"
