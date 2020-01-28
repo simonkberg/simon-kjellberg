@@ -1021,10 +1021,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@baransu/graphql_ppx_re@0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@baransu/graphql_ppx_re/-/graphql_ppx_re-0.5.0.tgz#147486c1d1252555e78b89d45f685b48cc293617"
-  integrity sha512-a0iDo4ewC74cqowkxuPcAhUeJ4AQmjKWW0EtnZ2QG/doqsfObOc43bAfGPPQHG2pdtGCY5MwtqbNOVH+5EHkMA==
+"@baransu/graphql_ppx_re@0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@baransu/graphql_ppx_re/-/graphql_ppx_re-0.6.1.tgz#7a701b5f2f1797095a034b5b6eca2a5d8781975f"
+  integrity sha512-jrHTlTMAasNU296RIL5ACa50Dj2YjP/ZmqLph+VM2Nso24B80ujXJF4iOdsiNh5DT48FNOcIVluCKtLrFQw5qw==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
