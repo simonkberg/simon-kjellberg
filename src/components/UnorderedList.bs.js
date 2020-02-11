@@ -25,10 +25,10 @@ var styles = Css.style(/* :: */[
     ]);
 
 function UnorderedList(Props) {
-  var match = Props.className;
-  var className = match !== undefined ? match : "";
+  var $staropt$star = Props.className;
   var innerRef = Props.innerRef;
   var children = Props.children;
+  var className = $staropt$star !== undefined ? $staropt$star : "";
   var tmp = {
     className: Utils$SimonKjellberg.cn(/* :: */[
           styles,

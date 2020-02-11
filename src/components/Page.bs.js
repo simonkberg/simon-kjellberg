@@ -53,11 +53,11 @@ var Styles = {
 };
 
 function Page(Props) {
-  var match = Props.siteTitle;
-  var siteTitle = match !== undefined ? match : "Simon Kjellberg";
-  var match$1 = Props.siteDescription;
-  var siteDescription = match$1 !== undefined ? match$1 : "";
+  var $staropt$star = Props.siteTitle;
+  var $staropt$star$1 = Props.siteDescription;
   var children = Props.children;
+  var siteTitle = $staropt$star !== undefined ? $staropt$star : "Simon Kjellberg";
+  var siteDescription = $staropt$star$1 !== undefined ? $staropt$star$1 : "";
   return React.createElement("div", {
               className: wrapper
             }, React.createElement(Head.default, {
