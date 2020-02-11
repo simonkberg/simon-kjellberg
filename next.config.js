@@ -35,6 +35,13 @@ module.exports = withOffline({
     siteTitle: app.title,
     siteDescription: app.description,
   },
+  workboxOpts: {
+    exclude: [
+      'react-loadable-manifest.json',
+      'build-manifest.json',
+      /\.(?:map|woff)$/,
+    ],
+  },
   webpack: (config, options) => {
     const resolve = require('resolve')
     const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
