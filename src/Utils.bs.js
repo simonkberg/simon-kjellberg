@@ -91,7 +91,7 @@ function string_of_rgb(r, g, b) {
 }
 
 function rgb_of_string(s) {
-  var match = s.match((/^rgb\((\d+), ?(\d+), ?(\d+)\)/));
+  var match = s.match(/^rgb\((\d+), ?(\d+), ?(\d+)\)/);
   if (match !== null) {
     return Css.rgb(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)));
   } else {
@@ -104,7 +104,7 @@ function string_of_rgba(r, g, b, a) {
 }
 
 function rgba_of_string(s) {
-  var match = s.match((/^rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/));
+  var match = s.match(/^rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/);
   if (match !== null) {
     return Css.rgba(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 4)));
   } else {
@@ -117,7 +117,7 @@ function string_of_hsl(h, s, l) {
 }
 
 function hsl_of_string(s) {
-  var match = s.match((/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/));
+  var match = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/);
   if (match !== null) {
     return Css.hsl(/* `deg */[
                 4995526,
@@ -133,7 +133,7 @@ function string_of_hsla(h, s, l, a) {
 }
 
 function hsla_of_string(s) {
-  var match = s.match((/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/));
+  var match = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/);
   if (match !== null) {
     return Css.hsla(/* `deg */[
                 4995526,

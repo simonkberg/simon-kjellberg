@@ -113,8 +113,8 @@ var Styles = {
 function ChatMessage(Props) {
   var user$1 = Props.user;
   var text = Props.text;
-  var match = Props.edited;
-  var edited = match !== undefined ? match : false;
+  var $staropt$star = Props.edited;
+  var edited = $staropt$star !== undefined ? $staropt$star : false;
   return React.createElement(React.Fragment, undefined, React.createElement("span", {
                   className: user,
                   style: {

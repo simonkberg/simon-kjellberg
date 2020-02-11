@@ -19,8 +19,8 @@ let styles =
 
 [@react.component]
 let make =
-  forwardDOMRef((~className=?, ~style=?, ~children, domRef) =>
-    <li className={cn([styles, className |? ""])} ?style ref=?domRef>
+  forwardDOMRef((~className=?, ~style=?, ~children, ref) =>
+    <li className={cn([styles, className |? ""])} ?style ?ref>
       children
     </li>
   );

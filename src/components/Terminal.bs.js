@@ -219,7 +219,7 @@ function Terminal(Props) {
           } else {
             return 0;
           }
-        }), /* array */[windowRef]);
+        }), [windowRef]);
   return React.createElement("div", {
               ref: windowRef,
               className: $$window
