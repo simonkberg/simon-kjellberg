@@ -33,27 +33,29 @@ function parse(value) {
                 var match = Js_dict.get(value$1, "name");
                 var tmp;
                 if (match !== undefined) {
-                  var match$1 = Js_json.decodeString(Caml_option.valFromOption(match));
-                  tmp = match$1 !== undefined ? match$1 : Js_exn.raiseError("Unexpected GraphQL query response");
+                  var value$2 = Caml_option.valFromOption(match);
+                  var match$1 = Js_json.decodeString(value$2);
+                  tmp = match$1 !== undefined ? match$1 : Js_exn.raiseError("graphql_ppx: Expected string, got " + JSON.stringify(value$2));
                 } else {
-                  tmp = Js_exn.raiseError("Unexpected GraphQL query response");
+                  tmp = Js_exn.raiseError("graphql_ppx: Field name on type WakaTimeStats is missing");
                 }
                 var match$2 = Js_dict.get(value$1, "percent");
                 var tmp$1;
                 if (match$2 !== undefined) {
-                  var match$3 = Js_json.decodeNumber(Caml_option.valFromOption(match$2));
-                  tmp$1 = match$3 !== undefined ? match$3 : Js_exn.raiseError("Unexpected GraphQL query response");
+                  var value$3 = Caml_option.valFromOption(match$2);
+                  var match$3 = Js_json.decodeNumber(value$3);
+                  tmp$1 = match$3 !== undefined ? match$3 : Js_exn.raiseError("graphql_ppx: Expected float, got " + JSON.stringify(value$3));
                 } else {
-                  tmp$1 = Js_exn.raiseError("Unexpected GraphQL query response");
+                  tmp$1 = Js_exn.raiseError("graphql_ppx: Field percent on type WakaTimeStats is missing");
                 }
                 return {
                         name: tmp,
                         percent: tmp$1
                       };
-              })) : Js_exn.raiseError("Unexpected GraphQL query response")
+              })) : Js_exn.raiseError("graphql_ppx: Field stats on type WakaTime is missing")
     };
   } else {
-    tmp = Js_exn.raiseError("Unexpected GraphQL query response");
+    tmp = Js_exn.raiseError("graphql_ppx: Field wakaTime on type Query is missing");
   }
   return {
           wakaTime: tmp
