@@ -1,16 +1,16 @@
 let styles =
   Css.(
     style([
-      position(`relative),
+      position(relative),
       marginTop(em(1.0)),
       marginBottom(em(1.0)),
       marginLeft(ch(1.5)),
       fontSize(rem(1.0)),
       fontWeight(`bold),
       before([
-        position(`absolute),
+        position(absolute),
         left(ch(-1.5)),
-        contentRule(">"),
+        contentRule(`text(">")),
         color(Theme.Color.muted),
       ]),
     ])

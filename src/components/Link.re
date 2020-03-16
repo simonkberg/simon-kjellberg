@@ -1,9 +1,9 @@
 let styles =
   Css.(
     style([
-      color(`currentColor),
-      textDecoration(`underline),
-      hover([textDecoration(`none)]),
+      color(currentColor),
+      textDecoration(underline),
+      hover([textDecoration(none)]),
     ])
   );
 
