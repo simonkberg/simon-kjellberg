@@ -7,7 +7,7 @@ module Styles = {
     style([
       fontSize(pct(100.0)),
       lineHeight(`abs(1.5)),
-      fontFamily("Iosevka, monospace"),
+      fontFamilies([`custom("Iosevka"), `monospace]),
       color(Theme.Color.primary),
     ]);
 

@@ -3,10 +3,10 @@ open Utils;
 let styles =
   Css.(
     style([
-      position(`relative),
+      position(relative),
       before([
-        contentRule("*"),
-        position(`absolute),
+        contentRule(`text("*")),
+        position(absolute),
         left(ch(-1.5)),
         color(Theme.Color.muted),
       ]),
