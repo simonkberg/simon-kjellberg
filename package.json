@@ -79,7 +79,7 @@
     "ioredis": "4.16.0",
     "lru-cache": "5.1.1",
     "minimist": "1.2.5",
-    "morgan": "1.9.1",
+    "morgan": "1.10.0",
     "ms": "2.1.2",
     "newrelic": "6.4.2",
     "next": "9.3.1",
