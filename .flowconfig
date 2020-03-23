@@ -4,6 +4,7 @@
 
 [untyped]
 <PROJECT_ROOT>/node_modules/graphql/utilities/extendSchema.js.flow
+<PROJECT_ROOT>/node_modules/graphql/subscription/mapAsyncIterator.js.flow
 <PROJECT_ROOT>/node_modules/polished/lib/shorthands/position.js.flow
 <PROJECT_ROOT>/node_modules/@emotion/cache/src/index.js
 <PROJECT_ROOT>/node_modules/emotion-theming/src/theme-provider.js
