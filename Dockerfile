@@ -1,6 +1,6 @@
 FROM node:12 as base
 WORKDIR /app
-ENV YARN_VERSION 1.19.1
+ENV YARN_VERSION 1.22.4
 RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
 ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:$PATH"
 COPY package.json yarn.lock ./
@@ -14,6 +14,7 @@ FROM node:12-alpine
 WORKDIR /app
 ENV PORT 3000
 ENV NODE_ENV production
+RUN npm install pm2 -g
 COPY --from=base /app .
 EXPOSE $PORT
-CMD ["node", "scripts/serve.js"]
+CMD ["pm2-runtime", "scripts/serve.js"]
