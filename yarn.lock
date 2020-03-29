@@ -1596,10 +1596,10 @@
   dependencies:
     any-observable "^0.3.0"
 
-"@simonkberg/eslint-config@21.0.0":
-  version "21.0.0"
-  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-21.0.0.tgz#d3b5d9c7ef7027a8ba7724a796483c8458a57ea2"
-  integrity sha512-28lQ9kIlPpdGF4a8BMQ14GdBQ4oL51Gfds3cFJzUrVlzWo/sCskwGAhjctVsKZyQfiqoYWCGSDdE3BBaJ5WIBA==
+"@simonkberg/eslint-config@21.0.1":
+  version "21.0.1"
+  resolved "https://registry.yarnpkg.com/@simonkberg/eslint-config/-/eslint-config-21.0.1.tgz#361628b558e6d3adeb9c7155a8822ab02f559203"
+  integrity sha512-EX7gj8ynHo6XIeo0QDMZtHqok6FGMCNMoPx64+q+NTvZc6RE4rRgy1HwNKLfPMq4tFAKBINwJUhuEinudY5CIQ==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^2.25.0"
     "@typescript-eslint/parser" "^2.25.0"
