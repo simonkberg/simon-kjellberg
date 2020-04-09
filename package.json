@@ -115,7 +115,7 @@
     "file-loader": "6.0.0",
     "flow-bin": "0.121.0",
     "fs-extra": "9.0.0",
-    "husky": "4.2.3",
+    "husky": "4.2.5",
     "jest": "25.2.3",
     "jest-emotion": "10.0.32",
     "lint-staged": "10.1.1",
