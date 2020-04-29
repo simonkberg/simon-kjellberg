@@ -140,6 +140,6 @@ module.exports = withOffline({
   },
   experimental: {
     modern: true,
-    deferScripts: true,
+    reactRefresh: true,
   },
 })
