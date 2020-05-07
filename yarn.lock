@@ -1305,10 +1305,10 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.5.tgz#8eed982e2ee6f7f4e44c253e12962980791efd46"
   integrity sha512-6U71C2Wp7r5XtFtQzYrW5iKFT67OixrSxjI4MptCHzdSVlgabczzqLe0ZSgnub/5Kp4hSbpDB1tMytZY9pwxxA==
 
-"@grpc/grpc-js@^0.6.15":
-  version "0.6.18"
-  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-0.6.18.tgz#ba3b3dfef869533161d192a385412a4abd0db127"
-  integrity sha512-uAzv/tM8qpbf1vpx1xPMfcUMzbfdqJtdCYAqY/LsLeQQlnTb4vApylojr+wlCyr7bZeg3AFfHvtihnNOQQt/nA==
+"@grpc/grpc-js@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.0.3.tgz#7fa2ba293ccc1e91b24074c2628c8c68336e18c4"
+  integrity sha512-JKV3f5Bv2TZxK6eJSB9EarsZrnLxrvcFNwI9goq0YRXa3S6NNoCSnI3cG3lkXVIJ03Wng1WXe76kc2JQtRe7AQ==
   dependencies:
     semver "^6.2.0"
 
@@ -7933,12 +7933,12 @@ neo-async@^2.5.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.1.tgz#ac27ada66167fa8849a6addd837f6b189ad2081c"
   integrity sha512-iyam8fBuCUpWeKPGpaNMetEocMt364qkCsfL9JuhjXX6dRnguRVOfk2GZaDpPjcOKiiXCPINZC1GczQ7iTq3Zw==
 
-newrelic@6.6.0:
-  version "6.6.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-6.6.0.tgz#ed1c6914bf758a7703573354e551d3f82722f4d5"
-  integrity sha512-0pC8VheOQfnWMKs5WwF4SFa9BMwm34hobwwsEE3PePcRcGNSIo6MXZZDvptaBH+9ZOMuaWkK2q5y0h8UKPxq9w==
+newrelic@6.7.0:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-6.7.0.tgz#577f3f4102b42617aab900fd1503f64124a739e4"
+  integrity sha512-NU5jCS8tm3T7A1ybEj+xShLilxPtKMS7nYzIf+QgbEsf8nFWoAvUdgr7J2Bszf6kC3mO0OsHKGLs/qb8CWU1qg==
   dependencies:
-    "@grpc/grpc-js" "^0.6.15"
+    "@grpc/grpc-js" "1.0.3"
     "@grpc/proto-loader" "^0.5.3"
     "@newrelic/aws-sdk" "^1.1.1"
     "@newrelic/koa" "^3.0.0"
