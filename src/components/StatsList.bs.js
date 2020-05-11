@@ -22,40 +22,38 @@ var ppx_printed_query = "query WakaTimeStatsQuery  {\n__typename\nwakaTime  {\n_
 
 function parse(value) {
   var value$1 = Js_option.getExn(Js_json.decodeObject(value));
-  var match = Js_dict.get(value$1, "wakaTime");
+  var value$2 = Js_dict.get(value$1, "wakaTime");
   var tmp;
-  if (match !== undefined) {
-    var value$2 = Js_option.getExn(Js_json.decodeObject(Caml_option.valFromOption(match)));
-    var match$1 = Js_dict.get(value$2, "stats");
+  if (value$2 !== undefined) {
+    var value$3 = Js_option.getExn(Js_json.decodeObject(Caml_option.valFromOption(value$2)));
+    var value$4 = Js_dict.get(value$3, "stats");
     tmp = {
-      stats: match$1 !== undefined ? Js_option.getExn(Js_json.decodeArray(Caml_option.valFromOption(match$1))).map((function (value) {
+      stats: value$4 !== undefined ? Js_option.getExn(Js_json.decodeArray(Caml_option.valFromOption(value$4))).map((function (value) {
                 var value$1 = Js_option.getExn(Js_json.decodeObject(value));
-                var match = Js_dict.get(value$1, "name");
+                var value$2 = Js_dict.get(value$1, "name");
                 var tmp;
-                if (match !== undefined) {
-                  var value$2 = Caml_option.valFromOption(match);
-                  var match$1 = Js_json.decodeString(value$2);
-                  tmp = match$1 !== undefined ? match$1 : Js_exn.raiseError("graphql_ppx: Expected string, got " + JSON.stringify(value$2));
+                if (value$2 !== undefined) {
+                  var value$3 = Js_json.decodeString(Caml_option.valFromOption(value$2));
+                  tmp = value$3 !== undefined ? value$3 : Js_exn.raiseError("Unexpected GraphQL query response");
                 } else {
-                  tmp = Js_exn.raiseError("graphql_ppx: Field name on type WakaTimeStats is missing");
+                  tmp = Js_exn.raiseError("Unexpected GraphQL query response");
                 }
-                var match$2 = Js_dict.get(value$1, "percent");
+                var value$4 = Js_dict.get(value$1, "percent");
                 var tmp$1;
-                if (match$2 !== undefined) {
-                  var value$3 = Caml_option.valFromOption(match$2);
-                  var match$3 = Js_json.decodeNumber(value$3);
-                  tmp$1 = match$3 !== undefined ? match$3 : Js_exn.raiseError("graphql_ppx: Expected float, got " + JSON.stringify(value$3));
+                if (value$4 !== undefined) {
+                  var value$5 = Js_json.decodeNumber(Caml_option.valFromOption(value$4));
+                  tmp$1 = value$5 !== undefined ? value$5 : Js_exn.raiseError("Unexpected GraphQL query response");
                 } else {
-                  tmp$1 = Js_exn.raiseError("graphql_ppx: Field percent on type WakaTimeStats is missing");
+                  tmp$1 = Js_exn.raiseError("Unexpected GraphQL query response");
                 }
                 return {
                         name: tmp,
                         percent: tmp$1
                       };
-              })) : Js_exn.raiseError("graphql_ppx: Field stats on type WakaTime is missing")
+              })) : Js_exn.raiseError("Unexpected GraphQL query response")
     };
   } else {
-    tmp = Js_exn.raiseError("graphql_ppx: Field wakaTime on type Query is missing");
+    tmp = Js_exn.raiseError("Unexpected GraphQL query response");
   }
   return {
           wakaTime: tmp
@@ -121,19 +119,19 @@ function StatsList(Props) {
                   var result = param.result;
                   if (typeof result === "number") {
                     return React.createElement(Loader$SimonKjellberg.make, { });
-                  } else if (result.tag) {
-                    var response = result[0];
-                    if (response.wakaTime.stats.length === 0) {
-                      return React.createElement("p", undefined, React.createElement("em", undefined, Utils$SimonKjellberg.str("Oops! Looks like the language statistics are currently empty. " + "I\'m probably on vacation 🌴 (or something is broken).")));
-                    } else {
-                      return React.createElement(UnorderedList$SimonKjellberg.make, {
-                                  children: React.createElement(make, {
-                                        stats: response.wakaTime.stats
-                                      })
-                                });
-                    }
-                  } else {
+                  }
+                  if (!result.tag) {
                     return React.createElement("p", undefined, Utils$SimonKjellberg.str("Language statistics are temporarily unavailable :("));
+                  }
+                  var response = result[0];
+                  if (response.wakaTime.stats.length === 0) {
+                    return React.createElement("p", undefined, React.createElement("em", undefined, Utils$SimonKjellberg.str("Oops! Looks like the language statistics are currently empty. " + "I\'m probably on vacation 🌴 (or something is broken).")));
+                  } else {
+                    return React.createElement(UnorderedList$SimonKjellberg.make, {
+                                children: React.createElement(make, {
+                                      stats: response.wakaTime.stats
+                                    })
+                              });
                   }
                 })
             });

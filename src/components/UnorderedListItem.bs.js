@@ -44,7 +44,6 @@ var make = Utils$SimonKjellberg.forwardDOMRef((function (Props, ref) {
         var className = Props.className;
         var style = Props.style;
         var children = Props.children;
-        var ref$1 = ref;
         var tmp = {
           className: Utils$SimonKjellberg.cn(/* :: */[
                 styles,
@@ -54,8 +53,8 @@ var make = Utils$SimonKjellberg.forwardDOMRef((function (Props, ref) {
                 ]
               ])
         };
-        if (ref$1 !== undefined) {
-          tmp.ref = Caml_option.valFromOption(ref$1);
+        if (ref !== undefined) {
+          tmp.ref = Caml_option.valFromOption(ref);
         }
         if (style !== undefined) {
           tmp.style = Caml_option.valFromOption(style);

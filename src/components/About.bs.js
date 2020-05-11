@@ -10,7 +10,7 @@ function str(prim) {
   return prim;
 }
 
-var config = Next$SimonKjellberg.Config.getConfig(/* () */0);
+var config = Next$SimonKjellberg.Config.getConfig(undefined);
 
 function About(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {

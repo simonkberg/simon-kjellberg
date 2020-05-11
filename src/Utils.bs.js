@@ -45,10 +45,9 @@ function $pipe$question(value, $$default) {
 }
 
 function cn(cns) {
-  var __x = Belt_List.keep(cns, (function (x) {
-          return x !== "";
-        }));
-  return $$String.concat(" ", __x);
+  return $$String.concat(" ", Belt_List.keep(cns, (function (x) {
+                    return x !== "";
+                  })));
 }
 
 function string_of_float(prim) {
@@ -91,9 +90,9 @@ function string_of_rgb(r, g, b) {
 }
 
 function rgb_of_string(s) {
-  var match = s.match(/^rgb\((\d+), ?(\d+), ?(\d+)\)/);
-  if (match !== null) {
-    return Css.rgb(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)));
+  var re = s.match(/^rgb\((\d+), ?(\d+), ?(\d+)\)/);
+  if (re !== null) {
+    return Css.rgb(Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 3)));
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -104,9 +103,9 @@ function string_of_rgba(r, g, b, a) {
 }
 
 function rgba_of_string(s) {
-  var match = s.match(/^rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/);
-  if (match !== null) {
-    return Css.rgba(Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(match, 3)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 4)));
+  var re = s.match(/^rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/);
+  if (re !== null) {
+    return Css.rgba(Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 3)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4)));
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -117,12 +116,12 @@ function string_of_hsl(h, s, l) {
 }
 
 function hsl_of_string(s) {
-  var match = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/);
-  if (match !== null) {
+  var re = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/);
+  if (re !== null) {
     return Css.hsl(/* `deg */[
                 4995526,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 1))
-              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 3)));
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
+              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)));
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -133,14 +132,14 @@ function string_of_hsla(h, s, l, a) {
 }
 
 function hsla_of_string(s) {
-  var match = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/);
-  if (match !== null) {
+  var re = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/);
+  if (re !== null) {
     return Css.hsla(/* `deg */[
                 4995526,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 1))
-              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 3)), /* `percent */[
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
+              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)), /* `percent */[
                 -119887163,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(match, 4))
+                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4))
               ]);
   } else {
     return Js_exn.raiseError("Invalid formatted value");
@@ -154,28 +153,25 @@ function string_of_color(param) {
     } else {
       return "currentColor";
     }
-  } else {
-    var variant = param[0];
-    if (variant !== -878128972) {
-      if (variant >= 5197569) {
-        if (variant >= 5692173) {
-          var match = param[1];
-          return string_of_rgb(match[0], match[1], match[2]);
-        } else {
-          var match$1 = param[1];
-          return string_of_hsl(match$1[0], match$1[1], match$1[2]);
-        }
-      } else if (variant >= 5194459) {
-        return "#" + param[1];
-      } else {
-        var match$2 = param[1];
-        return string_of_hsla(match$2[0], match$2[1], match$2[2], match$2[3]);
-      }
-    } else {
-      var match$3 = param[1];
-      return string_of_rgba(match$3[0], match$3[1], match$3[2], match$3[3]);
-    }
   }
+  var variant = param[0];
+  if (variant !== -878128972) {
+    if (variant >= 5197569) {
+      if (variant >= 5692173) {
+        var match = param[1];
+        return string_of_rgb(match[0], match[1], match[2]);
+      }
+      var match$1 = param[1];
+      return string_of_hsl(match$1[0], match$1[1], match$1[2]);
+    }
+    if (variant >= 5194459) {
+      return "#" + param[1];
+    }
+    var match$2 = param[1];
+    return string_of_hsla(match$2[0], match$2[1], match$2[2], match$2[3]);
+  }
+  var match$3 = param[1];
+  return string_of_rgba(match$3[0], match$3[1], match$3[2], match$3[3]);
 }
 
 function color_of_string(s) {
@@ -197,58 +193,57 @@ function color_of_string(s) {
 function string_of_length(param) {
   if (typeof param === "number") {
     return "0";
-  } else {
-    var variant = param[0];
-    if (variant >= 22632) {
-      if (variant >= 25096) {
-        if (variant >= 26433) {
-          if (variant >= 5691738) {
-            return param[1].toString() + "rem";
-          } else {
-            return param[1].toString() + "vw";
-          }
-        } else if (variant >= 26418) {
-          return param[1].toString() + "vh";
+  }
+  var variant = param[0];
+  if (variant >= 22632) {
+    if (variant >= 25096) {
+      if (variant >= 26433) {
+        if (variant >= 5691738) {
+          return param[1].toString() + "rem";
         } else {
-          return param[1].toString() + "px";
+          return param[1].toString() + "vw";
         }
-      } else if (variant >= 24416) {
-        if (variant >= 25092) {
-          return param[1].toString() + "pt";
-        } else {
-          return param[1].toString() + "mm";
-        }
-      } else if (variant >= 22643) {
-        return param[1].toString() + "ex";
+      } else if (variant >= 26418) {
+        return param[1].toString() + "vh";
       } else {
-        return param[1].toString() + "em";
+        return param[1].toString() + "px";
       }
-    } else if (variant >= -833470756) {
-      if (variant >= 22181) {
-        if (variant >= 22186) {
-          return param[1].toString() + "cm";
-        } else {
-          return param[1].toString() + "ch";
-        }
-      } else if (variant >= -119887163) {
-        return param[1].toString() + "%";
+    } else if (variant >= 24416) {
+      if (variant >= 25092) {
+        return param[1].toString() + "pt";
       } else {
-        return param[1].toString() + "vmin";
+        return param[1].toString() + "mm";
       }
-    } else if (variant !== -1040484748) {
-      if (variant >= -833472530) {
-        return param[1].toString() + "vmax";
-      } else {
-        var match = param[1];
-        if (match[0] >= 5745024) {
-          return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
-        } else {
-          return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
-        }
-      }
+    } else if (variant >= 22643) {
+      return param[1].toString() + "ex";
     } else {
-      return param[1].toString() + "px";
+      return param[1].toString() + "em";
     }
+  }
+  if (variant >= -833470756) {
+    if (variant >= 22181) {
+      if (variant >= 22186) {
+        return param[1].toString() + "cm";
+      } else {
+        return param[1].toString() + "ch";
+      }
+    } else if (variant >= -119887163) {
+      return param[1].toString() + "%";
+    } else {
+      return param[1].toString() + "vmin";
+    }
+  }
+  if (variant === -1040484748) {
+    return param[1].toString() + "px";
+  }
+  if (variant >= -833472530) {
+    return param[1].toString() + "vmax";
+  }
+  var match = param[1];
+  if (match[0] >= 5745024) {
+    return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
+  } else {
+    return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
   }
 }
 
@@ -265,60 +260,61 @@ function string_of_minmax(param) {
     } else {
       return "auto";
     }
-  } else {
-    var variant = param[0];
-    if (variant >= 22643) {
-      if (variant >= 25096) {
-        if (variant >= 26433) {
-          if (variant >= 5691738) {
-            return param[1].toString() + "rem";
-          } else {
-            return param[1].toString() + "vw";
-          }
-        } else if (variant >= 26418) {
-          return param[1].toString() + "vh";
+  }
+  var variant = param[0];
+  if (variant >= 22643) {
+    if (variant >= 25096) {
+      if (variant >= 26433) {
+        if (variant >= 5691738) {
+          return param[1].toString() + "rem";
         } else {
-          return param[1].toString() + "px";
+          return param[1].toString() + "vw";
         }
-      } else if (variant >= 24416) {
-        if (variant >= 25092) {
-          return param[1].toString() + "pt";
-        } else {
-          return param[1].toString() + "mm";
-        }
-      } else if (variant >= 22860) {
-        return param[1].toString() + "fr";
+      } else if (variant >= 26418) {
+        return param[1].toString() + "vh";
       } else {
-        return param[1].toString() + "ex";
+        return param[1].toString() + "px";
       }
-    } else if (variant >= -119887163) {
-      if (variant >= 22186) {
-        if (variant >= 22632) {
-          return param[1].toString() + "em";
-        } else {
-          return param[1].toString() + "cm";
-        }
-      } else if (variant >= 22181) {
-        return param[1].toString() + "ch";
+    } else if (variant >= 24416) {
+      if (variant >= 25092) {
+        return param[1].toString() + "pt";
       } else {
-        return param[1].toString() + "%";
+        return param[1].toString() + "mm";
       }
-    } else if (variant >= -833472530) {
-      if (variant >= -833470756) {
-        return param[1].toString() + "vmin";
-      } else {
-        return param[1].toString() + "vmax";
-      }
-    } else if (variant >= -1040484748) {
-      return param[1].toString() + "px";
+    } else if (variant >= 22860) {
+      return param[1].toString() + "fr";
     } else {
-      var match = param[1];
-      if (match[0] >= 5745024) {
-        return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
-      } else {
-        return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
-      }
+      return param[1].toString() + "ex";
     }
+  }
+  if (variant >= -119887163) {
+    if (variant >= 22186) {
+      if (variant >= 22632) {
+        return param[1].toString() + "em";
+      } else {
+        return param[1].toString() + "cm";
+      }
+    } else if (variant >= 22181) {
+      return param[1].toString() + "ch";
+    } else {
+      return param[1].toString() + "%";
+    }
+  }
+  if (variant >= -833472530) {
+    if (variant >= -833470756) {
+      return param[1].toString() + "vmin";
+    } else {
+      return param[1].toString() + "vmax";
+    }
+  }
+  if (variant >= -1040484748) {
+    return param[1].toString() + "px";
+  }
+  var match = param[1];
+  if (match[0] >= 5745024) {
+    return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
+  } else {
+    return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
   }
 }
 
@@ -339,65 +335,66 @@ function string_of_dimension(param) {
     } else {
       return "none";
     }
-  } else {
-    var variant = param[0];
-    if (variant >= 22632) {
-      if (variant >= 25092) {
-        if (variant !== 25096) {
-          if (variant >= 26433) {
-            if (variant >= 5691738) {
-              return param[1].toString() + "rem";
-            } else {
-              return param[1].toString() + "vw";
-            }
-          } else if (variant >= 26418) {
-            return param[1].toString() + "vh";
+  }
+  var variant = param[0];
+  if (variant >= 22632) {
+    if (variant >= 25092) {
+      if (variant !== 25096) {
+        if (variant >= 26433) {
+          if (variant >= 5691738) {
+            return param[1].toString() + "rem";
           } else {
-            return param[1].toString() + "pt";
+            return param[1].toString() + "vw";
           }
+        } else if (variant >= 26418) {
+          return param[1].toString() + "vh";
         } else {
-          return param[1].toString() + "px";
+          return param[1].toString() + "pt";
         }
-      } else if (variant >= 22860) {
-        if (variant >= 24416) {
-          return param[1].toString() + "mm";
-        } else {
-          return param[1].toString() + "fr";
-        }
-      } else if (variant >= 22643) {
-        return param[1].toString() + "ex";
       } else {
-        return param[1].toString() + "em";
+        return param[1].toString() + "px";
       }
-    } else if (variant >= -754859950) {
-      if (variant >= 22181) {
-        if (variant >= 22186) {
-          return param[1].toString() + "cm";
-        } else {
-          return param[1].toString() + "ch";
-        }
-      } else if (variant >= -119887163) {
-        return param[1].toString() + "%";
+    } else if (variant >= 22860) {
+      if (variant >= 24416) {
+        return param[1].toString() + "mm";
       } else {
-        var match = param[1];
-        return "minmax(" + (string_of_minmax(match[0]) + ("," + (string_of_minmax(match[1]) + ")")));
+        return param[1].toString() + "fr";
       }
-    } else if (variant >= -833472530) {
-      if (variant >= -833470756) {
-        return param[1].toString() + "vmin";
-      } else {
-        return param[1].toString() + "vmax";
-      }
-    } else if (variant >= -1040484748) {
-      return param[1].toString() + "px";
+    } else if (variant >= 22643) {
+      return param[1].toString() + "ex";
     } else {
-      var match$1 = param[1];
-      if (match$1[0] >= 5745024) {
-        return "calc(" + (string_of_length(match$1[1]) + (" - " + (string_of_length(match$1[2]) + ")")));
+      return param[1].toString() + "em";
+    }
+  }
+  if (variant >= -754859950) {
+    if (variant >= 22181) {
+      if (variant >= 22186) {
+        return param[1].toString() + "cm";
       } else {
-        return "calc(" + (string_of_length(match$1[1]) + (" + " + (string_of_length(match$1[2]) + ")")));
+        return param[1].toString() + "ch";
       }
     }
+    if (variant >= -119887163) {
+      return param[1].toString() + "%";
+    }
+    var match = param[1];
+    return "minmax(" + (string_of_minmax(match[0]) + ("," + (string_of_minmax(match[1]) + ")")));
+  }
+  if (variant >= -833472530) {
+    if (variant >= -833470756) {
+      return param[1].toString() + "vmin";
+    } else {
+      return param[1].toString() + "vmax";
+    }
+  }
+  if (variant >= -1040484748) {
+    return param[1].toString() + "px";
+  }
+  var match$1 = param[1];
+  if (match$1[0] >= 5745024) {
+    return "calc(" + (string_of_length(match$1[1]) + (" - " + (string_of_length(match$1[2]) + ")")));
+  } else {
+    return "calc(" + (string_of_length(match$1[1]) + (" + " + (string_of_length(match$1[2]) + ")")));
   }
 }
 

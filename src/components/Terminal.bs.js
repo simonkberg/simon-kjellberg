@@ -210,17 +210,15 @@ function Terminal(Props) {
   var children = Props.children;
   var windowRef = React.useRef(null);
   var handleClickMaximize = React.useCallback((function (param) {
-          if (Screenfull.isEnabled) {
-            var match = windowRef.current;
-            if (match == null) {
-              return /* () */0;
-            } else {
-              Screenfull.toggle(match);
-              return /* () */0;
-            }
-          } else {
-            return 0;
+          if (!Screenfull.isEnabled) {
+            return ;
           }
+          var r = windowRef.current;
+          if (!(r == null)) {
+            Screenfull.toggle(r);
+            return ;
+          }
+          
         }), [windowRef]);
   return React.createElement("div", {
               ref: windowRef,
