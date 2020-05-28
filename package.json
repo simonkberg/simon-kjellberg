@@ -104,7 +104,7 @@
     "@babel/plugin-proposal-optional-chaining": "7.9.0",
     "@babel/preset-flow": "7.9.0",
     "@baransu/graphql_ppx_re": "0.7.1",
-    "@packtracker/webpack-plugin": "2.2.0",
+    "@packtracker/webpack-plugin": "2.3.0",
     "@simonkberg/eslint-config": "21.0.1",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "26.0.1",
