@@ -105,7 +105,7 @@
     "@babel/preset-flow": "7.10.1",
     "@baransu/graphql_ppx_re": "0.7.1",
     "@packtracker/webpack-plugin": "2.3.0",
-    "@simonkberg/eslint-config": "22.0.0",
+    "@simonkberg/eslint-config": "23.0.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "26.0.1",
     "babel-plugin-emotion": "10.0.33",
