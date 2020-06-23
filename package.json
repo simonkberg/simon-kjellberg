@@ -95,7 +95,7 @@
     "sanitize.css": "11.0.1",
     "screenfull": "5.0.2",
     "serve-favicon": "2.5.0",
-    "styled-tools": "1.7.1",
+    "styled-tools": "1.7.2",
     "subscriptions-transport-ws": "0.9.16"
   },
   "devDependencies": {
