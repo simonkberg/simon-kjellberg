@@ -28,29 +28,29 @@ function parse(value) {
     var value$3 = Js_option.getExn(Js_json.decodeObject(Caml_option.valFromOption(value$2)));
     var value$4 = Js_dict.get(value$3, "stats");
     tmp = {
-      stats: value$4 !== undefined ? Js_option.getExn(Js_json.decodeArray(Caml_option.valFromOption(value$4))).map((function (value) {
-                var value$1 = Js_option.getExn(Js_json.decodeObject(value));
-                var value$2 = Js_dict.get(value$1, "name");
-                var tmp;
-                if (value$2 !== undefined) {
-                  var value$3 = Js_json.decodeString(Caml_option.valFromOption(value$2));
-                  tmp = value$3 !== undefined ? value$3 : Js_exn.raiseError("Unexpected GraphQL query response");
-                } else {
-                  tmp = Js_exn.raiseError("Unexpected GraphQL query response");
-                }
-                var value$4 = Js_dict.get(value$1, "percent");
-                var tmp$1;
-                if (value$4 !== undefined) {
-                  var value$5 = Js_json.decodeNumber(Caml_option.valFromOption(value$4));
-                  tmp$1 = value$5 !== undefined ? value$5 : Js_exn.raiseError("Unexpected GraphQL query response");
-                } else {
-                  tmp$1 = Js_exn.raiseError("Unexpected GraphQL query response");
-                }
-                return {
-                        name: tmp,
-                        percent: tmp$1
-                      };
-              })) : Js_exn.raiseError("Unexpected GraphQL query response")
+      stats: value$4 !== undefined ? Js_option.getExn(Js_json.decodeArray(Caml_option.valFromOption(value$4))).map(function (value) {
+              var value$1 = Js_option.getExn(Js_json.decodeObject(value));
+              var value$2 = Js_dict.get(value$1, "name");
+              var tmp;
+              if (value$2 !== undefined) {
+                var value$3 = Js_json.decodeString(Caml_option.valFromOption(value$2));
+                tmp = value$3 !== undefined ? value$3 : Js_exn.raiseError("Unexpected GraphQL query response");
+              } else {
+                tmp = Js_exn.raiseError("Unexpected GraphQL query response");
+              }
+              var value$4 = Js_dict.get(value$1, "percent");
+              var tmp$1;
+              if (value$4 !== undefined) {
+                var value$5 = Js_json.decodeNumber(Caml_option.valFromOption(value$4));
+                tmp$1 = value$5 !== undefined ? value$5 : Js_exn.raiseError("Unexpected GraphQL query response");
+              } else {
+                tmp$1 = Js_exn.raiseError("Unexpected GraphQL query response");
+              }
+              return {
+                      name: tmp,
+                      percent: tmp$1
+                    };
+            }) : Js_exn.raiseError("Unexpected GraphQL query response")
     };
   } else {
     tmp = Js_exn.raiseError("Unexpected GraphQL query response");
@@ -80,21 +80,21 @@ function makeVariables(param) {
   return null;
 }
 
-function definition_002(graphql_ppx_use_json_variables_fn) {
+function definition_2(graphql_ppx_use_json_variables_fn) {
   return 0;
 }
 
-var definition = /* tuple */[
+var definition = [
   parse,
   ppx_printed_query,
-  definition_002
+  definition_2
 ];
 
 function ret_type(f) {
-  return { };
+  return {};
 }
 
-var MT_Ret = { };
+var MT_Ret = {};
 
 var WakaTimeStats = {
   ppx_printed_query: ppx_printed_query,
@@ -118,12 +118,12 @@ function StatsList(Props) {
               children: (function (param) {
                   var result = param.result;
                   if (typeof result === "number") {
-                    return React.createElement(Loader$SimonKjellberg.make, { });
+                    return React.createElement(Loader$SimonKjellberg.make, {});
                   }
-                  if (!result.tag) {
+                  if (!result.TAG) {
                     return React.createElement("p", undefined, Utils$SimonKjellberg.str("Language statistics are temporarily unavailable :("));
                   }
-                  var response = result[0];
+                  var response = result._0;
                   if (response.wakaTime.stats.length === 0) {
                     return React.createElement("p", undefined, React.createElement("em", undefined, Utils$SimonKjellberg.str("Oops! Looks like the language statistics are currently empty. " + "I\'m probably on vacation 🌴 (or something is broken).")));
                   } else {

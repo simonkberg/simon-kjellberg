@@ -5,43 +5,43 @@ import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as React from "react";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.position(Css.relative),
-      /* :: */[
-        Css.marginTop(Css.em(1.0)),
-        /* :: */[
-          Css.marginBottom(Css.em(1.0)),
-          /* :: */[
-            Css.marginLeft(Css.ch(1.5)),
-            /* :: */[
-              Css.fontSize(Css.rem(1.0)),
-              /* :: */[
-                Css.fontWeight(/* bold */-1055161979),
-                /* :: */[
-                  Css.before(/* :: */[
-                        Css.position(Css.absolute),
-                        /* :: */[
-                          Css.left(Css.ch(-1.5)),
-                          /* :: */[
-                            Css.contentRule(/* `text */[
-                                  -856044371,
-                                  ">"
-                                ]),
-                            /* :: */[
-                              Css.color(Theme$SimonKjellberg.Color.muted),
-                              /* [] */0
-                            ]
-                          ]
-                        ]
-                      ]),
-                  /* [] */0
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.position(Css.relative),
+      tl: {
+        hd: Css.marginTop(Css.em(1.0)),
+        tl: {
+          hd: Css.marginBottom(Css.em(1.0)),
+          tl: {
+            hd: Css.marginLeft(Css.ch(1.5)),
+            tl: {
+              hd: Css.fontSize(Css.rem(1.0)),
+              tl: {
+                hd: Css.fontWeight(/* bold */-1055161979),
+                tl: {
+                  hd: Css.before({
+                        hd: Css.position(Css.absolute),
+                        tl: {
+                          hd: Css.left(Css.ch(-1.5)),
+                          tl: {
+                            hd: Css.contentRule({
+                                  HASH: /* text */-856044371,
+                                  VAL: ">"
+                                }),
+                            tl: {
+                              hd: Css.color(Theme$SimonKjellberg.Color.muted),
+                              tl: /* [] */0
+                            }
+                          }
+                        }
+                      }),
+                  tl: /* [] */0
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
 function Heading(Props) {
   var level = Props.level;

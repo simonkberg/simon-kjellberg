@@ -5,19 +5,19 @@ import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as React from "react";
 import * as Caml_option from "bs-platform/lib/es6/caml_option.js";
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.color(Css.currentColor),
-      /* :: */[
-        Css.textDecoration(Css.underline),
-        /* :: */[
-          Css.hover(/* :: */[
-                Css.textDecoration(Css.none),
-                /* [] */0
-              ]),
-          /* [] */0
-        ]
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.color(Css.currentColor),
+      tl: {
+        hd: Css.textDecoration(Css.underline),
+        tl: {
+          hd: Css.hover({
+                hd: Css.textDecoration(Css.none),
+                tl: /* [] */0
+              }),
+          tl: /* [] */0
+        }
+      }
+    });
 
 function Link(Props) {
   var href = Props.href;

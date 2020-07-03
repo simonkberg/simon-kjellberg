@@ -4,26 +4,26 @@ import * as Css from "bs-css-emotion/src/Css.js";
 import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as React from "react";
 import * as Caml_option from "bs-platform/lib/es6/caml_option.js";
-import * as ReasonReact from "reason-react/src/ReasonReact.js";
-import * as ReasonReactCompat from "reason-react/src/ReasonReactCompat.js";
+import * as ReasonReact from "reason-react/src/legacy/ReasonReact.bs.js";
+import * as ReasonReactCompat from "reason-react/src/legacy/ReasonReactCompat.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.listStyleType(/* none */-922086728),
-      /* :: */[
-        Css.padding(Css.zero),
-        /* :: */[
-          Css.marginTop(Css.em(1.0)),
-          /* :: */[
-            Css.marginBottom(Css.em(1.0)),
-            /* :: */[
-              Css.marginLeft(Css.ch(1.5)),
-              /* [] */0
-            ]
-          ]
-        ]
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.listStyleType(/* none */-922086728),
+      tl: {
+        hd: Css.padding(Css.zero),
+        tl: {
+          hd: Css.marginTop(Css.em(1.0)),
+          tl: {
+            hd: Css.marginBottom(Css.em(1.0)),
+            tl: {
+              hd: Css.marginLeft(Css.ch(1.5)),
+              tl: /* [] */0
+            }
+          }
+        }
+      }
+    });
 
 function UnorderedList(Props) {
   var classNameOpt = Props.className;
@@ -31,13 +31,13 @@ function UnorderedList(Props) {
   var children = Props.children;
   var className = classNameOpt !== undefined ? classNameOpt : "";
   var tmp = {
-    className: Utils$SimonKjellberg.cn(/* :: */[
-          styles,
-          /* :: */[
-            className,
-            /* [] */0
-          ]
-        ])
+    className: Utils$SimonKjellberg.cn({
+          hd: styles,
+          tl: {
+            hd: className,
+            tl: /* [] */0
+          }
+        })
   };
   if (innerRef !== undefined) {
     tmp.ref = Caml_option.valFromOption(innerRef);

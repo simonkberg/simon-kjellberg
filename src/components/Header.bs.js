@@ -7,61 +7,61 @@ import * as Link from "next/link";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 
-var wrapper = Curry._1(Css.style, /* :: */[
-      Css.color(Theme$SimonKjellberg.Header.color),
-      /* :: */[
-        Css.backgroundColor(Theme$SimonKjellberg.Header.backgroundColor),
-        /* :: */[
-          Css.marginBottom(Css.rem(1.45)),
-          /* [] */0
-        ]
-      ]
-    ]);
+var wrapper = Curry._1(Css.style, {
+      hd: Css.color(Theme$SimonKjellberg.Header.color),
+      tl: {
+        hd: Css.backgroundColor(Theme$SimonKjellberg.Header.backgroundColor),
+        tl: {
+          hd: Css.marginBottom(Css.rem(1.45)),
+          tl: /* [] */0
+        }
+      }
+    });
 
-var container = Curry._1(Css.style, /* :: */[
-      Css.margin2(/* zero */-789508312, /* auto */-1065951377),
-      /* :: */[
-        Css.maxWidth(Css.rem(35.0)),
-        /* :: */[
-          Css.padding2(Css.rem(1.45), Css.rem(1.0875)),
-          /* :: */[
-            Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-top))", Curry._1(Css.style, /* :: */[
-                      Css.unsafe("paddingTop", "max(env(safe-area-inset-top), 1.45rem)"),
-                      /* :: */[
-                        Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 1.0875rem)"),
-                        /* :: */[
-                          Css.unsafe("paddingRight", "max(env(safe-area-inset-right), 1.0875rem)"),
-                          /* [] */0
-                        ]
-                      ]
-                    ])),
-            /* [] */0
-          ]
-        ]
-      ]
-    ]);
+var container = Curry._1(Css.style, {
+      hd: Css.margin2(/* zero */-789508312, /* auto */-1065951377),
+      tl: {
+        hd: Css.maxWidth(Css.rem(35.0)),
+        tl: {
+          hd: Css.padding2(Css.rem(1.45), Css.rem(1.0875)),
+          tl: {
+            hd: Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-top))", Curry._1(Css.style, {
+                      hd: Css.unsafe("paddingTop", "max(env(safe-area-inset-top), 1.45rem)"),
+                      tl: {
+                        hd: Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 1.0875rem)"),
+                        tl: {
+                          hd: Css.unsafe("paddingRight", "max(env(safe-area-inset-right), 1.0875rem)"),
+                          tl: /* [] */0
+                        }
+                      }
+                    })),
+            tl: /* [] */0
+          }
+        }
+      }
+    });
 
-var title = Curry._1(Css.style, /* :: */[
-      Css.fontSize(Css.rem(1.0)),
-      /* :: */[
-        Css.fontWeight(/* bold */-1055161979),
-        /* :: */[
-          Css.margin(/* zero */-789508312),
-          /* :: */[
-            Css.textTransform(/* lowercase */-425349839),
-            /* [] */0
-          ]
-        ]
-      ]
-    ]);
+var title = Curry._1(Css.style, {
+      hd: Css.fontSize(Css.rem(1.0)),
+      tl: {
+        hd: Css.fontWeight(/* bold */-1055161979),
+        tl: {
+          hd: Css.margin(/* zero */-789508312),
+          tl: {
+            hd: Css.textTransform(/* lowercase */-425349839),
+            tl: /* [] */0
+          }
+        }
+      }
+    });
 
-var link = Curry._1(Css.style, /* :: */[
-      Css.color(Theme$SimonKjellberg.Header.color),
-      /* :: */[
-        Css.textDecoration(/* none */-922086728),
-        /* [] */0
-      ]
-    ]);
+var link = Curry._1(Css.style, {
+      hd: Css.color(Theme$SimonKjellberg.Header.color),
+      tl: {
+        hd: Css.textDecoration(/* none */-922086728),
+        tl: /* [] */0
+      }
+    });
 
 var Styles = {
   wrapper: wrapper,
