@@ -8,191 +8,191 @@ import * as Screenfull from "screenfull";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Polished$SimonKjellberg from "../bindings/Polished.bs.js";
 
-var windowFullscreen_000 = Css.height(Css.pct(100.0));
+var windowFullscreen_0 = Css.height(Css.pct(100.0));
 
-var windowFullscreen_001 = /* :: */[
-  Css.margin(/* zero */-789508312),
-  /* [] */0
-];
+var windowFullscreen_1 = {
+  hd: Css.margin(/* zero */-789508312),
+  tl: /* [] */0
+};
 
-var windowFullscreen = /* :: */[
-  windowFullscreen_000,
-  windowFullscreen_001
-];
+var windowFullscreen = {
+  hd: windowFullscreen_0,
+  tl: windowFullscreen_1
+};
 
-var $$window = Curry._1(Css.style, /* :: */[
-      Css.position(/* relative */903134412),
-      /* :: */[
-        Css.display(/* flex */-1010954439),
-        /* :: */[
-          Css.flexDirection(/* column */-963948842),
-          /* :: */[
-            Css.margin2(Css.em(1.0), /* auto */-1065951377),
-            /* :: */[
-              Css.width(Css.pct(100.0)),
-              /* :: */[
-                Css.borderRadius(Css.rem(0.625)),
-                /* :: */[
-                  Css.backgroundColor(Theme$SimonKjellberg.Terminal.$$Window.backgroundColor),
-                  /* :: */[
-                    Css.selector("&:fullscreen", windowFullscreen),
-                    /* :: */[
-                      Css.selector("&:-ms-fullscreen", windowFullscreen),
-                      /* :: */[
-                        Css.selector("&:-moz-full-screen", windowFullscreen),
-                        /* :: */[
-                          Css.selector("&:-webkit-full-screen", windowFullscreen),
-                          /* [] */0
-                        ]
-                      ]
-                    ]
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]);
+var $$window = Curry._1(Css.style, {
+      hd: Css.position(/* relative */903134412),
+      tl: {
+        hd: Css.display(/* flex */-1010954439),
+        tl: {
+          hd: Css.flexDirection(/* column */-963948842),
+          tl: {
+            hd: Css.margin2(Css.em(1.0), /* auto */-1065951377),
+            tl: {
+              hd: Css.width(Css.pct(100.0)),
+              tl: {
+                hd: Css.borderRadius(Css.rem(0.625)),
+                tl: {
+                  hd: Css.backgroundColor(Theme$SimonKjellberg.Terminal.$$Window.backgroundColor),
+                  tl: {
+                    hd: Css.selector("&:fullscreen", windowFullscreen),
+                    tl: {
+                      hd: Css.selector("&:-ms-fullscreen", windowFullscreen),
+                      tl: {
+                        hd: Css.selector("&:-moz-full-screen", windowFullscreen),
+                        tl: {
+                          hd: Css.selector("&:-webkit-full-screen", windowFullscreen),
+                          tl: /* [] */0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
-var windowTopbar = Curry._1(Css.style, /* :: */[
-      Css.backgroundColor(Theme$SimonKjellberg.Terminal.Topbar.backgroundColor),
-      /* :: */[
-        Css.height(Theme$SimonKjellberg.Terminal.Topbar.height),
-        /* :: */[
-          Css.borderTopLeftRadius(Css.rem(0.5)),
-          /* :: */[
-            Css.borderTopRightRadius(Css.rem(0.5)),
-            /* :: */[
-              Css.padding2(/* zero */-789508312, Css.rem(0.625)),
-              /* [] */0
-            ]
-          ]
-        ]
-      ]
-    ]);
+var windowTopbar = Curry._1(Css.style, {
+      hd: Css.backgroundColor(Theme$SimonKjellberg.Terminal.Topbar.backgroundColor),
+      tl: {
+        hd: Css.height(Theme$SimonKjellberg.Terminal.Topbar.height),
+        tl: {
+          hd: Css.borderTopLeftRadius(Css.rem(0.5)),
+          tl: {
+            hd: Css.borderTopRightRadius(Css.rem(0.5)),
+            tl: {
+              hd: Css.padding2(/* zero */-789508312, Css.rem(0.625)),
+              tl: /* [] */0
+            }
+          }
+        }
+      }
+    });
 
-var windowControl = Curry._1(Css.style, /* :: */[
-      Css.display(/* inlineBlock */-147785676),
-      /* :: */[
-        Css.width(Css.rem(0.75)),
-        /* :: */[
-          Css.height(Css.rem(0.75)),
-          /* :: */[
-            Css.padding(/* zero */-789508312),
-            /* :: */[
-              Css.marginTop(Css.rem(0.625)),
-              /* :: */[
-                Css.marginRight(Css.rem(0.25)),
-                /* :: */[
-                  Css.borderRadius(Css.rem(0.5)),
-                  /* :: */[
-                    Css.border(Css.px(1), /* solid */12956715, /* transparent */582626130),
-                    /* :: */[
-                      Css.focus(/* :: */[
-                            Css.outlineStyle(/* none */-922086728),
-                            /* [] */0
-                          ]),
-                      /* [] */0
-                    ]
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]);
+var windowControl = Curry._1(Css.style, {
+      hd: Css.display(/* inlineBlock */-147785676),
+      tl: {
+        hd: Css.width(Css.rem(0.75)),
+        tl: {
+          hd: Css.height(Css.rem(0.75)),
+          tl: {
+            hd: Css.padding(/* zero */-789508312),
+            tl: {
+              hd: Css.marginTop(Css.rem(0.625)),
+              tl: {
+                hd: Css.marginRight(Css.rem(0.25)),
+                tl: {
+                  hd: Css.borderRadius(Css.rem(0.5)),
+                  tl: {
+                    hd: Css.border(Css.px(1), /* solid */12956715, /* transparent */582626130),
+                    tl: {
+                      hd: Css.focus({
+                            hd: Css.outlineStyle(/* none */-922086728),
+                            tl: /* [] */0
+                          }),
+                      tl: /* [] */0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
-var windowControlClose = Curry._1(Css.merge, /* :: */[
-      windowControl,
-      /* :: */[
-        Curry._1(Css.style, /* :: */[
-              Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Close.backgroundColor),
-              /* :: */[
-                Css.focus(/* :: */[
-                      Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Close.backgroundColor)),
-                      /* [] */0
-                    ]),
-                /* [] */0
-              ]
-            ]),
-        /* [] */0
-      ]
-    ]);
+var windowControlClose = Curry._1(Css.merge, {
+      hd: windowControl,
+      tl: {
+        hd: Curry._1(Css.style, {
+              hd: Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Close.backgroundColor),
+              tl: {
+                hd: Css.focus({
+                      hd: Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Close.backgroundColor)),
+                      tl: /* [] */0
+                    }),
+                tl: /* [] */0
+              }
+            }),
+        tl: /* [] */0
+      }
+    });
 
-var windowControlMinimize = Curry._1(Css.merge, /* :: */[
-      windowControl,
-      /* :: */[
-        Curry._1(Css.style, /* :: */[
-              Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Minimize.backgroundColor),
-              /* :: */[
-                Css.focus(/* :: */[
-                      Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Minimize.backgroundColor)),
-                      /* [] */0
-                    ]),
-                /* [] */0
-              ]
-            ]),
-        /* [] */0
-      ]
-    ]);
+var windowControlMinimize = Curry._1(Css.merge, {
+      hd: windowControl,
+      tl: {
+        hd: Curry._1(Css.style, {
+              hd: Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Minimize.backgroundColor),
+              tl: {
+                hd: Css.focus({
+                      hd: Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Minimize.backgroundColor)),
+                      tl: /* [] */0
+                    }),
+                tl: /* [] */0
+              }
+            }),
+        tl: /* [] */0
+      }
+    });
 
-var windowControlMaximize = Curry._1(Css.merge, /* :: */[
-      windowControl,
-      /* :: */[
-        Curry._1(Css.style, /* :: */[
-              Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Maximize.backgroundColor),
-              /* :: */[
-                Css.focus(/* :: */[
-                      Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Maximize.backgroundColor)),
-                      /* [] */0
-                    ]),
-                /* [] */0
-              ]
-            ]),
-        /* [] */0
-      ]
-    ]);
+var windowControlMaximize = Curry._1(Css.merge, {
+      hd: windowControl,
+      tl: {
+        hd: Curry._1(Css.style, {
+              hd: Css.backgroundColor(Theme$SimonKjellberg.Terminal.Controls.Maximize.backgroundColor),
+              tl: {
+                hd: Css.focus({
+                      hd: Css.borderColor(Polished$SimonKjellberg.darken(0.15, Theme$SimonKjellberg.Terminal.Controls.Maximize.backgroundColor)),
+                      tl: /* [] */0
+                    }),
+                tl: /* [] */0
+              }
+            }),
+        tl: /* [] */0
+      }
+    });
 
-var windowContentFullscreen_000 = Css.maxHeight(Css_Core.Calc.$neg(Css.vh(100), Theme$SimonKjellberg.Terminal.Topbar.height));
+var windowContentFullscreen_0 = Css.maxHeight(Css_Core.Calc.$neg(Css.vh(100), Theme$SimonKjellberg.Terminal.Topbar.height));
 
-var windowContentFullscreen = /* :: */[
-  windowContentFullscreen_000,
-  /* [] */0
-];
+var windowContentFullscreen = {
+  hd: windowContentFullscreen_0,
+  tl: /* [] */0
+};
 
-var windowContent = Curry._1(Css.style, /* :: */[
-      Css.display(/* flex */-1010954439),
-      /* :: */[
-        Css.flexDirection(/* column */-963948842),
-        /* :: */[
-          Css.position(/* relative */903134412),
-          /* :: */[
-            Css.color(Theme$SimonKjellberg.Terminal.Content.color),
-            /* :: */[
-              Css.maxHeight(Theme$SimonKjellberg.Terminal.Content.maxHeight),
-              /* :: */[
-                Css.margin2(/* zero */-789508312, Css.rem(0.625)),
-                /* :: */[
-                  Css.selector("." + ($$window + ":fullscreen &"), windowContentFullscreen),
-                  /* :: */[
-                    Css.selector("." + ($$window + ":-ms-fullscreen &"), windowContentFullscreen),
-                    /* :: */[
-                      Css.selector("." + ($$window + ":-moz-full-screen &"), windowContentFullscreen),
-                      /* :: */[
-                        Css.selector("." + ($$window + ":-webkit-full-screen &"), windowContentFullscreen),
-                        /* [] */0
-                      ]
-                    ]
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]);
+var windowContent = Curry._1(Css.style, {
+      hd: Css.display(/* flex */-1010954439),
+      tl: {
+        hd: Css.flexDirection(/* column */-963948842),
+        tl: {
+          hd: Css.position(/* relative */903134412),
+          tl: {
+            hd: Css.color(Theme$SimonKjellberg.Terminal.Content.color),
+            tl: {
+              hd: Css.maxHeight(Theme$SimonKjellberg.Terminal.Content.maxHeight),
+              tl: {
+                hd: Css.margin2(/* zero */-789508312, Css.rem(0.625)),
+                tl: {
+                  hd: Css.selector("." + ($$window + ":fullscreen &"), windowContentFullscreen),
+                  tl: {
+                    hd: Css.selector("." + ($$window + ":-ms-fullscreen &"), windowContentFullscreen),
+                    tl: {
+                      hd: Css.selector("." + ($$window + ":-moz-full-screen &"), windowContentFullscreen),
+                      tl: {
+                        hd: Css.selector("." + ($$window + ":-webkit-full-screen &"), windowContentFullscreen),
+                        tl: /* [] */0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
 var Styles = {
   windowFullscreen: windowFullscreen,

@@ -5,13 +5,13 @@ import * as Curry from "bs-platform/lib/es6/curry.js";
 import * as React from "react";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.color(Theme$SimonKjellberg.Color.muted),
-      /* :: */[
-        Css.fontWeight(/* normal */812216871),
-        /* [] */0
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.color(Theme$SimonKjellberg.Color.muted),
+      tl: {
+        hd: Css.fontWeight(/* normal */812216871),
+        tl: /* [] */0
+      }
+    });
 
 function Subtitle(Props) {
   var children = Props.children;

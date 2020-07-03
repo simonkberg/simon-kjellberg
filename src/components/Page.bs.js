@@ -8,54 +8,54 @@ import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 import * as Header$SimonKjellberg from "./Header.bs.js";
 
-var wrapper = Curry._1(Css.style, /* :: */[
-      Css.fontSize(Css.pct(100.0)),
-      /* :: */[
-        Css.lineHeight(/* `abs */[
-              4845682,
-              1.5
-            ]),
-        /* :: */[
-          Css.fontFamilies(/* :: */[
-                /* `custom */[
-                  1066567601,
-                  "Iosevka"
-                ],
-                /* :: */[
-                  /* monospace */-555363901,
-                  /* [] */0
-                ]
-              ]),
-          /* :: */[
-            Css.color(Theme$SimonKjellberg.Color.primary),
-            /* [] */0
-          ]
-        ]
-      ]
-    ]);
+var wrapper = Curry._1(Css.style, {
+      hd: Css.fontSize(Css.pct(100.0)),
+      tl: {
+        hd: Css.lineHeight({
+              HASH: /* abs */4845682,
+              VAL: 1.5
+            }),
+        tl: {
+          hd: Css.fontFamilies({
+                hd: {
+                  HASH: /* custom */1066567601,
+                  VAL: "Iosevka"
+                },
+                tl: {
+                  hd: /* monospace */-555363901,
+                  tl: /* [] */0
+                }
+              }),
+          tl: {
+            hd: Css.color(Theme$SimonKjellberg.Color.primary),
+            tl: /* [] */0
+          }
+        }
+      }
+    });
 
-var content = Curry._1(Css.style, /* :: */[
-      Css.margin2(/* zero */-789508312, /* auto */-1065951377),
-      /* :: */[
-        Css.maxWidth(Theme$SimonKjellberg.Page.maxWidth),
-        /* :: */[
-          Css.padding3(/* zero */-789508312, Css.rem(0.9375), Css.rem(1.875)),
-          /* :: */[
-            Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-bottom))", Curry._1(Css.style, /* :: */[
-                      Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 0.9375rem)"),
-                      /* :: */[
-                        Css.unsafe("paddingRight", "max(env(safe-area-inset-right), 0.9375rem)"),
-                        /* :: */[
-                          Css.unsafe("paddingBottom", "max(env(safe-area-inset-bottom), 1.875rem)"),
-                          /* [] */0
-                        ]
-                      ]
-                    ])),
-            /* [] */0
-          ]
-        ]
-      ]
-    ]);
+var content = Curry._1(Css.style, {
+      hd: Css.margin2(/* zero */-789508312, /* auto */-1065951377),
+      tl: {
+        hd: Css.maxWidth(Theme$SimonKjellberg.Page.maxWidth),
+        tl: {
+          hd: Css.padding3(/* zero */-789508312, Css.rem(0.9375), Css.rem(1.875)),
+          tl: {
+            hd: Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-bottom))", Curry._1(Css.style, {
+                      hd: Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 0.9375rem)"),
+                      tl: {
+                        hd: Css.unsafe("paddingRight", "max(env(safe-area-inset-right), 0.9375rem)"),
+                        tl: {
+                          hd: Css.unsafe("paddingBottom", "max(env(safe-area-inset-bottom), 1.875rem)"),
+                          tl: /* [] */0
+                        }
+                      }
+                    })),
+            tl: /* [] */0
+          }
+        }
+      }
+    });
 
 var Styles = {
   wrapper: wrapper,

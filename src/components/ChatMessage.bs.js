@@ -6,104 +6,104 @@ import * as React from "react";
 import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 
-var user = Curry._1(Css.style, /* :: */[
-      Css.fontWeight(/* bold */-1055161979),
-      /* [] */0
-    ]);
+var user = Curry._1(Css.style, {
+      hd: Css.fontWeight(/* bold */-1055161979),
+      tl: /* [] */0
+    });
 
-var message = Curry._1(Css.style, /* :: */[
-      Css.display(/* inline */423610969),
-      /* :: */[
-        Css.selector("code", /* :: */[
-              Css.padding2(Css.em(0.1), Css.em(0.2)),
-              /* :: */[
-                Css.fontSize(Css.em(0.8)),
-                /* :: */[
-                  Css.color(Theme$SimonKjellberg.Code.Color.inline),
-                  /* :: */[
-                    Css.backgroundColor(Theme$SimonKjellberg.Code.backgroundColor),
-                    /* :: */[
-                      Css.border(Css.px(1), /* solid */12956715, Theme$SimonKjellberg.Code.borderColor),
-                      /* :: */[
-                        Css.borderRadius(Css.em(0.2)),
-                        /* :: */[
-                          Css.verticalAlign(/* textBottom */476669816),
-                          /* [] */0
-                        ]
-                      ]
-                    ]
-                  ]
-                ]
-              ]
-            ]),
-        /* :: */[
-          Css.selector("pre", /* :: */[
-                Css.padding(Css.em(0.5)),
-                /* :: */[
-                  Css.margin2(Css.em(0.5), /* zero */-789508312),
-                  /* :: */[
-                    Css.backgroundColor(Theme$SimonKjellberg.Code.backgroundColor),
-                    /* :: */[
-                      Css.border(Css.px(1), /* solid */12956715, Theme$SimonKjellberg.Code.borderColor),
-                      /* :: */[
-                        Css.borderRadius(Css.em(0.2)),
-                        /* :: */[
-                          Css.lineHeight(Css.em(1.0)),
-                          /* :: */[
-                            Css.selector("> code", /* :: */[
-                                  Css.color(Theme$SimonKjellberg.Code.Color.block),
-                                  /* :: */[
-                                    Css.padding(/* zero */-789508312),
-                                    /* :: */[
-                                      Css.borderWidth(/* zero */-789508312),
-                                      /* [] */0
-                                    ]
-                                  ]
-                                ]),
-                            /* [] */0
-                          ]
-                        ]
-                      ]
-                    ]
-                  ]
-                ]
-              ]),
-          /* :: */[
-            Css.selector("blockquote", /* :: */[
-                  Css.margin(/* zero */-789508312),
-                  /* :: */[
-                    Css.paddingLeft(Css.ch(1.0)),
-                    /* :: */[
-                      Css.borderLeft(Css.ch(0.5), /* solid */12956715, Theme$SimonKjellberg.Quote.borderColor),
-                      /* [] */0
-                    ]
-                  ]
-                ]),
-            /* :: */[
-              Css.selector("a", /* :: */[
-                    Css.color(Theme$SimonKjellberg.Color.muted),
-                    /* :: */[
-                      Css.textDecoration(/* underline */131142924),
-                      /* :: */[
-                        Css.hover(/* :: */[
-                              Css.textDecoration(/* none */-922086728),
-                              /* [] */0
-                            ]),
-                        /* [] */0
-                      ]
-                    ]
-                  ]),
-              /* [] */0
-            ]
-          ]
-        ]
-      ]
-    ]);
+var message = Curry._1(Css.style, {
+      hd: Css.display(/* inline */423610969),
+      tl: {
+        hd: Css.selector("code", {
+              hd: Css.padding2(Css.em(0.1), Css.em(0.2)),
+              tl: {
+                hd: Css.fontSize(Css.em(0.8)),
+                tl: {
+                  hd: Css.color(Theme$SimonKjellberg.Code.Color.inline),
+                  tl: {
+                    hd: Css.backgroundColor(Theme$SimonKjellberg.Code.backgroundColor),
+                    tl: {
+                      hd: Css.border(Css.px(1), /* solid */12956715, Theme$SimonKjellberg.Code.borderColor),
+                      tl: {
+                        hd: Css.borderRadius(Css.em(0.2)),
+                        tl: {
+                          hd: Css.verticalAlign(/* textBottom */476669816),
+                          tl: /* [] */0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }),
+        tl: {
+          hd: Css.selector("pre", {
+                hd: Css.padding(Css.em(0.5)),
+                tl: {
+                  hd: Css.margin2(Css.em(0.5), /* zero */-789508312),
+                  tl: {
+                    hd: Css.backgroundColor(Theme$SimonKjellberg.Code.backgroundColor),
+                    tl: {
+                      hd: Css.border(Css.px(1), /* solid */12956715, Theme$SimonKjellberg.Code.borderColor),
+                      tl: {
+                        hd: Css.borderRadius(Css.em(0.2)),
+                        tl: {
+                          hd: Css.lineHeight(Css.em(1.0)),
+                          tl: {
+                            hd: Css.selector("> code", {
+                                  hd: Css.color(Theme$SimonKjellberg.Code.Color.block),
+                                  tl: {
+                                    hd: Css.padding(/* zero */-789508312),
+                                    tl: {
+                                      hd: Css.borderWidth(/* zero */-789508312),
+                                      tl: /* [] */0
+                                    }
+                                  }
+                                }),
+                            tl: /* [] */0
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }),
+          tl: {
+            hd: Css.selector("blockquote", {
+                  hd: Css.margin(/* zero */-789508312),
+                  tl: {
+                    hd: Css.paddingLeft(Css.ch(1.0)),
+                    tl: {
+                      hd: Css.borderLeft(Css.ch(0.5), /* solid */12956715, Theme$SimonKjellberg.Quote.borderColor),
+                      tl: /* [] */0
+                    }
+                  }
+                }),
+            tl: {
+              hd: Css.selector("a", {
+                    hd: Css.color(Theme$SimonKjellberg.Color.muted),
+                    tl: {
+                      hd: Css.textDecoration(/* underline */131142924),
+                      tl: {
+                        hd: Css.hover({
+                              hd: Css.textDecoration(/* none */-922086728),
+                              tl: /* [] */0
+                            }),
+                        tl: /* [] */0
+                      }
+                    }
+                  }),
+              tl: /* [] */0
+            }
+          }
+        }
+      }
+    });
 
-var editedLabel = Curry._1(Css.style, /* :: */[
-      Css.color(Theme$SimonKjellberg.Color.muted),
-      /* [] */0
-    ]);
+var editedLabel = Curry._1(Css.style, {
+      hd: Css.color(Theme$SimonKjellberg.Color.muted),
+      tl: /* [] */0
+    });
 
 var Styles = {
   user: user,

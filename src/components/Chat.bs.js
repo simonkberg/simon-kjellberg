@@ -21,16 +21,16 @@ var ChatMessageInput = {
   make: make$1
 };
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.display(/* flex */-1010954439),
-      /* :: */[
-        Css.flexDirection(/* column */-963948842),
-        /* :: */[
-          Css.unsafe("maxHeight", "inherit"),
-          /* [] */0
-        ]
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.display(/* flex */-1010954439),
+      tl: {
+        hd: Css.flexDirection(/* column */-963948842),
+        tl: {
+          hd: Css.unsafe("maxHeight", "inherit"),
+          tl: /* [] */0
+        }
+      }
+    });
 
 function Chat(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {
@@ -39,7 +39,7 @@ function Chat(Props) {
                 }), React.createElement(Terminal$SimonKjellberg.make, {
                   children: React.createElement("div", {
                         className: styles
-                      }, React.createElement(make, { }), React.createElement(make$1, { }))
+                      }, React.createElement(make, {}), React.createElement(make$1, {}))
                 }));
 }
 

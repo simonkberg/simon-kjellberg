@@ -22,11 +22,11 @@ function dangerousHtml(html) {
 }
 
 function forwardDOMRef(fn) {
-  return React.forwardRef((function (props, ref_) {
-                return Curry._2(fn, props, Belt_Option.map((ref_ == null) ? undefined : Caml_option.some(ref_), (function (prim) {
-                                  return prim;
-                                })));
-              }));
+  return React.forwardRef(function (props, ref_) {
+              return Curry._2(fn, props, Belt_Option.map((ref_ == null) ? undefined : Caml_option.some(ref_), (function (prim) {
+                                return prim;
+                              })));
+            });
 }
 
 function $great$great$eq(value, fn) {
@@ -59,29 +59,29 @@ function string_of_int(prim) {
 }
 
 function string_of_angle(param) {
-  var variant = param[0];
+  var variant = param.HASH;
   if (variant >= 4995526) {
     if (variant >= 5690837) {
-      return param[1].toString() + "rad";
+      return param.VAL.toString() + "rad";
     } else {
-      return param[1].toString() + "deg";
+      return param.VAL.toString() + "deg";
     }
   } else if (variant >= -855250051) {
-    return param[1].toString() + "turn";
+    return param.VAL.toString() + "turn";
   } else {
-    return param[1].toString() + "grad";
+    return param.VAL.toString() + "grad";
   }
 }
 
 function string_of_percent(param) {
-  return param[1].toString() + "%";
+  return param.VAL.toString() + "%";
 }
 
 function string_of_alpha(param) {
-  if (param[0] >= 5496390) {
-    return param[1].toString();
+  if (param.HASH >= 5496390) {
+    return param.VAL.toString();
   } else {
-    return param[1].toString() + "%";
+    return param.VAL.toString() + "%";
   }
 }
 
@@ -118,10 +118,10 @@ function string_of_hsl(h, s, l) {
 function hsl_of_string(s) {
   var re = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%\)/);
   if (re !== null) {
-    return Css.hsl(/* `deg */[
-                4995526,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
-              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)));
+    return Css.hsl({
+                HASH: /* deg */4995526,
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
+              }, Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)));
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -134,13 +134,13 @@ function string_of_hsla(h, s, l, a) {
 function hsla_of_string(s) {
   var re = s.match(/^hsl\((\d+), ?(\d+)%, ?(\d+)%, ?([\d.]+)\)/);
   if (re !== null) {
-    return Css.hsla(/* `deg */[
-                4995526,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
-              ], Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)), /* `percent */[
-                -119887163,
-                Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4))
-              ]);
+    return Css.hsla({
+                HASH: /* deg */4995526,
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
+              }, Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)), {
+                HASH: /* percent */-119887163,
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4))
+              });
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
@@ -154,23 +154,23 @@ function string_of_color(param) {
       return "currentColor";
     }
   }
-  var variant = param[0];
+  var variant = param.HASH;
   if (variant !== -878128972) {
     if (variant >= 5197569) {
       if (variant >= 5692173) {
-        var match = param[1];
+        var match = param.VAL;
         return string_of_rgb(match[0], match[1], match[2]);
       }
-      var match$1 = param[1];
+      var match$1 = param.VAL;
       return string_of_hsl(match$1[0], match$1[1], match$1[2]);
     }
     if (variant >= 5194459) {
-      return "#" + param[1];
+      return "#" + param.VAL;
     }
-    var match$2 = param[1];
+    var match$2 = param.VAL;
     return string_of_hsla(match$2[0], match$2[1], match$2[2], match$2[3]);
   }
-  var match$3 = param[1];
+  var match$3 = param.VAL;
   return string_of_rgba(match$3[0], match$3[1], match$3[2], match$3[3]);
 }
 
@@ -194,52 +194,52 @@ function string_of_length(param) {
   if (typeof param === "number") {
     return "0";
   }
-  var variant = param[0];
+  var variant = param.HASH;
   if (variant >= 22632) {
     if (variant >= 25096) {
       if (variant >= 26433) {
         if (variant >= 5691738) {
-          return param[1].toString() + "rem";
+          return param.VAL.toString() + "rem";
         } else {
-          return param[1].toString() + "vw";
+          return param.VAL.toString() + "vw";
         }
       } else if (variant >= 26418) {
-        return param[1].toString() + "vh";
+        return param.VAL.toString() + "vh";
       } else {
-        return param[1].toString() + "px";
+        return param.VAL.toString() + "px";
       }
     } else if (variant >= 24416) {
       if (variant >= 25092) {
-        return param[1].toString() + "pt";
+        return param.VAL.toString() + "pt";
       } else {
-        return param[1].toString() + "mm";
+        return param.VAL.toString() + "mm";
       }
     } else if (variant >= 22643) {
-      return param[1].toString() + "ex";
+      return param.VAL.toString() + "ex";
     } else {
-      return param[1].toString() + "em";
+      return param.VAL.toString() + "em";
     }
   }
   if (variant >= -833470756) {
     if (variant >= 22181) {
       if (variant >= 22186) {
-        return param[1].toString() + "cm";
+        return param.VAL.toString() + "cm";
       } else {
-        return param[1].toString() + "ch";
+        return param.VAL.toString() + "ch";
       }
     } else if (variant >= -119887163) {
-      return param[1].toString() + "%";
+      return param.VAL.toString() + "%";
     } else {
-      return param[1].toString() + "vmin";
+      return param.VAL.toString() + "vmin";
     }
   }
   if (variant === -1040484748) {
-    return param[1].toString() + "px";
+    return param.VAL.toString() + "px";
   }
   if (variant >= -833472530) {
-    return param[1].toString() + "vmax";
+    return param.VAL.toString() + "vmax";
   }
-  var match = param[1];
+  var match = param.VAL;
   if (match[0] >= 5745024) {
     return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
   } else {
@@ -261,56 +261,56 @@ function string_of_minmax(param) {
       return "auto";
     }
   }
-  var variant = param[0];
+  var variant = param.HASH;
   if (variant >= 22643) {
     if (variant >= 25096) {
       if (variant >= 26433) {
         if (variant >= 5691738) {
-          return param[1].toString() + "rem";
+          return param.VAL.toString() + "rem";
         } else {
-          return param[1].toString() + "vw";
+          return param.VAL.toString() + "vw";
         }
       } else if (variant >= 26418) {
-        return param[1].toString() + "vh";
+        return param.VAL.toString() + "vh";
       } else {
-        return param[1].toString() + "px";
+        return param.VAL.toString() + "px";
       }
     } else if (variant >= 24416) {
       if (variant >= 25092) {
-        return param[1].toString() + "pt";
+        return param.VAL.toString() + "pt";
       } else {
-        return param[1].toString() + "mm";
+        return param.VAL.toString() + "mm";
       }
     } else if (variant >= 22860) {
-      return param[1].toString() + "fr";
+      return param.VAL.toString() + "fr";
     } else {
-      return param[1].toString() + "ex";
+      return param.VAL.toString() + "ex";
     }
   }
   if (variant >= -119887163) {
     if (variant >= 22186) {
       if (variant >= 22632) {
-        return param[1].toString() + "em";
+        return param.VAL.toString() + "em";
       } else {
-        return param[1].toString() + "cm";
+        return param.VAL.toString() + "cm";
       }
     } else if (variant >= 22181) {
-      return param[1].toString() + "ch";
+      return param.VAL.toString() + "ch";
     } else {
-      return param[1].toString() + "%";
+      return param.VAL.toString() + "%";
     }
   }
   if (variant >= -833472530) {
     if (variant >= -833470756) {
-      return param[1].toString() + "vmin";
+      return param.VAL.toString() + "vmin";
     } else {
-      return param[1].toString() + "vmax";
+      return param.VAL.toString() + "vmax";
     }
   }
   if (variant >= -1040484748) {
-    return param[1].toString() + "px";
+    return param.VAL.toString() + "px";
   }
-  var match = param[1];
+  var match = param.VAL;
   if (match[0] >= 5745024) {
     return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
   } else {
@@ -336,61 +336,61 @@ function string_of_dimension(param) {
       return "none";
     }
   }
-  var variant = param[0];
+  var variant = param.HASH;
   if (variant >= 22632) {
     if (variant >= 25092) {
       if (variant !== 25096) {
         if (variant >= 26433) {
           if (variant >= 5691738) {
-            return param[1].toString() + "rem";
+            return param.VAL.toString() + "rem";
           } else {
-            return param[1].toString() + "vw";
+            return param.VAL.toString() + "vw";
           }
         } else if (variant >= 26418) {
-          return param[1].toString() + "vh";
+          return param.VAL.toString() + "vh";
         } else {
-          return param[1].toString() + "pt";
+          return param.VAL.toString() + "pt";
         }
       } else {
-        return param[1].toString() + "px";
+        return param.VAL.toString() + "px";
       }
     } else if (variant >= 22860) {
       if (variant >= 24416) {
-        return param[1].toString() + "mm";
+        return param.VAL.toString() + "mm";
       } else {
-        return param[1].toString() + "fr";
+        return param.VAL.toString() + "fr";
       }
     } else if (variant >= 22643) {
-      return param[1].toString() + "ex";
+      return param.VAL.toString() + "ex";
     } else {
-      return param[1].toString() + "em";
+      return param.VAL.toString() + "em";
     }
   }
   if (variant >= -754859950) {
     if (variant >= 22181) {
       if (variant >= 22186) {
-        return param[1].toString() + "cm";
+        return param.VAL.toString() + "cm";
       } else {
-        return param[1].toString() + "ch";
+        return param.VAL.toString() + "ch";
       }
     }
     if (variant >= -119887163) {
-      return param[1].toString() + "%";
+      return param.VAL.toString() + "%";
     }
-    var match = param[1];
+    var match = param.VAL;
     return "minmax(" + (string_of_minmax(match[0]) + ("," + (string_of_minmax(match[1]) + ")")));
   }
   if (variant >= -833472530) {
     if (variant >= -833470756) {
-      return param[1].toString() + "vmin";
+      return param.VAL.toString() + "vmin";
     } else {
-      return param[1].toString() + "vmax";
+      return param.VAL.toString() + "vmax";
     }
   }
   if (variant >= -1040484748) {
-    return param[1].toString() + "px";
+    return param.VAL.toString() + "px";
   }
-  var match$1 = param[1];
+  var match$1 = param.VAL;
   if (match$1[0] >= 5745024) {
     return "calc(" + (string_of_length(match$1[1]) + (" - " + (string_of_length(match$1[2]) + ")")));
   } else {

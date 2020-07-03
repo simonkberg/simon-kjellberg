@@ -2,11 +2,11 @@
 
 import * as Config from "next/config";
 
-var Link = { };
+var Link = {};
 
-var Head = { };
+var Head = {};
 
-var $$Error = { };
+var $$Error = {};
 
 function getConfig(prim) {
   return Config.default();

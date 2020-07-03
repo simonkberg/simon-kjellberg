@@ -8,59 +8,59 @@ import * as Theme$SimonKjellberg from "../Theme.bs.js";
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 import * as UnorderedList$SimonKjellberg from "./UnorderedList.bs.js";
 
-var styles = Curry._1(Css.style, /* :: */[
-      Css.position(Css.relative),
-      /* :: */[
-        Css.before(/* :: */[
-              Css.contentRule(/* `text */[
-                    -856044371,
-                    "*"
-                  ]),
-              /* :: */[
-                Css.position(Css.absolute),
-                /* :: */[
-                  Css.left(Css.ch(-1.5)),
-                  /* :: */[
-                    Css.color(Theme$SimonKjellberg.Color.muted),
-                    /* [] */0
-                  ]
-                ]
-              ]
-            ]),
-        /* :: */[
-          Css.selector("& > ." + UnorderedList$SimonKjellberg.styles, /* :: */[
-                Css.marginTop(Css.zero),
-                /* :: */[
-                  Css.marginBottom(Css.zero),
-                  /* [] */0
-                ]
-              ]),
-          /* [] */0
-        ]
-      ]
-    ]);
+var styles = Curry._1(Css.style, {
+      hd: Css.position(Css.relative),
+      tl: {
+        hd: Css.before({
+              hd: Css.contentRule({
+                    HASH: /* text */-856044371,
+                    VAL: "*"
+                  }),
+              tl: {
+                hd: Css.position(Css.absolute),
+                tl: {
+                  hd: Css.left(Css.ch(-1.5)),
+                  tl: {
+                    hd: Css.color(Theme$SimonKjellberg.Color.muted),
+                    tl: /* [] */0
+                  }
+                }
+              }
+            }),
+        tl: {
+          hd: Css.selector("& > ." + UnorderedList$SimonKjellberg.styles, {
+                hd: Css.marginTop(Css.zero),
+                tl: {
+                  hd: Css.marginBottom(Css.zero),
+                  tl: /* [] */0
+                }
+              }),
+          tl: /* [] */0
+        }
+      }
+    });
 
-var make = Utils$SimonKjellberg.forwardDOMRef((function (Props, ref) {
-        var className = Props.className;
-        var style = Props.style;
-        var children = Props.children;
-        var tmp = {
-          className: Utils$SimonKjellberg.cn(/* :: */[
-                styles,
-                /* :: */[
-                  Utils$SimonKjellberg.$pipe$question(className, ""),
-                  /* [] */0
-                ]
-              ])
-        };
-        if (ref !== undefined) {
-          tmp.ref = Caml_option.valFromOption(ref);
-        }
-        if (style !== undefined) {
-          tmp.style = Caml_option.valFromOption(style);
-        }
-        return React.createElement("li", tmp, children);
-      }));
+var make = Utils$SimonKjellberg.forwardDOMRef(function (Props, ref) {
+      var className = Props.className;
+      var style = Props.style;
+      var children = Props.children;
+      var tmp = {
+        className: Utils$SimonKjellberg.cn({
+              hd: styles,
+              tl: {
+                hd: Utils$SimonKjellberg.$pipe$question(className, ""),
+                tl: /* [] */0
+              }
+            })
+      };
+      if (ref !== undefined) {
+        tmp.ref = Caml_option.valFromOption(ref);
+      }
+      if (style !== undefined) {
+        tmp.style = Caml_option.valFromOption(style);
+      }
+      return React.createElement("li", tmp, children);
+    });
 
 var $$default = make;
 
