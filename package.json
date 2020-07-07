@@ -81,7 +81,7 @@
     "minimist": "1.2.5",
     "morgan": "1.10.0",
     "ms": "2.1.2",
-    "newrelic": "6.10.0",
+    "newrelic": "6.11.0",
     "next": "9.4.4",
     "next-offline": "5.0.2",
     "open": "7.0.4",
