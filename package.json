@@ -73,7 +73,7 @@
     "execa": "4.0.2",
     "express": "4.17.1",
     "graphql": "15.3.0",
-    "graphql-tag": "2.10.3",
+    "graphql-tag": "2.10.4",
     "helmet": "3.23.3",
     "invariant": "2.2.4",
     "ioredis": "4.17.3",
