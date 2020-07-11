@@ -96,7 +96,7 @@
     "screenfull": "5.0.2",
     "serve-favicon": "2.5.0",
     "styled-tools": "1.7.2",
-    "subscriptions-transport-ws": "0.9.16"
+    "subscriptions-transport-ws": "0.9.17"
   },
   "devDependencies": {
     "@babel/core": "7.10.4",
