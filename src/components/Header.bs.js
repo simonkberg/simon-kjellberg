@@ -19,7 +19,7 @@ var wrapper = Curry._1(Css.style, {
     });
 
 var container = Curry._1(Css.style, {
-      hd: Css.margin2(/* zero */-789508312, /* auto */-1065951377),
+      hd: Css.margin2("zero", "auto"),
       tl: {
         hd: Css.maxWidth(Css.rem(35.0)),
         tl: {
@@ -44,11 +44,11 @@ var container = Curry._1(Css.style, {
 var title = Curry._1(Css.style, {
       hd: Css.fontSize(Css.rem(1.0)),
       tl: {
-        hd: Css.fontWeight(/* bold */-1055161979),
+        hd: Css.fontWeight("bold"),
         tl: {
-          hd: Css.margin(/* zero */-789508312),
+          hd: Css.margin("zero"),
           tl: {
-            hd: Css.textTransform(/* lowercase */-425349839),
+            hd: Css.textTransform("lowercase"),
             tl: /* [] */0
           }
         }
@@ -58,7 +58,7 @@ var title = Curry._1(Css.style, {
 var link = Curry._1(Css.style, {
       hd: Css.color(Theme$SimonKjellberg.Header.color),
       tl: {
-        hd: Css.textDecoration(/* none */-922086728),
+        hd: Css.textDecoration("none"),
         tl: /* [] */0
       }
     });

@@ -9,7 +9,7 @@ import * as UnorderedListItem$SimonKjellberg from "./UnorderedListItem.bs.js";
 
 function Links(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {
-                  level: /* Level2 */-656133554,
+                  level: "Level2",
                   children: Utils$SimonKjellberg.str("Links")
                 }), React.createElement(UnorderedList$SimonKjellberg.make, {
                   children: null

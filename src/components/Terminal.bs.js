@@ -11,7 +11,7 @@ import * as Polished$SimonKjellberg from "../bindings/Polished.bs.js";
 var windowFullscreen_0 = Css.height(Css.pct(100.0));
 
 var windowFullscreen_1 = {
-  hd: Css.margin(/* zero */-789508312),
+  hd: Css.margin("zero"),
   tl: /* [] */0
 };
 
@@ -21,13 +21,13 @@ var windowFullscreen = {
 };
 
 var $$window = Curry._1(Css.style, {
-      hd: Css.position(/* relative */903134412),
+      hd: Css.position("relative"),
       tl: {
-        hd: Css.display(/* flex */-1010954439),
+        hd: Css.display("flex"),
         tl: {
-          hd: Css.flexDirection(/* column */-963948842),
+          hd: Css.flexDirection("column"),
           tl: {
-            hd: Css.margin2(Css.em(1.0), /* auto */-1065951377),
+            hd: Css.margin2(Css.em(1.0), "auto"),
             tl: {
               hd: Css.width(Css.pct(100.0)),
               tl: {
@@ -64,7 +64,7 @@ var windowTopbar = Curry._1(Css.style, {
           tl: {
             hd: Css.borderTopRightRadius(Css.rem(0.5)),
             tl: {
-              hd: Css.padding2(/* zero */-789508312, Css.rem(0.625)),
+              hd: Css.padding2("zero", Css.rem(0.625)),
               tl: /* [] */0
             }
           }
@@ -73,13 +73,13 @@ var windowTopbar = Curry._1(Css.style, {
     });
 
 var windowControl = Curry._1(Css.style, {
-      hd: Css.display(/* inlineBlock */-147785676),
+      hd: Css.display("inlineBlock"),
       tl: {
         hd: Css.width(Css.rem(0.75)),
         tl: {
           hd: Css.height(Css.rem(0.75)),
           tl: {
-            hd: Css.padding(/* zero */-789508312),
+            hd: Css.padding("zero"),
             tl: {
               hd: Css.marginTop(Css.rem(0.625)),
               tl: {
@@ -87,10 +87,10 @@ var windowControl = Curry._1(Css.style, {
                 tl: {
                   hd: Css.borderRadius(Css.rem(0.5)),
                   tl: {
-                    hd: Css.border(Css.px(1), /* solid */12956715, /* transparent */582626130),
+                    hd: Css.border(Css.px(1), "solid", "transparent"),
                     tl: {
                       hd: Css.focus({
-                            hd: Css.outlineStyle(/* none */-922086728),
+                            hd: Css.outlineStyle("none"),
                             tl: /* [] */0
                           }),
                       tl: /* [] */0
@@ -163,17 +163,17 @@ var windowContentFullscreen = {
 };
 
 var windowContent = Curry._1(Css.style, {
-      hd: Css.display(/* flex */-1010954439),
+      hd: Css.display("flex"),
       tl: {
-        hd: Css.flexDirection(/* column */-963948842),
+        hd: Css.flexDirection("column"),
         tl: {
-          hd: Css.position(/* relative */903134412),
+          hd: Css.position("relative"),
           tl: {
             hd: Css.color(Theme$SimonKjellberg.Terminal.Content.color),
             tl: {
               hd: Css.maxHeight(Theme$SimonKjellberg.Terminal.Content.maxHeight),
               tl: {
-                hd: Css.margin2(/* zero */-789508312, Css.rem(0.625)),
+                hd: Css.margin2("zero", Css.rem(0.625)),
                 tl: {
                   hd: Css.selector("." + ($$window + ":fullscreen &"), windowContentFullscreen),
                   tl: {

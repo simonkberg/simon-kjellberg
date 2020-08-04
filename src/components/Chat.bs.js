@@ -22,9 +22,9 @@ var ChatMessageInput = {
 };
 
 var styles = Curry._1(Css.style, {
-      hd: Css.display(/* flex */-1010954439),
+      hd: Css.display("flex"),
       tl: {
-        hd: Css.flexDirection(/* column */-963948842),
+        hd: Css.flexDirection("column"),
         tl: {
           hd: Css.unsafe("maxHeight", "inherit"),
           tl: /* [] */0
@@ -34,7 +34,7 @@ var styles = Curry._1(Css.style, {
 
 function Chat(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {
-                  level: /* Level2 */-656133554,
+                  level: "Level2",
                   children: Utils$SimonKjellberg.str("Slack")
                 }), React.createElement(Terminal$SimonKjellberg.make, {
                   children: React.createElement("div", {
