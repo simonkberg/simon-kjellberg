@@ -14,7 +14,7 @@ var config = Next$SimonKjellberg.Config.getConfig(undefined);
 
 function About(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {
-                  level: /* Level2 */-656133554,
+                  level: "Level2",
                   children: null
                 }, "About ", React.createElement(Subtitle$SimonKjellberg.make, {
                       children: "(Location: Stockholm, Sweden)"

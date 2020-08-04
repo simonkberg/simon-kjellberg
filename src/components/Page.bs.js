@@ -12,17 +12,17 @@ var wrapper = Curry._1(Css.style, {
       hd: Css.fontSize(Css.pct(100.0)),
       tl: {
         hd: Css.lineHeight({
-              HASH: /* abs */4845682,
+              NAME: "abs",
               VAL: 1.5
             }),
         tl: {
           hd: Css.fontFamilies({
                 hd: {
-                  HASH: /* custom */1066567601,
+                  NAME: "custom",
                   VAL: "Iosevka"
                 },
                 tl: {
-                  hd: /* monospace */-555363901,
+                  hd: "monospace",
                   tl: /* [] */0
                 }
               }),
@@ -35,11 +35,11 @@ var wrapper = Curry._1(Css.style, {
     });
 
 var content = Curry._1(Css.style, {
-      hd: Css.margin2(/* zero */-789508312, /* auto */-1065951377),
+      hd: Css.margin2("zero", "auto"),
       tl: {
         hd: Css.maxWidth(Theme$SimonKjellberg.Page.maxWidth),
         tl: {
-          hd: Css.padding3(/* zero */-789508312, Css.rem(0.9375), Css.rem(1.875)),
+          hd: Css.padding3("zero", Css.rem(0.9375), Css.rem(1.875)),
           tl: {
             hd: Css.unsafe("@supports(padding: max(0px)) and (padding: env(safe-area-inset-bottom))", Curry._1(Css.style, {
                       hd: Css.unsafe("paddingLeft", "max(env(safe-area-inset-left), 0.9375rem)"),

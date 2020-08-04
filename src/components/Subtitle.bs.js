@@ -8,7 +8,7 @@ import * as Theme$SimonKjellberg from "../Theme.bs.js";
 var styles = Curry._1(Css.style, {
       hd: Css.color(Theme$SimonKjellberg.Color.muted),
       tl: {
-        hd: Css.fontWeight(/* normal */812216871),
+        hd: Css.fontWeight("normal"),
         tl: /* [] */0
       }
     });

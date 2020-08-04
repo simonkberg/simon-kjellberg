@@ -13,7 +13,7 @@ var styles = Curry._1(Css.style, {
       tl: {
         hd: Css.before({
               hd: Css.contentRule({
-                    HASH: /* text */-856044371,
+                    NAME: "text",
                     VAL: "*"
                   }),
               tl: {

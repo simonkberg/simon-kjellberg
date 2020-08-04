@@ -9,7 +9,7 @@ import * as StatsList$SimonKjellberg from "./StatsList.bs.js";
 
 function Stats(Props) {
   return React.createElement("section", undefined, React.createElement(Heading$SimonKjellberg.make, {
-                  level: /* Level2 */-656133554,
+                  level: "Level2",
                   children: null
                 }, Utils$SimonKjellberg.str("Currently writing "), React.createElement(Subtitle$SimonKjellberg.make, {
                       children: null

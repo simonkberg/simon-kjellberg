@@ -43,13 +43,13 @@ var bounce = Curry._1(Css.keyframes, {
     });
 
 var container = Curry._1(Css.style, {
-      hd: Css.position(/* relative */903134412),
+      hd: Css.position("relative"),
       tl: {
-        hd: Css.display(/* block */888960333),
+        hd: Css.display("block"),
         tl: {
           hd: Css.marginBottom(Css.rem(1.0)),
           tl: {
-            hd: Css.textAlign(/* left */-944764921),
+            hd: Css.textAlign("left"),
             tl: /* [] */0
           }
         }
@@ -57,7 +57,7 @@ var container = Curry._1(Css.style, {
     });
 
 var point = Curry._1(Css.style, {
-      hd: Css.display(/* inlineBlock */-147785676),
+      hd: Css.display("inlineBlock"),
       tl: {
         hd: Css.width(Css.ch(1.0)),
         tl: {
@@ -67,11 +67,11 @@ var point = Curry._1(Css.style, {
             tl: {
               hd: Css.borderRadius(Css.pct(100.0)),
               tl: {
-                hd: Css.backgroundColor(/* currentColor */292050538),
+                hd: Css.backgroundColor("currentColor"),
                 tl: {
                   hd: Css.unsafe("willChange", "transform"),
                   tl: {
-                    hd: Css.animation(1400, undefined, undefined, /* easeInOut */-960651557, /* both */-1055160191, undefined, /* infinite */-630647084, bounce),
+                    hd: Css.animation(1400, undefined, undefined, "easeInOut", "both", undefined, "infinite", bounce),
                     tl: /* [] */0
                   }
                 }

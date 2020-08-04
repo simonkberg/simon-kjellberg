@@ -9,7 +9,7 @@ import * as ReasonReactCompat from "reason-react/src/legacy/ReasonReactCompat.bs
 import * as Utils$SimonKjellberg from "../Utils.bs.js";
 
 var styles = Curry._1(Css.style, {
-      hd: Css.listStyleType(/* none */-922086728),
+      hd: Css.listStyleType("none"),
       tl: {
         hd: Css.padding(Css.zero),
         tl: {
