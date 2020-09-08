@@ -111,7 +111,7 @@
     "chokidar": "3.4.2",
     "eslint": "7.8.1",
     "file-loader": "6.1.0",
-    "flow-bin": "0.130.0",
+    "flow-bin": "0.133.0",
     "fs-extra": "9.0.1",
     "husky": "4.3.0",
     "jest": "26.4.2",
