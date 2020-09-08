@@ -1,6 +1,5 @@
 open Css;
 open Css_AtomicTypes;
-open Utils;
 
 type colors = {
   black: Color.t,
@@ -95,64 +94,64 @@ module Quote = {
 
 let theme = {
   "color": {
-    "primary": string_of_color(Color.primary),
-    "secondary": string_of_color(Color.secondary),
-    "muted": string_of_color(Color.muted),
+    "primary": Css_AtomicTypes.Color.toString(Color.primary),
+    "secondary": Css_AtomicTypes.Color.toString(Color.secondary),
+    "muted": Css_AtomicTypes.Color.toString(Color.muted),
   },
   "background": {
-    "primary": string_of_color(Background.primary),
-    "secondary": string_of_color(Background.secondary),
+    "primary": Css_AtomicTypes.Color.toString(Background.primary),
+    "secondary": Css_AtomicTypes.Color.toString(Background.secondary),
   },
   "page": {
-    "maxWidth": string_of_dimension(Page.maxWidth),
+    "maxWidth": Css_AtomicTypes.Length.toString(Page.maxWidth),
   },
   "scrollbar": {
-    "width": string_of_dimension(Scrollbar.width),
+    "width": Css_AtomicTypes.Length.toString(Scrollbar.width),
     "thumb": {
-      "color": string_of_color(Scrollbar.Thumb.color),
-      "radius": string_of_dimension(Scrollbar.Thumb.radius),
+      "color": Css_AtomicTypes.Color.toString(Scrollbar.Thumb.color),
+      "radius": Css_AtomicTypes.Length.toString(Scrollbar.Thumb.radius),
     },
     "track": {
-      "color": string_of_color(Scrollbar.Track.color),
+      "color": Css_AtomicTypes.Color.toString(Scrollbar.Track.color),
     },
   },
   "terminal": {
     "window": {
-      "backgroundColor": string_of_color(Terminal.Window.backgroundColor),
+      "backgroundColor": Css_AtomicTypes.Color.toString(Terminal.Window.backgroundColor),
     },
     "topbar": {
-      "backgroundColor": string_of_color(Terminal.Topbar.backgroundColor),
-      "height": string_of_dimension(Terminal.Topbar.height),
+      "backgroundColor": Css_AtomicTypes.Color.toString(Terminal.Topbar.backgroundColor),
+      "height": Css_AtomicTypes.Length.toString(Terminal.Topbar.height),
     },
     "controls": {
       "close": {
         "backgroundColor":
-          string_of_color(Terminal.Controls.Close.backgroundColor),
+          Css_AtomicTypes.Color.toString(Terminal.Controls.Close.backgroundColor),
       },
       "minimize": {
         "backgroundColor":
-          string_of_color(Terminal.Controls.Minimize.backgroundColor),
+          Css_AtomicTypes.Color.toString(Terminal.Controls.Minimize.backgroundColor),
       },
       "maximize": {
         "backgroundColor":
-          string_of_color(Terminal.Controls.Maximize.backgroundColor),
+          Css_AtomicTypes.Color.toString(Terminal.Controls.Maximize.backgroundColor),
       },
     },
     "content": {
-      "color": string_of_color(Terminal.Content.color),
-      "maxHeight": string_of_dimension(Terminal.Content.maxHeight),
+      "color": Css_AtomicTypes.Color.toString(Terminal.Content.color),
+      "maxHeight": Css_AtomicTypes.Length.toString(Terminal.Content.maxHeight),
     },
   },
   "code": {
     "color": {
-      "inline": string_of_color(Code.Color.inline),
-      "block": string_of_color(Code.Color.block),
+      "inline": Css_AtomicTypes.Color.toString(Code.Color.inline),
+      "block": Css_AtomicTypes.Color.toString(Code.Color.block),
     },
-    "background": string_of_color(Code.backgroundColor),
-    "border": string_of_color(Code.borderColor),
+    "background": Css_AtomicTypes.Color.toString(Code.backgroundColor),
+    "border": Css_AtomicTypes.Color.toString(Code.borderColor),
   },
   "quote": {
-    "border": string_of_color(Quote.borderColor),
+    "border": Css_AtomicTypes.Color.toString(Quote.borderColor),
   },
 };
 
