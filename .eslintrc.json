@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "@simonkberg/eslint-config",
-    "@simonkberg/eslint-config/flowtype"
-  ],
+  "extends": ["@simonkberg/eslint-config"],
   "overrides": [
     {
       "files": ["**/__tests__/**/*.js?(x)", "**/?(*.)+(spec|test).js?(x)"],

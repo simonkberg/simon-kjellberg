@@ -1,6 +1,4 @@
-// @flow strict
-
-const ensureTrailingSlash = (uri: string) =>
+const ensureTrailingSlash = uri =>
   uri.charAt(uri.length - 1) === '/' ? uri : `${uri}/`
 
 export default ensureTrailingSlash

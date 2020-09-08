@@ -1,10 +1,7 @@
-// @flow strict
 import * as React from 'react'
 
 const useNetworkStatus = (
-  initialValue?: boolean = typeof navigator !== 'undefined'
-    ? navigator.onLine
-    : true
+  initialValue = typeof navigator !== 'undefined' ? navigator.onLine : true
 ) => {
   const [value, setValue] = React.useState(initialValue)
 

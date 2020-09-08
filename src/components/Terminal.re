@@ -119,7 +119,7 @@ let make = (~children) => {
     React.useCallback1(
       _ =>
         if (Screenfull.isEnabled) {
-          switch (windowRef->React.Ref.current->Js.Nullable.toOption) {
+          switch (windowRef.current->Js.Nullable.toOption) {
           | Some(r) => Screenfull.toggle(r) |> ignore
           | None => ()
           };

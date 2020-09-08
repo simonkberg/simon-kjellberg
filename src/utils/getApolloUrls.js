@@ -1,9 +1,6 @@
-// @flow strict
-
-import type { NextContext } from '../types'
 import getBaseUrl from './getBaseUrl'
 
-export default function getApolloUrls(ctx?: NextContext) {
+export default function getApolloUrls(ctx) {
   const baseUrl = getBaseUrl(ctx)
   const graphqlUrl = new URL('/graphql', baseUrl)
   const subscriptionUrl = new URL(graphqlUrl.href)

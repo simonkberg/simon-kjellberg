@@ -50,43 +50,6 @@ function cn(cns) {
                   })));
 }
 
-function string_of_float(prim) {
-  return prim.toString();
-}
-
-function string_of_int(prim) {
-  return prim.toString();
-}
-
-function string_of_angle(param) {
-  var variant = param.NAME;
-  if (variant === "turn") {
-    return param.VAL.toString() + "turn";
-  } else if (variant === "deg") {
-    return param.VAL.toString() + "deg";
-  } else if (variant === "rad") {
-    return param.VAL.toString() + "rad";
-  } else {
-    return param.VAL.toString() + "grad";
-  }
-}
-
-function string_of_percent(param) {
-  return param.VAL.toString() + "%";
-}
-
-function string_of_alpha(param) {
-  if (param.NAME === "num") {
-    return param.VAL.toString();
-  } else {
-    return param.VAL.toString() + "%";
-  }
-}
-
-function string_of_rgb(r, g, b) {
-  return "rgb(" + (r.toString() + (", " + (g.toString() + (", " + (b.toString() + ")")))));
-}
-
 function rgb_of_string(s) {
   var re = s.match(/^rgb\((\d+), ?(\d+), ?(\d+)\)/);
   if (re !== null) {
@@ -96,21 +59,16 @@ function rgb_of_string(s) {
   }
 }
 
-function string_of_rgba(r, g, b, a) {
-  return "rgba(" + (r.toString() + (", " + (g.toString() + (", " + (b.toString() + (", " + (a.toString() + ")")))))));
-}
-
 function rgba_of_string(s) {
   var re = s.match(/^rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/);
   if (re !== null) {
-    return Css.rgba(Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 3)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4)));
+    return Css.rgba(Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 1)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_int_of_string(Caml_array.caml_array_get(re, 3)), {
+                NAME: "num",
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4))
+              });
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
-}
-
-function string_of_hsl(h, s, l) {
-  return "hsl(" + (string_of_angle(h) + (", " + (string_of_percent(s) + (", " + (string_of_percent(l) + ")")))));
 }
 
 function hsl_of_string(s) {
@@ -119,14 +77,16 @@ function hsl_of_string(s) {
     return Css.hsl({
                 NAME: "deg",
                 VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
-              }, Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)));
+              }, {
+                NAME: "percent",
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2))
+              }, {
+                NAME: "percent",
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3))
+              });
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
-}
-
-function string_of_hsla(h, s, l, a) {
-  return "hsla(" + (string_of_angle(h) + (", " + (string_of_percent(s) + (", " + (string_of_percent(l) + (", " + (string_of_alpha(a) + ")")))))));
 }
 
 function hsla_of_string(s) {
@@ -135,41 +95,19 @@ function hsla_of_string(s) {
     return Css.hsla({
                 NAME: "deg",
                 VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 1))
-              }, Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2)), Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3)), {
+              }, {
+                NAME: "percent",
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 2))
+              }, {
+                NAME: "percent",
+                VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 3))
+              }, {
                 NAME: "percent",
                 VAL: Caml_format.caml_float_of_string(Caml_array.caml_array_get(re, 4))
               });
   } else {
     return Js_exn.raiseError("Invalid formatted value");
   }
-}
-
-function string_of_color(param) {
-  if (typeof param === "string") {
-    if (param === "transparent") {
-      return "transparent";
-    } else {
-      return "currentColor";
-    }
-  }
-  var variant = param.NAME;
-  if (variant === "rgba") {
-    var match = param.VAL;
-    return string_of_rgba(match[0], match[1], match[2], match[3]);
-  }
-  if (variant === "hex") {
-    return "#" + param.VAL;
-  }
-  if (variant === "hsl") {
-    var match$1 = param.VAL;
-    return string_of_hsl(match$1[0], match$1[1], match$1[2]);
-  }
-  if (variant === "rgb") {
-    var match$2 = param.VAL;
-    return string_of_rgb(match$2[0], match$2[1], match$2[2]);
-  }
-  var match$3 = param.VAL;
-  return string_of_hsla(match$3[0], match$3[1], match$3[2], match$3[3]);
 }
 
 function color_of_string(s) {
@@ -188,199 +126,6 @@ function color_of_string(s) {
   }
 }
 
-function string_of_length(param) {
-  if (typeof param === "string") {
-    return "0";
-  }
-  var variant = param.NAME;
-  if (variant === "pxFloat") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vmax") {
-    return param.VAL.toString() + "vmax";
-  }
-  if (variant === "vmin") {
-    return param.VAL.toString() + "vmin";
-  }
-  if (variant === "percent") {
-    return param.VAL.toString() + "%";
-  }
-  if (variant === "ch") {
-    return param.VAL.toString() + "ch";
-  }
-  if (variant === "cm") {
-    return param.VAL.toString() + "cm";
-  }
-  if (variant === "em") {
-    return param.VAL.toString() + "em";
-  }
-  if (variant === "ex") {
-    return param.VAL.toString() + "ex";
-  }
-  if (variant === "mm") {
-    return param.VAL.toString() + "mm";
-  }
-  if (variant === "pt") {
-    return param.VAL.toString() + "pt";
-  }
-  if (variant === "px") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vh") {
-    return param.VAL.toString() + "vh";
-  }
-  if (variant === "vw") {
-    return param.VAL.toString() + "vw";
-  }
-  if (variant === "rem") {
-    return param.VAL.toString() + "rem";
-  }
-  var match = param.VAL;
-  if (match[0] === "sub") {
-    return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
-  } else {
-    return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
-  }
-}
-
-function string_of_minmax(param) {
-  if (typeof param === "string") {
-    if (param === "zero") {
-      return "0";
-    } else if (param === "minContent") {
-      return "min-content";
-    } else if (param === "maxContent") {
-      return "max-content";
-    } else {
-      return "auto";
-    }
-  }
-  var variant = param.NAME;
-  if (variant === "pxFloat") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vmax") {
-    return param.VAL.toString() + "vmax";
-  }
-  if (variant === "vmin") {
-    return param.VAL.toString() + "vmin";
-  }
-  if (variant === "percent") {
-    return param.VAL.toString() + "%";
-  }
-  if (variant === "ch") {
-    return param.VAL.toString() + "ch";
-  }
-  if (variant === "cm") {
-    return param.VAL.toString() + "cm";
-  }
-  if (variant === "em") {
-    return param.VAL.toString() + "em";
-  }
-  if (variant === "ex") {
-    return param.VAL.toString() + "ex";
-  }
-  if (variant === "fr") {
-    return param.VAL.toString() + "fr";
-  }
-  if (variant === "mm") {
-    return param.VAL.toString() + "mm";
-  }
-  if (variant === "pt") {
-    return param.VAL.toString() + "pt";
-  }
-  if (variant === "px") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vh") {
-    return param.VAL.toString() + "vh";
-  }
-  if (variant === "vw") {
-    return param.VAL.toString() + "vw";
-  }
-  if (variant === "rem") {
-    return param.VAL.toString() + "rem";
-  }
-  var match = param.VAL;
-  if (match[0] === "sub") {
-    return "calc(" + (string_of_length(match[1]) + (" - " + (string_of_length(match[2]) + ")")));
-  } else {
-    return "calc(" + (string_of_length(match[1]) + (" + " + (string_of_length(match[2]) + ")")));
-  }
-}
-
-function string_of_dimension(param) {
-  if (typeof param === "string") {
-    if (param === "none") {
-      return "none";
-    } else if (param === "zero") {
-      return "0";
-    } else if (param === "minContent") {
-      return "min-content";
-    } else if (param === "maxContent") {
-      return "max-content";
-    } else {
-      return "auto";
-    }
-  }
-  var variant = param.NAME;
-  if (variant === "pxFloat") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vmax") {
-    return param.VAL.toString() + "vmax";
-  }
-  if (variant === "vmin") {
-    return param.VAL.toString() + "vmin";
-  }
-  if (variant === "minmax") {
-    var match = param.VAL;
-    return "minmax(" + (string_of_minmax(match[0]) + ("," + (string_of_minmax(match[1]) + ")")));
-  }
-  if (variant === "percent") {
-    return param.VAL.toString() + "%";
-  }
-  if (variant === "ch") {
-    return param.VAL.toString() + "ch";
-  }
-  if (variant === "cm") {
-    return param.VAL.toString() + "cm";
-  }
-  if (variant === "em") {
-    return param.VAL.toString() + "em";
-  }
-  if (variant === "ex") {
-    return param.VAL.toString() + "ex";
-  }
-  if (variant === "fr") {
-    return param.VAL.toString() + "fr";
-  }
-  if (variant === "mm") {
-    return param.VAL.toString() + "mm";
-  }
-  if (variant === "pt") {
-    return param.VAL.toString() + "pt";
-  }
-  if (variant === "px") {
-    return param.VAL.toString() + "px";
-  }
-  if (variant === "vh") {
-    return param.VAL.toString() + "vh";
-  }
-  if (variant === "vw") {
-    return param.VAL.toString() + "vw";
-  }
-  if (variant === "rem") {
-    return param.VAL.toString() + "rem";
-  }
-  var match$1 = param.VAL;
-  if (match$1[0] === "sub") {
-    return "calc(" + (string_of_length(match$1[1]) + (" - " + (string_of_length(match$1[2]) + ")")));
-  } else {
-    return "calc(" + (string_of_length(match$1[1]) + (" + " + (string_of_length(match$1[2]) + ")")));
-  }
-}
-
 export {
   str ,
   dangerousHtml ,
@@ -388,24 +133,11 @@ export {
   $great$great$eq ,
   $pipe$question ,
   cn ,
-  string_of_float ,
-  string_of_int ,
-  string_of_angle ,
-  string_of_percent ,
-  string_of_alpha ,
-  string_of_rgb ,
   rgb_of_string ,
-  string_of_rgba ,
   rgba_of_string ,
-  string_of_hsl ,
   hsl_of_string ,
-  string_of_hsla ,
   hsla_of_string ,
-  string_of_color ,
   color_of_string ,
-  string_of_length ,
-  string_of_minmax ,
-  string_of_dimension ,
   
 }
 /* Css Not a pure module */

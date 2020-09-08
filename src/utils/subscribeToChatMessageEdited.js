@@ -1,5 +1,3 @@
-// @flow strict
-
 import chatMessageEditedSubscription from '../graphql/ChatMessageEditedSubscription.graphql'
 
 const updateQuery = (prev, { subscriptionData }) => {
@@ -85,7 +83,7 @@ const updateQuery = (prev, { subscriptionData }) => {
   return prev
 }
 
-const subscribeToChatMessageEdited = (subscribeToMore: $FlowFixMe) =>
+const subscribeToChatMessageEdited = subscribeToMore =>
   subscribeToMore({ document: chatMessageEditedSubscription, updateQuery })
 
 export default subscribeToChatMessageEdited

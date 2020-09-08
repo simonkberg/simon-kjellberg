@@ -1,4 +1,3 @@
-// @flow strict
 import * as React from 'react'
 import NextApp from 'next/app'
 import Head from 'next/head'
@@ -58,7 +57,7 @@ const globalStyles = css`
 `
 
 class App extends NextApp {
-  static async getInitialProps(ctx: $FlowFixMe) {
+  static async getInitialProps(ctx) {
     const appProps = await NextApp.getInitialProps(ctx)
     const { req } = ctx.ctx
 

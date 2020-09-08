@@ -1,9 +1,7 @@
-// @flow strict
 import * as React from 'react'
 import getConfig from 'next/config'
 import styled from '@emotion/styled'
 
-import type { NextContext } from '../types'
 import Page from '../components/Page.bs'
 
 const {
@@ -11,10 +9,10 @@ const {
 } = getConfig()
 
 const statusCodes = {
-  '400': 'Bad Request',
-  '404': 'This page could not be found',
-  '500': 'Internal Server Error',
-  '501': 'Not Implemented',
+  400: 'Bad Request',
+  404: 'This page could not be found',
+  500: 'Internal Server Error',
+  501: 'Not Implemented',
 }
 
 const Title = styled('h1')`
@@ -26,19 +24,15 @@ const SubTitle = styled('span')`
   font-size: 1rem;
   font-weight: normal;
 `
-
-type Props = {
-  statusCode: number | null,
-}
-
-export default class Error extends React.Component<Props> {
-  static getInitialProps({ res, err }: NextContext) {
+export default class Error extends React.Component {
+  static getInitialProps({ res, err }) {
     return {
       statusCode: res ? res.statusCode : err ? err.statusCode : null,
     }
   }
 
   render() {
+    // eslint-disable-next-line react/prop-types
     const { statusCode } = this.props
     const title =
       (statusCode && statusCodes[statusCode]) ||

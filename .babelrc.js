@@ -12,7 +12,6 @@ module.exports = {
         },
       },
     ],
-    '@babel/preset-flow',
   ],
   plugins: [
     ['@babel/plugin-proposal-optional-chaining', { loose: true }],
