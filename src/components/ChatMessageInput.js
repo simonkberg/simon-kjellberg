@@ -1,4 +1,3 @@
-// @flow strict
 import * as React from 'react'
 import styled from '@emotion/styled'
 import { theme } from 'styled-tools'
@@ -6,7 +5,6 @@ import { theme } from 'styled-tools'
 import usePostChatMessage from '../hooks/usePostChatMessage'
 import useNetworkStatus from '../hooks/useNetworkStatus'
 
-// $FlowFixMe: tagged templates don't support generics
 const Form = styled('form')`
   flex: 0 0 auto;
 `

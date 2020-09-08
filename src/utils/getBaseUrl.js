@@ -1,8 +1,4 @@
-// @flow strict
-
-import type { NextContext } from '../types'
-
-export default function getBaseUrl(ctx?: NextContext) {
+export default function getBaseUrl(ctx) {
   if (ctx != null && ctx.req != null) {
     const { address, family, port } = ctx.req.socket.address()
 

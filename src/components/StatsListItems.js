@@ -1,16 +1,11 @@
-// @flow strict
 import * as React from 'react'
 import { useSprings, animated } from 'react-spring'
 
 import UnorderedListItem from './UnorderedListItem.bs'
 
-type Props = {
-  stats: Array<{ name: string, percent: number }>,
-}
-
 const AnimatedListItem = animated(UnorderedListItem)
 
-const StatsListItems = ({ stats }: Props) => {
+const StatsListItems = ({ stats }) => {
   const springs = useSprings(
     stats.length,
     stats.map(item => ({

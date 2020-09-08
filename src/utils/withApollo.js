@@ -1,4 +1,4 @@
-// @flow strict
+/* eslint-disable react/prop-types */
 import * as React from 'react'
 import { ApolloClient } from 'apollo-client'
 import { getDataFromTree } from '@apollo/react-ssr'
@@ -15,13 +15,6 @@ import fetch from 'cross-fetch'
 import getApolloUrls from '../utils/getApolloUrls'
 import getFragmentTypes from '../utils/getFragmentTypes'
 
-type Props = {
-  +cookie?: string,
-  +fragmentTypes: Object,
-  +apolloState?: Object,
-  +apolloUrls: {| +graphql: string, +subscription: string |},
-}
-
 const dataIdFromObject = result => {
   switch (result.__typename) {
     case 'ChatMessage':
@@ -29,7 +22,9 @@ const dataIdFromObject = result => {
       if (result.ts != null) {
         return `${result.__typename}:${result.ts}`
       }
+
     // fallthrough
+
     default:
       return defaultDataIdFromObject(result)
   }
@@ -45,34 +40,46 @@ const createInMemoryCache = fragmentTypes =>
   })
 
 const createHttpLink = (uri, options) =>
-  new HttpLink({ uri, fetch, ...options })
+  new HttpLink({
+    uri,
+    fetch,
+    ...options,
+  })
 
 const createWebSocketLink = (uri, options) =>
-  new WebSocketLink({ uri, options: { reconnect: true, ...options } })
+  new WebSocketLink({
+    uri,
+    options: {
+      reconnect: true,
+      ...options,
+    },
+  })
 
 const splitSubscriptions = ({ query }) => {
   const { kind, operation } = getMainDefinition(query)
-
   return kind === 'OperationDefinition' && operation === 'subscription'
 }
 
-const createLinks = (props: Props) => {
+const createLinks = props => {
   if (!process.browser) {
     return createHttpLink(props.apolloUrls.graphql, {
-      headers: { cookie: props.cookie },
+      headers: {
+        cookie: props.cookie,
+      },
     })
   }
 
   const apolloUrls = getApolloUrls()
-
   return split(
     splitSubscriptions,
     createWebSocketLink(apolloUrls.subscription),
-    createHttpLink(apolloUrls.graphql, { credentials: 'include' })
+    createHttpLink(apolloUrls.graphql, {
+      credentials: 'include',
+    })
   )
 }
 
-const createClient = (props: Props) => {
+const createClient = props => {
   const link = createLinks(props)
   const cache = createInMemoryCache(props.fragmentTypes)
 
@@ -89,9 +96,9 @@ const createClient = (props: Props) => {
   })
 }
 
-export default (App: $FlowFixMe) =>
-  class WithApollo extends React.Component<Props> {
-    static async getInitialProps(ctx: $FlowFixMe) {
+export default App =>
+  class WithApollo extends React.Component {
+    static async getInitialProps(ctx) {
       const appProps =
         App.getInitialProps != null ? await App.getInitialProps(ctx) : {}
       const fragmentTypes = getFragmentTypes(ctx.ctx)
@@ -128,7 +135,7 @@ export default (App: $FlowFixMe) =>
       return { ...appProps, apolloUrls, fragmentTypes }
     }
 
-    apolloClient: ApolloClient<*> = createClient(this.props)
+    apolloClient = createClient(this.props)
 
     render() {
       const {

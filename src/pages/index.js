@@ -1,7 +1,7 @@
-// @flow strict
 import * as React from 'react'
 import getConfig from 'next/config'
 import dynamic from 'next/dynamic'
+
 import Page from '../components/Page.bs'
 import About from '../components/About.bs'
 import Stats from '../components/Stats.bs'

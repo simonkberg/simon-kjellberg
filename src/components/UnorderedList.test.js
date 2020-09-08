@@ -1,4 +1,3 @@
-// @flow strict
 import * as React from 'react'
 import renderer from 'react-test-renderer'
 import UnorderedList from './UnorderedList.bs'
