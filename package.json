@@ -122,7 +122,7 @@
     "react-test-renderer": "16.13.1",
     "resolve": "1.17.0",
     "url-loader": "4.1.0",
-    "webpack-bundle-analyzer": "3.8.0"
+    "webpack-bundle-analyzer": "3.9.0"
   },
   "resolutions": {
     "@simonkberg/reason-apollo/react-apollo": "3.1.5"
