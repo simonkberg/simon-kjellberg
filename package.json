@@ -118,7 +118,7 @@
     "lint-staged": "10.4.0",
     "nodemon": "2.0.4",
     "prettier": "2.1.2",
-    "raw-loader": "4.0.1",
+    "raw-loader": "4.0.2",
     "react-test-renderer": "16.13.1",
     "resolve": "1.17.0",
     "url-loader": "4.1.0",
