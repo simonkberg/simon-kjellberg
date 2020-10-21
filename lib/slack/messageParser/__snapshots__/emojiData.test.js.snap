@@ -130,6 +130,14 @@ Object {
 }
 `;
 
+exports[`emojiData: accordion 1`] = `
+Object {
+  "name": "1fa97",
+  "skins": null,
+  "string": "🪗",
+}
+`;
+
 exports[`emojiData: adhesive_bandage 1`] = `
 Object {
   "name": "1fa79",
@@ -244,6 +252,14 @@ Object {
   "name": "1f3fa",
   "skins": null,
   "string": "🏺",
+}
+`;
+
+exports[`emojiData: anatomical_heart 1`] = `
+Object {
+  "name": "1fac0",
+  "skins": null,
+  "string": "🫀",
 }
 `;
 
@@ -1052,6 +1068,14 @@ Object {
 }
 `;
 
+exports[`emojiData: beaver 1`] = `
+Object {
+  "name": "1f9ab",
+  "skins": null,
+  "string": "🦫",
+}
+`;
+
 exports[`emojiData: bed 1`] = `
 Object {
   "name": "1f6cf-fe0f",
@@ -1086,9 +1110,9 @@ Object {
 
 exports[`emojiData: beetle 1`] = `
 Object {
-  "name": "1f41e",
+  "name": "1fab2",
   "skins": null,
-  "string": "🐞",
+  "string": "🪲",
 }
 `;
 
@@ -1105,6 +1129,14 @@ Object {
   "name": "1f514",
   "skins": null,
   "string": "🔔",
+}
+`;
+
+exports[`emojiData: bell_pepper 1`] = `
+Object {
+  "name": "1fad1",
+  "skins": null,
+  "string": "🫑",
 }
 `;
 
@@ -1206,6 +1238,22 @@ Object {
   "name": "1f382",
   "skins": null,
   "string": "🎂",
+}
+`;
+
+exports[`emojiData: bison 1`] = `
+Object {
+  "name": "1f9ac",
+  "skins": null,
+  "string": "🦬",
+}
+`;
+
+exports[`emojiData: black_cat 1`] = `
+Object {
+  "name": "1f408-200d-2b1b",
+  "skins": null,
+  "string": "🐈‍⬛",
 }
 `;
 
@@ -1419,6 +1467,14 @@ Object {
 }
 `;
 
+exports[`emojiData: blueberries 1`] = `
+Object {
+  "name": "1fad0",
+  "skins": null,
+  "string": "🫐",
+}
+`;
+
 exports[`emojiData: blush 1`] = `
 Object {
   "name": "1f60a",
@@ -1496,6 +1552,14 @@ Object {
   "name": "1f4a5",
   "skins": null,
   "string": "💥",
+}
+`;
+
+exports[`emojiData: boomerang 1`] = `
+Object {
+  "name": "1fa83",
+  "skins": null,
+  "string": "🪃",
 }
 `;
 
@@ -1740,6 +1804,22 @@ Object {
   "name": "1f90e",
   "skins": null,
   "string": "🤎",
+}
+`;
+
+exports[`emojiData: bubble_tea 1`] = `
+Object {
+  "name": "1f9cb",
+  "skins": null,
+  "string": "🧋",
+}
+`;
+
+exports[`emojiData: bucket 1`] = `
+Object {
+  "name": "1faa3",
+  "skins": null,
+  "string": "🪣",
 }
 `;
 
@@ -2025,6 +2105,14 @@ Object {
   "name": "1f3a0",
   "skins": null,
   "string": "🎠",
+}
+`;
+
+exports[`emojiData: carpentry_saw 1`] = `
+Object {
+  "name": "1fa9a",
+  "skins": null,
+  "string": "🪚",
 }
 `;
 
@@ -2606,6 +2694,14 @@ Object {
 }
 `;
 
+exports[`emojiData: cockroach 1`] = `
+Object {
+  "name": "1fab3",
+  "skins": null,
+  "string": "🪳",
+}
+`;
+
 exports[`emojiData: cocktail 1`] = `
 Object {
   "name": "1f378",
@@ -2635,6 +2731,14 @@ Object {
   "name": "26b0-fe0f",
   "skins": null,
   "string": "⚰️",
+}
+`;
+
+exports[`emojiData: coin 1`] = `
+Object {
+  "name": "1fa99",
+  "skins": null,
+  "string": "🪙",
 }
 `;
 
@@ -3610,6 +3714,14 @@ Object {
 }
 `;
 
+exports[`emojiData: disguised_face 1`] = `
+Object {
+  "name": "1f978",
+  "skins": null,
+  "string": "🥸",
+}
+`;
+
 exports[`emojiData: diving_mask 1`] = `
 Object {
   "name": "1f93f",
@@ -3655,6 +3767,14 @@ Object {
   "name": "1f6af",
   "skins": null,
   "string": "🚯",
+}
+`;
+
+exports[`emojiData: dodo 1`] = `
+Object {
+  "name": "1f9a4",
+  "skins": null,
+  "string": "🦤",
 }
 `;
 
@@ -3985,6 +4105,14 @@ Object {
   "name": "1f418",
   "skins": null,
   "string": "🐘",
+}
+`;
+
+exports[`emojiData: elevator 1`] = `
+Object {
+  "name": "1f6d7",
+  "skins": null,
+  "string": "🛗",
 }
 `;
 
@@ -4439,6 +4567,14 @@ Object {
   "name": "1f628",
   "skins": null,
   "string": "😨",
+}
+`;
+
+exports[`emojiData: feather 1`] = `
+Object {
+  "name": "1fab6",
+  "skins": null,
+  "string": "🪶",
 }
 `;
 
@@ -7558,6 +7694,14 @@ Object {
 }
 `;
 
+exports[`emojiData: flatbread 1`] = `
+Object {
+  "name": "1fad3",
+  "skins": null,
+  "string": "🫓",
+}
+`;
+
 exports[`emojiData: fleur_de_lis 1`] = `
 Object {
   "name": "269c-fe0f",
@@ -7598,6 +7742,14 @@ Object {
 }
 `;
 
+exports[`emojiData: fly 1`] = `
+Object {
+  "name": "1fab0",
+  "skins": null,
+  "string": "🪰",
+}
+`;
+
 exports[`emojiData: flying_disc 1`] = `
 Object {
   "name": "1f94f",
@@ -7627,6 +7779,14 @@ Object {
   "name": "1f301",
   "skins": null,
   "string": "🌁",
+}
+`;
+
+exports[`emojiData: fondue 1`] = `
+Object {
+  "name": "1fad5",
+  "skins": null,
+  "string": "🫕",
 }
 `;
 
@@ -8390,6 +8550,14 @@ Object {
 }
 `;
 
+exports[`emojiData: headstone 1`] = `
+Object {
+  "name": "1faa6",
+  "skins": null,
+  "string": "🪦",
+}
+`;
+
 exports[`emojiData: health_worker 1`] = `
 Object {
   "name": "1f9d1-200d-2695-fe0f",
@@ -8659,6 +8827,14 @@ Object {
 }
 `;
 
+exports[`emojiData: hook 1`] = `
+Object {
+  "name": "1fa9d",
+  "skins": null,
+  "string": "🪝",
+}
+`;
+
 exports[`emojiData: horse 1`] = `
 Object {
   "name": "1f434",
@@ -8797,6 +8973,14 @@ Object {
   "name": "1f62f",
   "skins": null,
   "string": "😯",
+}
+`;
+
+exports[`emojiData: hut 1`] = `
+Object {
+  "name": "1f6d6",
+  "skins": null,
+  "string": "🛖",
 }
 `;
 
@@ -9305,6 +9489,14 @@ Object {
 }
 `;
 
+exports[`emojiData: knot 1`] = `
+Object {
+  "name": "1faa2",
+  "skins": null,
+  "string": "🪢",
+}
+`;
+
 exports[`emojiData: koala 1`] = `
 Object {
   "name": "1f428",
@@ -9350,6 +9542,14 @@ Object {
   "name": "1f94d",
   "skins": null,
   "string": "🥍",
+}
+`;
+
+exports[`emojiData: ladder 1`] = `
+Object {
+  "name": "1fa9c",
+  "skins": null,
+  "string": "🪜",
 }
 `;
 
@@ -9779,6 +9979,14 @@ Object {
 }
 `;
 
+exports[`emojiData: long_drum 1`] = `
+Object {
+  "name": "1fa98",
+  "skins": null,
+  "string": "🪘",
+}
+`;
+
 exports[`emojiData: loop 1`] = `
 Object {
   "name": "27bf",
@@ -9875,6 +10083,14 @@ Object {
 }
 `;
 
+exports[`emojiData: lungs 1`] = `
+Object {
+  "name": "1fac1",
+  "skins": null,
+  "string": "🫁",
+}
+`;
+
 exports[`emojiData: lying_face 1`] = `
 Object {
   "name": "1f925",
@@ -9933,6 +10149,14 @@ Object {
     },
   },
   "string": "🧙",
+}
+`;
+
+exports[`emojiData: magic_wand 1`] = `
+Object {
+  "name": "1fa84",
+  "skins": null,
+  "string": "🪄",
 }
 `;
 
@@ -10762,6 +10986,14 @@ Object {
 }
 `;
 
+exports[`emojiData: mammoth 1`] = `
+Object {
+  "name": "1f9a3",
+  "skins": null,
+  "string": "🦣",
+}
+`;
+
 exports[`emojiData: man 1`] = `
 Object {
   "name": "1f468",
@@ -10955,6 +11187,35 @@ Object {
     },
   },
   "string": "🕺",
+}
+`;
+
+exports[`emojiData: man_feeding_baby 1`] = `
+Object {
+  "name": "1f468-200d-1f37c",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f468-1f3fb-200d-1f37c",
+      "string": "👨🏻‍🍼",
+    },
+    "1f3fc" => Object {
+      "name": "1f468-1f3fc-200d-1f37c",
+      "string": "👨🏼‍🍼",
+    },
+    "1f3fd" => Object {
+      "name": "1f468-1f3fd-200d-1f37c",
+      "string": "👨🏽‍🍼",
+    },
+    "1f3fe" => Object {
+      "name": "1f468-1f3fe-200d-1f37c",
+      "string": "👨🏾‍🍼",
+    },
+    "1f3ff" => Object {
+      "name": "1f468-1f3ff-200d-1f37c",
+      "string": "👨🏿‍🍼",
+    },
+  },
+  "string": "👨‍🍼",
 }
 `;
 
@@ -11274,6 +11535,35 @@ Object {
     },
   },
   "string": "👳",
+}
+`;
+
+exports[`emojiData: man_with_veil 1`] = `
+Object {
+  "name": "1f470-200d-2642-fe0f",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f470-1f3fb-200d-2642-fe0f",
+      "string": "👰🏻‍♂️",
+    },
+    "1f3fc" => Object {
+      "name": "1f470-1f3fc-200d-2642-fe0f",
+      "string": "👰🏼‍♂️",
+    },
+    "1f3fd" => Object {
+      "name": "1f470-1f3fd-200d-2642-fe0f",
+      "string": "👰🏽‍♂️",
+    },
+    "1f3fe" => Object {
+      "name": "1f470-1f3fe-200d-2642-fe0f",
+      "string": "👰🏾‍♂️",
+    },
+    "1f3ff" => Object {
+      "name": "1f470-1f3ff-200d-2642-fe0f",
+      "string": "👰🏿‍♂️",
+    },
+  },
+  "string": "👰‍♂️",
 }
 `;
 
@@ -12642,6 +12932,14 @@ Object {
 }
 `;
 
+exports[`emojiData: military_helmet 1`] = `
+Object {
+  "name": "1fa96",
+  "skins": null,
+  "string": "🪖",
+}
+`;
+
 exports[`emojiData: milky_way 1`] = `
 Object {
   "name": "1f30c",
@@ -12663,6 +12961,14 @@ Object {
   "name": "1f4bd",
   "skins": null,
   "string": "💽",
+}
+`;
+
+exports[`emojiData: mirror 1`] = `
+Object {
+  "name": "1fa9e",
+  "skins": null,
+  "string": "🪞",
 }
 `;
 
@@ -12900,6 +13206,14 @@ Object {
 }
 `;
 
+exports[`emojiData: mouse_trap 1`] = `
+Object {
+  "name": "1faa4",
+  "skins": null,
+  "string": "🪤",
+}
+`;
+
 exports[`emojiData: mouse2 1`] = `
 Object {
   "name": "1f401",
@@ -13022,6 +13336,35 @@ Object {
 }
 `;
 
+exports[`emojiData: mx_claus 1`] = `
+Object {
+  "name": "1f9d1-200d-1f384",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f9d1-1f3fb-200d-1f384",
+      "string": "🧑🏻‍🎄",
+    },
+    "1f3fc" => Object {
+      "name": "1f9d1-1f3fc-200d-1f384",
+      "string": "🧑🏼‍🎄",
+    },
+    "1f3fd" => Object {
+      "name": "1f9d1-1f3fd-200d-1f384",
+      "string": "🧑🏽‍🎄",
+    },
+    "1f3fe" => Object {
+      "name": "1f9d1-1f3fe-200d-1f384",
+      "string": "🧑🏾‍🎄",
+    },
+    "1f3ff" => Object {
+      "name": "1f9d1-1f3ff-200d-1f384",
+      "string": "🧑🏿‍🎄",
+    },
+  },
+  "string": "🧑‍🎄",
+}
+`;
+
 exports[`emojiData: nail_care 1`] = `
 Object {
   "name": "1f485",
@@ -13107,6 +13450,14 @@ Object {
 }
 `;
 
+exports[`emojiData: nesting_dolls 1`] = `
+Object {
+  "name": "1fa86",
+  "skins": null,
+  "string": "🪆",
+}
+`;
+
 exports[`emojiData: neutral_face 1`] = `
 Object {
   "name": "1f610",
@@ -13168,6 +13519,35 @@ Object {
   "name": "0039-fe0f-20e3",
   "skins": null,
   "string": "9️⃣",
+}
+`;
+
+exports[`emojiData: ninja 1`] = `
+Object {
+  "name": "1f977",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f977-1f3fb",
+      "string": "🥷🏻",
+    },
+    "1f3fc" => Object {
+      "name": "1f977-1f3fc",
+      "string": "🥷🏼",
+    },
+    "1f3fd" => Object {
+      "name": "1f977-1f3fd",
+      "string": "🥷🏽",
+    },
+    "1f3fe" => Object {
+      "name": "1f977-1f3fe",
+      "string": "🥷🏾",
+    },
+    "1f3ff" => Object {
+      "name": "1f977-1f3ff",
+      "string": "🥷🏿",
+    },
+  },
+  "string": "🥷",
 }
 `;
 
@@ -13584,6 +13964,14 @@ Object {
     },
   },
   "string": "👵",
+}
+`;
+
+exports[`emojiData: olive 1`] = `
+Object {
+  "name": "1fad2",
+  "skins": null,
+  "string": "🫒",
 }
 `;
 
@@ -14146,6 +14534,14 @@ Object {
 }
 `;
 
+exports[`emojiData: people_hugging 1`] = `
+Object {
+  "name": "1fac2",
+  "skins": null,
+  "string": "🫂",
+}
+`;
+
 exports[`emojiData: performing_arts 1`] = `
 Object {
   "name": "1f3ad",
@@ -14217,6 +14613,35 @@ Object {
     },
   },
   "string": "🤸",
+}
+`;
+
+exports[`emojiData: person_feeding_baby 1`] = `
+Object {
+  "name": "1f9d1-200d-1f37c",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f9d1-1f3fb-200d-1f37c",
+      "string": "🧑🏻‍🍼",
+    },
+    "1f3fc" => Object {
+      "name": "1f9d1-1f3fc-200d-1f37c",
+      "string": "🧑🏼‍🍼",
+    },
+    "1f3fd" => Object {
+      "name": "1f9d1-1f3fd-200d-1f37c",
+      "string": "🧑🏽‍🍼",
+    },
+    "1f3fe" => Object {
+      "name": "1f9d1-1f3fe-200d-1f37c",
+      "string": "🧑🏾‍🍼",
+    },
+    "1f3ff" => Object {
+      "name": "1f9d1-1f3ff-200d-1f37c",
+      "string": "🧑🏿‍🍼",
+    },
+  },
+  "string": "🧑‍🍼",
 }
 `;
 
@@ -14534,6 +14959,14 @@ Object {
 }
 `;
 
+exports[`emojiData: pickup_truck 1`] = `
+Object {
+  "name": "1f6fb",
+  "skins": null,
+  "string": "🛻",
+}
+`;
+
 exports[`emojiData: pie 1`] = `
 Object {
   "name": "1f967",
@@ -14603,6 +15036,43 @@ Object {
 }
 `;
 
+exports[`emojiData: pinata 1`] = `
+Object {
+  "name": "1fa85",
+  "skins": null,
+  "string": "🪅",
+}
+`;
+
+exports[`emojiData: pinched_fingers 1`] = `
+Object {
+  "name": "1f90c",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f90c-1f3fb",
+      "string": "🤌🏻",
+    },
+    "1f3fc" => Object {
+      "name": "1f90c-1f3fc",
+      "string": "🤌🏼",
+    },
+    "1f3fd" => Object {
+      "name": "1f90c-1f3fd",
+      "string": "🤌🏽",
+    },
+    "1f3fe" => Object {
+      "name": "1f90c-1f3fe",
+      "string": "🤌🏾",
+    },
+    "1f3ff" => Object {
+      "name": "1f90c-1f3ff",
+      "string": "🤌🏿",
+    },
+  },
+  "string": "🤌",
+}
+`;
+
 exports[`emojiData: pinching_hand 1`] = `
 Object {
   "name": "1f90f",
@@ -14664,6 +15134,14 @@ Object {
 }
 `;
 
+exports[`emojiData: placard 1`] = `
+Object {
+  "name": "1faa7",
+  "skins": null,
+  "string": "🪧",
+}
+`;
+
 exports[`emojiData: place_of_worship 1`] = `
 Object {
   "name": "1f6d0",
@@ -14677,6 +15155,14 @@ Object {
   "name": "1f97a",
   "skins": null,
   "string": "🥺",
+}
+`;
+
+exports[`emojiData: plunger 1`] = `
+Object {
+  "name": "1faa0",
+  "skins": null,
+  "string": "🪠",
 }
 `;
 
@@ -14825,6 +15311,14 @@ Object {
 }
 `;
 
+exports[`emojiData: polar_bear 1`] = `
+Object {
+  "name": "1f43b-200d-2744-fe0f",
+  "skins": null,
+  "string": "🐻‍❄️",
+}
+`;
+
 exports[`emojiData: police_car 1`] = `
 Object {
   "name": "1f693",
@@ -14894,6 +15388,14 @@ Object {
   "name": "1f954",
   "skins": null,
   "string": "🥔",
+}
+`;
+
+exports[`emojiData: potted_plant 1`] = `
+Object {
+  "name": "1fab4",
+  "skins": null,
+  "string": "🪴",
 }
 `;
 
@@ -15780,6 +16282,14 @@ Object {
 }
 `;
 
+exports[`emojiData: rock 1`] = `
+Object {
+  "name": "1faa8",
+  "skins": null,
+  "string": "🪨",
+}
+`;
+
 exports[`emojiData: rocket 1`] = `
 Object {
   "name": "1f680",
@@ -15809,6 +16319,14 @@ Object {
   "name": "1f3a2",
   "skins": null,
   "string": "🎢",
+}
+`;
+
+exports[`emojiData: roller_skate 1`] = `
+Object {
+  "name": "1f6fc",
+  "skins": null,
+  "string": "🛼",
 }
 `;
 
@@ -16229,11 +16747,27 @@ Object {
 }
 `;
 
+exports[`emojiData: screwdriver 1`] = `
+Object {
+  "name": "1fa9b",
+  "skins": null,
+  "string": "🪛",
+}
+`;
+
 exports[`emojiData: scroll 1`] = `
 Object {
   "name": "1f4dc",
   "skins": null,
   "string": "📜",
+}
+`;
+
+exports[`emojiData: seal 1`] = `
+Object {
+  "name": "1f9ad",
+  "skins": null,
+  "string": "🦭",
 }
 `;
 
@@ -16327,6 +16861,14 @@ Object {
   "name": "0037-fe0f-20e3",
   "skins": null,
   "string": "7️⃣",
+}
+`;
+
+exports[`emojiData: sewing_needle 1`] = `
+Object {
+  "name": "1faa1",
+  "skins": null,
+  "string": "🪡",
 }
 `;
 
@@ -16880,6 +17422,14 @@ Object {
   "name": "1f92d",
   "skins": null,
   "string": "🤭",
+}
+`;
+
+exports[`emojiData: smiling_face_with_tear 1`] = `
+Object {
+  "name": "1f972",
+  "skins": null,
+  "string": "🥲",
 }
 `;
 
@@ -17795,6 +18345,14 @@ Object {
 }
 `;
 
+exports[`emojiData: tamale 1`] = `
+Object {
+  "name": "1fad4",
+  "skins": null,
+  "string": "🫔",
+}
+`;
+
 exports[`emojiData: tanabata_tree 1`] = `
 Object {
   "name": "1f38b",
@@ -17861,6 +18419,14 @@ Object {
     },
   },
   "string": "🧑‍🏫",
+}
+`;
+
+exports[`emojiData: teapot 1`] = `
+Object {
+  "name": "1fad6",
+  "skins": null,
+  "string": "🫖",
 }
 `;
 
@@ -17999,6 +18565,14 @@ Object {
   "name": "1f949",
   "skins": null,
   "string": "🥉",
+}
+`;
+
+exports[`emojiData: thong_sandal 1`] = `
+Object {
+  "name": "1fa74",
+  "skins": null,
+  "string": "🩴",
 }
 `;
 
@@ -18196,6 +18770,14 @@ Object {
 }
 `;
 
+exports[`emojiData: toothbrush 1`] = `
+Object {
+  "name": "1faa5",
+  "skins": null,
+  "string": "🪥",
+}
+`;
+
 exports[`emojiData: top 1`] = `
 Object {
   "name": "1f51d",
@@ -18273,6 +18855,22 @@ Object {
   "name": "1f68a",
   "skins": null,
   "string": "🚊",
+}
+`;
+
+exports[`emojiData: transgender_flag 1`] = `
+Object {
+  "name": "1f3f3-fe0f-200d-26a7-fe0f",
+  "skins": null,
+  "string": "🏳️‍⚧️",
+}
+`;
+
+exports[`emojiData: transgender_symbol 1`] = `
+Object {
+  "name": "26a7-fe0f",
+  "skins": null,
+  "string": "⚧️",
 }
 `;
 
@@ -19427,6 +20025,14 @@ Object {
 }
 `;
 
+exports[`emojiData: window 1`] = `
+Object {
+  "name": "1fa9f",
+  "skins": null,
+  "string": "🪟",
+}
+`;
+
 exports[`emojiData: wine_glass 1`] = `
 Object {
   "name": "1f377",
@@ -19618,6 +20224,35 @@ Object {
 }
 `;
 
+exports[`emojiData: woman_feeding_baby 1`] = `
+Object {
+  "name": "1f469-200d-1f37c",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f469-1f3fb-200d-1f37c",
+      "string": "👩🏻‍🍼",
+    },
+    "1f3fc" => Object {
+      "name": "1f469-1f3fc-200d-1f37c",
+      "string": "👩🏼‍🍼",
+    },
+    "1f3fd" => Object {
+      "name": "1f469-1f3fd-200d-1f37c",
+      "string": "👩🏽‍🍼",
+    },
+    "1f3fe" => Object {
+      "name": "1f469-1f3fe-200d-1f37c",
+      "string": "👩🏾‍🍼",
+    },
+    "1f3ff" => Object {
+      "name": "1f469-1f3ff-200d-1f37c",
+      "string": "👩🏿‍🍼",
+    },
+  },
+  "string": "👩‍🍼",
+}
+`;
+
 exports[`emojiData: woman_in_lotus_position 1`] = `
 Object {
   "name": "1f9d8-200d-2640-fe0f",
@@ -19734,6 +20369,35 @@ Object {
 }
 `;
 
+exports[`emojiData: woman_in_tuxedo 1`] = `
+Object {
+  "name": "1f935-200d-2640-fe0f",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f935-1f3fb-200d-2640-fe0f",
+      "string": "🤵🏻‍♀️",
+    },
+    "1f3fc" => Object {
+      "name": "1f935-1f3fc-200d-2640-fe0f",
+      "string": "🤵🏼‍♀️",
+    },
+    "1f3fd" => Object {
+      "name": "1f935-1f3fd-200d-2640-fe0f",
+      "string": "🤵🏽‍♀️",
+    },
+    "1f3fe" => Object {
+      "name": "1f935-1f3fe-200d-2640-fe0f",
+      "string": "🤵🏾‍♀️",
+    },
+    "1f3ff" => Object {
+      "name": "1f935-1f3ff-200d-2640-fe0f",
+      "string": "🤵🏿‍♀️",
+    },
+  },
+  "string": "🤵‍♀️",
+}
+`;
+
 exports[`emojiData: woman_kneeling 1`] = `
 Object {
   "name": "1f9ce-200d-2640-fe0f",
@@ -19818,6 +20482,35 @@ Object {
     },
   },
   "string": "👩‍🦯",
+}
+`;
+
+exports[`emojiData: woman_with_veil 1`] = `
+Object {
+  "name": "1f470-200d-2640-fe0f",
+  "skins": Map {
+    "1f3fb" => Object {
+      "name": "1f470-1f3fb-200d-2640-fe0f",
+      "string": "👰🏻‍♀️",
+    },
+    "1f3fc" => Object {
+      "name": "1f470-1f3fc-200d-2640-fe0f",
+      "string": "👰🏼‍♀️",
+    },
+    "1f3fd" => Object {
+      "name": "1f470-1f3fd-200d-2640-fe0f",
+      "string": "👰🏽‍♀️",
+    },
+    "1f3fe" => Object {
+      "name": "1f470-1f3fe-200d-2640-fe0f",
+      "string": "👰🏾‍♀️",
+    },
+    "1f3ff" => Object {
+      "name": "1f470-1f3ff-200d-2640-fe0f",
+      "string": "👰🏿‍♀️",
+    },
+  },
+  "string": "👰‍♀️",
 }
 `;
 
@@ -20844,6 +21537,14 @@ Object {
 }
 `;
 
+exports[`emojiData: wood 1`] = `
+Object {
+  "name": "1fab5",
+  "skins": null,
+  "string": "🪵",
+}
+`;
+
 exports[`emojiData: woozy_face 1`] = `
 Object {
   "name": "1f974",
@@ -20857,6 +21558,14 @@ Object {
   "name": "1f5fa-fe0f",
   "skins": null,
   "string": "🗺️",
+}
+`;
+
+exports[`emojiData: worm 1`] = `
+Object {
+  "name": "1fab1",
+  "skins": null,
+  "string": "🪱",
 }
 `;
 
