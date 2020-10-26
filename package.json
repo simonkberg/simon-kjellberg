@@ -71,7 +71,7 @@
     "emotion-theming": "10.0.27",
     "execa": "4.0.3",
     "express": "4.17.1",
-    "graphql": "15.3.0",
+    "graphql": "15.4.0",
     "graphql-tag": "2.11.0",
     "helmet": "4.1.1",
     "invariant": "2.2.4",
