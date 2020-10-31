@@ -75,7 +75,7 @@
     "graphql-tag": "2.11.0",
     "helmet": "4.1.1",
     "invariant": "2.2.4",
-    "ioredis": "4.17.3",
+    "ioredis": "4.19.2",
     "lru-cache": "6.0.0",
     "minimist": "1.2.5",
     "morgan": "1.10.0",
