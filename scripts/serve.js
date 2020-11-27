@@ -1,5 +1,3 @@
-// @flow strict
-
 'use strict'
 
 require('dotenv').config()
@@ -18,11 +16,7 @@ const options = require('../lib/options')
 const createServer = require('../lib/createServer')
 const config = require('../app.config')
 
-/*::
-import type { Options } from '../lib/options'
-*/
-
-module.exports = options(async (opts /*: Options */) => {
+module.exports = options(async opts => {
   const app = next({ dev: false, dir: config.src })
   const server = await createServer(app, { newrelic })
 

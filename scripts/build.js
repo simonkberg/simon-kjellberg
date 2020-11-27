@@ -1,5 +1,3 @@
-// @flow strict
-
 'use strict'
 
 require('dotenv').config()
@@ -15,14 +13,6 @@ const graphql = require('graphql')
 const getFragmentTypes = require('../lib/getFragmentTypes')
 const config = require('../app.config')
 
-/*::
-export type Options = {
-  lambdas: boolean,
-  schemaPath: string,
-  fragmentTypesPath: string,
-}
-*/
-
 const argv = minimist(process.argv.slice(2), {
   alias: {
     lambdas: 'l',
@@ -36,7 +26,7 @@ const argv = minimist(process.argv.slice(2), {
   },
 })
 
-const options = (fn /*: (opt: Options) => Promise<void> */) =>
+const options = fn =>
   fn({
     lambdas: Boolean(argv.lambdas),
     schemaPath: String(argv.schemaPath),
