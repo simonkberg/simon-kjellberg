@@ -1,6 +1,6 @@
 import * as React from 'react'
 import getConfig from 'next/config'
-import NextDocument, { Head, Main, NextScript } from 'next/document'
+import NextDocument, { Html, Head, Main, NextScript } from 'next/document'
 import { cache } from 'emotion'
 import { CacheProvider } from '@emotion/core'
 import { oneLineTrim } from 'common-tags'
@@ -33,7 +33,7 @@ export default class Document extends NextDocument {
 
   render() {
     return (
-      <html lang="en">
+      <Html lang="en">
         <Head>
           <link rel="manifest" href="/manifest.json" />
           <link rel="shortcut icon" href="/favicon.ico" />
@@ -76,7 +76,7 @@ export default class Document extends NextDocument {
           />
           <NextScript />
         </body>
-      </html>
+      </Html>
     )
   }
 }

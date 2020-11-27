@@ -1,5 +1,3 @@
-// @flow strict
-
 'use strict'
 
 require('dotenv').config()
@@ -13,13 +11,9 @@ const options = require('../lib/options')
 const createServer = require('../lib/createServer')
 const config = require('../app.config')
 
-/*::
-import type { Options } from '../lib/options'
-*/
-
-module.exports = options(async (opts /*: Options */) => {
+module.exports = options(async opts => {
   await execa('bsb', ['-make-world'])
-  const app = next({ dev: true, dir: config.src })
+  const app = next({ dev: true, dir: config.src, customServer: true })
   const server = await createServer(app)
 
   server.listen(opts.port, opts.host, undefined, () => {
