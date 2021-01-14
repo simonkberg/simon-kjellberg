@@ -1,6 +1,6 @@
-FROM node:12 as base
+FROM node:14 as base
 WORKDIR /app
-ENV YARN_VERSION 1.22.4
+ENV YARN_VERSION 1.22.5
 RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
 ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:$PATH"
 COPY package.json yarn.lock ./
@@ -10,7 +10,7 @@ RUN yarn build
 RUN yarn install --production --ignore-scripts --prefer-offline
 
 
-FROM node:12-alpine
+FROM node:14-alpine
 WORKDIR /app
 ENV PORT 3000
 ENV NODE_ENV production

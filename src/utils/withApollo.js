@@ -96,7 +96,7 @@ const createClient = props => {
   })
 }
 
-export default App =>
+const withApollo = App =>
   class WithApollo extends React.Component {
     static async getInitialProps(ctx) {
       const appProps =
@@ -149,3 +149,5 @@ export default App =>
       return <App {...props} apolloClient={this.apolloClient} />
     }
   }
+
+export default withApollo
