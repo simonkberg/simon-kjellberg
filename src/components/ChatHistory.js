@@ -124,7 +124,7 @@ const ChatHistoryMessageThreads = ({ messages }) => {
 }
 
 const ChatHistory = () => {
-  const { loading, error, data } = useChatHistory()
+  const { loading, error, data } = useChatHistory({ ssr: false })
 
   if (loading) {
     return <Loader />
