@@ -46,7 +46,7 @@
     "last 2 Samsung versions"
   ],
   "dependencies": {
-    "@apollo/react-ssr": "3.1.5",
+    "@apollo/react-ssr": "4.0.0",
     "@emotion/core": "10.1.1",
     "@emotion/styled": "10.0.27",
     "@simonkberg/reason-apollo": "0.19.0",
