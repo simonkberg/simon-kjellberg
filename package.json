@@ -111,7 +111,7 @@
     "chokidar": "3.5.1",
     "eslint": "7.18.0",
     "file-loader": "6.2.0",
-    "fs-extra": "9.0.1",
+    "fs-extra": "9.1.0",
     "husky": "4.3.8",
     "jest": "26.6.3",
     "jest-emotion": "10.0.32",
