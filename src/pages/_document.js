@@ -37,6 +37,7 @@ export default class Document extends NextDocument {
         <Head>
           <link rel="manifest" href="/manifest.json" />
           <link rel="shortcut icon" href="/favicon.ico" />
+          <link rel="me" href="https://mastodon.social/@simonkberg" />
           <meta name="theme-color" content="#000000" />
           {this.props.browserTimingHeader != null && (
             <script
