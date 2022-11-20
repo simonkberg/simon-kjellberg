@@ -1,4 +1,4 @@
-FROM node:14 as base
+FROM node:19 as base
 WORKDIR /app
 ENV YARN_VERSION 1.22.10
 RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
@@ -10,7 +10,7 @@ RUN yarn build
 RUN yarn install --production --ignore-scripts --prefer-offline
 
 
-FROM node:14-alpine
+FROM node:19-alpine
 WORKDIR /app
 ENV PORT 3000
 ENV NODE_ENV production
