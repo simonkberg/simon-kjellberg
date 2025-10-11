@@ -1,4 +1,4 @@
-FROM node:16 as base
+FROM node:22 as base
 WORKDIR /app
 ENV YARN_VERSION 1.22.19
 RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
