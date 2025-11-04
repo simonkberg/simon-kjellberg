@@ -1,0 +1,21 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:js-app",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration",
+    ":maintainLockFilesWeekly",
+    ":automergePatch",
+    ":automergeDigest",
+    ":automergeLinters",
+    ":automergeTesters",
+    "group:nextjsMonorepo",
+    "group:nodeJs"
+  ],
+  pinDigest: {
+    automerge: true,
+  },
+  postUpdateOptions: [
+    "pnpmDedupe"
+  ],
+}
