@@ -14,7 +14,8 @@
     "dev": "next dev",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest"
   },
   "dependencies": {
     "@react-spring/web": "10.0.3",
@@ -32,16 +33,22 @@
   },
   "devDependencies": {
     "@next/third-parties": "16.0.1",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.0",
     "@types/node": "24.10.0",
     "@types/react": "19.2.2",
+    "@vitejs/plugin-react": "5.1.0",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.1",
     "eslint-config-prettier": "10.1.8",
     "jiti": "2.6.1",
+    "jsdom": "27.1.0",
     "prettier": "3.6.2",
     "prettier-plugin-organize-imports": "4.3.0",
     "typescript": "5.9.3",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "4.0.6",
     "zod": "4.1.12"
   },
   "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",

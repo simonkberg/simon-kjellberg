@@ -60,4 +60,5 @@ export const getEmoji = (name: string): Emoji | null => {
   return data ? parseEmoji(data) : null;
 };
 
+export const data = emojiData.data;
 export const keys = Array.from(emojiData.alias.keys());
