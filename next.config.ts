@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
+  reactCompiler: true,
   turbopack: {
     root: import.meta.dirname,
   },
