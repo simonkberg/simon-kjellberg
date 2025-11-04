@@ -1,9 +1,0 @@
-#import './ChatMessageFragment.graphql'
-
-mutation PostChatMessageMutation($input: PostChatMessageInput!) {
-  postChatMessage(input: $input) {
-    chatMessage {
-      ...ChatMessage
-    }
-  }
-}
