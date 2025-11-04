@@ -5,8 +5,8 @@ export const env = createEnv({
   server: {
     UID: z.string().default("UNSAFE"),
     SESSION_SECRET: z.string().default("UNSAFE"),
-    SLACK_CHANNEL: z.string(),
-    SLACK_TOKEN: z.string(),
+    SLACK_CHANNEL: z.string().default("DUMMY"),
+    SLACK_TOKEN: z.string().default("DUMMY"),
   },
   runtimeEnv: {
     UID: process.env["UID"],
