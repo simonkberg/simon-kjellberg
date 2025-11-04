@@ -63,6 +63,9 @@ importers:
       eslint-config-prettier:
         specifier: 10.1.8
         version: 10.1.8(eslint@9.39.1(jiti@2.6.1))
+      jiti:
+        specifier: 2.6.1
+        version: 2.6.1
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -3433,8 +3436,7 @@ snapshots:
       has-symbols: 1.1.0
       set-function-name: 2.0.2
 
-  jiti@2.6.1:
-    optional: true
+  jiti@2.6.1: {}
 
   jose@6.1.0: {}
 
