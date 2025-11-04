@@ -1,20 +1,37 @@
-FROM node:16 as base
-WORKDIR /app
-ENV YARN_VERSION 1.22.19
-RUN curl -o- -L https://yarnpkg.com/install.sh | sh -s -- --version $YARN_VERSION
-ENV PATH="/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin:$PATH"
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
-COPY . ./
-RUN yarn build
-RUN yarn install --production --ignore-scripts --prefer-offline
+# syntax=docker.io/docker/dockerfile:1
 
+FROM node:24.11.0-alpine@sha256:f36fed0b2129a8492535e2853c64fbdbd2d29dc1219ee3217023ca48aebd3787 AS base
 
-FROM node:16-alpine
+# Install dependencies
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-ENV PORT 3000
-ENV NODE_ENV production
-RUN npm install pm2 -g
-COPY --from=base /app .
-EXPOSE $PORT
-CMD ["pm2-runtime", "scripts/serve.js"]
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable pnpm && pnpm i --frozen-lockfile
+
+# Build the app
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN corepack enable pnpm && pnpm run build
+
+# Production server
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]

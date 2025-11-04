@@ -1,5 +1,0 @@
-{
-  "watch": ["lib/"],
-  "ignore": ["lib/bs"],
-  "ext": "js,json,graphql,gql"
-}

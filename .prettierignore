@@ -1,5 +1,0 @@
-flow-typed
-.next
-lib/bs
-**/__generated__/*.js
-**/*.bs.js

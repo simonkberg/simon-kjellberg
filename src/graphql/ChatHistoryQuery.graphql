@@ -1,9 +1,0 @@
-#import './ChatMessageFragment.graphql'
-
-query ChatHistoryQuery {
-  chat {
-    history {
-      ...ChatMessage
-    }
-  }
-}

@@ -2,28 +2,13 @@
   "name": "simon-kjellberg",
   "scripts": {},
   "env": {
-    "GTM_ID": {
-      "value": "GTM-P3HX5HW"
-    },
     "SLACK_TOKEN": {
       "required": true
     },
     "SLACK_CHANNEL": {
       "required": true
     },
-    "APOLLO_KEY": {
-      "required": true
-    },
-    "REDIS_URL": {
-      "required": true
-    },
-    "NEW_RELIC_LICENSE_KEY": {
-      "required": true
-    },
-    "SESSION_KEY_PRIMARY": {
-      "generator": "secret"
-    },
-    "SESSION_KEY_SECONDARY": {
+    "SESSION_SECRET": {
       "generator": "secret"
     }
   },

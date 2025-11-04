@@ -1,3 +1,6 @@
 build:
   docker:
     web: Dockerfile
+  config:
+    SLACK_CHANNEL: DUMMY_VALUE
+    SLACK_TOKEN: DUMMY_VALUE
