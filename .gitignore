@@ -9,3 +9,5 @@ node_modules
 .worktrees
 .env*.local
 tsconfig.tsbuildinfo
+coverage
+junit.xml
