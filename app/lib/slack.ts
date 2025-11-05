@@ -1,8 +1,8 @@
 import "server-only";
 
 import { messageParser } from "@/lib/messageParser/messageParser";
-import { WebClient } from "@slack/web-api";
 import { RTMClient } from "@slack/rtm-api";
+import { WebClient } from "@slack/web-api";
 import DataLoader from "dataloader";
 import { z } from "zod";
 import { env } from "./env";

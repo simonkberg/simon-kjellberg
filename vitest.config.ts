@@ -7,6 +7,7 @@ const config = defineConfig({
   test: {
     environment: "jsdom",
     exclude: [...defaultExclude, "**/.worktrees/**"],
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
 
