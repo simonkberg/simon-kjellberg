@@ -47,6 +47,7 @@ export default async function RootPage() {
           <ExternalLink href="https://twitter.com/SpotifyEng">
             Spotify
           </ExternalLink>
+          .
         </p>
       </section>
 
