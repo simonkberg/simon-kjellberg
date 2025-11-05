@@ -5,7 +5,7 @@ import { defaultExclude, defineConfig } from "vitest/config";
 const config = defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     exclude: [...defaultExclude, "**/.worktrees/**"],
     setupFiles: ["./vitest.setup.ts"],
   },
