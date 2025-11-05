@@ -16,11 +16,20 @@ export const Terminal = ({ children }: PropsWithChildren) => {
   };
 
   return (
-    <div className="terminal" ref={terminalRef}>
+    <div
+      className="terminal"
+      ref={terminalRef}
+      role="region"
+      aria-label="Terminal"
+    >
       <div className="topbar">
-        <button className="control close" />
-        <button className="control minimize" />
-        <button className="control maximize" onClick={handleClickMaximize} />
+        <button className="control close" aria-label="Close" />
+        <button className="control minimize" aria-label="Minimize" />
+        <button
+          className="control maximize"
+          aria-label="Maximize"
+          onClick={handleClickMaximize}
+        />
       </div>
       <div className="content">{children}</div>
     </div>

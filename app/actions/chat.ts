@@ -1,8 +1,8 @@
 "use server";
 
+import { getSession } from "@/lib/session";
 import { getHistory, type Message, postMessage } from "@/lib/slack";
 import { connection } from "next/server";
-import { getSession } from "@/lib/session";
 import { z } from "zod";
 
 export type ChatHistoryResult =

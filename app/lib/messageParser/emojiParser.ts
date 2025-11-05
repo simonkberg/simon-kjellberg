@@ -1,7 +1,10 @@
 import * as emojiData from "./emojiData";
 
 const regexKeys = emojiData.keys.join("|").replace(/[+]/g, "\\$&");
-const regex = new RegExp(`:(${regexKeys})(?:::)?(skin-tone-[2-6](?:-[2-6])?)?:`, "gim");
+const regex = new RegExp(
+  `:(${regexKeys})(?:::)?(skin-tone-[2-6](?:-[2-6])?)?:`,
+  "gim",
+);
 
 const getEmoji = (emojiKey: string, skinKey?: string) => {
   const emoji = emojiData.getEmoji(emojiKey.toLowerCase());
