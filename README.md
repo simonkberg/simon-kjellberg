@@ -11,6 +11,7 @@ My personal website built with Next.js 16.
 ## Development
 
 Requirements:
+
 - Node.js 24
 - Corepack enabled
 
@@ -27,8 +28,11 @@ pnpm dev
 # Run tests
 pnpm test
 
-# Lint
+# Lint (ESLint + Prettier)
 pnpm lint
+
+# Auto-fix linting issues
+pnpm lint:fix
 ```
 
 ## Environment Variables
