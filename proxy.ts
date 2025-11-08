@@ -1,6 +1,6 @@
 import { randomName } from "@/lib/randomName";
 import { decrypt, encrypt } from "@/lib/session";
-import { NextRequest, NextResponse } from "next/server"; // This function can be marked `async` if using `await` inside
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next();
