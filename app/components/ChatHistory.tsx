@@ -55,11 +55,42 @@ export const ChatHistory = ({ history }: ChatHistoryProps) => {
   const result = use(history);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/chat/sse");
+    let eventSource: EventSource | null = null;
+    let reconnectAttempts = 0;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    const MAX_BACKOFF = 30000;
+    
+    const connect = () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      eventSource = new EventSource("/api/chat/sse");
+      eventSource.onopen = () => {
+        reconnectAttempts = 0;
+      };
+      eventSource.onmessage = () => void refreshClientCache();
+      eventSource.onerror = () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        reconnectAttempts++;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        const backoff = Math.min(1000 * 2 ** reconnectAttempts, MAX_BACKOFF);
+        reconnectTimer = setTimeout(() => connect(), backoff);
+      };
+    };
 
-    eventSource.addEventListener("message", refreshClientCache);
+    connect();
 
-    return () => eventSource.removeEventListener("message", refreshClientCache);
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+    };
   }, []);
 
   if (result.status === "error") {
