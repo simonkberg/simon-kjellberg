@@ -24,3 +24,5 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       - id: deploy
         uses: superfly/fly-pr-review-apps@1.5.0
+        with:
+          name: simon-dev-pr-${{ github.event.number }}
