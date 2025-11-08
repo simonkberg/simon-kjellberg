@@ -37,8 +37,8 @@ MCP servers are configured in `.mcp.json`. Key guidance:
 - For Next.js questions or features, always consult the Next.js documentation via the `nextjs_docs` MCP tool
 
 ### Docker
-- Build: `docker build -t simon-kjellberg .`
-- Run: `docker run -p 3000:3000 simon-kjellberg`
+- Build: `docker build -t simon.dev .`
+- Run: `docker run -p 3000:3000 simon.dev`
 
 ## Architecture
 

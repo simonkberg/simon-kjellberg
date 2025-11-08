@@ -1,10 +1,10 @@
 {
-  "name": "@simonkberg/simon-kjellberg",
+  "name": "@simonkberg/simon.dev",
   "version": "1.0.0",
   "private": true,
   "description": "My personal website",
   "keywords": [],
-  "repository": "https://github.com/simonkberg/simon-kjellberg",
+  "repository": "https://github.com/simonkberg/simon.dev",
   "license": "MIT",
   "author": "Simon Kjellberg <simon.kjellberg@gmail.com> (https://simon.dev)",
   "type": "module",

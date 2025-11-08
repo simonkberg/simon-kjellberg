@@ -47,10 +47,10 @@ The site is containerized and deployed to Heroku:
 
 ```bash
 # Build Docker image
-docker build -t simon-kjellberg .
+docker build -t simon.dev .
 
 # Run locally
-docker run -p 3000:3000 simon-kjellberg
+docker run -p 3000:3000 simon.dev
 ```
 
 ## License
