@@ -6,6 +6,13 @@ This file provides guidance to AI coding agents when working with code in this r
 
 This is a personal website built with Next.js 16 (App Router) that integrates with Slack for real-time chat functionality and WakaTime for coding statistics. The site is deployed as a standalone Docker container (configured for Heroku).
 
+## Requirements
+
+- Node.js 24
+- Corepack enabled
+
+If Corepack is not enabled, run `corepack enable` before installing dependencies.
+
 ## Development Commands
 
 ### Essential Commands
