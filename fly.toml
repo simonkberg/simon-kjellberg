@@ -4,7 +4,7 @@
 #
 
 app = 'simon-dev'
-primary_region = 'iad'
+primary_region = 'ams'
 
 [build]
 
