@@ -10,12 +10,10 @@
     ":automergeLinters",
     ":automergeTesters",
     "group:nextjsMonorepo",
-    "group:nodeJs"
+    "group:nodeJs",
   ],
   pinDigest: {
     automerge: true,
   },
-  postUpdateOptions: [
-    "pnpmDedupe"
-  ],
+  postUpdateOptions: ["pnpmDedupe"],
 }
