@@ -59,7 +59,7 @@ export const ChatHistory = ({ history }: ChatHistoryProps) => {
     let reconnectAttempts = 0;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     const MAX_BACKOFF = 30000;
-    
+
     const connect = () => {
       if (eventSource) {
         eventSource.close();
