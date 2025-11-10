@@ -2,7 +2,7 @@
 
 import { postChatMessage } from "@/actions/chat";
 import { useActionState } from "react";
-import { ChatToast } from "./ChatToat";
+import { ChatToast } from "./ChatToast";
 
 export const ChatInput = () => {
   const [result, action, pending] = useActionState(postChatMessage, {
