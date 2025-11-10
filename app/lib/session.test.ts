@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decrypt, encrypt } from "./session";
 
 vi.mock(import("server-only"), () => ({}));
@@ -46,6 +47,12 @@ describe("session", () => {
   });
 
   describe("decrypt", () => {
+    let consoleErrorSpy: Mock<Console["error"]>;
+
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
     it("should decrypt a valid session token", async () => {
       const payload = { username: "testuser" };
       const encrypted = await encrypt(payload);
@@ -60,32 +67,43 @@ describe("session", () => {
     });
 
     it("should return undefined for invalid token", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
       const result = await decrypt("invalid-token");
       expect(result).toBeUndefined();
-      expect(console.error).toHaveBeenCalledOnce();
+      expect(consoleErrorSpy).toHaveBeenCalledOnce();
     });
 
     it("should return undefined for tampered token", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
       const payload = { username: "testuser" };
       const encrypted = await encrypt(payload);
       const tampered = encrypted.slice(0, -5) + "xxxxx";
 
       const result = await decrypt(tampered);
       expect(result).toBeUndefined();
-      expect(console.error).toHaveBeenCalledOnce();
+      expect(consoleErrorSpy).toHaveBeenCalledOnce();
     });
 
     it("should validate session schema and reject invalid payload", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
-      const validPayload = { name: "testuser" };
+      // Payload has 'name' instead of 'username' - should fail schema validation
+      const invalidPayload = { name: "testuser" };
       // @ts-expect-error -- testing invalid payload
-      const encrypted = await encrypt(validPayload);
+      const encrypted = await encrypt(invalidPayload);
       const decrypted = await decrypt(encrypted);
 
       expect(decrypted).toBeUndefined();
-      expect(console.error).toHaveBeenCalledOnce();
+      expect(consoleErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should return undefined for expired token", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const payload = { username: "testuser" };
+      const encrypted = await encrypt(payload);
+
+      // Advance time by more than 365 days (token expiration)
+      vi.advanceTimersByTime(366 * 24 * 60 * 60 * 1000);
+
+      const result = await decrypt(encrypted);
+      expect(result).toBeUndefined();
+      expect(consoleErrorSpy).toHaveBeenCalledOnce();
     });
   });
 });
