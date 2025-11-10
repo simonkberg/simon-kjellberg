@@ -2,20 +2,31 @@
 
 import { postChatMessage } from "@/actions/chat";
 import { useActionState } from "react";
+import { ChatToast } from "./ChatToat";
 
 export const ChatInput = () => {
-  const [, action, pending] = useActionState(postChatMessage, null);
+  const [result, action, pending] = useActionState(postChatMessage, {
+    status: "pending",
+  });
 
   return (
-    <form action={action} className="chat-input">
-      <div className="wrapper">
-        <input
-          name="text"
-          placeholder="Write a message..."
-          disabled={pending}
-          className="input"
-        />
-      </div>
-    </form>
+    <>
+      <ChatToast
+        variant={result.status === "error" ? "error" : "default"}
+        message={
+          !pending && result.status === "error" ? result.error : undefined
+        }
+      />
+      <form action={action} className="chat-input">
+        <div className="wrapper">
+          <input
+            name="text"
+            placeholder="Write a message..."
+            disabled={pending}
+            className="input"
+          />
+        </div>
+      </form>
+    </>
   );
 };

@@ -442,3 +442,23 @@ ul {
     }
   }
 }
+
+.chat-toast {
+  position: absolute;
+  z-index: 1;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &.error {
+    background-color: var(--color-firebrick);
+  }
+}
