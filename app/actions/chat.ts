@@ -22,17 +22,19 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
 }
 
 export type PostChatMessageResult =
+  | { status: "pending" }
   | { status: "ok"; message: Message }
   | { status: "error"; error: string };
 
 export async function postChatMessage(
-  _prevState: PostChatMessageResult | null,
+  _prevState: PostChatMessageResult,
   formData: FormData,
 ): Promise<PostChatMessageResult> {
   try {
     const text = z.string().parse(formData.get("text"));
 
     const { username } = await getSession();
+
     const response = await postMessage(text, username);
 
     void logMessage(text, username);
