@@ -12,6 +12,7 @@ RUN corepack enable pnpm && pnpm i --frozen-lockfile
 # Build the app
 FROM base AS builder
 WORKDIR /app
+ENV SKIP_ENV_VALIDATION=true
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable pnpm && pnpm run build
