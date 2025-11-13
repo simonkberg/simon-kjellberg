@@ -1,13 +1,25 @@
 "use client";
 
 import { postChatMessage } from "@/actions/chat";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { ChatToast } from "./ChatToast";
 
 export const ChatInput = () => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [result, action, pending] = useActionState(postChatMessage, {
-    status: "pending",
+    status: "initial",
   });
+
+  useEffect(() => {
+    if (!pending && result.status !== "initial") {
+      if (inputRef.current) {
+        if (result.status === "error" && result.input) {
+          inputRef.current.value = result.input;
+        }
+        inputRef.current.focus();
+      }
+    }
+  }, [pending, result]);
 
   return (
     <>
@@ -24,6 +36,7 @@ export const ChatInput = () => {
             placeholder="Write a message..."
             disabled={pending}
             className="input"
+            ref={inputRef}
           />
         </div>
       </form>
