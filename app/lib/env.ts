@@ -19,19 +19,22 @@ function parseAndValidateEnv<T extends Record<string, z.ZodTypeAny>>(
 
   const skipEnvValidation = z
     .stringbool()
+    .default(false)
     .parse(process.env["SKIP_ENV_VALIDATION"]);
 
-  try {
-    return (skipEnvValidation ? envSchema.partial() : envSchema).parse(
-      process.env,
-    ) as z.infer<typeof envSchema>;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.error("✖ Invalid environment variables:", z.formatError(error));
+  const result = (
+    skipEnvValidation ? envSchema.partial() : envSchema
+  ).safeParse(process.env) as z.ZodSafeParseResult<z.infer<typeof envSchema>>;
 
-      throw new Error("Invalid environment variables");
-    }
+  if (!result.success) {
+    console.error(
+      `✖ Invalid environment variables:\n${z.prettifyError(result.error)}`,
+    );
 
-    throw error;
+    throw new Error(
+      "Invalid environment variables. Check the console output above for details.",
+    );
   }
+
+  return result.data;
 }
