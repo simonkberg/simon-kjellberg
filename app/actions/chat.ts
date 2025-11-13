@@ -42,16 +42,13 @@ function getRateLimiter() {
 export type PostChatMessageResult =
   | { status: "initial" }
   | { status: "ok"; message: Message }
-  | { status: "error"; error: string; input?: string };
+  | { status: "error"; error: string };
 
 export async function postChatMessage(
-  _prevState: PostChatMessageResult,
   formData: FormData,
 ): Promise<PostChatMessageResult> {
-  const input = formData.get("text")?.toString();
-
   try {
-    const text = z.string().parse(input);
+    const text = z.string().parse(formData.get("text"));
 
     const { username } = await getSession();
 
@@ -65,7 +62,6 @@ export async function postChatMessage(
       return {
         status: "error",
         error: "Rate limit exceeded. Please slow down.",
-        input,
       };
     }
 
@@ -76,7 +72,7 @@ export async function postChatMessage(
     return { status: "ok", message: response };
   } catch (error) {
     console.error("Error posting chat message:", error);
-    return { status: "error", error: "Failed to post chat message", input };
+    return { status: "error", error: "Failed to post chat message" };
   }
 }
 
