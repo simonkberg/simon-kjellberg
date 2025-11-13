@@ -33,8 +33,25 @@ const flattenSettled = <T>(values: PromiseSettledResult<T>[]): (T | Error)[] =>
     value.status === "fulfilled" ? value.value : value.reason,
   );
 
-const client = new WebClient(env.SLACK_TOKEN);
-const rtmClient = new RTMClient(env.SLACK_TOKEN);
+let _webClient: WebClient | undefined;
+let _rtmClient: RTMClient | undefined;
+
+const getWebClient = () => {
+  if (!_webClient) {
+    _webClient = new WebClient(env.SLACK_TOKEN);
+  }
+
+  return _webClient;
+};
+
+const getRtmClient = () => {
+  if (!_rtmClient) {
+    _rtmClient = new RTMClient(env.SLACK_TOKEN);
+  }
+
+  return _rtmClient;
+};
+
 const channel = env.SLACK_CHANNEL;
 
 const eventSchema = z.object({
@@ -54,6 +71,8 @@ export async function subscribe(
       | typeof EVENT_CHAT_MESSAGE_DELETED,
   ) => void,
 ) {
+  const rtmClient = getRtmClient();
+
   function subscriber(rawEvent: unknown) {
     const event = eventSchema.parse(rawEvent);
 
@@ -87,7 +106,7 @@ export const postMessage = async (
   text: string,
   username: string,
 ): Promise<Message> => {
-  const response = await client.chat.postMessage({
+  const response = await getWebClient().chat.postMessage({
     channel,
     parse: "full",
     text,
@@ -103,7 +122,7 @@ const userLoader = new DataLoader<string, User>(
   (keys) =>
     Promise.allSettled(
       keys.map(async (user: string) => {
-        const response = await client.users.info({ user });
+        const response = await getWebClient().users.info({ user });
         return toUser(response.user?.name ?? user);
       }),
     ).then(flattenSettled),
@@ -157,7 +176,7 @@ const parseMessage = async (rawMessage: unknown): Promise<Message> => {
 };
 
 export const getHistory = async (): Promise<Message[]> => {
-  const response = await client.conversations.history({ channel });
+  const response = await getWebClient().conversations.history({ channel });
 
   if (response.messages) {
     const messages = await Promise.all(response.messages.map(parseMessage));
@@ -168,7 +187,7 @@ export const getHistory = async (): Promise<Message[]> => {
 };
 
 const getReplies = async (ts: string): Promise<BaseMessage[]> => {
-  const response = await client.conversations.replies({ channel, ts });
+  const response = await getWebClient().conversations.replies({ channel, ts });
 
   if (response.messages) {
     const messages = await Promise.all(
