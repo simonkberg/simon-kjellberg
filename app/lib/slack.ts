@@ -33,24 +33,28 @@ const flattenSettled = <T>(values: PromiseSettledResult<T>[]): (T | Error)[] =>
     value.status === "fulfilled" ? value.value : value.reason,
   );
 
-let _webClient: WebClient | undefined;
-let _rtmClient: RTMClient | undefined;
+class slackClients {
+  static #web: WebClient;
+  static #rtm: RTMClient;
 
-const getWebClient = () => {
-  if (!_webClient) {
-    _webClient = new WebClient(env.SLACK_TOKEN);
+  private constructor() {
+    throw new Error("Cannot instantiate slackClients");
   }
 
-  return _webClient;
-};
-
-const getRtmClient = () => {
-  if (!_rtmClient) {
-    _rtmClient = new RTMClient(env.SLACK_TOKEN);
+  static get web() {
+    if (!this.#web) {
+      this.#web = new WebClient(env.SLACK_TOKEN);
+    }
+    return this.#web;
   }
 
-  return _rtmClient;
-};
+  static get rtm() {
+    if (!this.#rtm) {
+      this.#rtm = new RTMClient(env.SLACK_TOKEN);
+    }
+    return this.#rtm;
+  }
+}
 
 const channel = env.SLACK_CHANNEL;
 
@@ -71,8 +75,6 @@ export async function subscribe(
       | typeof EVENT_CHAT_MESSAGE_DELETED,
   ) => void,
 ) {
-  const rtmClient = getRtmClient();
-
   function subscriber(rawEvent: unknown) {
     const event = eventSchema.parse(rawEvent);
 
@@ -91,14 +93,14 @@ export async function subscribe(
     }
   }
 
-  rtmClient.on("message", subscriber);
+  slackClients.rtm.on("message", subscriber);
 
-  if (!rtmClient.connected) {
-    await rtmClient.start();
+  if (!slackClients.rtm.connected) {
+    await slackClients.rtm.start();
   }
 
   return function unsubscribe() {
-    return void rtmClient.off("message", subscriber);
+    return void slackClients.rtm.off("message", subscriber);
   };
 }
 
@@ -106,7 +108,7 @@ export const postMessage = async (
   text: string,
   username: string,
 ): Promise<Message> => {
-  const response = await getWebClient().chat.postMessage({
+  const response = await slackClients.web.chat.postMessage({
     channel,
     parse: "full",
     text,
@@ -122,7 +124,7 @@ const userLoader = new DataLoader<string, User>(
   (keys) =>
     Promise.allSettled(
       keys.map(async (user: string) => {
-        const response = await getWebClient().users.info({ user });
+        const response = await slackClients.web.users.info({ user });
         return toUser(response.user?.name ?? user);
       }),
     ).then(flattenSettled),
@@ -176,7 +178,7 @@ const parseMessage = async (rawMessage: unknown): Promise<Message> => {
 };
 
 export const getHistory = async (): Promise<Message[]> => {
-  const response = await getWebClient().conversations.history({ channel });
+  const response = await slackClients.web.conversations.history({ channel });
 
   if (response.messages) {
     const messages = await Promise.all(response.messages.map(parseMessage));
@@ -187,7 +189,10 @@ export const getHistory = async (): Promise<Message[]> => {
 };
 
 const getReplies = async (ts: string): Promise<BaseMessage[]> => {
-  const response = await getWebClient().conversations.replies({ channel, ts });
+  const response = await slackClients.web.conversations.replies({
+    channel,
+    ts,
+  });
 
   if (response.messages) {
     const messages = await Promise.all(
