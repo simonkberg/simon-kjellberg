@@ -88,6 +88,55 @@ describe("ChatInput", () => {
     });
   });
 
+  it("clears input and focuses it after successful submission", async () => {
+    const user = userEvent.setup();
+    const mockMessage = createMockMessage("Test message");
+
+    vi.mocked(postChatMessage).mockResolvedValue({
+      status: "ok",
+      message: mockMessage,
+    });
+
+    render(<ChatInput />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+
+    await user.type(input, "Test message");
+    expect(input.value).toBe("Test message");
+
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(input.value).toBe("");
+    });
+
+    expect(input).toHaveFocus();
+  });
+
+  it("preserves input and focuses it after failed submission", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(postChatMessage).mockResolvedValue({
+      status: "error",
+      error: "Rate limit exceeded",
+    });
+
+    render(<ChatInput />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+
+    await user.type(input, "Test message");
+    expect(input.value).toBe("Test message");
+
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument();
+    });
+
+    // Input value should be preserved on error
+    expect(input.value).toBe("Test message");
+    expect(input).toHaveFocus();
+  });
+
   describe("ChatToast integration", () => {
     it("does not show toast initially", () => {
       render(<ChatInput />);
