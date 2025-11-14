@@ -32,7 +32,7 @@ function getRateLimiter() {
       limiter: Ratelimit.slidingWindow(5, "30 s"),
       enableProtection: true,
       analytics: true,
-      prefix: "ratelimit:chat",
+      prefix: "postChatMessage",
     });
   }
 
