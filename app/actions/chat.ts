@@ -64,7 +64,7 @@ export async function postChatMessage(
     if (!success) {
       return {
         status: "error",
-        error: `Rate limit exceeded. Wait ${Math.ceil(reset - Date.now() / 1000)} seconds before trying again.`,
+        error: `Rate limit exceeded. Wait ${Math.ceil((reset - Date.now()) / 1000)} seconds before trying again.`,
       };
     }
 
