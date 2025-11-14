@@ -52,16 +52,19 @@ export async function postChatMessage(
 
     const { username } = await getSession();
 
-    const req = await identifiers();
-    const identifier = req.ip ?? username;
-    const { success, pending } = await getRateLimiter().limit(identifier, req);
+    const request = await identifiers();
+    const identifier = request.ip ?? username;
+    const { success, pending, reset } = await getRateLimiter().limit(
+      identifier,
+      request,
+    );
 
     after(pending);
 
     if (!success) {
       return {
         status: "error",
-        error: "Rate limit exceeded. Please slow down.",
+        error: `Rate limit exceeded. Wait ${Math.ceil(reset - Date.now() / 1000)} seconds before trying again.`,
       };
     }
 
