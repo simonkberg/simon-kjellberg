@@ -30,7 +30,7 @@ export const ChatInput = () => {
     if (!pending && result.status !== "initial") {
       inputRef.current?.focus();
     }
-  }, [pending, result]);
+  }, [pending, result.status]);
 
   return (
     <>
