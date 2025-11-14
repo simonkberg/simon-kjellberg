@@ -57,9 +57,7 @@ describe("ChatInput", () => {
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(input).toBeDisabled();
-    });
+    expect(input).toBeDisabled();
 
     resolve({ status: "ok", message: mockMessage });
 
@@ -83,9 +81,7 @@ describe("ChatInput", () => {
     await user.type(input, "Test message");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(postChatMessage).toHaveBeenCalled();
-    });
+    expect(postChatMessage).toHaveBeenCalled();
   });
 
   it("clears input and focuses it after successful submission", async () => {
@@ -153,10 +149,7 @@ describe("ChatInput", () => {
       await user.type(input, "Test message");
       await user.keyboard("{Enter}");
 
-      await waitFor(() => {
-        expect(postChatMessage).toHaveBeenCalled();
-      });
-
+      expect(postChatMessage).toHaveBeenCalled();
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
