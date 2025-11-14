@@ -1,9 +1,11 @@
 "use server";
 
-import { ip } from "@/lib/ip";
+import { identifiers } from "@/lib/identifiers";
 import { getSession } from "@/lib/session";
 import { getHistory, type Message, postMessage } from "@/lib/slack";
-import { connection } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { after, connection } from "next/server";
 import { z } from "zod";
 
 export type ChatHistoryResult =
@@ -21,19 +23,50 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
   }
 }
 
+let rateLimiter: Ratelimit | undefined;
+
+function getRateLimiter() {
+  if (!rateLimiter) {
+    rateLimiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, "30 s"),
+      enableProtection: true,
+      analytics: true,
+      prefix: "postChatMessage",
+    });
+  }
+
+  return rateLimiter;
+}
+
 export type PostChatMessageResult =
-  | { status: "pending" }
+  | { status: "initial" }
   | { status: "ok"; message: Message }
   | { status: "error"; error: string };
 
 export async function postChatMessage(
-  _prevState: PostChatMessageResult,
   formData: FormData,
 ): Promise<PostChatMessageResult> {
   try {
     const text = z.string().parse(formData.get("text"));
 
     const { username } = await getSession();
+
+    const request = await identifiers();
+    const identifier = request.ip ?? username;
+    const { success, pending, reset } = await getRateLimiter().limit(
+      identifier,
+      request,
+    );
+
+    after(pending);
+
+    if (!success) {
+      return {
+        status: "error",
+        error: `Rate limit exceeded. Wait ${Math.ceil((reset - Date.now()) / 1000)} seconds before trying again.`,
+      };
+    }
 
     const response = await postMessage(text, username);
 
@@ -47,5 +80,6 @@ export async function postChatMessage(
 }
 
 async function logMessage(message: string, username: string) {
-  console.log(`[Chat] [${await ip()}] ${username}: ${message}`);
+  const { ip } = await identifiers();
+  console.log(`[Chat] [${ip}] ${username}: ${message}`);
 }

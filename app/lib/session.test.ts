@@ -9,6 +9,8 @@ vi.mock(import("@/lib/env"), () => ({
     SESSION_SECRET: "stub-session-secret",
     SLACK_CHANNEL: "stub-slack-channel",
     SLACK_TOKEN: "stub-slack-token",
+    UPSTASH_REDIS_REST_URL: "https://stub-redis-url.upstash.io",
+    UPSTASH_REDIS_REST_TOKEN: "stub-redis-token",
   },
 }));
 

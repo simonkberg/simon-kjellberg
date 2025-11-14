@@ -66,13 +66,15 @@ MCP servers are configured in `.mcp.json`. Key guidance:
 - `@/*` maps to `app/*` (configured in tsconfig.json)
 
 **Environment Variables:**
-Environment validation is handled via `@t3-oss/env-nextjs` in `app/lib/env.ts`. Required variables:
+Environment validation is handled via custom Zod validation in `app/lib/env.ts`. Required variables:
 
-- `SESSION_SECRET` - Session encryption secret
+- `SESSION_SECRET` - Session encryption secret (auto-defaults to "unsafe_dev_secret" in development)
 - `SLACK_CHANNEL` - Slack channel ID
 - `SLACK_TOKEN` - Slack API token
+- `UPSTASH_REDIS_REST_URL` - Upstash Redis REST API URL
+- `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis REST API token
 
-Variables default to dummy values for development but must be set properly for production. Configure development environment variables in `.env.local` (per Next.js convention).
+Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables (used in CI/Docker). Configure development environment variables in `.env.local` (per Next.js convention).
 
 **Slack Integration Architecture:**
 
@@ -88,6 +90,14 @@ Variables default to dummy values for development but must be set properly for p
 - Random usernames are generated using `app/lib/randomName.ts`
 - Username-to-color mapping via `app/lib/stringToColor.ts` for consistent UI coloring
 
+**Rate Limiting:**
+
+- Chat messages are rate-limited using Upstash Redis (5 messages per 30 seconds per IP)
+- Uses sliding window algorithm for accurate rate limiting
+- Lazy initialization pattern for the rate limiter singleton
+- Analytics and protection features enabled
+- Identifier extraction via `app/lib/identifiers.ts` (IP address and user agent)
+
 **React Compiler:**
 
 - Enabled via `babel-plugin-react-compiler` in Next.js config
@@ -96,7 +106,8 @@ Variables default to dummy values for development but must be set properly for p
 **TypeScript Configuration:**
 
 - Extremely strict mode enabled (see tsconfig.json)
-- Notable strictness: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`
+- Notable strictness: `noUncheckedIndexedAccess`, `noPropertyAccessFromIndexSignature`
+- `exactOptionalPropertyTypes` is disabled for better compatibility with optional fields and external libraries
 - Always use optional chaining and nullish coalescing when accessing arrays/objects
 
 **Testing Strategy:**

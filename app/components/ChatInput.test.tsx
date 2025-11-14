@@ -57,9 +57,7 @@ describe("ChatInput", () => {
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(input).toBeDisabled();
-    });
+    expect(input).toBeDisabled();
 
     resolve({ status: "ok", message: mockMessage });
 
@@ -83,9 +81,51 @@ describe("ChatInput", () => {
     await user.type(input, "Test message");
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(postChatMessage).toHaveBeenCalled();
+    expect(postChatMessage).toHaveBeenCalled();
+  });
+
+  it("clears input and focuses it after successful submission", async () => {
+    const user = userEvent.setup();
+    const mockMessage = createMockMessage("Test message");
+
+    vi.mocked(postChatMessage).mockResolvedValue({
+      status: "ok",
+      message: mockMessage,
     });
+
+    render(<ChatInput />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+
+    await user.type(input, "Test message");
+    expect(input.value).toBe("Test message");
+
+    await user.keyboard("{Enter}");
+
+    expect(input.value).toBe("");
+    expect(input).toHaveFocus();
+  });
+
+  it("preserves input and focuses it after failed submission", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(postChatMessage).mockResolvedValue({
+      status: "error",
+      error: "Rate limit exceeded",
+    });
+
+    render(<ChatInput />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+
+    await user.type(input, "Test message");
+    expect(input.value).toBe("Test message");
+
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument();
+
+    // Input value should be preserved on error
+    expect(input.value).toBe("Test message");
+    expect(input).toHaveFocus();
   });
 
   describe("ChatToast integration", () => {
@@ -109,10 +149,7 @@ describe("ChatInput", () => {
       await user.type(input, "Test message");
       await user.keyboard("{Enter}");
 
-      await waitFor(() => {
-        expect(postChatMessage).toHaveBeenCalled();
-      });
-
+      expect(postChatMessage).toHaveBeenCalled();
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
