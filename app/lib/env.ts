@@ -10,7 +10,7 @@ export const env = parseAndValidateEnv({
   ),
   SLACK_CHANNEL: z.string().min(1, "SLACK_CHANNEL is required"),
   SLACK_TOKEN: z.string().min(1, "SLACK_TOKEN is required"),
-  UPSTASH_REDIS_REST_URL: z.url(),
+  UPSTASH_REDIS_REST_URL: z.url("UPSTASH_REDIS_REST_URL must be a valid URL"),
   UPSTASH_REDIS_REST_TOKEN: z
     .string()
     .min(1, "UPSTASH_REDIS_REST_TOKEN is required"),
