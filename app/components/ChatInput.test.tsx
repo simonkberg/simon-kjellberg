@@ -105,10 +105,7 @@ describe("ChatInput", () => {
 
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(input.value).toBe("");
-    });
-
+    expect(input.value).toBe("");
     expect(input).toHaveFocus();
   });
 
@@ -128,9 +125,7 @@ describe("ChatInput", () => {
 
     await user.keyboard("{Enter}");
 
-    await waitFor(() => {
-      expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument();
 
     // Input value should be preserved on error
     expect(input.value).toBe("Test message");
