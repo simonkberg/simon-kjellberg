@@ -1,7 +1,8 @@
 import { subscribe } from "@/lib/slack";
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-const ping = ":\n\n";
+const ping = ": ping\n\n";
+const ignoreWriteErrors = () => {};
 
 export async function GET(request: NextRequest) {
   await connection();
@@ -12,12 +13,14 @@ export async function GET(request: NextRequest) {
 
   const pingInterval = setInterval(() => {
     if (aborted) return;
-    writer.write(encoder.encode(ping));
+    void writer.write(encoder.encode(ping)).catch(ignoreWriteErrors);
   }, 30_000);
 
   const unsubscribe = await subscribe((type) => {
     if (aborted) return;
-    writer.write(encoder.encode(`data: ${type}\n\n`));
+    void writer
+      .write(encoder.encode(`data: ${type}\n\n`))
+      .catch(ignoreWriteErrors);
   });
 
   request.signal.addEventListener("abort", () => {
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
     writer.close();
   });
 
-  void writer.write(encoder.encode(ping));
+  void writer.write(encoder.encode(ping)).catch(ignoreWriteErrors);
 
   return new NextResponse(responseStream.readable, {
     headers: {
