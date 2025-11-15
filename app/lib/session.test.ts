@@ -11,6 +11,7 @@ vi.mock(import("@/lib/env"), () => ({
     SLACK_TOKEN: "stub-slack-token",
     UPSTASH_REDIS_REST_URL: "https://stub-redis-url.upstash.io",
     UPSTASH_REDIS_REST_TOKEN: "stub-redis-token",
+    LAST_FM_API_KEY: "stub-lastfm-key",
   },
 }));
 

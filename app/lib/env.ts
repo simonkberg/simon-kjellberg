@@ -14,6 +14,7 @@ export const env = parseAndValidateEnv({
   UPSTASH_REDIS_REST_TOKEN: z
     .string()
     .min(1, "UPSTASH_REDIS_REST_TOKEN is required"),
+  LAST_FM_API_KEY: z.string().min(1, "LAST_FM_API_KEY is required"),
 });
 
 function parseAndValidateEnv<T extends Record<string, z.ZodTypeAny>>(
