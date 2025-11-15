@@ -1,4 +1,5 @@
 import { getChatHistory } from "@/actions/chat";
+import { getRecentTracks } from "@/actions/lastfm";
 import { getWakaTimeStats } from "@/actions/wakaTime";
 import { ChatHistory } from "@/components/ChatHistory";
 import { ChatInput } from "@/components/ChatInput";
@@ -6,6 +7,7 @@ import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
 import { Loader } from "@/components/Loader";
 import { Page } from "@/components/Page";
+import { RecentTracksList } from "@/components/RecentTracksList";
 import { StatsList } from "@/components/StatsList";
 import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
@@ -34,6 +36,7 @@ export const viewport: Viewport = {
 export default async function RootPage() {
   const stats = getWakaTimeStats();
   const history = getChatHistory();
+  const recentTracks = getRecentTracks();
 
   return (
     <Page title={config.title}>
@@ -64,6 +67,22 @@ export default async function RootPage() {
         </Heading>
         <Suspense fallback={<Loader />}>
           <StatsList stats={stats} />
+        </Suspense>
+      </section>
+
+      <section>
+        <Heading level={2}>
+          Currently listening to{" "}
+          <Subtitle>
+            (Via{" "}
+            <ExternalLink href="https://www.last.fm/user/magijo">
+              Last.fm
+            </ExternalLink>
+            )
+          </Subtitle>
+        </Heading>
+        <Suspense fallback={<Loader />}>
+          <RecentTracksList recentTracks={recentTracks} />
         </Suspense>
       </section>
 
