@@ -1,8 +1,17 @@
 import { subscribe } from "@/lib/slack";
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-const ping = ": ping\n\n";
-const ignoreWriteErrors = () => {};
+// Heroku requires bytes sent within 30s initially, then within 55s rolling windows
+// to keep long-polling connections alive. See:
+// https://devcenter.heroku.com/articles/request-timeout#long-polling-and-streaming-responses
+const PING_INTERVAL_MS = 30_000;
+const PING_MESSAGE = ": ping\n\n";
+
+const ignoreWriteErrors = (error: unknown) => {
+  if (process.env.NODE_ENV === "development") {
+    console.debug("SSE write error:", error);
+  }
+};
 
 export async function GET(request: NextRequest) {
   await connection();
@@ -13,8 +22,8 @@ export async function GET(request: NextRequest) {
 
   const pingInterval = setInterval(() => {
     if (aborted) return;
-    void writer.write(encoder.encode(ping)).catch(ignoreWriteErrors);
-  }, 30_000);
+    void writer.write(encoder.encode(PING_MESSAGE)).catch(ignoreWriteErrors);
+  }, PING_INTERVAL_MS);
 
   const unsubscribe = await subscribe((type) => {
     if (aborted) return;
@@ -27,10 +36,10 @@ export async function GET(request: NextRequest) {
     aborted = true;
     unsubscribe();
     clearInterval(pingInterval);
-    writer.close();
+    void writer.close().catch(ignoreWriteErrors);
   });
 
-  void writer.write(encoder.encode(ping)).catch(ignoreWriteErrors);
+  void writer.write(encoder.encode(PING_MESSAGE)).catch(ignoreWriteErrors);
 
   return new NextResponse(responseStream.readable, {
     headers: {
