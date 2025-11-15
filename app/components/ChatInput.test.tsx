@@ -121,7 +121,7 @@ describe("ChatInput", () => {
 
     await user.keyboard("{Enter}");
 
-    expect(screen.getByText("Rate limit exceeded")).toBeInTheDocument();
+    expect(await screen.findByText("Rate limit exceeded")).toBeInTheDocument();
 
     // Input value should be preserved on error
     expect(input.value).toBe("Test message");
@@ -168,7 +168,7 @@ describe("ChatInput", () => {
       await user.keyboard("{Enter}");
 
       expect(
-        screen.getByText("Failed to post chat message"),
+        await screen.findByText("Failed to post chat message"),
       ).toBeInTheDocument();
 
       const toast = screen.getByRole("status");
@@ -190,7 +190,7 @@ describe("ChatInput", () => {
       await user.type(input, "Test message");
       await user.keyboard("{Enter}");
 
-      expect(screen.getByText("Network error")).toBeInTheDocument();
+      expect(await screen.findByText("Network error")).toBeInTheDocument();
 
       const closeButton = screen.getByRole("button", {
         name: "Close notification",
@@ -215,7 +215,7 @@ describe("ChatInput", () => {
       await user.type(input, "Test message");
       await user.keyboard("{Enter}");
 
-      expect(screen.getByText("Timeout error")).toBeInTheDocument();
+      expect(await screen.findByText("Timeout error")).toBeInTheDocument();
 
       vi.advanceTimersByTime(5000);
       vi.runAllTimers();
@@ -246,12 +246,12 @@ describe("ChatInput", () => {
       await user.type(input, "First message");
       await user.keyboard("{Enter}");
 
-      expect(screen.getByText("First error")).toBeInTheDocument();
+      expect(await screen.findByText("First error")).toBeInTheDocument();
 
       await user.type(input, "Second message");
       await user.keyboard("{Enter}");
 
-      expect(screen.getByText("Second error")).toBeInTheDocument();
+      expect(await screen.findByText("Second error")).toBeInTheDocument();
       expect(screen.queryByText("First error")).not.toBeInTheDocument();
     });
 
@@ -275,7 +275,7 @@ describe("ChatInput", () => {
       await user.type(input, "First message");
       await user.keyboard("{Enter}");
 
-      expect(screen.getByText("Failed to post")).toBeInTheDocument();
+      expect(await screen.findByText("Failed to post")).toBeInTheDocument();
 
       await user.type(input, "Second message");
       await user.keyboard("{Enter}");
