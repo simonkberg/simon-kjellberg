@@ -1,7 +1,6 @@
 import {
   render,
   screen,
-  waitFor,
   waitForElementToBeRemoved,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -66,9 +65,7 @@ describe("ChatToast", () => {
 
     vi.advanceTimersByTime(3000);
 
-    await waitFor(() => {
-      expect(screen.queryByText("Test message")).not.toBeInTheDocument();
-    });
+    await waitForElementToBeRemoved(() => screen.queryByText("Test message"));
 
     vi.useRealTimers();
   });
