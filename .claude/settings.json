@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(corepack enable)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm test:*)",
+      "mcp__eslint__*",
+      "mcp__next-devtools__*"
+    ],
+    "deny": ["Read(./.env.local)"]
+  },
+  "enableAllProjectMcpServers": true
+}

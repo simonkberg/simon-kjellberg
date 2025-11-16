@@ -35,21 +35,8 @@ jobs:
         uses: anthropics/claude-code-action@8a1c4371755898f67cd97006ba7c97702d5fc4bf # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          track_progress: true
-          use_sticky_comment: true
-
-          # Load project settings (includes pnpm commands and MCP servers)
           settings: ".claude/settings.json"
-
-          # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
-
-          # Additional tools beyond defaults + settings.json:
-          # - gh CLI for PR/issue operations (create, comment, label, etc.)
-          # - TodoWrite for task tracking in multi-step operations
-          # - Inline comments for code-specific feedback
-          #
-          # Note: File operations (Read, Write, Edit, Grep, Glob) and git commands
-          # are already included by default. pnpm/MCP tools come from settings.json
-          claude_args: '--allowed-tools "Bash(gh pr *),Bash(gh issue *),TodoWrite,mcp__github_inline_comment__create_inline_comment"'
+          claude_args: |
+            --allowed-tools "Bash(gh pr:*),Bash(gh issue:*)"
