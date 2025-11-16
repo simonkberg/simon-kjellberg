@@ -7,7 +7,7 @@ import { djb2hash } from "@/lib/djb2hash";
  * @param string - The input string to convert to a color
  * @param saturation - Color saturation (0-1), defaults to 0.95
  * @param lightness - Color lightness (0-1), defaults to 0.65
- * @returns HSL color string in CSS format
+ * @returns HSL color string in CSS format (e.g., "hsl(240 95% 65%)")
  */
 export function stringToColor(
   string: string,
