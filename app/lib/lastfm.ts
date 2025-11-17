@@ -3,52 +3,33 @@ import "server-only";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
-abstract class AbstractLastFmClient {
-  static #BASE_URL = "https://ws.audioscrobbler.com/2.0/";
-  readonly #apiKey: string;
+const BASE_URL = "https://ws.audioscrobbler.com/2.0/";
 
-  constructor(apiKey: string) {
-    this.#apiKey = apiKey;
+async function call<T extends z.ZodType>(
+  method: string,
+  schema: T,
+  params: Record<string, unknown> = {},
+): Promise<z.infer<T>> {
+  const url = new URL(BASE_URL);
+  url.searchParams.set("method", method);
+  url.searchParams.set("api_key", env.LAST_FM_API_KEY);
+  url.searchParams.set("format", "json");
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, String(value));
   }
 
-  protected async call<T extends z.ZodType>(
-    method: string,
-    schema: T,
-    params: Record<string, unknown> = {},
-  ) {
-    const url = new URL(AbstractLastFmClient.#BASE_URL);
-    url.searchParams.set("method", method);
-    url.searchParams.set("api_key", this.#apiKey);
-    url.searchParams.set("format", "json");
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, String(value));
-    }
-
-    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
-    if (!response.ok) {
-      throw new Error(
-        `Last.fm API error: ${response.status} ${response.statusText}`,
-      );
-    }
-    const json = await response.json();
-
-    return schema.parse(json);
+  const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+  if (!response.ok) {
+    throw new Error(
+      `Last.fm API error: ${response.status} ${response.statusText}`,
+    );
   }
+  const json = await response.json();
+
+  return schema.parse(json);
 }
 
-export class LastFmClient extends AbstractLastFmClient {
-  #user?: LastFmUserClient;
-
-  get user() {
-    if (!this.#user) {
-      this.#user = new LastFmUserClient(env.LAST_FM_API_KEY);
-    }
-
-    return this.#user;
-  }
-}
-
-const UserGetRecentTracksResponseSchema = z
+const userGetRecentTracksResponseSchema = z
   .object({
     recenttracks: z.object({
       track: z.array(
@@ -94,21 +75,19 @@ const UserGetRecentTracksResponseSchema = z
   .transform((data) => data.recenttracks.track);
 
 export type UserGetRecentTracksResponse = z.infer<
-  typeof UserGetRecentTracksResponseSchema
+  typeof userGetRecentTracksResponseSchema
 >;
 
-class LastFmUserClient extends AbstractLastFmClient {
-  async getRecentTracks(
-    user: string,
-    params?: {
-      limit?: number;
-      page?: number;
-    },
-  ): Promise<UserGetRecentTracksResponse> {
-    return this.call(
-      "user.getrecenttracks",
-      UserGetRecentTracksResponseSchema,
-      { user, extended: 1, ...params },
-    );
-  }
+export async function userGetRecentTracks(
+  user: string,
+  params?: {
+    limit?: number;
+    page?: number;
+  },
+): Promise<UserGetRecentTracksResponse> {
+  return call("user.getrecenttracks", userGetRecentTracksResponseSchema, {
+    user,
+    extended: 1,
+    ...params,
+  });
 }
