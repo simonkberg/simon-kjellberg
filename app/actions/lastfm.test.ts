@@ -1,12 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { connection } from "next/server";
+import { describe, expect, it, vi } from "vitest";
 
-import type { UserGetRecentTracksResponse } from "@/lib/lastfm";
+import {
+  userGetRecentTracks,
+  type UserGetRecentTracksResponse,
+} from "@/lib/lastfm";
+
+import { getRecentTracks } from "./lastfm";
+
+vi.mock(import("@/lib/lastfm"), () => ({
+  userGetRecentTracks: vi.fn(),
+}));
+
+vi.mock(import("next/server"), () => ({
+  connection: vi.fn(),
+}));
 
 describe("getRecentTracks", () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-  it("should return success status with tracks when client succeeds", async () => {
+  it("should return success status with tracks when userGetRecentTracks succeeds", async () => {
     const mockTracks: UserGetRecentTracksResponse = [
       {
         id: "track-123",
@@ -28,58 +39,26 @@ describe("getRecentTracks", () => {
       },
     ];
 
-    const mockGetRecentTracks = vi.fn().mockResolvedValue(mockTracks);
-    const mockConnection = vi.fn();
+    vi.mocked(userGetRecentTracks).mockResolvedValue(mockTracks);
 
-    vi.doMock(import("@/lib/lastfm"), () => ({
-      LastFmClient: vi.fn().mockImplementation(function (this: {
-        user: { getRecentTracks: typeof mockGetRecentTracks };
-      }) {
-        this.user = {
-          getRecentTracks: mockGetRecentTracks,
-        };
-      }),
-    }));
-
-    vi.doMock(import("next/server"), () => ({
-      connection: mockConnection,
-    }));
-
-    const { getRecentTracks } = await import("./lastfm");
     const result = await getRecentTracks();
 
-    expect(mockConnection).toHaveBeenCalled();
-    expect(mockGetRecentTracks).toHaveBeenCalledWith("magijo", { limit: 5 });
+    expect(connection).toHaveBeenCalled();
+    expect(userGetRecentTracks).toHaveBeenCalledWith("magijo", { limit: 5 });
     expect(result).toEqual({
       status: "ok",
       tracks: mockTracks,
     });
   });
 
-  it("should return error status when client fails", async () => {
+  it("should return error status when userGetRecentTracks fails", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
 
     const mockError = new Error("API error");
-    const mockGetRecentTracks = vi.fn().mockRejectedValue(mockError);
-    const mockConnection = vi.fn();
+    vi.mocked(userGetRecentTracks).mockRejectedValue(mockError);
 
-    vi.doMock(import("@/lib/lastfm"), () => ({
-      LastFmClient: vi.fn().mockImplementation(function (this: {
-        user: { getRecentTracks: typeof mockGetRecentTracks };
-      }) {
-        this.user = {
-          getRecentTracks: mockGetRecentTracks,
-        };
-      }),
-    }));
-
-    vi.doMock(import("next/server"), () => ({
-      connection: mockConnection,
-    }));
-
-    const { getRecentTracks } = await import("./lastfm");
     const result = await getRecentTracks();
 
     expect(result).toEqual({
