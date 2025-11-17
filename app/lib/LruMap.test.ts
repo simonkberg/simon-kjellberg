@@ -173,4 +173,25 @@ describe("LruMap", () => {
     expect(cache.get("b")).toBe(2);
     expect(cache.size).toBe(1);
   });
+
+  it("deletes the tail node", () => {
+    const cache = new LruMap<string, number>(3);
+    cache.set("a", 1);
+    cache.set("b", 2);
+    cache.set("c", 3);
+
+    expect(cache.delete("c")).toBe(true); // Delete tail
+    expect(cache.has("c")).toBe(false);
+    expect(cache.size).toBe(2);
+    expect([...cache.keys()]).toEqual(["a", "b"]);
+  });
+
+  it("deletes from single-item cache", () => {
+    const cache = new LruMap<string, number>(3);
+    cache.set("a", 1);
+
+    expect(cache.delete("a")).toBe(true);
+    expect(cache.size).toBe(0);
+    expect(cache.has("a")).toBe(false);
+  });
 });
