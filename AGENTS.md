@@ -85,6 +85,14 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
 - Server-Sent Events (SSE) endpoint at `/api/chat/sse` streams chat updates to clients
 - Emoji data is extracted from `emoji-datasource` package at build time
 
+**WakaTime Integration Architecture:**
+
+- Simple fetch function in `app/lib/wakaTime.ts` retrieves coding statistics
+- Uses public share URL (no API key required)
+- 3 second timeout on API requests
+- Returns language/framework usage percentages
+- Zod schema validation for response data
+
 **Last.fm Integration Architecture:**
 
 - Client implementation in `app/lib/lastfm.ts` wraps Last.fm Web Services API
