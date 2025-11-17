@@ -72,8 +72,8 @@ describe("LastFmClient", () => {
 
     it("should handle now playing track", async () => {
       server.use(
-        http.get(LASTFM_BASE_URL, () => {
-          return HttpResponse.json({
+        http.get(LASTFM_BASE_URL, () =>
+          HttpResponse.json({
             recenttracks: {
               track: [
                 {
@@ -85,8 +85,8 @@ describe("LastFmClient", () => {
                 },
               ],
             },
-          });
-        }),
+          }),
+        ),
       );
 
       const client = new LastFmClient("test-last-fm-api-key");
@@ -117,11 +117,11 @@ describe("LastFmClient", () => {
 
     it("should handle invalid response schema", async () => {
       server.use(
-        http.get(LASTFM_BASE_URL, () => {
-          return HttpResponse.json({
+        http.get(LASTFM_BASE_URL, () =>
+          HttpResponse.json({
             invalid: "data",
-          });
-        }),
+          }),
+        ),
       );
 
       const client = new LastFmClient("test-last-fm-api-key");
@@ -129,11 +129,7 @@ describe("LastFmClient", () => {
     });
 
     it("should handle network errors", async () => {
-      server.use(
-        http.get(LASTFM_BASE_URL, () => {
-          return HttpResponse.error();
-        }),
-      );
+      server.use(http.get(LASTFM_BASE_URL, () => HttpResponse.error()));
 
       const client = new LastFmClient("test-last-fm-api-key");
       await expect(client.user.getRecentTracks("testuser")).rejects.toThrow();
@@ -143,13 +139,13 @@ describe("LastFmClient", () => {
       const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
 
       server.use(
-        http.get(LASTFM_BASE_URL, () => {
-          return HttpResponse.json({
+        http.get(LASTFM_BASE_URL, () =>
+          HttpResponse.json({
             recenttracks: {
               track: [],
             },
-          });
-        }),
+          }),
+        ),
       );
 
       const client = new LastFmClient("test-last-fm-api-key");
@@ -166,9 +162,10 @@ describe("LastFmClient", () => {
       { status: 503, statusText: "Service Unavailable" },
     ])("should handle HTTP $status error", async ({ status, statusText }) => {
       server.use(
-        http.get(LASTFM_BASE_URL, () => {
-          return new HttpResponse(null, { status, statusText });
-        }),
+        http.get(
+          LASTFM_BASE_URL,
+          () => new HttpResponse(null, { status, statusText }),
+        ),
       );
 
       const client = new LastFmClient("test-last-fm-api-key");

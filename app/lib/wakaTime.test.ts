@@ -11,15 +11,15 @@ const WAKATIME_URL =
 describe("getStats", () => {
   it("should fetch and parse WakaTime stats successfully", async () => {
     server.use(
-      http.get(WAKATIME_URL, () => {
-        return HttpResponse.json({
+      http.get(WAKATIME_URL, () =>
+        HttpResponse.json({
           data: [
             { name: "TypeScript", percent: 45.5 },
             { name: "JavaScript", percent: 30.2 },
             { name: "JSON", percent: 15.3 },
           ],
-        });
-      }),
+        }),
+      ),
     );
 
     const stats = await getStats();
@@ -33,22 +33,18 @@ describe("getStats", () => {
 
   it("should handle invalid response schema", async () => {
     server.use(
-      http.get(WAKATIME_URL, () => {
-        return HttpResponse.json({
+      http.get(WAKATIME_URL, () =>
+        HttpResponse.json({
           data: [{ invalid: "data" }],
-        });
-      }),
+        }),
+      ),
     );
 
     await expect(getStats()).rejects.toThrow();
   });
 
   it("should handle network errors", async () => {
-    server.use(
-      http.get(WAKATIME_URL, () => {
-        return HttpResponse.error();
-      }),
-    );
+    server.use(http.get(WAKATIME_URL, () => HttpResponse.error()));
 
     await expect(getStats()).rejects.toThrow();
   });
@@ -57,11 +53,11 @@ describe("getStats", () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
 
     server.use(
-      http.get(WAKATIME_URL, () => {
-        return HttpResponse.json({
+      http.get(WAKATIME_URL, () =>
+        HttpResponse.json({
           data: [{ name: "TypeScript", percent: 45.5 }],
-        });
-      }),
+        }),
+      ),
     );
 
     await getStats();
@@ -77,9 +73,10 @@ describe("getStats", () => {
     { status: 503, statusText: "Service Unavailable" },
   ])("should handle HTTP $status error", async ({ status, statusText }) => {
     server.use(
-      http.get(WAKATIME_URL, () => {
-        return new HttpResponse(null, { status, statusText });
-      }),
+      http.get(
+        WAKATIME_URL,
+        () => new HttpResponse(null, { status, statusText }),
+      ),
     );
 
     await expect(getStats()).rejects.toThrow(
