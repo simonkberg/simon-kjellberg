@@ -116,6 +116,11 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
 - Uses @testing-library/react for component tests
 - Snapshot tests are used for emoji parsing validation
 - happy-dom provides a lightweight DOM environment
+- MSW (Mock Service Worker) is used for mocking HTTP requests in tests
+    - MSW server is set up in `mocks/node.ts` and configured in `vitest.setup.ts`
+    - Handlers are automatically reset between tests
+    - Import server from `@/mocks/node` to add request handlers in tests
+    - Environment variables are mocked in `vitest.config.ts` using a `mockEnv` object
 
 ## Common Patterns
 

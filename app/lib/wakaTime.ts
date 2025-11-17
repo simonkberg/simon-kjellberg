@@ -15,6 +15,9 @@ export async function getStats(): Promise<WakaTimeStats> {
     "https://wakatime.com/share/@simonkberg/4a1baa98-ab8f-436e-ada0-8810ef941f76.json",
     { signal: AbortSignal.timeout(3000) },
   );
+  if (!res.ok) {
+    throw new Error(`WakaTime API error: ${res.status} ${res.statusText}`);
+  }
   const data = await res.json();
   return wakaTimeStatsResponseSchema.parse(data).data;
 }

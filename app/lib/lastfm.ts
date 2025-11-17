@@ -25,6 +25,11 @@ abstract class AbstractLastFmClient {
     }
 
     const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) {
+      throw new Error(
+        `Last.fm API error: ${response.status} ${response.statusText}`,
+      );
+    }
     const json = await response.json();
 
     return schema.parse(json);

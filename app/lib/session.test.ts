@@ -4,17 +4,6 @@ import { decrypt, encrypt } from "./session";
 
 vi.mock(import("server-only"), () => ({}));
 
-vi.mock(import("@/lib/env"), () => ({
-  env: {
-    SESSION_SECRET: "stub-session-secret",
-    SLACK_CHANNEL: "stub-slack-channel",
-    SLACK_TOKEN: "stub-slack-token",
-    UPSTASH_REDIS_REST_URL: "https://stub-redis-url.upstash.io",
-    UPSTASH_REDIS_REST_TOKEN: "stub-redis-token",
-    LAST_FM_API_KEY: "stub-lastfm-key",
-  },
-}));
-
 describe("session", () => {
   afterEach(() => {
     vi.restoreAllMocks();

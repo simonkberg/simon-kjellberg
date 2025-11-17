@@ -17,6 +17,8 @@ export const env = parseAndValidateEnv({
   LAST_FM_API_KEY: z.string().min(1, "LAST_FM_API_KEY is required"),
 });
 
+export type Env = typeof env;
+
 function parseAndValidateEnv<T extends Record<string, z.ZodTypeAny>>(
   schema: T,
 ) {
