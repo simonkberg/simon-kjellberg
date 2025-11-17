@@ -69,4 +69,21 @@ describe("getStats", () => {
     expect(timeoutSpy).toHaveBeenCalledWith(3000);
     timeoutSpy.mockRestore();
   });
+
+  it.each([
+    { status: 404, statusText: "Not Found" },
+    { status: 429, statusText: "Too Many Requests" },
+    { status: 500, statusText: "Internal Server Error" },
+    { status: 503, statusText: "Service Unavailable" },
+  ])("should handle HTTP $status error", async ({ status, statusText }) => {
+    server.use(
+      http.get(WAKATIME_URL, () => {
+        return new HttpResponse(null, { status, statusText });
+      }),
+    );
+
+    await expect(getStats()).rejects.toThrow(
+      `WakaTime API error: ${status} ${statusText}`,
+    );
+  });
 });

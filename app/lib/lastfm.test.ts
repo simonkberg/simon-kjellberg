@@ -158,5 +158,23 @@ describe("LastFmClient", () => {
       expect(timeoutSpy).toHaveBeenCalledWith(3000);
       timeoutSpy.mockRestore();
     });
+
+    it.each([
+      { status: 404, statusText: "Not Found" },
+      { status: 429, statusText: "Too Many Requests" },
+      { status: 500, statusText: "Internal Server Error" },
+      { status: 503, statusText: "Service Unavailable" },
+    ])("should handle HTTP $status error", async ({ status, statusText }) => {
+      server.use(
+        http.get(LASTFM_BASE_URL, () => {
+          return new HttpResponse(null, { status, statusText });
+        }),
+      );
+
+      const client = new LastFmClient("test-last-fm-api-key");
+      await expect(client.user.getRecentTracks("testuser")).rejects.toThrow(
+        `Last.fm API error: ${status} ${statusText}`,
+      );
+    });
   });
 });
