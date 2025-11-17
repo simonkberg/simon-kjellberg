@@ -1,49 +1,38 @@
-import { describe, expect, expectTypeOf, it } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
+
+import { mockEnv } from "@/mocks/env";
 
 import type { Env } from "./env";
-import { env } from "./env";
 
 describe("env", () => {
-  describe("environment variable parsing", () => {
-    it("should successfully parse all environment variables from vitest.config.ts", () => {
-      // These values come from mockEnv in vitest.config.ts
-      expect(env.SESSION_SECRET).toBe("test");
-      expect(env.SLACK_CHANNEL).toBe("test-channel");
-      expect(env.SLACK_TOKEN).toBe("test-token");
-      expect(env.UPSTASH_REDIS_REST_URL).toBe("https://test.upstash.io");
-      expect(env.UPSTASH_REDIS_REST_TOKEN).toBe("test-redis-token");
-      expect(env.LAST_FM_API_KEY).toBe("test-last-fm-api-key");
-    });
-
-    it("should have all required environment variables defined", () => {
-      expect(env).toHaveProperty("SESSION_SECRET");
-      expect(env).toHaveProperty("SLACK_CHANNEL");
-      expect(env).toHaveProperty("SLACK_TOKEN");
-      expect(env).toHaveProperty("UPSTASH_REDIS_REST_URL");
-      expect(env).toHaveProperty("UPSTASH_REDIS_REST_TOKEN");
-      expect(env).toHaveProperty("LAST_FM_API_KEY");
-    });
-
-    it("should validate UPSTASH_REDIS_REST_URL is a valid URL", () => {
-      expect(env.UPSTASH_REDIS_REST_URL).toMatch(/^https?:\/\//);
-      expect(() => new URL(env.UPSTASH_REDIS_REST_URL)).not.toThrow();
-    });
+  beforeEach(() => {
+    vi.resetModules();
   });
 
-  describe("TypeScript types", () => {
-    it("should have correct TypeScript types for all environment variables", () => {
-      expectTypeOf(env.SESSION_SECRET).toBeString();
-      expectTypeOf(env.SLACK_CHANNEL).toBeString();
-      expectTypeOf(env.SLACK_TOKEN).toBeString();
-      expectTypeOf(env.UPSTASH_REDIS_REST_URL).toBeString();
-      expectTypeOf(env.UPSTASH_REDIS_REST_TOKEN).toBeString();
-      expectTypeOf(env.LAST_FM_API_KEY).toBeString();
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  describe("successful validation", () => {
+    it("should parse valid environment variables", async () => {
+      const { env } = await import("./env");
+
+      expect(env).toEqual(mockEnv);
     });
 
-    it("should export Env type that matches env object structure", () => {
-      type TestEnv = typeof env;
+    it("should export Env type matching env object", async () => {
+      const { env } = await import("./env");
 
-      expectTypeOf<TestEnv>().toEqualTypeOf<{
+      expectTypeOf<Env>(env).toEqualTypeOf<{
         SESSION_SECRET: string;
         SLACK_CHANNEL: string;
         SLACK_TOKEN: string;
@@ -53,19 +42,82 @@ describe("env", () => {
       }>();
     });
 
-    it("should have Env type export matching the env object type", () => {
-      expectTypeOf<Env>().toEqualTypeOf<typeof env>();
+    it("should use default SESSION_SECRET in development when not provided", async () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("SESSION_SECRET", undefined);
+
+      const { env } = await import("./env");
+
+      expect(env.SESSION_SECRET).toBe("unsafe_dev_secret");
+    });
+
+    it("should allow missing values when SKIP_ENV_VALIDATION is true", async () => {
+      vi.stubEnv("SKIP_ENV_VALIDATION", "true");
+      for (const key of Object.keys(mockEnv)) {
+        vi.stubEnv(key, undefined);
+      }
+
+      const { env } = await import("./env");
+
+      // When SKIP_ENV_VALIDATION is true, schema becomes partial
+      // so undefined values are allowed
+      expect(env).toBeDefined();
+
+      // Type should still match Env even with partial validation
+      expectTypeOf(env).toEqualTypeOf<Env>();
     });
   });
 
-  describe("environment variable constraints", () => {
-    it("should have non-empty string values for all variables", () => {
-      expect(env.SESSION_SECRET.length).toBeGreaterThan(0);
-      expect(env.SLACK_CHANNEL.length).toBeGreaterThan(0);
-      expect(env.SLACK_TOKEN.length).toBeGreaterThan(0);
-      expect(env.UPSTASH_REDIS_REST_URL.length).toBeGreaterThan(0);
-      expect(env.UPSTASH_REDIS_REST_TOKEN.length).toBeGreaterThan(0);
-      expect(env.LAST_FM_API_KEY.length).toBeGreaterThan(0);
+  describe("validation failures", () => {
+    let consoleErrorSpy: Mock<Console["error"]>;
+
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should throw when SESSION_SECRET is missing in production", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("SESSION_SECRET", undefined);
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+    });
+
+    it("should throw when SLACK_CHANNEL is missing", async () => {
+      vi.stubEnv("SLACK_CHANNEL", undefined);
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+    });
+
+    it("should throw when UPSTASH_REDIS_REST_URL is not a valid URL", async () => {
+      vi.stubEnv("UPSTASH_REDIS_REST_URL", "not-a-url");
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+    });
+
+    it("should throw when SLACK_TOKEN is empty string", async () => {
+      vi.stubEnv("SLACK_TOKEN", "");
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+    });
+
+    it("should throw when LAST_FM_API_KEY is missing", async () => {
+      vi.stubEnv("LAST_FM_API_KEY", undefined);
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
     });
   });
 });
