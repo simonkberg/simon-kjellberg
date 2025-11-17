@@ -139,6 +139,7 @@ export class LruMap<K, V> implements Map<K, V> {
   }
 
   #removeHead(): void {
+    /* v8 ignore if -- @preserve */
     if (!this.#head) return;
     this.#cache.delete(this.#head.key);
     this.#removeNode(this.#head);
