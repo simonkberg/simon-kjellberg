@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-This is a personal website built with Next.js 16 (App Router) that integrates with Slack for real-time chat functionality and WakaTime for coding statistics. The site is deployed as a standalone Docker container (configured for Heroku).
+This is a personal website built with Next.js 16 (App Router) that integrates with Slack for real-time chat functionality, WakaTime for coding statistics, and Last.fm for recently played music. The site is deployed as a standalone Docker container (configured for Heroku).
 
 ## Requirements
 
@@ -73,6 +73,7 @@ Environment validation is handled via custom Zod validation in `app/lib/env.ts`.
 - `SLACK_TOKEN` - Slack API token
 - `UPSTASH_REDIS_REST_URL` - Upstash Redis REST API URL
 - `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis REST API token
+- `LAST_FM_API_KEY` - Last.fm API key for fetching recently played tracks
 
 Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables (used in CI/Docker). Configure development environment variables in `.env.local` (per Next.js convention).
 
@@ -83,6 +84,23 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
 - DataLoader with LRU cache (100 entries) is used to batch and cache user info requests
 - Server-Sent Events (SSE) endpoint at `/api/chat/sse` streams chat updates to clients
 - Emoji data is extracted from `emoji-datasource` package at build time
+
+**WakaTime Integration Architecture:**
+
+- Simple fetch function in `app/lib/wakaTime.ts` retrieves coding statistics
+- Uses public share URL (no API key required)
+- 3 second timeout on API requests
+- Returns language/framework usage percentages
+- Zod schema validation for response data
+
+**Last.fm Integration Architecture:**
+
+- Client implementation in `app/lib/lastfm.ts` wraps Last.fm Web Services API
+- Fetches recently played tracks via `user.getRecentTracks` method
+- Supports pagination with `limit` and `page` parameters
+- Includes now playing status and loved track indicators
+- 3 second timeout on API requests
+- Track data includes artist, album, play time, and MusicBrainz IDs
 
 **Session Management:**
 
