@@ -1,5 +1,9 @@
 import type { Env } from "@/lib/env";
 
+/**
+ * Centralized mock environment variables for tests.
+ * Used in vitest.config.ts and tests to ensure consistent test data.
+ */
 export const mockEnv = {
   SESSION_SECRET: "test",
   SLACK_CHANNEL: "test-channel",
