@@ -6,6 +6,7 @@ My personal website built with Next.js 16.
 
 - Real-time chat powered by Slack
 - Coding stats from WakaTime
+- Recently played music from Last.fm
 - Server-Sent Events for live updates
 
 ## Development
@@ -43,6 +44,9 @@ Create a `.env.local` file with:
 SESSION_SECRET=your-secret-key
 SLACK_CHANNEL=your-channel-id
 SLACK_TOKEN=your-slack-token
+UPSTASH_REDIS_REST_URL=your-redis-url
+UPSTASH_REDIS_REST_TOKEN=your-redis-token
+LAST_FM_API_KEY=your-lastfm-api-key
 ```
 
 ## Deployment
