@@ -167,5 +167,14 @@ describe("session", () => {
 
       consoleErrorSpy.mockRestore();
     });
+
+    it("should call forbidden when session cookie is empty", async () => {
+      vi.mocked(cookies).mockResolvedValue(
+        new MockCookies(new Headers({ cookie: "session=" })),
+      );
+
+      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
+      expect(forbidden).toHaveBeenCalledOnce();
+    });
   });
 });
