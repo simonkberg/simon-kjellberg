@@ -1,3 +1,6 @@
+import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+
 import { getChatHistory } from "@/actions/chat";
 import { getRecentTracks } from "@/actions/lastfm";
 import { getWakaTimeStats } from "@/actions/wakaTime";
@@ -12,8 +15,6 @@ import { StatsList } from "@/components/StatsList";
 import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
 import { config } from "@/config";
-import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: config.title,

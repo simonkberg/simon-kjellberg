@@ -1,11 +1,11 @@
 "use client";
 
+import type { Metadata } from "next";
+
 import { Heading } from "@/components/Heading";
 import { Layout } from "@/components/Layout";
 import { Page } from "@/components/Page";
 import { config } from "@/config";
-import "@/global.css";
-import type { Metadata } from "next";
 
 const title = `${config.title} - Error`;
 
