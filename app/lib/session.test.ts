@@ -13,7 +13,9 @@ vi.mock(import("next/headers"), () => ({
 }));
 
 vi.mock(import("next/navigation"), () => ({
-  forbidden: vi.fn<() => never>(),
+  forbidden: vi.fn(() => {
+    throw new Error("NEXT_FORBIDDEN");
+  }),
 }));
 
 describe("session", () => {
@@ -146,9 +148,7 @@ describe("session", () => {
     it("should call forbidden when no session cookie exists", async () => {
       vi.mocked(cookies).mockResolvedValue(new MockCookies(new Headers()));
 
-      const result = await getSession();
-
-      expect(result).toBeUndefined();
+      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
       expect(forbidden).toHaveBeenCalledOnce();
     });
 
@@ -161,8 +161,7 @@ describe("session", () => {
         new MockCookies(new Headers({ cookie: "session=invalid-token" })),
       );
 
-      await getSession();
-
+      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
       expect(forbidden).toHaveBeenCalledOnce();
       expect(consoleErrorSpy).toHaveBeenCalledOnce();
 
