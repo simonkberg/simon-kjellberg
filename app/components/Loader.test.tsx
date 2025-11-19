@@ -6,6 +6,6 @@ describe("Loader", () => {
   it("renders loading status", () => {
     render(<Loader />);
     const loader = screen.getByRole("status");
-    expect(loader).toHaveAccessibleName("Loading");
+    expect(loader).toHaveTextContent("Loading");
   });
 });
