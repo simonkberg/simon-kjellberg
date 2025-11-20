@@ -20,7 +20,6 @@ describe("getRecentTracks", () => {
   it("should return success status with tracks when userGetRecentTracks succeeds", async () => {
     const mockTracks: UserGetRecentTracksResponse = [
       {
-        id: "track-123",
         name: "Test Track",
         artist: "Test Artist",
         album: "Test Album",
@@ -29,7 +28,6 @@ describe("getRecentTracks", () => {
         loved: true,
       },
       {
-        id: "track-456",
         name: "Another Track",
         artist: "Another Artist",
         album: "Another Album",

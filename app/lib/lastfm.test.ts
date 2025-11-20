@@ -23,18 +23,16 @@ describe("userGetRecentTracks", () => {
           recenttracks: {
             track: [
               {
-                mbid: "track-123",
                 name: "Test Track",
-                artist: { mbid: "artist-123", name: "Test Artist" },
-                album: { mbid: "album-123", "#text": "Test Album" },
+                artist: { name: "Test Artist" },
+                album: { "#text": "Test Album" },
                 date: { uts: "1609459200", "#text": "01 Jan 2021" },
                 loved: "1",
               },
               {
-                mbid: "track-456",
                 name: "Another Track",
-                artist: { mbid: "artist-456", "#text": "Another Artist" },
-                album: { mbid: "album-456", "#text": "Another Album" },
+                artist: { "#text": "Another Artist" },
+                album: { "#text": "Another Album" },
                 date: { uts: "1609372800", "#text": "31 Dec 2020" },
                 loved: "0",
               },
@@ -48,7 +46,6 @@ describe("userGetRecentTracks", () => {
 
     expect(tracks).toEqual([
       {
-        id: "track-123",
         name: "Test Track",
         artist: "Test Artist",
         album: "Test Album",
@@ -57,7 +54,6 @@ describe("userGetRecentTracks", () => {
         loved: true,
       },
       {
-        id: "track-456",
         name: "Another Track",
         artist: "Another Artist",
         album: "Another Album",
@@ -75,10 +71,9 @@ describe("userGetRecentTracks", () => {
           recenttracks: {
             track: [
               {
-                mbid: "track-123",
                 name: "Now Playing Track",
-                artist: { mbid: "artist-123", name: "Test Artist" },
-                album: { mbid: "album-123", "#text": "Test Album" },
+                artist: { name: "Test Artist" },
+                album: { "#text": "Test Album" },
                 "@attr": { nowplaying: "true" },
               },
             ],
@@ -100,11 +95,7 @@ describe("userGetRecentTracks", () => {
         expect(url.searchParams.get("limit")).toBe("5");
         expect(url.searchParams.get("page")).toBe("2");
 
-        return HttpResponse.json({
-          recenttracks: {
-            track: [],
-          },
-        });
+        return HttpResponse.json({ recenttracks: { track: [] } });
       }),
     );
 
@@ -113,11 +104,7 @@ describe("userGetRecentTracks", () => {
 
   it("should handle invalid response schema", async () => {
     server.use(
-      http.get(LASTFM_BASE_URL, () =>
-        HttpResponse.json({
-          invalid: "data",
-        }),
-      ),
+      http.get(LASTFM_BASE_URL, () => HttpResponse.json({ invalid: "data" })),
     );
 
     await expect(userGetRecentTracks("testuser")).rejects.toThrow();
@@ -134,11 +121,7 @@ describe("userGetRecentTracks", () => {
 
     server.use(
       http.get(LASTFM_BASE_URL, () =>
-        HttpResponse.json({
-          recenttracks: {
-            track: [],
-          },
-        }),
+        HttpResponse.json({ recenttracks: { track: [] } }),
       ),
     );
 
@@ -173,31 +156,27 @@ describe("userGetRecentTracks", () => {
           recenttracks: {
             track: [
               {
-                mbid: "track-now",
                 name: "Now Playing",
-                artist: { mbid: "artist-now", name: "Artist Now" },
-                album: { mbid: "album-now", "#text": "Album Now" },
+                artist: { name: "Artist Now" },
+                album: { "#text": "Album Now" },
                 "@attr": { nowplaying: "true" },
               },
               {
-                mbid: "track-1",
                 name: "Track 1",
-                artist: { mbid: "artist-1", name: "Artist 1" },
-                album: { mbid: "album-1", "#text": "Album 1" },
+                artist: { name: "Artist 1" },
+                album: { "#text": "Album 1" },
                 date: { uts: "1609459200", "#text": "01 Jan 2021" },
               },
               {
-                mbid: "track-2",
                 name: "Track 2",
-                artist: { mbid: "artist-2", name: "Artist 2" },
-                album: { mbid: "album-2", "#text": "Album 2" },
+                artist: { name: "Artist 2" },
+                album: { "#text": "Album 2" },
                 date: { uts: "1609372800", "#text": "31 Dec 2020" },
               },
               {
-                mbid: "track-3",
                 name: "Track 3",
-                artist: { mbid: "artist-3", name: "Artist 3" },
-                album: { mbid: "album-3", "#text": "Album 3" },
+                artist: { name: "Artist 3" },
+                album: { "#text": "Album 3" },
                 date: { uts: "1609286400", "#text": "30 Dec 2020" },
               },
             ],

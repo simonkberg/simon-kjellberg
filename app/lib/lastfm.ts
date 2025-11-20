@@ -35,18 +35,17 @@ const userGetRecentTracksResponseSchema = z
       track: z.array(
         z
           .object({
-            mbid: z.string(),
             name: z.string(),
             artist: z
               .union([
-                z.object({ mbid: z.string(), name: z.string() }),
-                z.object({ mbid: z.string(), "#text": z.string() }),
+                z.object({ "#text": z.string() }),
+                z.object({ name: z.string() }),
               ])
               .transform((artist) =>
                 "name" in artist ? artist.name : artist["#text"],
               ),
             album: z
-              .object({ mbid: z.string(), "#text": z.string() })
+              .object({ "#text": z.string() })
               .transform((album) => album["#text"]),
             date: z
               .object({ uts: z.string(), "#text": z.string() })
@@ -61,7 +60,6 @@ const userGetRecentTracksResponseSchema = z
             "@attr": z.object({ nowplaying: z.string() }).optional(),
           })
           .transform((data) => ({
-            id: data.mbid,
             name: data.name,
             artist: data.artist,
             album: data.album,
