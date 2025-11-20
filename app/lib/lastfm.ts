@@ -35,21 +35,20 @@ const userGetRecentTracksResponseSchema = z
       track: z.array(
         z
           .object({
-            mbid: z.string(),
             name: z.string(),
             artist: z
               .union([
-                z.object({ mbid: z.string(), name: z.string() }),
-                z.object({ mbid: z.string(), "#text": z.string() }),
+                z.object({ "#text": z.string() }),
+                z.object({ name: z.string() }),
               ])
               .transform((artist) =>
                 "name" in artist ? artist.name : artist["#text"],
               ),
             album: z
-              .object({ mbid: z.string(), "#text": z.string() })
+              .object({ "#text": z.string() })
               .transform((album) => album["#text"]),
             date: z
-              .object({ uts: z.string(), "#text": z.string() })
+              .object({ uts: z.string() })
               .optional()
               .transform((data) =>
                 data ? new Date(Number(data.uts) * 1000) : undefined,
@@ -61,7 +60,6 @@ const userGetRecentTracksResponseSchema = z
             "@attr": z.object({ nowplaying: z.string() }).optional(),
           })
           .transform((data) => ({
-            id: data.mbid,
             name: data.name,
             artist: data.artist,
             album: data.album,
@@ -85,9 +83,20 @@ export async function userGetRecentTracks(
     page?: number;
   },
 ): Promise<UserGetRecentTracksResponse> {
-  return call("user.getrecenttracks", userGetRecentTracksResponseSchema, {
-    user,
-    extended: 1,
-    ...params,
-  });
+  const tracks = await call(
+    "user.getrecenttracks",
+    userGetRecentTracksResponseSchema,
+    {
+      user,
+      extended: 1,
+      ...params,
+    },
+  );
+
+  // Last.fm doesn't count "now playing" track toward the limit, so enforce it
+  if (params?.limit !== undefined && tracks.length > params.limit) {
+    return tracks.slice(0, params.limit);
+  }
+
+  return tracks;
 }

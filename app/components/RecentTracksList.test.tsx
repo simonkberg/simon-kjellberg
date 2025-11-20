@@ -12,7 +12,6 @@ describe("RecentTracksList", () => {
   const createMockTrack = (
     overrides: Partial<RecentTrack> = {},
   ): RecentTrack => ({
-    id: "test-mbid",
     name: "Test Song",
     artist: "Test Artist",
     album: "Test Album",

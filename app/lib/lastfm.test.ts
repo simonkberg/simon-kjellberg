@@ -23,19 +23,17 @@ describe("userGetRecentTracks", () => {
           recenttracks: {
             track: [
               {
-                mbid: "track-123",
                 name: "Test Track",
-                artist: { mbid: "artist-123", name: "Test Artist" },
-                album: { mbid: "album-123", "#text": "Test Album" },
-                date: { uts: "1609459200", "#text": "01 Jan 2021" },
+                artist: { name: "Test Artist" },
+                album: { "#text": "Test Album" },
+                date: { uts: "1609459200" },
                 loved: "1",
               },
               {
-                mbid: "track-456",
                 name: "Another Track",
-                artist: { mbid: "artist-456", "#text": "Another Artist" },
-                album: { mbid: "album-456", "#text": "Another Album" },
-                date: { uts: "1609372800", "#text": "31 Dec 2020" },
+                artist: { "#text": "Another Artist" },
+                album: { "#text": "Another Album" },
+                date: { uts: "1609372800" },
                 loved: "0",
               },
             ],
@@ -48,7 +46,6 @@ describe("userGetRecentTracks", () => {
 
     expect(tracks).toEqual([
       {
-        id: "track-123",
         name: "Test Track",
         artist: "Test Artist",
         album: "Test Album",
@@ -57,7 +54,6 @@ describe("userGetRecentTracks", () => {
         loved: true,
       },
       {
-        id: "track-456",
         name: "Another Track",
         artist: "Another Artist",
         album: "Another Album",
@@ -75,10 +71,9 @@ describe("userGetRecentTracks", () => {
           recenttracks: {
             track: [
               {
-                mbid: "track-123",
                 name: "Now Playing Track",
-                artist: { mbid: "artist-123", name: "Test Artist" },
-                album: { mbid: "album-123", "#text": "Test Album" },
+                artist: { name: "Test Artist" },
+                album: { "#text": "Test Album" },
                 "@attr": { nowplaying: "true" },
               },
             ],
@@ -100,11 +95,7 @@ describe("userGetRecentTracks", () => {
         expect(url.searchParams.get("limit")).toBe("5");
         expect(url.searchParams.get("page")).toBe("2");
 
-        return HttpResponse.json({
-          recenttracks: {
-            track: [],
-          },
-        });
+        return HttpResponse.json({ recenttracks: { track: [] } });
       }),
     );
 
@@ -113,11 +104,7 @@ describe("userGetRecentTracks", () => {
 
   it("should handle invalid response schema", async () => {
     server.use(
-      http.get(LASTFM_BASE_URL, () =>
-        HttpResponse.json({
-          invalid: "data",
-        }),
-      ),
+      http.get(LASTFM_BASE_URL, () => HttpResponse.json({ invalid: "data" })),
     );
 
     await expect(userGetRecentTracks("testuser")).rejects.toThrow();
@@ -134,11 +121,7 @@ describe("userGetRecentTracks", () => {
 
     server.use(
       http.get(LASTFM_BASE_URL, () =>
-        HttpResponse.json({
-          recenttracks: {
-            track: [],
-          },
-        }),
+        HttpResponse.json({ recenttracks: { track: [] } }),
       ),
     );
 
@@ -164,5 +147,50 @@ describe("userGetRecentTracks", () => {
     await expect(userGetRecentTracks("testuser")).rejects.toThrow(
       `Last.fm API error: ${status} ${statusText}`,
     );
+  });
+
+  it("should enforce limit when now playing track is returned", async () => {
+    server.use(
+      http.get(LASTFM_BASE_URL, () =>
+        HttpResponse.json({
+          recenttracks: {
+            track: [
+              {
+                name: "Now Playing",
+                artist: { name: "Artist Now" },
+                album: { "#text": "Album Now" },
+                "@attr": { nowplaying: "true" },
+              },
+              {
+                name: "Track 1",
+                artist: { name: "Artist 1" },
+                album: { "#text": "Album 1" },
+                date: { uts: "1609459200" },
+              },
+              {
+                name: "Track 2",
+                artist: { name: "Artist 2" },
+                album: { "#text": "Album 2" },
+                date: { uts: "1609372800" },
+              },
+              {
+                name: "Track 3",
+                artist: { name: "Artist 3" },
+                album: { "#text": "Album 3" },
+                date: { uts: "1609286400" },
+              },
+            ],
+          },
+        }),
+      ),
+    );
+
+    const tracks = await userGetRecentTracks("testuser", { limit: 3 });
+
+    expect(tracks).toHaveLength(3);
+    expect(tracks[0]?.name).toBe("Now Playing");
+    expect(tracks[1]?.name).toBe("Track 1");
+    expect(tracks[2]?.name).toBe("Track 2");
+    // Track 3 should be discarded to enforce limit
   });
 });
