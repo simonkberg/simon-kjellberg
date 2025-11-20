@@ -28,12 +28,11 @@ If Corepack is not enabled, run `corepack enable` before installing dependencies
 
 ### Testing
 
-- `pnpm test` - Run tests in watch mode
-- `CI=true pnpm test` - Run tests once with coverage (as CI does)
+- `pnpm test` - Run tests
+- `pnpm test --coverage` - Run tests with coverage report
 - Tests are located alongside source files with `.test.ts` or `.test.tsx` extensions
 - Test files must be in the `app/` directory to be discovered
 - Uses happy-dom as the test environment
-- Coverage is automatically enabled in CI mode
 
 ### MCP Tools
 
@@ -139,6 +138,13 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
     - Handlers are automatically reset between tests
     - Import server from `@/mocks/node` to add request handlers in tests
     - Environment variables are mocked in `vitest.config.ts` using a `mockEnv` object
+
+**Testing Best Practices:**
+
+- **Type-safe mocks**: Always use `vi.mock(import("module"), ...)` syntax, never string-based mocks
+- **Type imports**: Use `import type { TypeName }` for types, avoid React UMD globals
+- **Avoid redundant tests**: Don't test element existence separately if interaction tests already verify it (e.g., a click test inherently verifies the button exists)
+- **Separate concerns**: Use separate `describe` blocks for different exports (e.g., metadata vs component)
 
 ## Common Patterns
 
