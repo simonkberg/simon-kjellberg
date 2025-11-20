@@ -8,11 +8,9 @@ import { Page } from "@/components/Page";
 import { config } from "@/config";
 
 const title = `${config.title} - Error`;
+const description = "Something went wrong!";
 
-export const metadata: Metadata = {
-  title: title,
-  description: "Something went wrong!",
-};
+export const metadata: Metadata = { title, description };
 
 interface GlobalErrorProps {
   error: Error;
@@ -24,7 +22,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     <Layout>
       <Page title={title}>
         <section>
-          <Heading level={2}>Something went wrong!</Heading>
+          <Heading level={2}>{description}</Heading>
           <p className="subtitle">{error.message}</p>
           <button className="link" onClick={() => reset()}>
             Try again

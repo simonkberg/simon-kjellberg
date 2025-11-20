@@ -8,10 +8,7 @@ import { config } from "@/config";
 const title = `${config.title} - Not Found`;
 const description = "The page you are looking for does not exist.";
 
-export const metadata: Metadata = {
-  title,
-  description,
-};
+export const metadata: Metadata = { title, description };
 
 export default function GlobalNotFound() {
   return (
