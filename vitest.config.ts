@@ -10,6 +10,13 @@ const config = defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: "happy-dom",
+    environmentOptions: {
+      happyDOM: {
+        settings: {
+          handleDisabledFileLoadingAsSuccess: true,
+        },
+      },
+    },
     include: ["app/**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
