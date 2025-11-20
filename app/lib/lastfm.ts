@@ -85,9 +85,20 @@ export async function userGetRecentTracks(
     page?: number;
   },
 ): Promise<UserGetRecentTracksResponse> {
-  return call("user.getrecenttracks", userGetRecentTracksResponseSchema, {
-    user,
-    extended: 1,
-    ...params,
-  });
+  const tracks = await call(
+    "user.getrecenttracks",
+    userGetRecentTracksResponseSchema,
+    {
+      user,
+      extended: 1,
+      ...params,
+    },
+  );
+
+  // Last.fm doesn't count "now playing" track toward the limit, so enforce it
+  if (params?.limit !== undefined && tracks.length > params.limit) {
+    return tracks.slice(0, params.limit);
+  }
+
+  return tracks;
 }

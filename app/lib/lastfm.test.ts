@@ -165,4 +165,53 @@ describe("userGetRecentTracks", () => {
       `Last.fm API error: ${status} ${statusText}`,
     );
   });
+
+  it("should enforce limit when now playing track is returned", async () => {
+    server.use(
+      http.get(LASTFM_BASE_URL, () =>
+        HttpResponse.json({
+          recenttracks: {
+            track: [
+              {
+                mbid: "track-now",
+                name: "Now Playing",
+                artist: { mbid: "artist-now", name: "Artist Now" },
+                album: { mbid: "album-now", "#text": "Album Now" },
+                "@attr": { nowplaying: "true" },
+              },
+              {
+                mbid: "track-1",
+                name: "Track 1",
+                artist: { mbid: "artist-1", name: "Artist 1" },
+                album: { mbid: "album-1", "#text": "Album 1" },
+                date: { uts: "1609459200", "#text": "01 Jan 2021" },
+              },
+              {
+                mbid: "track-2",
+                name: "Track 2",
+                artist: { mbid: "artist-2", name: "Artist 2" },
+                album: { mbid: "album-2", "#text": "Album 2" },
+                date: { uts: "1609372800", "#text": "31 Dec 2020" },
+              },
+              {
+                mbid: "track-3",
+                name: "Track 3",
+                artist: { mbid: "artist-3", name: "Artist 3" },
+                album: { mbid: "album-3", "#text": "Album 3" },
+                date: { uts: "1609286400", "#text": "30 Dec 2020" },
+              },
+            ],
+          },
+        }),
+      ),
+    );
+
+    const tracks = await userGetRecentTracks("testuser", { limit: 3 });
+
+    expect(tracks).toHaveLength(3);
+    expect(tracks[0]?.name).toBe("Now Playing");
+    expect(tracks[1]?.name).toBe("Track 1");
+    expect(tracks[2]?.name).toBe("Track 2");
+    // Track 3 should be discarded to enforce limit
+  });
 });
