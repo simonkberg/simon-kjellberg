@@ -48,7 +48,7 @@ const userGetRecentTracksResponseSchema = z
               .object({ "#text": z.string() })
               .transform((album) => album["#text"]),
             date: z
-              .object({ uts: z.string(), "#text": z.string() })
+              .object({ uts: z.string() })
               .optional()
               .transform((data) =>
                 data ? new Date(Number(data.uts) * 1000) : undefined,
