@@ -7,9 +7,7 @@
     "eslint": {
       "command": "npx",
       "args": ["@eslint/mcp@latest"],
-      "env": {
-        "ESLINT_FLAGS": "unstable_native_nodejs_ts_config"
-      }
+      "env": { "ESLINT_FLAGS": "unstable_native_nodejs_ts_config" }
     }
   }
 }

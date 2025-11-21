@@ -1,12 +1,12 @@
-import type { ChatHistoryResult } from "@/actions/chat";
-import type { Message } from "@/lib/slack";
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { ChatHistoryResult } from "@/actions/chat";
+import type { Message } from "@/lib/slack";
+
 import { ChatHistory } from "./ChatHistory";
 
-vi.mock(import("@/actions/cache"), () => ({
-  refreshClientCache: vi.fn(),
-}));
+vi.mock(import("@/actions/cache"), () => ({ refreshClientCache: vi.fn() }));
 
 describe("ChatHistory", () => {
   beforeEach(() => {

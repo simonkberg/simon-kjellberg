@@ -1,5 +1,6 @@
-import { subscribe } from "@/lib/slack";
 import { connection, type NextRequest, NextResponse } from "next/server";
+
+import { subscribe } from "@/lib/slack";
 
 // Send periodic pings to keep the connection alive and detect client disconnects.
 const PING_INTERVAL_MS = 30_000;

@@ -1,12 +1,12 @@
-import type { GetRecentTracksResult, RecentTrack } from "@/actions/lastfm";
-import { getRecentTracks } from "@/actions/lastfm";
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import type { GetRecentTracksResult, RecentTrack } from "@/actions/lastfm";
+import { getRecentTracks } from "@/actions/lastfm";
+
 import { RecentTracksList } from "./RecentTracksList";
 
-vi.mock(import("@/actions/lastfm"), () => ({
-  getRecentTracks: vi.fn(),
-}));
+vi.mock(import("@/actions/lastfm"), () => ({ getRecentTracks: vi.fn() }));
 
 describe("RecentTracksList", () => {
   const createMockTrack = (
@@ -279,12 +279,7 @@ describe("RecentTracksList", () => {
 
       const successResult: GetRecentTracksResult = {
         status: "ok",
-        tracks: [
-          createMockTrack({
-            name: "Old Track",
-            playedAt: twoDaysAgo,
-          }),
-        ],
+        tracks: [createMockTrack({ name: "Old Track", playedAt: twoDaysAgo })],
       };
 
       await act(() =>

@@ -1,6 +1,8 @@
-import type { WakaTimeStatsResult } from "@/actions/wakaTime";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import type { WakaTimeStatsResult } from "@/actions/wakaTime";
+
 import { StatsList } from "./StatsList";
 
 describe("StatsList", () => {
@@ -41,10 +43,7 @@ describe("StatsList", () => {
   });
 
   it("displays empty state message when stats array is empty", async () => {
-    const emptyResult: WakaTimeStatsResult = {
-      status: "ok",
-      stats: [],
-    };
+    const emptyResult: WakaTimeStatsResult = { status: "ok", stats: [] };
 
     await act(() => render(<StatsList stats={Promise.resolve(emptyResult)} />));
 

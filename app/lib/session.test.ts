@@ -8,9 +8,7 @@ import { decrypt, encrypt, getSession } from "./session";
 
 vi.mock(import("server-only"), () => ({}));
 
-vi.mock(import("next/headers"), () => ({
-  cookies: vi.fn(),
-}));
+vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
 vi.mock(import("next/navigation"), () => ({
   forbidden: vi.fn(() => {

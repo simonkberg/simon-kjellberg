@@ -1,6 +1,3 @@
-import type { PostChatMessageResult } from "@/actions/chat";
-import { postChatMessage } from "@/actions/chat";
-import type { Message } from "@/lib/slack";
 import {
   render,
   screen,
@@ -9,11 +6,14 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import type { PostChatMessageResult } from "@/actions/chat";
+import { postChatMessage } from "@/actions/chat";
+import type { Message } from "@/lib/slack";
+
 import { ChatInput } from "./ChatInput";
 
-vi.mock(import("@/actions/chat"), () => ({
-  postChatMessage: vi.fn(),
-}));
+vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
 describe("ChatInput", () => {
   const createMockMessage = (text: string): Message => ({
@@ -231,14 +231,8 @@ describe("ChatInput", () => {
       const user = userEvent.setup();
 
       vi.mocked(postChatMessage)
-        .mockResolvedValueOnce({
-          status: "error",
-          error: "First error",
-        })
-        .mockResolvedValueOnce({
-          status: "error",
-          error: "Second error",
-        });
+        .mockResolvedValueOnce({ status: "error", error: "First error" })
+        .mockResolvedValueOnce({ status: "error", error: "Second error" });
 
       render(<ChatInput />);
       const input = screen.getByRole("textbox");
@@ -260,14 +254,8 @@ describe("ChatInput", () => {
       const mockMessage = createMockMessage("Success message");
 
       vi.mocked(postChatMessage)
-        .mockResolvedValueOnce({
-          status: "error",
-          error: "Failed to post",
-        })
-        .mockResolvedValueOnce({
-          status: "ok",
-          message: mockMessage,
-        });
+        .mockResolvedValueOnce({ status: "error", error: "Failed to post" })
+        .mockResolvedValueOnce({ status: "ok", message: mockMessage });
 
       render(<ChatInput />);
       const input = screen.getByRole("textbox");

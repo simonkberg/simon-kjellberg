@@ -1,9 +1,10 @@
 "use client";
 
-import type { WakaTimeStatsResult } from "@/actions/wakaTime";
-import type { WakaTimeStats } from "@/lib/wakaTime";
 import { animated, useSprings } from "@react-spring/web";
 import { use } from "react";
+
+import type { WakaTimeStatsResult } from "@/actions/wakaTime";
+import type { WakaTimeStats } from "@/lib/wakaTime";
 
 interface StatsListItemsProps {
   stats: WakaTimeStats;

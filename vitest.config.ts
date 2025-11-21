@@ -11,11 +11,7 @@ const config = defineConfig({
   test: {
     environment: "happy-dom",
     environmentOptions: {
-      happyDOM: {
-        settings: {
-          handleDisabledFileLoadingAsSuccess: true,
-        },
-      },
+      happyDOM: { settings: { handleDisabledFileLoadingAsSuccess: true } },
     },
     include: ["app/**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],

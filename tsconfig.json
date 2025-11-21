@@ -25,16 +25,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["app/*"],
-      "@/mocks/*": ["mocks/*"]
-    }
+    "paths": { "@/*": ["app/*"], "@/mocks/*": ["mocks/*"] }
   },
   "include": [
     "next-env.d.ts",

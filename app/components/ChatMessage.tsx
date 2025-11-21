@@ -1,5 +1,6 @@
-import type { BaseMessage } from "@/lib/slack";
 import type { CSSProperties } from "react";
+
+import type { BaseMessage } from "@/lib/slack";
 
 export const ChatMessage = ({ user, text, edited }: BaseMessage) => (
   <div
