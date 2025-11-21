@@ -1,9 +1,7 @@
 import { subscribe } from "@/lib/slack";
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-// Heroku requires bytes sent within 30s initially, then within 55s rolling windows
-// to keep long-polling connections alive. See:
-// https://devcenter.heroku.com/articles/request-timeout#long-polling-and-streaming-responses
+// Send periodic pings to keep the connection alive and detect client disconnects.
 const PING_INTERVAL_MS = 30_000;
 const PING_MESSAGE = ": ping\n\n";
 
