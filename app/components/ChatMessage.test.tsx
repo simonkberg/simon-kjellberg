@@ -1,13 +1,12 @@
-import type { BaseMessage } from "@/lib/slack";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import type { BaseMessage } from "@/lib/slack";
+
 import { ChatMessage } from "./ChatMessage";
 
 describe("ChatMessage", () => {
-  const mockUser = {
-    name: "TestUser",
-    color: "hsl(0 100% 50%)",
-  };
+  const mockUser = { name: "TestUser", color: "hsl(0 100% 50%)" };
 
   const createMessage = (overrides?: Partial<BaseMessage>): BaseMessage => ({
     ts: "1234567890.123456",

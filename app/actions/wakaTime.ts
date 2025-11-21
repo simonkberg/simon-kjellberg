@@ -1,7 +1,8 @@
 "use server";
 
-import { getStats, type WakaTimeStats } from "@/lib/wakaTime";
 import { cacheLife } from "next/cache";
+
+import { getStats, type WakaTimeStats } from "@/lib/wakaTime";
 
 export type WakaTimeStatsResult =
   | { status: "ok"; stats: WakaTimeStats }

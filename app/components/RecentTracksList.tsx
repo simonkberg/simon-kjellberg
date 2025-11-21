@@ -1,8 +1,9 @@
 "use client";
 
+import { use, useEffect, useState } from "react";
+
 import { getRecentTracks, type GetRecentTracksResult } from "@/actions/lastfm";
 import { Subtitle } from "@/components/Subtitle";
-import { use, useEffect, useState } from "react";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 

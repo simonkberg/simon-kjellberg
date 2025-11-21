@@ -1,10 +1,12 @@
 import "server-only";
 
-import { messageParser } from "@/lib/messageParser/messageParser";
 import { RTMClient } from "@slack/rtm-api";
 import { WebClient } from "@slack/web-api";
 import DataLoader from "dataloader";
 import { z } from "zod";
+
+import { messageParser } from "@/lib/messageParser/messageParser";
+
 import { env } from "./env";
 import { LruMap } from "./LruMap";
 import { stringToColor } from "./stringToColor";

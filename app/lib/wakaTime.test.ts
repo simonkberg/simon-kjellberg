@@ -34,9 +34,7 @@ describe("getStats", () => {
   it("should handle invalid response schema", async () => {
     server.use(
       http.get(WAKATIME_URL, () =>
-        HttpResponse.json({
-          data: [{ invalid: "data" }],
-        }),
+        HttpResponse.json({ data: [{ invalid: "data" }] }),
       ),
     );
 
@@ -54,9 +52,7 @@ describe("getStats", () => {
 
     server.use(
       http.get(WAKATIME_URL, () =>
-        HttpResponse.json({
-          data: [{ name: "TypeScript", percent: 45.5 }],
-        }),
+        HttpResponse.json({ data: [{ name: "TypeScript", percent: 45.5 }] }),
       ),
     );
 

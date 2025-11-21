@@ -1,10 +1,11 @@
 "use server";
 
+import { connection } from "next/server";
+
 import {
   userGetRecentTracks,
   type UserGetRecentTracksResponse,
 } from "@/lib/lastfm";
-import { connection } from "next/server";
 
 export type RecentTrack = UserGetRecentTracksResponse[number];
 

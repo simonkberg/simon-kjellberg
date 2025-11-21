@@ -22,10 +22,7 @@ const emojiData = rawEmojiData.reduce(
 
     return acc;
   },
-  {
-    data: new Map<string, RawEmoji>(),
-    alias: new Map<string, string>(),
-  },
+  { data: new Map<string, RawEmoji>(), alias: new Map<string, string>() },
 );
 
 const parseEmoji = (data: RawEmoji) => {
@@ -41,10 +38,7 @@ const parseEmoji = (data: RawEmoji) => {
               const skinName = skin.unified.toLowerCase();
               return [
                 key.toLowerCase(),
-                {
-                  name: skinName,
-                  string: codePointsToString(skinName),
-                },
+                { name: skinName, string: codePointsToString(skinName) },
               ];
             }),
           )

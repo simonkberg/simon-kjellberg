@@ -5,18 +5,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
-  logging: {
-    fetches: {
-      fullUrl: true,
-    },
-  },
+  logging: { fetches: { fullUrl: true } },
   reactCompiler: true,
-  turbopack: {
-    root: import.meta.dirname,
-  },
-  experimental: {
-    globalNotFound: true,
-  },
+  turbopack: { root: import.meta.dirname },
+  experimental: { globalNotFound: true },
 };
 
 export default nextConfig;

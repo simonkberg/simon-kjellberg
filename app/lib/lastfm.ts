@@ -1,7 +1,8 @@
 import "server-only";
 
-import { env } from "@/lib/env";
 import { z } from "zod";
+
+import { env } from "@/lib/env";
 
 const BASE_URL = "https://ws.audioscrobbler.com/2.0/";
 
@@ -78,19 +79,12 @@ export type UserGetRecentTracksResponse = z.infer<
 
 export async function userGetRecentTracks(
   user: string,
-  params?: {
-    limit?: number;
-    page?: number;
-  },
+  params?: { limit?: number; page?: number },
 ): Promise<UserGetRecentTracksResponse> {
   const tracks = await call(
     "user.getrecenttracks",
     userGetRecentTracksResponseSchema,
-    {
-      user,
-      extended: 1,
-      ...params,
-    },
+    { user, extended: 1, ...params },
   );
 
   // Last.fm doesn't count "now playing" track toward the limit, so enforce it

@@ -1,10 +1,12 @@
 "use client";
 
+import { animated, useTransition } from "@react-spring/web";
+import { use, useEffect } from "react";
+
 import { refreshClientCache } from "@/actions/cache";
 import type { ChatHistoryResult } from "@/actions/chat";
 import type { BaseMessage, Message } from "@/lib/slack";
-import { animated, useTransition } from "@react-spring/web";
-import { use, useEffect } from "react";
+
 import { ChatMessage } from "./ChatMessage";
 
 interface ChatHistoryMessagesProps {

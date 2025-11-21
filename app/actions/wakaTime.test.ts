@@ -5,13 +5,9 @@ import { getStats, type WakaTimeStats } from "@/lib/wakaTime";
 
 import { getWakaTimeStats } from "./wakaTime";
 
-vi.mock(import("@/lib/wakaTime"), () => ({
-  getStats: vi.fn(),
-}));
+vi.mock(import("@/lib/wakaTime"), () => ({ getStats: vi.fn() }));
 
-vi.mock(import("next/cache"), () => ({
-  cacheLife: vi.fn(),
-}));
+vi.mock(import("next/cache"), () => ({ cacheLife: vi.fn() }));
 
 describe("getWakaTimeStats", () => {
   it("should return success status with stats when getStats succeeds", async () => {
@@ -25,10 +21,7 @@ describe("getWakaTimeStats", () => {
 
     const result = await getWakaTimeStats();
 
-    expect(result).toEqual({
-      status: "ok",
-      stats: mockStats,
-    });
+    expect(result).toEqual({ status: "ok", stats: mockStats });
     expect(cacheLife).toHaveBeenCalledWith("hours");
   });
 

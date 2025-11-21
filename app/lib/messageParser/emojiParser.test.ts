@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import * as emojiData from "./emojiData";
 import { emojiParser } from "./emojiParser";
 

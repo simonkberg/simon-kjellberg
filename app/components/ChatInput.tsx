@@ -1,8 +1,10 @@
 "use client";
 
-import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
 import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import { requestFormReset } from "react-dom";
+
+import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
+
 import { ChatToast } from "./ChatToast";
 
 export const ChatInput = () => {

@@ -1,5 +1,6 @@
-import { Header } from "@/components/Header";
 import type { PropsWithChildren } from "react";
+
+import { Header } from "@/components/Header";
 
 interface PageProps extends PropsWithChildren {
   title: string;

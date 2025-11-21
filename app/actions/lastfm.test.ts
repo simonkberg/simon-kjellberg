@@ -8,13 +8,9 @@ import {
 
 import { getRecentTracks } from "./lastfm";
 
-vi.mock(import("@/lib/lastfm"), () => ({
-  userGetRecentTracks: vi.fn(),
-}));
+vi.mock(import("@/lib/lastfm"), () => ({ userGetRecentTracks: vi.fn() }));
 
-vi.mock(import("next/server"), () => ({
-  connection: vi.fn(),
-}));
+vi.mock(import("next/server"), () => ({ connection: vi.fn() }));
 
 describe("getRecentTracks", () => {
   it("should return success status with tracks when userGetRecentTracks succeeds", async () => {
@@ -43,10 +39,7 @@ describe("getRecentTracks", () => {
 
     expect(connection).toHaveBeenCalled();
     expect(userGetRecentTracks).toHaveBeenCalledWith("magijo", { limit: 5 });
-    expect(result).toEqual({
-      status: "ok",
-      tracks: mockTracks,
-    });
+    expect(result).toEqual({ status: "ok", tracks: mockTracks });
   });
 
   it("should return error status when userGetRecentTracks fails", async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { djb2hash } from "./djb2hash";
 import { stringToColor } from "./stringToColor";
 

@@ -1,14 +1,13 @@
 import "server-only";
 
-import { env } from "@/lib/env";
 import { type JWTPayload, jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { forbidden } from "next/navigation";
 import { z } from "zod";
 
-const sessionSchema = z.object({
-  username: z.string(),
-});
+import { env } from "@/lib/env";
+
+const sessionSchema = z.object({ username: z.string() });
 
 export type Session = z.infer<typeof sessionSchema>;
 

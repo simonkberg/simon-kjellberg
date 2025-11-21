@@ -1,12 +1,13 @@
 "use server";
 
-import { identifiers } from "@/lib/identifiers";
-import { getSession } from "@/lib/session";
-import { getHistory, type Message, postMessage } from "@/lib/slack";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { after, connection } from "next/server";
 import { z } from "zod";
+
+import { identifiers } from "@/lib/identifiers";
+import { getSession } from "@/lib/session";
+import { getHistory, type Message, postMessage } from "@/lib/slack";
 
 export type ChatHistoryResult =
   | { status: "ok"; messages: Message[] }
