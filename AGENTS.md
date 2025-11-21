@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-This is a personal website built with Next.js 16 (App Router) that integrates with Slack for real-time chat functionality, WakaTime for coding statistics, and Last.fm for recently played music. The site is deployed as a standalone Docker container (configured for Heroku).
+This is a personal website built with Next.js 16 (App Router) that integrates with Slack for real-time chat functionality, WakaTime for coding statistics, and Last.fm for recently played music. The site is deployed as a standalone Docker container on Railway.
 
 ## Requirements
 

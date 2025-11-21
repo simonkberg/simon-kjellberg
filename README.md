@@ -51,7 +51,7 @@ LAST_FM_API_KEY=your-lastfm-api-key
 
 ## Deployment
 
-The site is containerized and deployed to Heroku:
+The site is containerized and deployed to Railway:
 
 ```bash
 # Build Docker image
