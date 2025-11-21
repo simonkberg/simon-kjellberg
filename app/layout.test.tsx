@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import RootLayout from "@/layout";
+import RootLayout from "./layout";
 
 vi.mock(import("@/components/Layout"), () => ({
   Layout: ({ children }: PropsWithChildren) => (

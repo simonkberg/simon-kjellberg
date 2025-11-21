@@ -3,7 +3,8 @@ import type { PropsWithChildren } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { config } from "@/config";
-import GlobalNotFound, { metadata } from "@/global-not-found";
+
+import GlobalNotFound, { metadata } from "./global-not-found";
 
 vi.mock(import("@/components/Layout"), () => ({
   Layout: ({ children }: PropsWithChildren) => (
