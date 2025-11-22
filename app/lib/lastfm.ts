@@ -4,6 +4,21 @@ import { z } from "zod";
 
 import { env } from "@/lib/env";
 
+export const periods = [
+  "7day",
+  "1month",
+  "3month",
+  "6month",
+  "12month",
+  "overall",
+] as const;
+
+export type Period = (typeof periods)[number];
+
+export function isValidPeriod(value: unknown): value is Period {
+  return periods.includes(value as Period);
+}
+
 const BASE_URL = "https://ws.audioscrobbler.com/2.0/";
 
 async function call<T extends z.ZodType>(
