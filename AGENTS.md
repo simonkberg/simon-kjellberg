@@ -53,12 +53,16 @@ MCP servers are configured in `.mcp.json`. Key guidance:
 ### Directory Structure
 
 - `app/` - Next.js App Router structure (all source code lives here)
-    - `actions/` - Server actions for chat and WakaTime integration
+    - `actions/` - Server actions for chat, WakaTime, and Last.fm integration
     - `api/` - API routes (e.g., SSE endpoint for real-time chat updates)
-    - `components/` - React components (co-located with tests)
+    - `components/` - Shared React components (co-located with tests)
     - `lib/` - Utility libraries and core logic
         - `messageParser/` - Slack message parsing with emoji support
     - `assets/` - Static assets (fonts, images)
+    - `listening/` - Listening stats page
+        - `components/` - Route-specific components (PeriodSelector, TopTracksTable, etc.)
+
+**Note:** Route-specific components live in `{route}/components/` rather than the shared `app/components/` directory. This keeps related code colocated and makes it clear which components are page-specific vs shared.
 
 ### Key Technical Details
 
@@ -98,10 +102,32 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
 
 - Client implementation in `app/lib/lastfm.ts` wraps Last.fm Web Services API
 - Fetches recently played tracks via `user.getRecentTracks` method
+- Fetches top tracks/artists/albums via `user.getTopTracks`, `user.getTopArtists`, `user.getTopAlbums`
 - Supports pagination with `limit` and `page` parameters
 - Includes now playing status and loved track indicators
 - 3 second timeout on API requests
 - Track data includes artist, album, play time, and MusicBrainz IDs
+- Period filtering for top stats: `7day`, `1month`, `3month`, `6month`, `12month`, `overall`
+
+**Caching with `"use cache"`:**
+
+- Server actions in `app/actions/lastfm.ts` use the `"use cache"` directive for data caching
+- Use `cacheLife("hours")` for successful responses
+- Use `cacheLife("seconds")` in catch blocks to avoid caching errors for long periods
+- Example pattern:
+    ```typescript
+    export async function getData(): Promise<Result> {
+        "use cache";
+        cacheLife("hours");
+        try {
+            const data = await fetchData();
+            return { status: "ok", data };
+        } catch (error) {
+            cacheLife("seconds"); // Don't cache errors for long
+            return { status: "error", error: "Failed to fetch" };
+        }
+    }
+    ```
 
 **Session Management:**
 
@@ -147,8 +173,46 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
 - **Type imports**: Use `import type { TypeName }` for types, avoid React UMD globals
 - **Avoid redundant tests**: Don't test element existence separately if interaction tests already verify it (e.g., a click test inherently verifies the button exists)
 - **Separate concerns**: Use separate `describe` blocks for different exports (e.g., metadata vs component)
+- **Testing async components with `use()` hook**: Wrap render in `await act(async () => render(...))` to ensure promises resolve before assertions:
+    ```typescript
+    it("should render data", async () => {
+      const result = { status: "ok", data: [...] };
+      await act(async () =>
+        render(<MyComponent data={Promise.resolve(result)} />),
+      );
+      expect(screen.getByRole("table")).toBeInTheDocument();
+    });
+    ```
 
 ## Common Patterns
+
+**Page Layout and Metadata:**
+
+- Root layout (`app/layout.tsx`) defines metadata template: `%s - Simon Kjellberg`
+- Subpages only need to set `title: "PageName"` and the template adds the suffix
+- `Page` component accepts optional `section` prop for header display (`#!/Simon Kjellberg/Section`)
+- `global-error.tsx` and `global-not-found.tsx` don't inherit the layout template, so they must include the full title
+
+**Promise Props with `use()` Hook (React 19):**
+
+- Components can accept Promise props and unwrap them with the `use()` hook
+- This enables streaming: parent passes promise, child renders when resolved
+- Works in both Server and Client Components (only `async/await` is Server Component only)
+- Wrap in Suspense for loading states:
+
+    ```typescript
+    // Page passes promise
+    <Suspense fallback={<Loader />}>
+      <DataTable data={fetchData()} />
+    </Suspense>
+
+    // Component unwraps with use()
+    "use client";
+    const DataTable = ({ data }: { data: Promise<Data> }) => {
+      const result = use(data);
+      return <table>...</table>;
+    };
+    ```
 
 **Server-Only Code:**
 Files that should never run on the client must import `"server-only"` at the top (e.g., `app/lib/slack.ts`, `app/lib/session.ts`).
