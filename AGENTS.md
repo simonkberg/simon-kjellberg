@@ -20,10 +20,11 @@ If Corepack is not enabled, run `corepack enable` before installing dependencies
 - `pnpm dev` - Start Next.js development server with Turbopack
 - `pnpm build` - Build production bundle (requires all environment variables to be set)
 - `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint and Prettier checks
+- `pnpm lint` - Run TypeScript, ESLint, and Prettier checks in parallel
 - `pnpm lint:fix` - Auto-fix ESLint and Prettier issues
 - `pnpm lint:eslint` - Run ESLint only
 - `pnpm lint:prettier` - Run Prettier check only
+- `pnpm lint:tsc` - Run TypeScript type checking (runs typegen first)
 - `pnpm test` - Run Vitest in watch mode
 
 ### Testing
