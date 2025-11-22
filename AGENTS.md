@@ -25,15 +25,16 @@ If Corepack is not enabled, run `corepack enable` before installing dependencies
 - `pnpm lint:eslint` - Run ESLint only
 - `pnpm lint:prettier` - Run Prettier check only
 - `pnpm lint:tsc` - Run TypeScript type checking (runs typegen first)
-- `pnpm test` - Run Vitest in watch mode
+- `pnpm test` - Run tests (watch mode only in interactive terminals; runs once and exits in non-TTY environments)
+- `pnpm test --coverage` - Run tests with coverage report
 
 ### Testing
 
-- `pnpm test` - Run tests
-- `pnpm test --coverage` - Run tests with coverage report
 - Tests are located alongside source files with `.test.ts` or `.test.tsx` extensions
 - Test files must be in the `app/` directory to be discovered
 - Uses happy-dom as the test environment
+
+**Note for AI agents:** Do not prefix test commands with `CI=true`. Vitest automatically detects non-TTY environments and runs once.
 
 ### MCP Tools
 
