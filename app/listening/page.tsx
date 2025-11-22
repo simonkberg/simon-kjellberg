@@ -15,7 +15,7 @@ import { TopArtistsTable } from "./components/TopArtistsTable";
 import { TopTracksTable } from "./components/TopTracksTable";
 
 export const metadata: Metadata = {
-  title: "Listening | simon.dev",
+  title: "Listening",
   description: "My listening statistics from Last.fm",
 };
 
@@ -27,7 +27,7 @@ export default function ListeningPage({
   );
 
   return (
-    <Page title="Listening">
+    <Page section="Listening">
       <section>
         <p>
           My listening statistics from{" "}

@@ -1,15 +1,18 @@
 import Link from "next/link";
 
+import { config } from "@/config";
+
 export interface HeaderProps {
-  title: string;
+  section?: string;
 }
 
-export const Header = ({ title }: HeaderProps) => (
+export const Header = ({ section }: HeaderProps) => (
   <header className={"header"}>
     <div className={"container"}>
       <h1 className={"title"}>
         <Link href={"/"} className={"link"}>
-          #!/{title}
+          #!/{config.title}
+          {section && `/${section}`}
         </Link>
       </h1>
     </div>

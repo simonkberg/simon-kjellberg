@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -17,17 +17,6 @@ import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
 import { config } from "@/config";
 
-export const metadata: Metadata = {
-  title: config.title,
-  description: config.description,
-  openGraph: {
-    type: "website",
-    url: config.url,
-    title: config.title,
-    description: config.description,
-  },
-};
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -41,7 +30,7 @@ export default async function RootPage() {
   const recentTracks = getRecentTracks();
 
   return (
-    <Page title={config.title}>
+    <Page>
       <section>
         <Heading level={2}>
           About <Subtitle>(Location: Stockholm, Sweden)</Subtitle>

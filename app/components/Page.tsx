@@ -3,12 +3,12 @@ import type { PropsWithChildren } from "react";
 import { Header } from "@/components/Header";
 
 interface PageProps extends PropsWithChildren {
-  title: string;
+  section?: string;
 }
 
-export const Page = ({ title, children }: PageProps) => (
+export const Page = ({ section, children }: PageProps) => (
   <div className="page">
-    <Header title={title} />
+    <Header section={section} />
     <div className="content">{children}</div>
   </div>
 );
