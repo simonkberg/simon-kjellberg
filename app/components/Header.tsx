@@ -7,10 +7,10 @@ export interface HeaderProps {
 }
 
 export const Header = ({ section }: HeaderProps) => (
-  <header className={"header"}>
-    <div className={"container"}>
-      <h1 className={"title"}>
-        <Link href={"/"} className={"link"}>
+  <header className="header">
+    <div className="container">
+      <h1 className="title">
+        <Link href="/" className="link">
           #!/{config.title}
           {section && `/${section}`}
         </Link>
