@@ -179,3 +179,39 @@ export async function userGetTopArtists(
     ...params,
   });
 }
+
+const userGetTopAlbumsResponseSchema = z
+  .object({
+    topalbums: z.object({
+      album: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            artist: z.object({ name: z.string() }),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            artist: data.artist.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.topalbums.album);
+
+export type UserGetTopAlbumsResponse = z.infer<
+  typeof userGetTopAlbumsResponseSchema
+>;
+
+export async function userGetTopAlbums(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopAlbumsResponse> {
+  return call("user.gettopalbums", userGetTopAlbumsResponseSchema, {
+    user,
+    ...params,
+  });
+}
