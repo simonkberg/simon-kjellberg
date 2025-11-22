@@ -145,3 +145,37 @@ export async function userGetTopTracks(
     ...params,
   });
 }
+
+const userGetTopArtistsResponseSchema = z
+  .object({
+    topartists: z.object({
+      artist: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.topartists.artist);
+
+export type UserGetTopArtistsResponse = z.infer<
+  typeof userGetTopArtistsResponseSchema
+>;
+
+export async function userGetTopArtists(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopArtistsResponse> {
+  return call("user.gettopartists", userGetTopArtistsResponseSchema, {
+    user,
+    ...params,
+  });
+}
