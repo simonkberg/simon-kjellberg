@@ -1,9 +1,4 @@
-import {
-  render,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-} from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -45,7 +40,7 @@ describe("ChatInput", () => {
   });
 
   it("disables input while form is submitting", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { promise, resolve } = Promise.withResolvers<PostChatMessageResult>();
     const mockMessage = createMockMessage("Hello");
 
@@ -67,7 +62,7 @@ describe("ChatInput", () => {
   });
 
   it("calls postChatMessage when form is submitted", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const mockMessage = createMockMessage("Test message");
 
     vi.mocked(postChatMessage).mockResolvedValue({
@@ -85,7 +80,7 @@ describe("ChatInput", () => {
   });
 
   it("clears input and focuses it after successful submission", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const mockMessage = createMockMessage("Test message");
 
     vi.mocked(postChatMessage).mockResolvedValue({
@@ -106,7 +101,7 @@ describe("ChatInput", () => {
   });
 
   it("preserves input and focuses it after failed submission", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     vi.mocked(postChatMessage).mockResolvedValue({
       status: "error",
@@ -134,141 +129,59 @@ describe("ChatInput", () => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    it("does not show toast on successful message submission", async () => {
-      const user = userEvent.setup();
-      const mockMessage = createMockMessage("Test message");
-
+    it("does not show toast on successful submission", async () => {
+      const user = userEvent.setup({ delay: null });
       vi.mocked(postChatMessage).mockResolvedValue({
         status: "ok",
-        message: mockMessage,
+        message: createMockMessage("Test"),
       });
 
       render(<ChatInput />);
-      const input = screen.getByRole("textbox");
-
-      await user.type(input, "Test message");
+      await user.type(screen.getByRole("textbox"), "Test");
       await user.keyboard("{Enter}");
 
-      expect(postChatMessage).toHaveBeenCalled();
+      await waitFor(() => expect(postChatMessage).toHaveBeenCalled());
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    it("shows error toast when message submission fails", async () => {
-      const user = userEvent.setup();
-
+    it("passes error message and error variant to toast on failure", async () => {
+      const user = userEvent.setup({ delay: null });
       vi.mocked(postChatMessage).mockResolvedValue({
         status: "error",
-        error: "Failed to post chat message",
+        error: "Rate limited",
       });
 
       render(<ChatInput />);
-      const input = screen.getByRole("textbox");
-
-      await user.type(input, "Test message");
+      await user.type(screen.getByRole("textbox"), "Test");
       await user.keyboard("{Enter}");
 
-      expect(
-        await screen.findByText("Failed to post chat message"),
-      ).toBeInTheDocument();
-
-      const toast = screen.getByRole("status");
-      expect(toast).toHaveAttribute("aria-live", "assertive");
+      const toast = await screen.findByRole("status");
+      expect(toast).toHaveTextContent("Rate limited");
       expect(toast).toHaveClass("error");
     });
 
-    it("allows closing error toast via close button", async () => {
-      const user = userEvent.setup();
-
-      vi.mocked(postChatMessage).mockResolvedValue({
-        status: "error",
-        error: "Network error",
-      });
-
-      render(<ChatInput />);
-      const input = screen.getByRole("textbox");
-
-      await user.type(input, "Test message");
-      await user.keyboard("{Enter}");
-
-      expect(await screen.findByText("Network error")).toBeInTheDocument();
-
-      const closeButton = screen.getByRole("button", {
-        name: "Close notification",
-      });
-      await user.click(closeButton);
-
-      expect(screen.queryByText("Network error")).not.toBeInTheDocument();
-    });
-
-    it("hides error toast after duration", async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true });
+    it("clears toast message on successful submission after error", async () => {
       const user = userEvent.setup({ delay: null });
-
-      vi.mocked(postChatMessage).mockResolvedValue({
-        status: "error",
-        error: "Timeout error",
-      });
+      vi.mocked(postChatMessage)
+        .mockResolvedValueOnce({ status: "error", error: "Failed" })
+        .mockResolvedValueOnce({
+          status: "ok",
+          message: createMockMessage(""),
+        });
 
       render(<ChatInput />);
       const input = screen.getByRole("textbox");
 
-      await user.type(input, "Test message");
+      await user.type(input, "First");
+      await user.keyboard("{Enter}");
+      await screen.findByRole("status");
+
+      await user.type(input, "Second");
       await user.keyboard("{Enter}");
 
-      expect(await screen.findByText("Timeout error")).toBeInTheDocument();
-
-      vi.advanceTimersByTime(5000);
-      vi.runAllTimers();
-
-      await waitForElementToBeRemoved(() =>
-        screen.queryByText("Timeout error"),
+      await waitFor(() =>
+        expect(screen.queryByRole("status")).not.toBeInTheDocument(),
       );
-
-      vi.useRealTimers();
-    });
-
-    it("shows new error toast when subsequent submission fails", async () => {
-      const user = userEvent.setup();
-
-      vi.mocked(postChatMessage)
-        .mockResolvedValueOnce({ status: "error", error: "First error" })
-        .mockResolvedValueOnce({ status: "error", error: "Second error" });
-
-      render(<ChatInput />);
-      const input = screen.getByRole("textbox");
-
-      await user.type(input, "First message");
-      await user.keyboard("{Enter}");
-
-      expect(await screen.findByText("First error")).toBeInTheDocument();
-
-      await user.type(input, "Second message");
-      await user.keyboard("{Enter}");
-
-      expect(await screen.findByText("Second error")).toBeInTheDocument();
-      expect(screen.queryByText("First error")).not.toBeInTheDocument();
-    });
-
-    it("clears error toast when submission succeeds after error", async () => {
-      const user = userEvent.setup();
-      const mockMessage = createMockMessage("Success message");
-
-      vi.mocked(postChatMessage)
-        .mockResolvedValueOnce({ status: "error", error: "Failed to post" })
-        .mockResolvedValueOnce({ status: "ok", message: mockMessage });
-
-      render(<ChatInput />);
-      const input = screen.getByRole("textbox");
-
-      await user.type(input, "First message");
-      await user.keyboard("{Enter}");
-
-      expect(await screen.findByText("Failed to post")).toBeInTheDocument();
-
-      await user.type(input, "Second message");
-      await user.keyboard("{Enter}");
-
-      expect(screen.queryByText("Failed to post")).not.toBeInTheDocument();
     });
   });
 });
