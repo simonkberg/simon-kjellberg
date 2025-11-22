@@ -12,17 +12,17 @@
   "scripts": {
     "build": "next build --experimental-app-only",
     "dev": "next dev",
-    "lint": "pnpm lint:tsc & pnpm lint:eslint && pnpm lint:prettier",
+    "lint": "conc -g -c auto 'node:lint:*(!fix)'",
     "lint:eslint": "eslint --max-warnings=0 .",
     "lint:eslint:fix": "eslint --max-warnings=0 --fix .",
-    "lint:fix": "pnpm lint:eslint:fix && pnpm lint:prettier:fix",
-    "lint:prettier": "prettier --check .",
-    "lint:prettier:fix": "prettier --write .",
-    "lint:tsc": "pnpm typegen && tsc --noEmit",
-    "prepare": "husky && pnpm typegen",
-    "typegen": "SKIP_ENV_VALIDATION=1 next typegen",
+    "lint:fix": "node --run lint:eslint:fix && node --run lint:prettier:fix",
+    "lint:prettier": "prettier -c .",
+    "lint:prettier:fix": "prettier -wl .",
+    "lint:tsc": "node --run typegen && tsc --noEmit",
+    "prepare": "husky && node --run typegen",
     "start": "next start",
-    "test": "vitest"
+    "test": "vitest",
+    "typegen": "SKIP_ENV_VALIDATION=1 next typegen"
   },
   "dependencies": {
     "@react-spring/web": "10.0.3",
@@ -53,6 +53,7 @@
     "@vitest/coverage-v8": "4.0.13",
     "@vitest/ui": "4.0.13",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "9.2.1",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.3",
     "eslint-config-prettier": "10.1.8",

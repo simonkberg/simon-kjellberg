@@ -28,11 +28,11 @@ const config: Configuration = (filenames) => {
   }
 
   if (allFiles !== "") {
-    commands.push(`prettier --write --ignore-unknown ${allFiles}`);
+    commands.push(`prettier -wlu ${allFiles}`);
   }
 
   if (sourceFiles !== "") {
-    commands.push(`vitest related ${sourceFiles}`, "pnpm run lint:tsc");
+    commands.push(`vitest related ${sourceFiles}`, "node --run lint:tsc");
   }
 
   return commands;
