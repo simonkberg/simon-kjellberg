@@ -12,8 +12,7 @@ const sourceFilesRegex = /\.[cm]?[tj]sx?$/;
  * ensure that any code changes made by ESLint are formatted correctly.
  */
 const config: Configuration = (filenames) => {
-  /** @type {string[]} */
-  const commands = [];
+  const commands: string[] = [];
   let allFiles = "";
   let sourceFiles = "";
 
@@ -33,10 +32,7 @@ const config: Configuration = (filenames) => {
   }
 
   if (sourceFiles !== "") {
-    commands.push(
-      `vitest related ${sourceFiles}`,
-      `tsc -p tsconfig.json --noEmit`,
-    );
+    commands.push(`vitest related ${sourceFiles}`, "pnpm run lint:tsc");
   }
 
   return commands;

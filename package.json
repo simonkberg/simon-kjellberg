@@ -12,13 +12,15 @@
   "scripts": {
     "build": "next build --experimental-app-only",
     "dev": "next dev",
-    "lint": "pnpm lint:eslint && pnpm lint:prettier",
+    "lint": "pnpm lint:tsc & pnpm lint:eslint && pnpm lint:prettier",
     "lint:eslint": "eslint --max-warnings=0 .",
     "lint:eslint:fix": "eslint --max-warnings=0 --fix .",
     "lint:fix": "pnpm lint:eslint:fix && pnpm lint:prettier:fix",
     "lint:prettier": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
-    "prepare": "husky",
+    "lint:tsc": "pnpm typegen && tsc --noEmit",
+    "prepare": "husky && pnpm typegen",
+    "typegen": "SKIP_ENV_VALIDATION=1 next typegen",
     "start": "next start",
     "test": "vitest"
   },
