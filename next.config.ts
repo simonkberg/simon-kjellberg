@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   logging: { fetches: { fullUrl: true } },
   reactCompiler: true,
   turbopack: { root: import.meta.dirname },
+  typedRoutes: true,
   experimental: { globalNotFound: true },
 };
 

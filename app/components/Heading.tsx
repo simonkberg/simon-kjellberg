@@ -7,5 +7,5 @@ export interface HeadingProps extends PropsWithChildren {
 export const Heading = ({ level, children }: HeadingProps) => {
   const Component = `h${level}` as const;
 
-  return <Component className={"heading"}>{children}</Component>;
+  return <Component className="heading">{children}</Component>;
 };

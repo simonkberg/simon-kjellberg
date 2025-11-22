@@ -5,8 +5,6 @@ import { Layout } from "@/components/Layout";
 import { Page } from "@/components/Page";
 import { config } from "@/config";
 
-const title = `${config.title} - Error`;
-
 interface GlobalErrorProps {
   error: Error;
   reset: () => void;
@@ -15,8 +13,8 @@ interface GlobalErrorProps {
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <Layout>
-      <title>{title}</title>
-      <Page title={title}>
+      <title>{`Error - ${config.title}`}</title>
+      <Page section="Error">
         <section>
           <Heading level={2}>Something went wrong!</Heading>
           <p className="subtitle">{error.message}</p>

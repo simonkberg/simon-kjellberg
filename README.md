@@ -7,6 +7,7 @@ My personal website built with Next.js 16.
 - Real-time chat powered by Slack
 - Coding stats from WakaTime
 - Recently played music from Last.fm
+- Listening statistics (top tracks, artists, albums) from Last.fm
 - Server-Sent Events for live updates
 
 ## Development

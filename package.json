@@ -37,7 +37,8 @@
     "react": "19.3.0-canary-fb2177c1-20251114",
     "react-dom": "19.3.0-canary-fb2177c1-20251114",
     "sanitize.css": "13.0.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "ts-extras": "0.16.0"
   },
   "devDependencies": {
     "@edge-runtime/cookies": "6.0.0",

@@ -24,7 +24,7 @@ describe("GlobalError", () => {
   it("should have correct title", () => {
     render(<GlobalError error={error} reset={reset} />);
 
-    expect(document.title).toEqual(`${config.title} - Error`);
+    expect(document.title).toEqual(`Error - ${config.title}`);
   });
 
   it("should render within Layout component", () => {

@@ -4,6 +4,21 @@ import { z } from "zod";
 
 import { env } from "@/lib/env";
 
+export const periods = [
+  "7day",
+  "1month",
+  "3month",
+  "6month",
+  "12month",
+  "overall",
+] as const;
+
+export type Period = (typeof periods)[number];
+
+export function isValidPeriod(value: unknown): value is Period {
+  return periods.includes(value as Period);
+}
+
 const BASE_URL = "https://ws.audioscrobbler.com/2.0/";
 
 async function call<T extends z.ZodType>(
@@ -93,4 +108,110 @@ export async function userGetRecentTracks(
   }
 
   return tracks;
+}
+
+const userGetTopTracksResponseSchema = z
+  .object({
+    toptracks: z.object({
+      track: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            artist: z.object({ name: z.string() }),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            artist: data.artist.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.toptracks.track);
+
+export type UserGetTopTracksResponse = z.infer<
+  typeof userGetTopTracksResponseSchema
+>;
+
+export async function userGetTopTracks(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopTracksResponse> {
+  return call("user.gettoptracks", userGetTopTracksResponseSchema, {
+    user,
+    ...params,
+  });
+}
+
+const userGetTopArtistsResponseSchema = z
+  .object({
+    topartists: z.object({
+      artist: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.topartists.artist);
+
+export type UserGetTopArtistsResponse = z.infer<
+  typeof userGetTopArtistsResponseSchema
+>;
+
+export async function userGetTopArtists(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopArtistsResponse> {
+  return call("user.gettopartists", userGetTopArtistsResponseSchema, {
+    user,
+    ...params,
+  });
+}
+
+const userGetTopAlbumsResponseSchema = z
+  .object({
+    topalbums: z.object({
+      album: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            artist: z.object({ name: z.string() }),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            artist: data.artist.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.topalbums.album);
+
+export type UserGetTopAlbumsResponse = z.infer<
+  typeof userGetTopAlbumsResponseSchema
+>;
+
+export async function userGetTopAlbums(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopAlbumsResponse> {
+  return call("user.gettopalbums", userGetTopAlbumsResponseSchema, {
+    user,
+    ...params,
+  });
 }

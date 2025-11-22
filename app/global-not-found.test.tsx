@@ -15,7 +15,7 @@ vi.mock(import("@/components/Layout"), () => ({
 describe("metadata", () => {
   it("should have correct title and description", () => {
     expect(metadata).toEqual({
-      title: `${config.title} - Not Found`,
+      title: `Not Found - ${config.title}`,
       description: "The page you are looking for does not exist.",
     });
   });

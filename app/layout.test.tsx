@@ -2,13 +2,37 @@ import { render, screen } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import RootLayout from "./layout";
+import { config } from "@/config";
+
+import RootLayout, { metadata } from "./layout";
 
 vi.mock(import("@/components/Layout"), () => ({
   Layout: ({ children }: PropsWithChildren) => (
     <div data-testid="layout">{children}</div>
   ),
 }));
+
+describe("metadata", () => {
+  it("should have correct title with template", () => {
+    expect(metadata.title).toEqual({
+      default: config.title,
+      template: `%s - ${config.title}`,
+    });
+  });
+
+  it("should have correct description", () => {
+    expect(metadata.description).toEqual(config.description);
+  });
+
+  it("should have correct openGraph", () => {
+    expect(metadata.openGraph).toEqual({
+      type: "website",
+      url: config.url,
+      title: config.title,
+      description: config.description,
+    });
+  });
+});
 
 describe("RootLayout", () => {
   it("should render within Layout component", () => {
