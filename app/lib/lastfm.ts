@@ -109,3 +109,39 @@ export async function userGetRecentTracks(
 
   return tracks;
 }
+
+const userGetTopTracksResponseSchema = z
+  .object({
+    toptracks: z.object({
+      track: z.array(
+        z
+          .object({
+            name: z.string(),
+            playcount: z.string().transform(Number),
+            artist: z.object({ name: z.string() }),
+            "@attr": z.object({ rank: z.string().transform(Number) }),
+          })
+          .transform((data) => ({
+            name: data.name,
+            artist: data.artist.name,
+            playcount: data.playcount,
+            rank: data["@attr"].rank,
+          })),
+      ),
+    }),
+  })
+  .transform((data) => data.toptracks.track);
+
+export type UserGetTopTracksResponse = z.infer<
+  typeof userGetTopTracksResponseSchema
+>;
+
+export async function userGetTopTracks(
+  user: string,
+  params: { period: Period; limit: number },
+): Promise<UserGetTopTracksResponse> {
+  return call("user.gettoptracks", userGetTopTracksResponseSchema, {
+    user,
+    ...params,
+  });
+}

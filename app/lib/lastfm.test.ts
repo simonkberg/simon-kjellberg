@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { server } from "@/mocks/node";
 
-import { userGetRecentTracks } from "./lastfm";
+import { userGetRecentTracks, userGetTopTracks } from "./lastfm";
 
 vi.mock(import("server-only"), () => ({}));
 
@@ -192,5 +192,54 @@ describe("userGetRecentTracks", () => {
     expect(tracks[1]?.name).toBe("Track 1");
     expect(tracks[2]?.name).toBe("Track 2");
     // Track 3 should be discarded to enforce limit
+  });
+});
+
+describe("userGetTopTracks", () => {
+  it("should fetch and parse top tracks successfully", async () => {
+    server.use(
+      http.get(LASTFM_BASE_URL, ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("method")).toBe("user.gettoptracks");
+        expect(url.searchParams.get("api_key")).toBe("test-last-fm-api-key");
+        expect(url.searchParams.get("user")).toBe("testuser");
+        expect(url.searchParams.get("period")).toBe("7day");
+        expect(url.searchParams.get("limit")).toBe("10");
+
+        return HttpResponse.json({
+          toptracks: {
+            track: [
+              {
+                name: "Test Track",
+                playcount: "100",
+                artist: { name: "Test Artist" },
+                "@attr": { rank: "1" },
+              },
+              {
+                name: "Another Track",
+                playcount: "50",
+                artist: { name: "Another Artist" },
+                "@attr": { rank: "2" },
+              },
+            ],
+          },
+        });
+      }),
+    );
+
+    const tracks = await userGetTopTracks("testuser", {
+      period: "7day",
+      limit: 10,
+    });
+
+    expect(tracks).toEqual([
+      { name: "Test Track", artist: "Test Artist", playcount: 100, rank: 1 },
+      {
+        name: "Another Track",
+        artist: "Another Artist",
+        playcount: 50,
+        rank: 2,
+      },
+    ]);
   });
 });
