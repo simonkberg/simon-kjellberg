@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { getChatHistory } from "@/actions/chat";
@@ -85,6 +86,9 @@ export default async function RootPage() {
         <Suspense fallback={<Loader />}>
           <RecentTracksList recentTracks={recentTracks} />
         </Suspense>
+        <p>
+          See <Link href="/listening">listening statistics</Link>.
+        </p>
       </section>
 
       <section>

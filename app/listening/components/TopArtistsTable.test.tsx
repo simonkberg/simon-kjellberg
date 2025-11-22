@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { GetTopArtistsResult } from "@/actions/lastfm";
@@ -6,7 +6,7 @@ import type { GetTopArtistsResult } from "@/actions/lastfm";
 import { TopArtistsTable } from "./TopArtistsTable";
 
 describe("TopArtistsTable", () => {
-  it("should render artists in a table", () => {
+  it("should render artists in a table", async () => {
     const result: GetTopArtistsResult = {
       status: "ok",
       artists: [
@@ -15,7 +15,9 @@ describe("TopArtistsTable", () => {
       ],
     };
 
-    render(<TopArtistsTable result={result} />);
+    await act(async () =>
+      render(<TopArtistsTable topArtists={Promise.resolve(result)} />),
+    );
 
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByText("Artist 1")).toBeInTheDocument();
@@ -23,13 +25,15 @@ describe("TopArtistsTable", () => {
     expect(screen.getByText("Artist 2")).toBeInTheDocument();
   });
 
-  it("should render error message on failure", () => {
+  it("should render error message on failure", async () => {
     const result: GetTopArtistsResult = {
       status: "error",
       error: "Failed to fetch",
     };
 
-    render(<TopArtistsTable result={result} />);
+    await act(async () =>
+      render(<TopArtistsTable topArtists={Promise.resolve(result)} />),
+    );
 
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.getByText(/unavailable/i)).toBeInTheDocument();

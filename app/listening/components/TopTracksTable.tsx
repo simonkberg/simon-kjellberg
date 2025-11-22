@@ -1,31 +1,43 @@
+"use client";
+
+import { use } from "react";
+
 import type { GetTopTracksResult } from "@/actions/lastfm";
 
 export interface TopTracksTableProps {
-  result: GetTopTracksResult;
+  topTracks: Promise<GetTopTracksResult>;
 }
 
-export const TopTracksTable = ({ result }: TopTracksTableProps) => {
+export const TopTracksTable = ({ topTracks }: TopTracksTableProps) => {
+  const result = use(topTracks);
+
   if (result.status === "error") {
     return <p>Top tracks are temporarily unavailable :(</p>;
   }
 
   return (
     <table>
+      <colgroup>
+        <col />
+        <col style={{ width: "50%" }} />
+        <col style={{ width: "50%" }} />
+        <col />
+      </colgroup>
       <thead>
         <tr>
-          <th>#</th>
+          <th className="numeric">#</th>
           <th>Track</th>
           <th>Artist</th>
-          <th>Plays</th>
+          <th className="numeric">Plays</th>
         </tr>
       </thead>
       <tbody>
         {result.tracks.map((track) => (
           <tr key={`${track.rank}-${track.name}`}>
-            <td>{track.rank}</td>
+            <td className="numeric">{track.rank}</td>
             <td>{track.name}</td>
             <td>{track.artist}</td>
-            <td>{track.playcount}</td>
+            <td className="numeric">{track.playcount}</td>
           </tr>
         ))}
       </tbody>

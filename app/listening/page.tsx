@@ -1,40 +1,30 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { getTopAlbums, getTopArtists, getTopTracks } from "@/actions/lastfm";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
+import { Loader } from "@/components/Loader";
 import { Page } from "@/components/Page";
-import { PeriodSelector } from "@/components/PeriodSelector";
 import { Subtitle } from "@/components/Subtitle";
-import { TopAlbumsTable } from "@/components/TopAlbumsTable";
-import { TopArtistsTable } from "@/components/TopArtistsTable";
-import { TopTracksTable } from "@/components/TopTracksTable";
-import { isValidPeriod, type Period } from "@/lib/lastfm";
+import { isValidPeriod } from "@/lib/lastfm";
+
+import { PeriodSelector } from "./components/PeriodSelector";
+import { TopAlbumsTable } from "./components/TopAlbumsTable";
+import { TopArtistsTable } from "./components/TopArtistsTable";
+import { TopTracksTable } from "./components/TopTracksTable";
 
 export const metadata: Metadata = {
   title: "Listening | simon.dev",
   description: "My listening statistics from Last.fm",
 };
 
-interface ListeningPageProps {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}
-
-export default async function ListeningPage({
+export default function ListeningPage({
   searchParams,
-}: ListeningPageProps) {
-  const params = await searchParams;
-  const periodParam = params["period"];
-  const period: Period =
-    typeof periodParam === "string" && isValidPeriod(periodParam)
-      ? periodParam
-      : "overall";
-
-  const [tracksResult, artistsResult, albumsResult] = await Promise.all([
-    getTopTracks(period),
-    getTopArtists(period),
-    getTopAlbums(period),
-  ]);
+}: PageProps<"/listening">) {
+  const period = searchParams.then((params) =>
+    isValidPeriod(params["period"]) ? params["period"] : "overall",
+  );
 
   return (
     <Page title="Listening">
@@ -46,29 +36,32 @@ export default async function ListeningPage({
           </ExternalLink>
           .
         </p>
-        <PeriodSelector current={period} />
       </section>
 
-      <section>
-        <Heading level={2}>
-          Top Tracks <Subtitle>(Top 10)</Subtitle>
-        </Heading>
-        <TopTracksTable result={tracksResult} />
-      </section>
+      <PeriodSelector current={period} />
 
-      <section>
-        <Heading level={2}>
-          Top Artists <Subtitle>(Top 10)</Subtitle>
-        </Heading>
-        <TopArtistsTable result={artistsResult} />
-      </section>
+      <Suspense fallback={<Loader />}>
+        <section>
+          <Heading level={2}>
+            Top Tracks <Subtitle>(Top 10)</Subtitle>
+          </Heading>
+          <TopTracksTable topTracks={period.then(getTopTracks)} />
+        </section>
 
-      <section>
-        <Heading level={2}>
-          Top Albums <Subtitle>(Top 10)</Subtitle>
-        </Heading>
-        <TopAlbumsTable result={albumsResult} />
-      </section>
+        <section>
+          <Heading level={2}>
+            Top Artists <Subtitle>(Top 10)</Subtitle>
+          </Heading>
+          <TopArtistsTable topArtists={period.then(getTopArtists)} />
+        </section>
+
+        <section>
+          <Heading level={2}>
+            Top Albums <Subtitle>(Top 10)</Subtitle>
+          </Heading>
+          <TopAlbumsTable topAlbums={period.then(getTopAlbums)} />
+        </section>
+      </Suspense>
     </Page>
   );
 }

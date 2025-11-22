@@ -1,29 +1,40 @@
+"use client";
+
+import { use } from "react";
+
 import type { GetTopArtistsResult } from "@/actions/lastfm";
 
 export interface TopArtistsTableProps {
-  result: GetTopArtistsResult;
+  topArtists: Promise<GetTopArtistsResult>;
 }
 
-export const TopArtistsTable = ({ result }: TopArtistsTableProps) => {
+export const TopArtistsTable = ({ topArtists }: TopArtistsTableProps) => {
+  const result = use(topArtists);
+
   if (result.status === "error") {
     return <p>Top artists are temporarily unavailable :(</p>;
   }
 
   return (
     <table>
+      <colgroup>
+        <col />
+        <col style={{ width: "100%" }} />
+        <col />
+      </colgroup>
       <thead>
         <tr>
-          <th>#</th>
+          <th className="numeric">#</th>
           <th>Artist</th>
-          <th>Plays</th>
+          <th className="numeric">Plays</th>
         </tr>
       </thead>
       <tbody>
         {result.artists.map((artist) => (
           <tr key={`${artist.rank}-${artist.name}`}>
-            <td>{artist.rank}</td>
+            <td className="numeric">{artist.rank}</td>
             <td>{artist.name}</td>
-            <td>{artist.playcount}</td>
+            <td className="numeric">{artist.playcount}</td>
           </tr>
         ))}
       </tbody>
