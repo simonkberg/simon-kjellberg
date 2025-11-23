@@ -39,20 +39,18 @@ export async function generateMetadata({
   const period = toPeriod((await params).period);
   const periodLabel = periodLabels[period];
 
-  const title = `Listening - ${periodLabel}`;
-  const description = `My ${periodLabel} listening statistics from Last.fm`;
-
-  return { title, description, openGraph: { title, description } };
+  return {
+    title: `Listening - ${periodLabel}`,
+    description: `My ${periodLabel} listening statistics from Last.fm`,
+  };
 }
 
-export async function generateStaticParams() {
-  const slugs: Awaited<ListeningPageProps["params"]>[] = periods.map(
-    (period) => ({ period: [period] }),
-  );
-
-  slugs.push({ period: undefined });
-
-  return slugs;
+export function generateStaticParams(): Awaited<
+  ListeningPageProps["params"]
+>[] {
+  return periods.map((period) => ({
+    period: period === "overall" ? undefined : [period],
+  }));
 }
 
 export default function ListeningPage({ params }: ListeningPageProps) {
