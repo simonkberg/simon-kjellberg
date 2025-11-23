@@ -59,7 +59,7 @@ MCP servers are configured in `.mcp.json`. Key guidance:
     - `lib/` - Utility libraries and core logic
         - `messageParser/` - Slack message parsing with emoji support
     - `assets/` - Static assets (fonts, images)
-    - `listening/` - Listening stats page
+    - `listening/[[...period]]/` - Listening stats page (optional catch-all for period filter)
         - `components/` - Route-specific components (PeriodSelector, TopTracksTable, etc.)
 
 **Note:** Route-specific components live in `{route}/components/` rather than the shared `app/components/` directory. This keeps related code colocated and makes it clear which components are page-specific vs shared.
@@ -69,6 +69,11 @@ MCP servers are configured in `.mcp.json`. Key guidance:
 **Path Aliases:**
 
 - `@/*` maps to `app/*` (configured in tsconfig.json)
+
+**Typed Routes:**
+
+- `typedRoutes` is enabled in `next.config.ts` for type-safe `<Link>` hrefs
+- For optional catch-all routes like `[[...param]]`, use a trailing slash to link to the base path (e.g., `/listening/` not `/listening`)
 
 **Environment Variables:**
 Environment validation is handled via custom Zod validation in `app/lib/env.ts`. Required variables:
@@ -182,6 +187,10 @@ Set `SKIP_ENV_VALIDATION=true` to allow builds without all environment variables
       );
       expect(screen.getByRole("table")).toBeInTheDocument();
     });
+    ```
+- **Testing components that import from `server-only` modules**: Mock the `server-only` package:
+    ```typescript
+    vi.mock("server-only", () => ({}));
     ```
 
 ## Common Patterns

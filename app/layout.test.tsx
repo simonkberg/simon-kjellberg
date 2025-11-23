@@ -24,13 +24,8 @@ describe("metadata", () => {
     expect(metadata.description).toEqual(config.description);
   });
 
-  it("should have correct openGraph", () => {
-    expect(metadata.openGraph).toEqual({
-      type: "website",
-      url: config.url,
-      title: config.title,
-      description: config.description,
-    });
+  it("should have correct alternates", () => {
+    expect(metadata.alternates).toEqual({ canonical: new URL(config.url) });
   });
 });
 
