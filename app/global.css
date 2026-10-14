@@ -1423,7 +1423,7 @@ ul {
   }
 
   /* Touch has no hover to reveal them, so visitors never found reply. */
-  @media (hover: none) {
+  @media (hover: none), (pointer: coarse) {
     > .reply,
     > .react {
       visibility: visible;
