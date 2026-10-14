@@ -135,7 +135,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   with its own reaction while any remain, so Discord shows site reactions as one. History
   adds those rows to Discord's counts minus the bot's. Other replicas' streams refresh only
   when the mirror changes (an emoji's first site reaction or its last removal), via its
-  gateway events. `:shortcodes:` in posts become emoji (`app/lib/shortcodes.ts`).
+  gateway events, which also drop the rows for a deleted message or a moderator's clear.
+  `:shortcodes:` in posts become emoji (`app/lib/shortcodes.ts`).
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.

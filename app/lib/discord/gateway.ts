@@ -42,14 +42,29 @@ const ReadyDataSchema = z.object({
 
 const MessageEventDataSchema = z.object({ channel_id: z.string() });
 
+const ReactionClearDataSchema = z.object({
+  message_id: z.string(),
+  emoji: z.object({ name: z.string().nullable() }).optional(),
+});
+
+const MessageDeleteDataSchema = z.object({ id: z.string() });
+
+/** Reactions Discord dropped from a message: one emoji's, or all when `emoji` is null. */
+export interface ReactionClear {
+  messageId: string;
+  emoji: string | null;
+}
+
 export type MessageSubscriber = (message: DiscordMessage) => void;
 export type StatusSubscriber = (ready: boolean) => void;
+export type ClearSubscriber = (clear: ReactionClear) => void;
 
 class DiscordGateway {
   #ws: WebSocket | null = null;
   #subscribers = new Set<() => void>();
   #messageSubscribers = new Set<MessageSubscriber>();
   #statusSubscribers = new Set<StatusSubscriber>();
+  #clearSubscribers = new Set<ClearSubscriber>();
 
   // Session state (for resume)
   #sessionId: string | null = null;
@@ -104,6 +119,24 @@ class DiscordGateway {
         callback(message);
       } catch (err) {
         log.error({ err }, "Message subscriber callback error");
+      }
+    }
+  }
+
+  addClearSubscriber(callback: ClearSubscriber): void {
+    this.#clearSubscribers.add(callback);
+  }
+
+  removeClearSubscriber(callback: ClearSubscriber): void {
+    this.#clearSubscribers.delete(callback);
+  }
+
+  #notifyClearSubscribers(clear: ReactionClear): void {
+    for (const callback of this.#clearSubscribers) {
+      try {
+        callback(clear);
+      } catch (err) {
+        log.error({ err }, "Clear subscriber callback error");
       }
     }
   }
@@ -356,6 +389,16 @@ class DiscordGateway {
               this.#notifyMessageSubscribers(parsedMessage.data);
             }
           }
+
+          if (eventName === "MESSAGE_DELETE") {
+            const deleted = MessageDeleteDataSchema.safeParse(data);
+            if (deleted.success) {
+              this.#notifyClearSubscribers({
+                messageId: deleted.data.id,
+                emoji: null,
+              });
+            }
+          }
         }
         break;
       }
@@ -371,6 +414,24 @@ class DiscordGateway {
         ) {
           log.debug({ event: eventName }, "Reaction event for our channel");
           this.notifySubscribers();
+
+          const clear = ReactionClearDataSchema.safeParse(data);
+          if (eventName === "MESSAGE_REACTION_REMOVE_ALL" && clear.success) {
+            this.#notifyClearSubscribers({
+              messageId: clear.data.message_id,
+              emoji: null,
+            });
+          }
+          if (
+            eventName === "MESSAGE_REACTION_REMOVE_EMOJI" &&
+            clear.success &&
+            clear.data.emoji?.name
+          ) {
+            this.#notifyClearSubscribers({
+              messageId: clear.data.message_id,
+              emoji: clear.data.emoji.name,
+            });
+          }
         }
         break;
       }
@@ -439,6 +500,15 @@ export async function subscribeToMessages(
 /** Tells this process's subscribers the channel changed without a gateway event. */
 export function notifySubscribers(): void {
   getGateway().notifySubscribers();
+}
+
+/** Called when Discord drops a message's reactions, or the message itself; doesn't connect. */
+export function subscribeToReactionClears(
+  callback: ClearSubscriber,
+): () => void {
+  const gw = getGateway();
+  gw.addClearSubscriber(callback);
+  return () => gw.removeClearSubscriber(callback);
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */

@@ -355,6 +355,123 @@ describe("subscribe", () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ["MESSAGE_REACTION_REMOVE_ALL", { message_id: "msg-test" }, null],
+    [
+      "MESSAGE_REACTION_REMOVE_EMOJI",
+      { message_id: "msg-test", emoji: { id: null, name: "👍" } },
+      "👍",
+    ],
+    ["MESSAGE_DELETE", { id: "msg-test" }, null],
+  ])("should report %s to clear subscribers", async (event, data, emoji) => {
+    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    subscribeToReactionClears(callback);
+    await subscribe(vi.fn());
+
+    const client = getLastClient(gateway.clients);
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", ...data },
+        2,
+        event,
+      ),
+    );
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "some-other-channel-id", ...data },
+        3,
+        event,
+      ),
+    );
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(callback).toHaveBeenCalledExactlyOnceWith({
+      messageId: "msg-test",
+      emoji,
+    });
+  });
+
+  it("should not report a custom emoji's clear or a single removal", async () => {
+    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    const unsubscribe = subscribeToReactionClears(callback);
+    await subscribe(vi.fn());
+
+    const client = getLastClient(gateway.clients);
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        {
+          channel_id: "test-discord-channel-id",
+          message_id: "msg-test",
+          emoji: { id: "123", name: null },
+        },
+        2,
+        "MESSAGE_REACTION_REMOVE_EMOJI",
+      ),
+    );
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        {
+          channel_id: "test-discord-channel-id",
+          message_id: "msg-test",
+          emoji: { id: null, name: "👍" },
+        },
+        3,
+        "MESSAGE_REACTION_REMOVE",
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(callback).not.toHaveBeenCalled();
+
+    unsubscribe();
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", message_id: "msg-test" },
+        4,
+        "MESSAGE_REACTION_REMOVE_ALL",
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it("should log errors thrown by clear subscribers", async () => {
+    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+    const { log } = await import("@/lib/log");
+    server.use(createHandshakeHandler());
+
+    subscribeToReactionClears(() => {
+      throw new Error("boom");
+    });
+    await subscribe(vi.fn());
+
+    getLastClient(gateway.clients)?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", id: "msg-test" },
+        2,
+        "MESSAGE_DELETE",
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(log.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "Clear subscriber callback error",
+    );
+  });
+
   it("should notify subscribers on demand", async () => {
     const { subscribe, notifySubscribers } = await import("./gateway");
     server.use(createHandshakeHandler());

@@ -7,7 +7,11 @@ import {
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
-import { notifySubscribers } from "@/lib/discord/gateway";
+import {
+  notifySubscribers,
+  type ReactionClear,
+  subscribeToReactionClears,
+} from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
@@ -60,6 +64,28 @@ export async function toggleReaction(
   }
   notifySubscribers();
   return "added";
+}
+
+/** Drops the site's rows for reactions Discord cleared, so they don't outlive the message or a moderator's clear. */
+export async function clearReactions({
+  messageId,
+  emoji,
+}: ReactionClear): Promise<void> {
+  await (emoji === null
+    ? query("DELETE FROM reactions WHERE message_id = ?", [messageId])
+    : query("DELETE FROM reactions WHERE message_id = ? AND emoji = ?", [
+        messageId,
+        emoji,
+      ]));
+}
+
+export function startReactionCleanup(): void {
+  subscribeToReactionClears((clear) => {
+    // The gateway's own refresh may read the rows before they're gone.
+    clearReactions(clear).then(notifySubscribers, (err: unknown) => {
+      log.error({ err, ...clear }, "Failed to clear reactions");
+    });
+  });
 }
 
 function collectIds(messages: Message[], ids: string[] = []): string[] {

@@ -4,6 +4,7 @@ export async function register() {
     const { refreshIpDenyList } = await import("@/lib/ipDenyList");
     const { bridgeConsole, log } = await import("@/lib/log");
     const { runMigrations } = await import("@/lib/migrations");
+    const { startReactionCleanup } = await import("@/lib/reactions");
     const { markReady } = await import("@/lib/readiness");
 
     bridgeConsole();
@@ -16,6 +17,7 @@ export async function register() {
       log.error({ err }, "Failed to run migrations");
     }
 
+    startReactionCleanup();
     startBotSubscription()
       .then(() => markReady("bot"))
       .catch((err) => {

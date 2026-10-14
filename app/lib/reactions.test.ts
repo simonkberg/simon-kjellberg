@@ -7,7 +7,10 @@ import {
   type Message,
   removeBotReaction,
 } from "@/lib/discord/api";
-import { notifySubscribers } from "@/lib/discord/gateway";
+import {
+  notifySubscribers,
+  subscribeToReactionClears,
+} from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
@@ -15,7 +18,13 @@ import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
-import { EmojiSchema, toggleReaction, withSiteReactions } from "./reactions";
+import {
+  clearReactions,
+  EmojiSchema,
+  startReactionCleanup,
+  toggleReaction,
+  withSiteReactions,
+} from "./reactions";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
@@ -25,6 +34,7 @@ vi.mock(import("@/lib/discord/api"), () => ({
 }));
 vi.mock(import("@/lib/discord/gateway"), () => ({
   notifySubscribers: vi.fn(),
+  subscribeToReactionClears: vi.fn(() => () => {}),
 }));
 
 const alice = "alice" as Username;
@@ -140,6 +150,58 @@ describe("withSiteReactions", () => {
   it("skips the query without messages", async () => {
     expect(await withSiteReactions([])).toEqual([]);
     expect(query).not.toHaveBeenCalled();
+  });
+});
+
+describe("clearReactions", () => {
+  it("drops one emoji's rows or all of a message's", async () => {
+    await toggleReaction("1", "👍", alice);
+    await toggleReaction("1", "😂", alice);
+    await toggleReaction("2", "👍", bob);
+
+    await clearReactions({ messageId: "1", emoji: "👍" });
+    expect(await withSiteReactions([message("1"), message("2")])).toMatchObject(
+      [
+        { id: "1", reactions: [{ emoji: "😂" }] },
+        { id: "2", reactions: [{ emoji: "👍" }] },
+      ],
+    );
+
+    await clearReactions({ messageId: "1", emoji: null });
+    expect(await withSiteReactions([message("1")])).toMatchObject([
+      { id: "1", reactions: [] },
+    ]);
+  });
+});
+
+describe("startReactionCleanup", () => {
+  function startAndGetCallback() {
+    startReactionCleanup();
+    const callback = vi.mocked(subscribeToReactionClears).mock.calls[0]?.[0];
+    if (!callback) throw new Error("not subscribed");
+    return callback;
+  }
+
+  it("clears rows on Discord's clears, then refreshes", async () => {
+    await toggleReaction("1", "👍", alice);
+    vi.mocked(notifySubscribers).mockClear();
+
+    startAndGetCallback()({ messageId: "1", emoji: null });
+
+    await vi.waitFor(() => expect(notifySubscribers).toHaveBeenCalledOnce());
+    expect(await withSiteReactions([message("1")])).toMatchObject([
+      { reactions: [] },
+    ]);
+  });
+
+  it("logs a failed clear", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(query).mockRejectedValueOnce(new Error("down"));
+
+    startAndGetCallback()({ messageId: "1", emoji: "👍" });
+
+    await vi.waitFor(() => expect(log.error).toHaveBeenCalledOnce());
+    expect(notifySubscribers).not.toHaveBeenCalled();
   });
 });
 
