@@ -15,7 +15,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
     // The head script swaps the data attributes before hydration.
     <html
       lang="en"
-      className={iosevka.className}
+      className={iosevka.variable}
       data-variant={variantPreference.fallback}
       data-theme={themePreference.fallback}
       suppressHydrationWarning

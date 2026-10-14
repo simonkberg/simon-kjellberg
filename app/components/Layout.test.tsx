@@ -8,6 +8,7 @@ import { preferencesScript } from "@/lib/preferences";
 vi.mock(import("@/assets/fonts"), () => ({
   iosevka: {
     className: "iosevka-mock-class",
+    variable: "iosevka-mock-variable",
     style: { fontFamily: "Iosevka" },
   },
 }));
@@ -28,7 +29,7 @@ describe("Layout", () => {
   it("should apply font class to html element", () => {
     render(<Layout />, { container: document });
 
-    expect(document.documentElement).toHaveClass("iosevka-mock-class");
+    expect(document.documentElement).toHaveClass("iosevka-mock-variable");
   });
 
   it("should default to the panes variant and the system theme", () => {
