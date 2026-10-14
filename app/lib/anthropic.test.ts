@@ -11,12 +11,13 @@ import {
 } from "@/lib/lastfm";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
+import { addReaction } from "@/lib/reactions";
 import { query } from "@/lib/turso";
 import { getStats } from "@/lib/wakaTime";
 import { server } from "@/mocks/node";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
-import { createMessage } from "./anthropic";
+import { type ChatMessage, createMessage, formatChatLine } from "./anthropic";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/discord/api"), () => ({
@@ -24,6 +25,10 @@ vi.mock(import("@/lib/discord/api"), () => ({
   searchChannelMessages: vi.fn(),
 }));
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/reactions"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, addReaction: vi.fn() };
+});
 vi.mock(import("@/lib/wakaTime"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, getStats: vi.fn() };
@@ -105,6 +110,7 @@ describe("createMessage", () => {
             { name: "get_top_artists" },
             { name: "get_top_albums" },
             { name: "search_messages" },
+            { name: "react" },
             { name: "remember" },
             { name: "recall" },
             { name: "edit" },
@@ -1822,5 +1828,109 @@ describe("createMessage", () => {
         sort_order: "asc",
       });
     });
+  });
+});
+
+describe("formatChatLine", () => {
+  it("adds a message's reactions after it", () => {
+    expect(
+      formatChatLine({
+        role: "user",
+        username: "simon",
+        content: "nice one",
+        reactions: [
+          { emoji: "👍", count: 2, users: [] },
+          { emoji: "😂", count: 1, users: ["otter"] },
+        ],
+      }),
+    ).toBe("simon: nice one [👍 2, 😂 1]");
+  });
+
+  it("leaves a message without reactions as it is", () => {
+    expect(
+      formatChatLine({ role: "user", username: "simon", content: "hi" }),
+    ).toBe("simon: hi");
+  });
+});
+
+describe("react tool", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  });
+
+  async function runReact(
+    input: Record<string, unknown>,
+    chat: [ChatMessage, ...ChatMessage[]] = [
+      { role: "user", id: "42", username: TEST_USERNAME, content: "lol" },
+    ],
+  ): Promise<unknown> {
+    let toolResult = "";
+    let callCount = 0;
+
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
+        callCount++;
+        if (callCount === 1) {
+          return HttpResponse.json({
+            content: [{ type: "tool_use", id: "tool_1", name: "react", input }],
+            stop_reason: "tool_use",
+          });
+        }
+
+        const body = (await request.json()) as {
+          messages: Array<{ content: Array<{ content: string }> }>;
+        };
+        toolResult = body.messages.at(-1)?.content[0]?.content ?? "";
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await collectResponses(createMessage(chat));
+    return JSON.parse(toolResult);
+  }
+
+  it("reacts to the message it is answering", async () => {
+    expect(await runReact({ emoji: "😂" })).toEqual({ reacted: "😂" });
+    expect(addReaction).toHaveBeenCalledWith("42", "😂", "simon-bot");
+  });
+
+  it("reacts to a message it names", async () => {
+    await runReact({ emoji: "👍", message_id: "7" });
+
+    expect(addReaction).toHaveBeenCalledWith("7", "👍", "simon-bot");
+  });
+
+  it("says so when there is no message to react to", async () => {
+    expect(
+      await runReact({ emoji: "👍" }, [
+        { role: "user", username: TEST_USERNAME, content: "hi" },
+      ]),
+    ).toEqual({ error: "No message to react to" });
+    expect(addReaction).not.toHaveBeenCalled();
+  });
+
+  it("offers a schema without the emoji pattern", async () => {
+    let tool: unknown;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
+        const body = (await request.json()) as { tools: { name: string }[] };
+        tool = body.tools.find(({ name }) => name === "react");
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await collectResponses(
+      createMessage([{ role: "user", username: TEST_USERNAME, content: "hi" }]),
+    );
+
+    expect(JSON.stringify(tool)).not.toContain("RGI_Emoji");
+  });
+
+  it("turns away anything but one emoji", async () => {
+    expect(await runReact({ emoji: "lol" })).toEqual({
+      error: expect.any(String),
+    });
+    expect(addReaction).not.toHaveBeenCalled();
   });
 });

@@ -1,15 +1,14 @@
 import "server-only";
-import { type ChatMessage, createMessage } from "@/lib/anthropic";
+import { BOT_USERNAME, type ChatMessage, createMessage } from "@/lib/anthropic";
 import { log } from "@/lib/log";
+import { withSiteReactions } from "@/lib/reactions";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 
-import type { Username } from "../session";
 import { getMessageChain, postChannelMessage } from "./api";
 import { subscribeToMessages } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
-const BOT_USERNAME = "simon-bot" as Username;
 const BOT_PREFIX = `${BOT_USERNAME}: `;
 const BOT_MENTION_PATTERN = /\bsimon[- ]?bot\b/i;
 
@@ -67,13 +66,15 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
     if (!chain.some((m) => mentionsBot(m.content))) return;
 
     // Past this point, we're committed to responding
-    const messages = chain.map((m) => ({
+    const messages = (await withSiteReactions(chain)).map((m) => ({
       role:
         m.username === BOT_USERNAME
           ? ("assistant" as const)
           : ("user" as const),
+      id: m.id,
       username: m.username,
       content: m.content,
+      reactions: m.reactions,
     })) as [ChatMessage, ...ChatMessage[]];
 
     const replies: ChatMessage[] = [];

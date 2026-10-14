@@ -136,6 +136,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   adds those rows to Discord's counts minus the bot's. Other replicas' streams refresh only
   when the mirror changes (an emoji's first site reaction or its last removal), via its
   gateway events, which also drop the rows for a deleted message or a moderator's clear.
+  simon-bot reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
   `:shortcodes:` in posts become emoji (`app/lib/shortcodes.ts`).
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`

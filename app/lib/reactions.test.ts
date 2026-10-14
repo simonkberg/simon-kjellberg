@@ -19,6 +19,7 @@ import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
 import {
+  addReaction,
   clearReactions,
   EmojiSchema,
   startReactionCleanup,
@@ -111,6 +112,14 @@ describe("toggleReaction", () => {
     expect(await toggleReaction("1", "👍", alice)).toBe("removed");
     expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
+  });
+
+  it("keeps one reaction when the same one is added twice", async () => {
+    await addReaction("1", "👍", alice);
+    await addReaction("1", "👍", alice);
+
+    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+    expect(addBotReaction).toHaveBeenCalledTimes(2);
   });
 
   it("adds nothing when Discord turns the reaction away", async () => {

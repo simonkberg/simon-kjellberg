@@ -316,6 +316,7 @@ export type ChainMessage = {
   type: number;
   username: string;
   content: string;
+  reactions: Reaction[];
 };
 
 const MAX_CHAIN_DEPTH = 50;
@@ -336,7 +337,13 @@ export async function getMessageChain(
 
     const { username, content } = await resolveMessageContent(response);
 
-    chain.unshift({ id: response.id, type: response.type, username, content });
+    chain.unshift({
+      id: response.id,
+      type: response.type,
+      username,
+      content,
+      reactions: toReactions(response),
+    });
 
     currentId = response.message_reference?.message_id;
   }

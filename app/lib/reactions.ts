@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import {
   addBotReaction,
-  type Message,
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
@@ -39,6 +38,16 @@ export async function toggleReaction(
     return "removed";
   }
 
+  await addReaction(messageId, emoji, username);
+  return "added";
+}
+
+/** Adds a reaction and mirrors it on Discord; adding one that's already there changes nothing. */
+export async function addReaction(
+  messageId: string,
+  emoji: string,
+  username: Username,
+): Promise<void> {
   // The row goes in first so a concurrent removal counts it and keeps the mirror.
   const inserted = await query(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
@@ -57,7 +66,6 @@ export async function toggleReaction(
     throw err;
   }
   notifySubscribers();
-  return "added";
 }
 
 async function countReactions(messageId: string, emoji: string) {
@@ -97,21 +105,27 @@ export function startReactionCleanup(): void {
   });
 }
 
-function collectIds(messages: Message[], ids: string[] = []): string[] {
-  for (const message of messages) {
-    ids.push(message.id);
-    collectIds(message.replies, ids);
+type Reactable<T> = { id: string; reactions: Reaction[]; replies?: T[] };
+type SiteReactions = Map<string, Map<string, string[]>>;
+
+function collectIds<T extends Reactable<T>>(
+  items: T[],
+  ids: string[] = [],
+): string[] {
+  for (const item of items) {
+    ids.push(item.id);
+    collectIds(item.replies ?? [], ids);
   }
   return ids;
 }
 
-function mergeReactions(
-  messages: Message[],
-  site: Map<string, Map<string, string[]>>,
-): Message[] {
-  return messages.map((message) => {
-    const users = site.get(message.id) ?? new Map<string, string[]>();
-    const reactions: Reaction[] = message.reactions.map((reaction) => {
+function mergeReactions<T extends Reactable<T>>(
+  items: T[],
+  site: SiteReactions,
+): T[] {
+  return items.map((item) => {
+    const users = site.get(item.id) ?? new Map<string, string[]>();
+    const reactions: Reaction[] = item.reactions.map((reaction) => {
       const siteUsers = users.get(reaction.emoji) ?? [];
       users.delete(reaction.emoji);
       return {
@@ -123,20 +137,18 @@ function mergeReactions(
     for (const [emoji, siteUsers] of users) {
       reactions.push({ emoji, count: siteUsers.length, users: siteUsers });
     }
-    return {
-      ...message,
-      reactions,
-      replies: mergeReactions(message.replies, site),
-    };
+    return item.replies
+      ? { ...item, reactions, replies: mergeReactions(item.replies, site) }
+      : { ...item, reactions };
   });
 }
 
 /** Adds the site's reactions to the Discord ones; on failure the Discord ones still show. */
-export async function withSiteReactions(
-  messages: Message[],
-): Promise<Message[]> {
-  const ids = collectIds(messages);
-  if (ids.length === 0) return messages;
+export async function withSiteReactions<T extends Reactable<T>>(
+  items: T[],
+): Promise<T[]> {
+  const ids = collectIds(items);
+  if (ids.length === 0) return items;
 
   try {
     const { rows } = await query(
@@ -146,7 +158,7 @@ export async function withSiteReactions(
       ids,
     );
 
-    const site = new Map<string, Map<string, string[]>>();
+    const site: SiteReactions = new Map();
     for (const row of rows) {
       const messageId = String(row["message_id"]);
       const emoji = String(row["emoji"]);
@@ -158,9 +170,9 @@ export async function withSiteReactions(
       ]);
     }
 
-    return mergeReactions(messages, site);
+    return mergeReactions(items, site);
   } catch (err) {
     log.error({ err }, "Failed to load reactions");
-    return messages;
+    return items;
   }
 }
