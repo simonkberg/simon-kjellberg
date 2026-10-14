@@ -29,16 +29,13 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
 function toggleOwnReaction(
   reactions: Reaction[],
   emoji: string,
-  username: string | null,
+  username: string,
 ): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
   if (!existing) {
-    return [
-      ...reactions,
-      { emoji, count: 1, users: username ? [username] : [] },
-    ];
+    return [...reactions, { emoji, count: 1, users: [username] }];
   }
-  const reacted = username !== null && existing.users.includes(username);
+  const reacted = existing.users.includes(username);
   return reactions
     .map((reaction) =>
       reaction !== existing
@@ -52,7 +49,7 @@ function toggleOwnReaction(
           : {
               ...reaction,
               count: reaction.count + 1,
-              users: username ? [...reaction.users, username] : reaction.users,
+              users: [...reaction.users, username],
             },
     )
     .filter((reaction) => reaction.count > 0);
@@ -62,7 +59,7 @@ const withReactionToggled = (
   messages: Message[],
   messageId: string,
   emoji: string,
-  username: string | null,
+  username: string,
 ): Message[] =>
   messages.map((message) => ({
     ...message,
@@ -88,8 +85,14 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   // Shown at once; the server's history replaces it when the action settles.
   const [messages, toggleOptimistically] = useOptimistic(
     result.status === "ok" ? result.messages : [],
-    (current, { messageId, emoji }: { messageId: string; emoji: string }) =>
-      withReactionToggled(current, messageId, emoji, currentUsername),
+    (
+      current,
+      {
+        messageId,
+        emoji,
+        username,
+      }: { messageId: string; emoji: string; username: string },
+    ) => withReactionToggled(current, messageId, emoji, username),
   );
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
@@ -99,7 +102,10 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
 
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
-      toggleOptimistically({ messageId, emoji });
+      // Without a session the server turns the reaction away.
+      if (currentUsername !== null) {
+        toggleOptimistically({ messageId, emoji, username: currentUsername });
+      }
       const reaction = await reactToChatMessage(messageId, emoji).catch(
         () =>
           ({

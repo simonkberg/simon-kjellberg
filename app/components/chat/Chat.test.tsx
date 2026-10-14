@@ -302,7 +302,7 @@ describe("Chat", () => {
       await settle();
     });
 
-    it("counts a visitor's reaction before they have a username", async () => {
+    it("waits for the server before a visitor has a username", async () => {
       await act(async () =>
         render(
           <Chat
@@ -320,27 +320,11 @@ describe("Chat", () => {
         ),
       );
 
-      let settle = holdReaction();
+      const settle = holdReaction();
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
-      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
-        "title",
-        "2 on Discord",
-      );
-      await settle();
 
-      settle = holdReaction();
-      const picker = screen.getByRole("group", {
-        name: "Pick a reaction",
-        hidden: true,
-      });
-      fireEvent(
-        picker,
-        Object.assign(new Event("beforetoggle"), { newState: "open" }),
-      );
-      await userEvent.click(
-        within(picker).getByRole("button", { name: "tada", hidden: true }),
-      );
-      expect(screen.getByRole("button", { name: "🎉 1" })).toBeInTheDocument();
+      expect(reactToChatMessage).toHaveBeenCalledWith("msg-1", "👍");
+      expect(screen.getByRole("button", { name: "👍 1" })).toBeInTheDocument();
       await settle();
     });
 
