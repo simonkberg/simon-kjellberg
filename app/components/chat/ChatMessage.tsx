@@ -44,21 +44,23 @@ export const ChatMessage = ({
       </Suspense>
     </small>{" "}
     {!preview && (
-      <span className="actions">
-        <button
-          aria-label="Reply"
-          title="Reply"
-          className="reply"
-          onClick={() => setReplyToId(id)}
-          disabled={replyToId === id}
-        >
-          ↩
-        </button>
-        <ChatReactionPicker messageId={id} />
-      </span>
-    )}
-    {!preview && reactions.length > 0 && (
-      <ChatReactionList messageId={id} reactions={reactions} />
+      <>
+        <span className="actions">
+          <button
+            aria-label="Reply"
+            title="Reply"
+            className="reply"
+            onClick={() => setReplyToId(id)}
+            disabled={replyToId === id}
+          >
+            ↩
+          </button>
+          <ChatReactionPicker messageId={id} />
+        </span>
+        {reactions.length > 0 && (
+          <ChatReactionList messageId={id} reactions={reactions} />
+        )}
+      </>
     )}
   </div>
 );

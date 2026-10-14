@@ -419,22 +419,21 @@ class DiscordGateway {
           log.debug({ event: eventName }, "Reaction event for our channel");
           this.notifySubscribers();
 
-          const clear = ReactionClearDataSchema.safeParse(data);
-          if (eventName === "MESSAGE_REACTION_REMOVE_ALL" && clear.success) {
-            this.#notifyClearSubscribers({
-              messageIds: [clear.data.message_id],
-              emoji: null,
-            });
-          }
-          if (
-            eventName === "MESSAGE_REACTION_REMOVE_EMOJI" &&
-            clear.success &&
-            clear.data.emoji?.name
-          ) {
-            this.#notifyClearSubscribers({
-              messageIds: [clear.data.message_id],
-              emoji: clear.data.emoji.name,
-            });
+          const clear =
+            eventName === "MESSAGE_REACTION_REMOVE_ALL" ||
+            eventName === "MESSAGE_REACTION_REMOVE_EMOJI"
+              ? ReactionClearDataSchema.safeParse(data)
+              : undefined;
+          if (clear?.success) {
+            const messageIds = [clear.data.message_id];
+            if (eventName === "MESSAGE_REACTION_REMOVE_ALL") {
+              this.#notifyClearSubscribers({ messageIds, emoji: null });
+            } else if (clear.data.emoji?.name) {
+              this.#notifyClearSubscribers({
+                messageIds,
+                emoji: clear.data.emoji.name,
+              });
+            }
           }
         }
         break;

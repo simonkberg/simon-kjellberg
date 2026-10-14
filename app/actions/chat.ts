@@ -18,7 +18,7 @@ import {
   toggleReaction,
   withSiteReactions,
 } from "@/lib/reactions";
-import { getSession } from "@/lib/session";
+import { getSession, type Username } from "@/lib/session";
 import { replaceShortcodes } from "@/lib/shortcodes";
 
 export type ChatHistoryResult =
@@ -40,6 +40,28 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
 }
 
 const RATE_LIMIT = { limit: 5, windowMs: 30_000 };
+
+async function admit(
+  action: string,
+  verb: string,
+  ip: string | undefined,
+  username: Username,
+  limits: { limit: number; windowMs: number },
+): Promise<{ status: "error"; error: string } | null> {
+  if (ip !== undefined && isDeniedIp(ip)) {
+    log.info({ ip, action }, "Denied a listed IP");
+    return { status: "error", error: `${verb} from your network is blocked.` };
+  }
+
+  const result = await rateLimit(`${action}:${ip ?? username}`, limits);
+  if (!result.success) {
+    return {
+      status: "error",
+      error: `Rate limit exceeded. Wait ${result.retryAfterSeconds} seconds before trying again.`,
+    };
+  }
+  return null;
+}
 
 export async function refreshChatHistory() {
   updateTag("getChatHistory");
@@ -70,26 +92,14 @@ export async function postChatMessage(
     const { username } = await getSession();
 
     const request = await identifiers();
-    if (request.ip !== undefined && isDeniedIp(request.ip)) {
-      log.info(
-        { ip: request.ip, action: "postChatMessage" },
-        "Denied a listed IP",
-      );
-      return {
-        status: "error",
-        error: "Posting from your network is blocked.",
-      };
-    }
-
-    const identifier = request.ip ?? username;
-    const result = await rateLimit(`postChatMessage:${identifier}`, RATE_LIMIT);
-
-    if (!result.success) {
-      return {
-        status: "error",
-        error: `Rate limit exceeded. Wait ${result.retryAfterSeconds} seconds before trying again.`,
-      };
-    }
+    const denied = await admit(
+      "postChatMessage",
+      "Posting",
+      request.ip,
+      username,
+      RATE_LIMIT,
+    );
+    if (denied) return denied;
 
     const messageId = await postChannelMessage(text, username, replyToId);
 
@@ -123,28 +133,15 @@ export async function reactToChatMessage(
 
     const { username } = await getSession();
 
-    const request = await identifiers();
-    if (request.ip !== undefined && isDeniedIp(request.ip)) {
-      log.info(
-        { ip: request.ip, action: "reactToChatMessage" },
-        "Denied a listed IP",
-      );
-      return {
-        status: "error",
-        error: "Reacting from your network is blocked.",
-      };
-    }
-
-    const result = await rateLimit(
-      `reactToChatMessage:${request.ip ?? username}`,
+    const { ip } = await identifiers();
+    const denied = await admit(
+      "reactToChatMessage",
+      "Reacting",
+      ip,
+      username,
       REACTION_RATE_LIMIT,
     );
-    if (!result.success) {
-      return {
-        status: "error",
-        error: `Rate limit exceeded. Wait ${result.retryAfterSeconds} seconds before trying again.`,
-      };
-    }
+    if (denied) return denied;
 
     const change = await toggleReaction(id, reaction, username);
     log.info(

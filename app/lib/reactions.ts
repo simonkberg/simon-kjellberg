@@ -18,16 +18,20 @@ import { query } from "@/lib/turso";
 /** One emoji as Discord stores a reaction's name; kept off the client, where older browsers can't parse the `v` flag. */
 export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
 
+function deleteRow(messageId: string, emoji: string, username: Username) {
+  return query(
+    "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
+    [messageId, emoji, username],
+  );
+}
+
 /** Adds the visitor's reaction, or takes it back if they already reacted with that emoji. */
 export async function toggleReaction(
   messageId: string,
   emoji: string,
   username: Username,
 ): Promise<"added" | "removed"> {
-  const { rowsAffected } = await query(
-    "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
-    [messageId, emoji, username],
-  );
+  const { rowsAffected } = await deleteRow(messageId, emoji, username);
 
   if (rowsAffected > 0) {
     // The site counts from Turso, so a stale mirror only shows on Discord.
@@ -58,15 +62,14 @@ export async function addReaction(
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
   } catch (err) {
-    await query(
-      "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
-      [messageId, emoji, username],
-    ).catch((rollbackErr: unknown) => {
-      log.error(
-        { err: rollbackErr, messageId, emoji },
-        "Failed to roll back an unmirrored reaction",
-      );
-    });
+    await deleteRow(messageId, emoji, username).catch(
+      (rollbackErr: unknown) => {
+        log.error(
+          { err: rollbackErr, messageId, emoji },
+          "Failed to roll back an unmirrored reaction",
+        );
+      },
+    );
     throw err;
   }
   notifySubscribers();
@@ -93,19 +96,25 @@ async function dropMirrorIfUnused(messageId: string, emoji: string) {
 export async function clearReactions({
   messageIds,
   emoji,
-}: ReactionClear): Promise<void> {
-  await query(
+}: ReactionClear): Promise<number> {
+  const { rowsAffected } = await query(
     "DELETE FROM reactions WHERE message_id IN (SELECT value FROM json_each(?)) AND (? IS NULL OR emoji = ?)",
     [JSON.stringify(messageIds), emoji, emoji],
   );
+  return rowsAffected;
 }
 
 export function startReactionCleanup(): void {
   subscribeToReactionClears((clear) => {
     // The gateway's own refresh may read the rows before they're gone.
-    clearReactions(clear).then(notifySubscribers, (err: unknown) => {
-      log.error({ err, ...clear }, "Failed to clear reactions");
-    });
+    clearReactions(clear).then(
+      (cleared) => {
+        if (cleared > 0) notifySubscribers();
+      },
+      (err: unknown) => {
+        log.error({ err, ...clear }, "Failed to clear reactions");
+      },
+    );
   });
 }
 
@@ -157,9 +166,9 @@ export async function withSiteReactions<T extends Reactable<T>>(
   try {
     const { rows } = await query(
       `SELECT message_id, emoji, username FROM reactions
-       WHERE message_id IN (${ids.map(() => "?").join(", ")})
+       WHERE message_id IN (SELECT value FROM json_each(?))
        ORDER BY id`,
-      ids,
+      [JSON.stringify(ids)],
     );
 
     const site: SiteReactions = new Map();
@@ -168,10 +177,9 @@ export async function withSiteReactions<T extends Reactable<T>>(
       const emoji = String(row["emoji"]);
       const byEmoji = site.get(messageId) ?? new Map<string, string[]>();
       site.set(messageId, byEmoji);
-      byEmoji.set(emoji, [
-        ...(byEmoji.get(emoji) ?? []),
-        String(row["username"]),
-      ]);
+      const users = byEmoji.get(emoji) ?? [];
+      byEmoji.set(emoji, users);
+      users.push(String(row["username"]));
     }
 
     return mergeReactions(items, site);

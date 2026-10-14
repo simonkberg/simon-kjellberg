@@ -35,40 +35,50 @@ function toggleOwnReaction(
   if (!existing) {
     return [...reactions, { emoji, count: 1, users: [username] }];
   }
-  const reacted = existing.users.includes(username);
+  const updated = existing.users.includes(username)
+    ? {
+        ...existing,
+        count: existing.count - 1,
+        users: existing.users.filter((user) => user !== username),
+      }
+    : {
+        ...existing,
+        count: existing.count + 1,
+        users: [...existing.users, username],
+      };
   return reactions
-    .map((reaction) =>
-      reaction !== existing
-        ? reaction
-        : reacted
-          ? {
-              ...reaction,
-              count: reaction.count - 1,
-              users: reaction.users.filter((user) => user !== username),
-            }
-          : {
-              ...reaction,
-              count: reaction.count + 1,
-              users: [...reaction.users, username],
-            },
-    )
+    .map((reaction) => (reaction === existing ? updated : reaction))
     .filter((reaction) => reaction.count > 0);
 }
 
-const withReactionToggled = (
+// Copies only the path to the message, so the rest keep their memoized renders.
+function withReactionToggled(
   messages: Message[],
   messageId: string,
   emoji: string,
   username: string,
-): Message[] =>
-  messages.map((message) => ({
-    ...message,
-    reactions:
-      message.id === messageId
-        ? toggleOwnReaction(message.reactions, emoji, username)
-        : message.reactions,
-    replies: withReactionToggled(message.replies, messageId, emoji, username),
-  }));
+): Message[] {
+  const next = messages.map((message) => {
+    const replies = withReactionToggled(
+      message.replies,
+      messageId,
+      emoji,
+      username,
+    );
+    if (message.id !== messageId && replies === message.replies) {
+      return message;
+    }
+    return {
+      ...message,
+      reactions:
+        message.id === messageId
+          ? toggleOwnReaction(message.reactions, emoji, username)
+          : message.reactions,
+      replies,
+    };
+  });
+  return next.every((message, i) => message === messages[i]) ? messages : next;
+}
 
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
