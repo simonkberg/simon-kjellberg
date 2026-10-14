@@ -222,7 +222,10 @@ describe("Chat", () => {
             status: "ok",
             messages: [
               createMessage({
-                reactions: [{ emoji: "👍", count: 1, users: [] }],
+                reactions: [
+                  { emoji: "👍", count: 1, users: [] },
+                  { emoji: "🎉", count: 1, users: [] },
+                ],
               }),
             ],
           }),
@@ -234,6 +237,10 @@ describe("Chat", () => {
       const pill = screen.getByRole("button", { name: "👍 2" });
       expect(pill).toHaveAttribute("aria-pressed", "true");
       expect(pill).toHaveAttribute("title", "TestUser and 1 on Discord");
+      expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
       await settle();
     });
 
@@ -292,6 +299,48 @@ describe("Chat", () => {
         "aria-pressed",
         "true",
       );
+      await settle();
+    });
+
+    it("counts a visitor's reaction before they have a username", async () => {
+      await act(async () =>
+        render(
+          <Chat
+            history={Promise.resolve({
+              status: "ok",
+              messages: [
+                createMessage({
+                  reactions: [{ emoji: "👍", count: 1, users: [] }],
+                }),
+              ],
+            })}
+            tipDismissed={Promise.resolve(false)}
+            username={Promise.resolve(null)}
+          />,
+        ),
+      );
+
+      let settle = holdReaction();
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
+        "title",
+        "2 on Discord",
+      );
+      await settle();
+
+      settle = holdReaction();
+      const picker = screen.getByRole("group", {
+        name: "Pick a reaction",
+        hidden: true,
+      });
+      fireEvent(
+        picker,
+        Object.assign(new Event("beforetoggle"), { newState: "open" }),
+      );
+      await userEvent.click(
+        within(picker).getByRole("button", { name: "tada", hidden: true }),
+      );
+      expect(screen.getByRole("button", { name: "🎉 1" })).toBeInTheDocument();
       await settle();
     });
 
