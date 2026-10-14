@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -177,6 +184,14 @@ describe("Chat", () => {
   });
 
   describe("reactions", () => {
+    // React holds every transition until all pending actions settle, so each test settles its own.
+    function holdReaction() {
+      const { promise, resolve } =
+        Promise.withResolvers<Awaited<ReturnType<typeof reactToChatMessage>>>();
+      vi.mocked(reactToChatMessage).mockReturnValue(promise);
+      return () => act(async () => resolve({ status: "ok" }));
+    }
+
     it("toggles a reaction from its pill", async () => {
       vi.mocked(reactToChatMessage).mockResolvedValue({ status: "ok" });
       await act(async () =>
@@ -197,6 +212,112 @@ describe("Chat", () => {
       await userEvent.click(pill);
 
       expect(reactToChatMessage).toHaveBeenCalledWith("msg-1", "👍");
+    });
+
+    it("shows a reaction at once while the server catches up", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: [] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      const pill = screen.getByRole("button", { name: "👍 2" });
+      expect(pill).toHaveAttribute("aria-pressed", "true");
+      expect(pill).toHaveAttribute("title", "TestUser and 1 on Discord");
+      await settle();
+    });
+
+    it("drops a pill at once when the last reaction is taken back", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: ["TestUser"] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        screen.queryByRole("button", { name: /👍/ }),
+      ).not.toBeInTheDocument();
+      await settle();
+    });
+
+    it("shows a reply's new reaction at once", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                replies: [createMessage({ id: "reply-1", content: "Reply" })],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      const picker = screen.getAllByRole("group", {
+        name: "Pick a reaction",
+        hidden: true,
+      })[1]!;
+      fireEvent(
+        picker,
+        Object.assign(new Event("beforetoggle"), { newState: "open" }),
+      );
+      await userEvent.click(
+        within(picker).getByRole("button", { name: "tada", hidden: true }),
+      );
+
+      expect(reactToChatMessage).toHaveBeenCalledWith("reply-1", "🎉");
+      expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await settle();
+    });
+
+    it("puts the reaction back when the server turns it away", async () => {
+      vi.mocked(reactToChatMessage).mockResolvedValue({
+        status: "error",
+        error: "Rate limit exceeded.",
+      });
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: [] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        await screen.findByRole("button", { name: "👍 1" }),
+      ).toHaveAttribute("aria-pressed", "false");
     });
 
     it("shows why a reaction failed", async () => {

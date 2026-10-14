@@ -1,11 +1,11 @@
 "use client";
 
-import { use, useState, useTransition } from "react";
+import { use, useOptimistic, useState, useTransition } from "react";
 
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
-import type { Message } from "@/lib/discord/api";
+import type { Message, Reaction } from "@/lib/discord/api";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
@@ -26,6 +26,53 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
+function toggleOwnReaction(
+  reactions: Reaction[],
+  emoji: string,
+  username: string | null,
+): Reaction[] {
+  const existing = reactions.find((reaction) => reaction.emoji === emoji);
+  if (!existing) {
+    return [
+      ...reactions,
+      { emoji, count: 1, users: username ? [username] : [] },
+    ];
+  }
+  const reacted = username !== null && existing.users.includes(username);
+  return reactions
+    .map((reaction) =>
+      reaction !== existing
+        ? reaction
+        : reacted
+          ? {
+              ...reaction,
+              count: reaction.count - 1,
+              users: reaction.users.filter((user) => user !== username),
+            }
+          : {
+              ...reaction,
+              count: reaction.count + 1,
+              users: username ? [...reaction.users, username] : reaction.users,
+            },
+    )
+    .filter((reaction) => reaction.count > 0);
+}
+
+const withReactionToggled = (
+  messages: Message[],
+  messageId: string,
+  emoji: string,
+  username: string | null,
+): Message[] =>
+  messages.map((message) => ({
+    ...message,
+    reactions:
+      message.id === messageId
+        ? toggleOwnReaction(message.reactions, emoji, username)
+        : message.reactions,
+    replies: withReactionToggled(message.replies, messageId, emoji, username),
+  }));
+
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
@@ -38,6 +85,12 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [reacting, startReacting] = useTransition();
+  // Shown at once; the server's history replaces it when the action settles.
+  const [messages, toggleOptimistically] = useOptimistic(
+    result.status === "ok" ? result.messages : [],
+    (current, { messageId, emoji }: { messageId: string; emoji: string }) =>
+      withReactionToggled(current, messageId, emoji, currentUsername),
+  );
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
     message: string;
@@ -46,6 +99,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
 
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
+      toggleOptimistically({ messageId, emoji });
       const reaction = await reactToChatMessage(messageId, emoji).catch(
         () =>
           ({
@@ -67,7 +121,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
 
   // @v8
   const replyToMessage = replyToId
-    ? findMessageById(result.messages, replyToId)
+    ? findMessageById(messages, replyToId)
     : null;
 
   return (
@@ -80,7 +134,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
         message={reactionError?.message}
       />
       <ChatHistory
-        messages={result.messages}
+        messages={messages}
         replyToId={replyToId}
         setReplyToId={setReplyToId}
       />
