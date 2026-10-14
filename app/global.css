@@ -1415,10 +1415,12 @@ ul {
     margin-left: 1ch;
   }
 
+  /* Kept while its picker is open: the picker hides with its anchor, and Safari doesn't focus a clicked button. */
   &:hover > .reply,
   &:focus-within > .reply,
   &:hover > .react,
-  &:focus-within > .react {
+  &:focus-within > .react,
+  &:has(> .chat-reaction-picker:popover-open) > .react {
     visibility: visible;
   }
 
