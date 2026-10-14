@@ -13,6 +13,19 @@ export const DiscordMessageSchema = z.object({
   timestamp: z.string(),
   edited_timestamp: z.string().nullable().optional(),
   message_reference: z.object({ message_id: z.string().optional() }).optional(),
+  reactions: z
+    .array(
+      z.object({
+        count: z.number(),
+        me: z.boolean(),
+        // `id` is set for custom guild emoji, which the site can't render.
+        emoji: z.object({
+          id: z.string().nullable(),
+          name: z.string().nullable(),
+        }),
+      }),
+    )
+    .optional(),
 });
 
 export type DiscordMessage = z.infer<typeof DiscordMessageSchema>;

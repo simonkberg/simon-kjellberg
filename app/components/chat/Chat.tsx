@@ -1,15 +1,17 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useTransition } from "react";
 
-import type { ChatHistoryResult } from "@/actions/chat";
+import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
 import type { Message } from "@/lib/discord/api";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
+import { ChatReactionsContext } from "./ChatReactions";
 import { ChatTip } from "./ChatTip";
+import { ChatToast } from "./ChatToast";
 
 const findMessageById = (messages: Message[], id: string): Message | null => {
   for (const message of messages) {
@@ -27,12 +29,25 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
+  username: Promise<string | null>;
 }
 
-export const Chat = ({ history, tipDismissed }: ChatProps) => {
+export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const result = use(history);
   const dismissed = use(tipDismissed);
+  const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [reacting, startReacting] = useTransition();
+  const [reactionError, setReactionError] = useState<string>();
+
+  const react = (messageId: string, emoji: string) => {
+    startReacting(async () => {
+      const reaction = await reactToChatMessage(messageId, emoji);
+      setReactionError(
+        reaction.status === "error" ? reaction.error : undefined,
+      );
+    });
+  };
 
   if (result.status === "error") {
     return <p>Chat is temporarily unavailable :(</p>;
@@ -44,7 +59,10 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     : null;
 
   return (
-    <>
+    <ChatReactionsContext
+      value={{ username: currentUsername, pending: reacting, react }}
+    >
+      <ChatToast variant="error" message={reactionError} />
       <ChatHistory
         messages={result.messages}
         replyToId={replyToId}
@@ -71,6 +89,6 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
       <ChatInput replyToId={replyToId} setReplyToId={setReplyToId}>
         {!dismissed && <ChatTip />}
       </ChatInput>
-    </>
+    </ChatReactionsContext>
   );
 };

@@ -320,6 +320,52 @@ describe("subscribe", () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "MESSAGE_REACTION_ADD",
+    "MESSAGE_REACTION_REMOVE",
+    "MESSAGE_REACTION_REMOVE_ALL",
+    "MESSAGE_REACTION_REMOVE_EMOJI",
+  ])("should notify subscribers on %s for matching channel", async (event) => {
+    const { subscribe } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    await subscribe(callback);
+
+    const client = getLastClient(gateway.clients);
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", message_id: "msg-test" },
+        2,
+        event,
+      ),
+    );
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "some-other-channel-id", message_id: "msg-test" },
+        3,
+        event,
+      ),
+    );
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("should notify subscribers on demand", async () => {
+    const { subscribe, notifySubscribers } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    await subscribe(callback);
+    notifySubscribers();
+
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   it("should stop notifying after unsubscribe", async () => {
     const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());

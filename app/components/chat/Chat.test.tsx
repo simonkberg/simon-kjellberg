@@ -2,12 +2,13 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ChatHistoryResult } from "@/actions/chat";
+import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import type { Message } from "@/lib/discord/api";
 
 import { Chat } from "./Chat";
 
 vi.mock(import("server-only"), () => ({}));
+vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
 
 describe("Chat", () => {
   beforeEach(() => {
@@ -26,6 +27,7 @@ describe("Chat", () => {
     <Chat
       history={Promise.resolve(result)}
       tipDismissed={Promise.resolve(dismissed)}
+      username={Promise.resolve("TestUser")}
     />
   );
 
@@ -35,6 +37,7 @@ describe("Chat", () => {
     user: { name: "TestUser", color: "hsl(0 100% 50%)" },
     edited: false,
     timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+    reactions: [],
     replies: [],
     ...overrides,
   });
@@ -170,6 +173,55 @@ describe("Chat", () => {
 
       // Reply preview should be hidden since the message no longer exists
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("reactions", () => {
+    it("toggles a reaction from its pill", async () => {
+      vi.mocked(reactToChatMessage).mockResolvedValue({ status: "ok" });
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: ["TestUser"] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      const pill = screen.getByRole("button", { name: "👍 1" });
+      expect(pill).toHaveAttribute("aria-pressed", "true");
+      await userEvent.click(pill);
+
+      expect(reactToChatMessage).toHaveBeenCalledWith("msg-1", "👍");
+    });
+
+    it("shows why a reaction failed", async () => {
+      vi.mocked(reactToChatMessage).mockResolvedValue({
+        status: "error",
+        error: "Rate limit exceeded.",
+      });
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: [] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        await screen.findByText("Rate limit exceeded."),
+      ).toBeInTheDocument();
     });
   });
 });

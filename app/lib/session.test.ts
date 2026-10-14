@@ -5,7 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { log } from "@/lib/log";
 import { MockCookies } from "@/mocks/headers";
 
-import { decrypt, encrypt, getSession, SessionSchema } from "./session";
+import {
+  decrypt,
+  encrypt,
+  getSession,
+  getUsername,
+  SessionSchema,
+} from "./session";
 
 vi.mock(import("server-only"), () => ({}));
 
@@ -154,6 +160,26 @@ describe("session", () => {
 
       await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
       expect(forbidden).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("getUsername", () => {
+    it("should return the username from the session cookie", async () => {
+      const sessionToken = await encrypt(
+        SessionSchema.parse({ username: "testuser" }),
+      );
+      vi.mocked(cookies).mockResolvedValue(
+        new MockCookies(new Headers({ cookie: `session=${sessionToken}` })),
+      );
+
+      expect(await getUsername()).toBe("testuser");
+    });
+
+    it("should return null without a session cookie", async () => {
+      vi.mocked(cookies).mockResolvedValue(new MockCookies(new Headers()));
+
+      expect(await getUsername()).toBeNull();
+      expect(forbidden).not.toHaveBeenCalled();
     });
   });
 });

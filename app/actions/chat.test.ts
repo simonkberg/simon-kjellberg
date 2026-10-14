@@ -6,13 +6,16 @@ import {
   dismissChatTip,
   getChatHistory,
   postChatMessage,
+  reactToChatMessage,
   refreshChatHistory,
 } from "@/actions/chat";
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
+  addBotReaction,
   getChannelMessages,
   type Message,
   postChannelMessage,
+  removeBotReaction,
 } from "@/lib/discord/api";
 import { resetGlobal } from "@/lib/global";
 import { identifiers } from "@/lib/identifiers";
@@ -52,6 +55,7 @@ function createMockMessage(overrides: Partial<Message> = {}): Message {
     content: "Hello, world!",
     edited: false,
     timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+    reactions: [],
     replies: [],
     ...overrides,
   };
@@ -74,6 +78,10 @@ afterEach(() => {
 });
 
 describe("getChatHistory", () => {
+  beforeEach(() => {
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  });
+
   it("returns messages on success", async () => {
     const mockMessages = [
       createMockMessage({ id: "1", content: "First message" }),
@@ -101,6 +109,32 @@ describe("getChatHistory", () => {
       { err: error, action: "getChatHistory" },
       "Error fetching chat history",
     );
+  });
+
+  it("adds the site's reactions to Discord's", async () => {
+    vi.mocked(getChannelMessages).mockResolvedValue([
+      createMockMessage({
+        id: "1",
+        reactions: [{ emoji: "👍", count: 1, users: [] }],
+      }),
+    ]);
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'a'), ('1', '🎉', 'b')",
+    );
+
+    const result = await getChatHistory();
+
+    expect(result).toMatchObject({
+      status: "ok",
+      messages: [
+        {
+          reactions: [
+            { emoji: "👍", count: 2, users: ["a"] },
+            { emoji: "🎉", count: 1, users: ["b"] },
+          ],
+        },
+      ],
+    });
   });
 
   it("sets cache life and tag", async () => {
@@ -228,6 +262,16 @@ describe("postChatMessage", () => {
     );
   });
 
+  it("turns :shortcodes: into emoji", async () => {
+    await post("ha :joy: :not_an_emoji:");
+
+    expect(postChannelMessage).toHaveBeenCalledWith(
+      "ha 😂 :not_an_emoji:",
+      "test-user",
+      undefined,
+    );
+  });
+
   it("returns error when form data is invalid", async () => {
     const formData = new FormData();
     // Missing 'text' field
@@ -253,6 +297,94 @@ describe("postChatMessage", () => {
     const result = await postChatMessage(formData);
 
     expect(result.status).toBe("error");
+  });
+});
+
+describe("reactToChatMessage", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
+    vi.spyOn(log, "info").mockImplementation(() => {});
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    resetGlobal("simon.dev/rate-limit-blocked");
+    resetGlobal("simon.dev/ip-deny-list");
+    server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
+    await refreshIpDenyList();
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(addBotReaction).mockResolvedValue();
+    vi.mocked(removeBotReaction).mockResolvedValue();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const reactions = async () =>
+    (await query("SELECT message_id, emoji, username FROM reactions")).rows;
+
+  it("adds the reaction, mirrors it to Discord and refreshes", async () => {
+    expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
+
+    expect(await reactions()).toEqual([
+      { message_id: "123", emoji: "👍", username: "test-user" },
+    ]);
+    expect(addBotReaction).toHaveBeenCalledWith("123", "👍");
+    expect(updateTag).toHaveBeenCalledWith("getChatHistory");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("takes the reaction back on a second toggle", async () => {
+    await reactToChatMessage("123", "👍");
+    expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
+
+    expect(await reactions()).toEqual([]);
+    expect(removeBotReaction).toHaveBeenCalledWith("123", "👍");
+  });
+
+  it.each([
+    ["a message ID that isn't a snowflake", "../123", "👍"],
+    ["text that isn't one emoji", "123", "nice"],
+    ["two emoji", "123", "👍👍"],
+  ])("rejects %s", async (_, messageId, emoji) => {
+    expect(await reactToChatMessage(messageId, emoji)).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
+    expect(addBotReaction).not.toHaveBeenCalled();
+  });
+
+  it("turns away an IP on the deny list", async () => {
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "6.6.6.6",
+      userAgent: "vitest",
+    });
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Reacting from your network is blocked.",
+    });
+    expect(await reactions()).toEqual([]);
+  });
+
+  it("rejects the eleventh reaction in 30 seconds", async () => {
+    for (let i = 0; i < 10; i++) {
+      expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
+    }
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Rate limit exceeded. Wait 30 seconds before trying again.",
+    });
+  });
+
+  it("returns error when Discord rejects the reaction", async () => {
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("Unknown"));
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
+    expect(await reactions()).toEqual([]);
   });
 });
 

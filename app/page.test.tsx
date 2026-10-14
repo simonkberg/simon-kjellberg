@@ -30,6 +30,10 @@ vi.mock(import("@/lib/chatTip"), () => ({
   getChatTipDismissed: vi.fn(() => Promise.resolve(false)),
 }));
 
+vi.mock(import("@/lib/session"), () => ({
+  getUsername: vi.fn(() => Promise.resolve(null)),
+}));
+
 vi.mock(import("@/actions/lastfm"), () => ({
   getRecentTracks: vi.fn(() =>
     Promise.resolve<GetRecentTracksResult>({ status: "ok", tracks: [] }),
@@ -44,9 +48,10 @@ vi.mock(import("@/actions/wakaTime"), () => ({
 
 // Mock components that use() their promise props to trigger Suspense
 vi.mock(import("@/components/chat/Chat"), () => ({
-  Chat: ({ history, tipDismissed }: ChatProps) => {
+  Chat: ({ history, tipDismissed, username }: ChatProps) => {
     use(history);
     use(tipDismissed);
+    use(username);
     return <div data-testid="chat" />;
   },
 }));

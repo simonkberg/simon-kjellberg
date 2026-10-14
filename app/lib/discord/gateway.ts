@@ -19,7 +19,7 @@ const GatewayOpcode = {
 } as const;
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
-const GATEWAY_INTENTS = 1 << 9; // GUILD_MESSAGES
+const GATEWAY_INTENTS = (1 << 9) | (1 << 10); // GUILD_MESSAGES, GUILD_MESSAGE_REACTIONS
 
 // Close codes that require fresh identify (not resume)
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
@@ -80,7 +80,7 @@ class DiscordGateway {
     this.#subscribers.delete(callback);
   }
 
-  #notifySubscribers(): void {
+  notifySubscribers(): void {
     for (const callback of this.#subscribers) {
       try {
         callback();
@@ -348,7 +348,7 @@ class DiscordGateway {
           parsed.data.channel_id === env.DISCORD_CHANNEL_ID
         ) {
           log.debug({ event: eventName }, "Message event for our channel");
-          this.#notifySubscribers();
+          this.notifySubscribers();
 
           if (eventName === "MESSAGE_CREATE") {
             const parsedMessage = DiscordMessageSchema.safeParse(data);
@@ -356,6 +356,21 @@ class DiscordGateway {
               this.#notifyMessageSubscribers(parsedMessage.data);
             }
           }
+        }
+        break;
+      }
+
+      case "MESSAGE_REACTION_ADD":
+      case "MESSAGE_REACTION_REMOVE":
+      case "MESSAGE_REACTION_REMOVE_ALL":
+      case "MESSAGE_REACTION_REMOVE_EMOJI": {
+        const parsed = MessageEventDataSchema.safeParse(data);
+        if (
+          parsed.success &&
+          parsed.data.channel_id === env.DISCORD_CHANNEL_ID
+        ) {
+          log.debug({ event: eventName }, "Reaction event for our channel");
+          this.notifySubscribers();
         }
         break;
       }
@@ -419,6 +434,11 @@ export async function subscribeToMessages(
   gw.addMessageSubscriber(callback);
   await gw.connect();
   return () => gw.removeMessageSubscriber(callback);
+}
+
+/** Tells this process's subscribers the channel changed without a gateway event. */
+export function notifySubscribers(): void {
+  getGateway().notifySubscribers();
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */

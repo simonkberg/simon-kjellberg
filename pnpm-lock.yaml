@@ -181,6 +181,9 @@ importers:
       dataloader:
         specifier: 2.2.3
         version: 2.2.3
+      gemoji:
+        specifier: 8.1.0
+        version: 8.1.0
       jose:
         specifier: 6.2.12
         version: 6.2.12
@@ -1572,6 +1575,9 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  gemoji@8.1.0:
+    resolution: {integrity: sha512-HA4Gx59dw2+tn+UAa7XEV4ufUKI4fH1KgcbenVA9YKSj1QJTT0xh5Mwv5HMFNN3l2OtUe3ZIfuRwSyZS5pLIWw==}
 
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
@@ -3035,6 +3041,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  gemoji@8.1.0: {}
 
   get-caller-file@2.0.5: {}
 

@@ -8,9 +8,11 @@ import { server } from "@/mocks/node";
 import {
   _resetRateLimitState,
   _setRateLimitGate,
+  addBotReaction,
   getChannelMessages,
   getMessageChain,
   postChannelMessage,
+  removeBotReaction,
   searchChannelMessages,
 } from "./api";
 
@@ -234,6 +236,36 @@ describe("getChannelMessages", () => {
     const messages = await getChannelMessages();
 
     expect(messages).toMatchObject([{ edited: true }]);
+  });
+
+  it("should count Discord reactions other than the bot's own mirror", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            type: 0,
+            id: "1",
+            author: { id: "user1", bot: true },
+            content: "User: Hi",
+            timestamp: "2025-01-01T00:00:00.000000+00:00",
+            edited_timestamp: null,
+            reactions: [
+              { count: 3, me: true, emoji: { id: null, name: "👍" } },
+              { count: 1, me: true, emoji: { id: null, name: "🎉" } },
+              { count: 2, me: false, emoji: { id: null, name: "😂" } },
+              { count: 1, me: false, emoji: { id: "42", name: "custom" } },
+            ],
+          },
+        ]),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions).toEqual([
+      { emoji: "👍", count: 2, users: [] },
+      { emoji: "😂", count: 2, users: [] },
+    ]);
   });
 
   it("should handle replies as nested messages with multiple levels", async () => {
@@ -791,6 +823,68 @@ describe("postChannelMessage", () => {
     await expect(
       postChannelMessage("Hello", "TestUser" as Username),
     ).rejects.toThrow(`Discord API error: ${status} ${statusText}`);
+  });
+});
+
+describe("bot reactions", () => {
+  it("should add the bot's reaction with the emoji encoded", async () => {
+    const onPut = vi.fn();
+    server.use(
+      http.put(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
+        ({ params }) => {
+          onPut(params);
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    await addBotReaction("123", "👍🏽");
+
+    expect(onPut).toHaveBeenCalledWith({
+      channelId: "test-discord-channel-id",
+      messageId: "123",
+      emoji: "👍🏽",
+    });
+  });
+
+  it("should remove the bot's reaction", async () => {
+    const onDelete = vi.fn();
+    server.use(
+      http.delete(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
+        ({ params }) => {
+          onDelete(params);
+          return new HttpResponse(null, { status: 204 });
+        },
+      ),
+    );
+
+    await removeBotReaction("123", "🎉");
+
+    expect(onDelete).toHaveBeenCalledWith({
+      channelId: "test-discord-channel-id",
+      messageId: "123",
+      emoji: "🎉",
+    });
+  });
+
+  it("should throw when Discord rejects the reaction", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.put(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
+        () =>
+          HttpResponse.json(
+            { message: "Unknown Message", code: 10008 },
+            { status: 404 },
+          ),
+      ),
+    );
+
+    await expect(addBotReaction("123", "👍")).rejects.toThrow(
+      "Discord API error: 404",
+    );
   });
 });
 

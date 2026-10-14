@@ -1193,6 +1193,7 @@ describe("createMessage", () => {
           content: "Hello",
           edited: false,
           timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+          reactions: [],
           replies: [],
         },
         {
@@ -1201,6 +1202,7 @@ describe("createMessage", () => {
           content: "World",
           edited: false,
           timestamp: new Date("2025-01-01T00:01:00.000000+00:00"),
+          reactions: [],
           replies: [],
         },
       ];

@@ -38,14 +38,22 @@ export async function decrypt(session: string | undefined) {
   }
 }
 
-export async function getSession() {
+async function readSession() {
   const cookieJar = await cookies();
-  const sessionCookie = cookieJar.get("session");
-  const session = await decrypt(sessionCookie?.value);
+  return decrypt(cookieJar.get("session")?.value);
+}
+
+export async function getSession() {
+  const session = await readSession();
 
   if (!session) {
     return forbidden();
   }
 
   return session;
+}
+
+/** The visitor's username, or null before the proxy has set their session cookie. */
+export async function getUsername(): Promise<Username | null> {
+  return (await readSession())?.username ?? null;
 }

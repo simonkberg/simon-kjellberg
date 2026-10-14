@@ -131,6 +131,10 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Chat stream:** `ChatStream` (in the chat's title bar) owns the SSE connection and shows
   its state: `live`, `connecting` or `offline`. The route sends a named `status` event when
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.
+- **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
+  with its own reaction while any remain, so Discord shows site reactions as one. History
+  adds those rows to Discord's counts minus the bot's. The mirror's gateway events are what
+  refresh other replicas' streams. `:shortcodes:` in posts become emoji (`app/lib/shortcodes.ts`).
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.

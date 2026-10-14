@@ -19,6 +19,7 @@ import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
 import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
+import { getUsername } from "@/lib/session";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -34,6 +35,7 @@ export default function RootPage() {
   const history = request.then(getChatHistory);
   const recentTracks = request.then(getRecentTracks);
   const tipDismissed = getChatTipDismissed();
+  const username = getUsername();
 
   return (
     <Page>
@@ -105,7 +107,11 @@ export default function RootPage() {
         </Heading>
         <Terminal status={<ChatStream />}>
           <Suspense fallback={<Loader />}>
-            <Chat history={history} tipDismissed={tipDismissed} />
+            <Chat
+              history={history}
+              tipDismissed={tipDismissed}
+              username={username}
+            />
           </Suspense>
         </Terminal>
       </section>

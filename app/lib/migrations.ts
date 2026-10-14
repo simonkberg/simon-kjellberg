@@ -18,6 +18,13 @@ export const MIGRATIONS: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS seen_messages (id TEXT PRIMARY KEY, at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS rate_limits (key TEXT NOT NULL, expires_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS rate_limits_key_expires_at ON rate_limits (key, expires_at)`,
+  `CREATE TABLE IF NOT EXISTS reactions (
+    id INTEGER PRIMARY KEY,
+    message_id TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    username TEXT NOT NULL,
+    UNIQUE (message_id, emoji, username)
+  )`,
 ];
 
 // Outside MIGRATIONS: the lock and the version list need these before it can run.

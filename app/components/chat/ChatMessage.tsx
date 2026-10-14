@@ -9,6 +9,8 @@ import { Markdown } from "@/components/Markdown";
 import { RelativeTime } from "@/components/RelativeTime";
 import type { Message } from "@/lib/discord/api";
 
+import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
+
 export interface ChatMessageProps extends Message {
   replyToId: string | null;
   setReplyToId: Dispatch<SetStateAction<string | null>>;
@@ -20,6 +22,7 @@ export const ChatMessage = ({
   content,
   edited,
   timestamp,
+  reactions,
   replyToId,
   setReplyToId,
 }: ChatMessageProps) => (
@@ -46,6 +49,10 @@ export const ChatMessage = ({
     >
       ↩
     </button>
+    <ChatReactionPicker messageId={id} />
+    {reactions.length > 0 && (
+      <ChatReactionList messageId={id} reactions={reactions} />
+    )}
   </div>
 );
 
