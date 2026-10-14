@@ -96,25 +96,19 @@ async function dropMirrorIfUnused(messageId: string, emoji: string) {
 export async function clearReactions({
   messageIds,
   emoji,
-}: ReactionClear): Promise<number> {
-  const { rowsAffected } = await query(
+}: ReactionClear): Promise<void> {
+  await query(
     "DELETE FROM reactions WHERE message_id IN (SELECT value FROM json_each(?)) AND (? IS NULL OR emoji = ?)",
     [JSON.stringify(messageIds), emoji, emoji],
   );
-  return rowsAffected;
 }
 
 export function startReactionCleanup(): void {
   subscribeToReactionClears((clear) => {
-    // The gateway's own refresh may read the rows before they're gone.
-    clearReactions(clear).then(
-      (cleared) => {
-        if (cleared > 0) notifySubscribers();
-      },
-      (err: unknown) => {
-        log.error({ err, ...clear }, "Failed to clear reactions");
-      },
-    );
+    // Unconditional: the gateway's refresh may have read rows another replica deleted since.
+    clearReactions(clear).then(notifySubscribers, (err: unknown) => {
+      log.error({ err, ...clear }, "Failed to clear reactions");
+    });
   });
 }
 

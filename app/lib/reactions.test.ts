@@ -259,14 +259,6 @@ describe("startReactionCleanup", () => {
     ]);
   });
 
-  it("skips the refresh when there were no rows to clear", async () => {
-    startAndGetCallback()({ messageIds: ["1"], emoji: null });
-
-    await vi.waitFor(() => expect(query).toHaveBeenCalledOnce());
-    await new Promise((resolve) => setTimeout(resolve));
-    expect(notifySubscribers).not.toHaveBeenCalled();
-  });
-
   it("logs a failed clear", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValueOnce(new Error("down"));
