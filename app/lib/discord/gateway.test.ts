@@ -397,7 +397,7 @@ describe("subscribe", () => {
     });
   });
 
-  it("should not report a custom emoji's clear or a single removal", async () => {
+  it("should not report a custom emoji's clear, a single removal or a malformed delete", async () => {
     const { subscribe, subscribeToReactionClears } = await import("./gateway");
     server.use(createHandshakeHandler());
 
@@ -430,6 +430,14 @@ describe("subscribe", () => {
         "MESSAGE_REACTION_REMOVE",
       ),
     );
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id" },
+        4,
+        "MESSAGE_DELETE",
+      ),
+    );
     await vi.advanceTimersByTimeAsync(0);
     expect(callback).not.toHaveBeenCalled();
 
@@ -438,7 +446,7 @@ describe("subscribe", () => {
       createPayload(
         GatewayOpcode.DISPATCH,
         { channel_id: "test-discord-channel-id", message_id: "msg-test" },
-        4,
+        5,
         "MESSAGE_REACTION_REMOVE_ALL",
       ),
     );
