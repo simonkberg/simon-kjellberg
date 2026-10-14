@@ -57,12 +57,13 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
   );
 };
 
+const reactorList = new Intl.ListFormat("en", { type: "conjunction" });
+
 function describeReactors({ count, users }: Reaction): string {
   const onDiscord = count - users.length;
-  const names = onDiscord > 0 ? [...users, `${onDiscord} on Discord`] : users;
-  return names.length > 1
-    ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`
-    : (names[0] ?? "");
+  return reactorList.format(
+    onDiscord > 0 ? [...users, `${onDiscord} on Discord`] : users,
+  );
 }
 
 export const ChatReactionList = ({

@@ -1,4 +1,6 @@
 import "server-only";
+import { z } from "zod";
+
 import {
   addBotReaction,
   type Message,
@@ -9,6 +11,9 @@ import { notifySubscribers } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
+
+/** One emoji as Discord stores a reaction's name; kept off the client, where older browsers can't parse the `v` flag. */
+export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
 
 /** Adds the visitor's reaction, or takes it back if they already reacted with that emoji. */
 export async function toggleReaction(
@@ -36,12 +41,21 @@ export async function toggleReaction(
     return "removed";
   }
 
-  // Reacting on Discord first turns away a message or emoji it doesn't know.
-  await addBotReaction(messageId, emoji);
+  // The row goes in first so a concurrent removal counts it and keeps the mirror.
   await query(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
+  try {
+    // Discord turns away a message or emoji it doesn't know.
+    await addBotReaction(messageId, emoji);
+  } catch (err) {
+    await query(
+      "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
+      [messageId, emoji, username],
+    );
+    throw err;
+  }
   notifySubscribers();
   return "added";
 }

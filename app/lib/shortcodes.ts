@@ -5,10 +5,20 @@ const EMOJI_BY_NAME = new Map(
   gemoji.flatMap(({ emoji, names }) => names.map((name) => [name, emoji])),
 );
 
+// Code and links are left as typed: the capture keeps them as odd-indexed parts.
+const VERBATIM = /(`+[\s\S]*?`+|https?:\/\/\S+)/;
+
 /** Turns `:joy:` into 😂, leaving unknown names as typed; Discord doesn't convert them either. */
 export function replaceShortcodes(text: string): string {
-  return text.replace(
-    /:([\w+-]+):/g,
-    (match, name: string) => EMOJI_BY_NAME.get(name) ?? match,
-  );
+  return text
+    .split(VERBATIM)
+    .map((part, index) =>
+      index % 2 === 1
+        ? part
+        : part.replace(
+            /:([\w+-]+):/g,
+            (match, name: string) => EMOJI_BY_NAME.get(name) ?? match,
+          ),
+    )
+    .join("");
 }

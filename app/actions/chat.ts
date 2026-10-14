@@ -9,12 +9,15 @@ import {
   type Message,
   postChannelMessage,
 } from "@/lib/discord/api";
-import { EmojiSchema } from "@/lib/emoji";
 import { identifiers } from "@/lib/identifiers";
 import { isDeniedIp } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rateLimit";
-import { toggleReaction, withSiteReactions } from "@/lib/reactions";
+import {
+  EmojiSchema,
+  toggleReaction,
+  withSiteReactions,
+} from "@/lib/reactions";
 import { getSession } from "@/lib/session";
 import { replaceShortcodes } from "@/lib/shortcodes";
 

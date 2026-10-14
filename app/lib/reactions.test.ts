@@ -13,8 +13,9 @@ import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
+import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
-import { toggleReaction, withSiteReactions } from "./reactions";
+import { EmojiSchema, toggleReaction, withSiteReactions } from "./reactions";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
@@ -125,5 +126,18 @@ describe("withSiteReactions", () => {
   it("skips the query without messages", async () => {
     expect(await withSiteReactions([])).toEqual([]);
     expect(query).not.toHaveBeenCalled();
+  });
+});
+
+describe("EmojiSchema", () => {
+  it.each([...REACTION_EMOJI.map(({ emoji }) => emoji), "👍🏽", "🏳️‍🌈", "1️⃣"])(
+    "accepts %s",
+    (emoji) => {
+      expect(EmojiSchema.safeParse(emoji).success).toBe(true);
+    },
+  );
+
+  it.each(["", "a", "👍👍", "👍 ", ":joy:"])("rejects %j", (text) => {
+    expect(EmojiSchema.safeParse(text).success).toBe(false);
   });
 });

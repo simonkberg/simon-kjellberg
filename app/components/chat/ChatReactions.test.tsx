@@ -59,7 +59,7 @@ describe("ChatReactionList", () => {
 
     const [thumbs, tada] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
-    expect(thumbs).toHaveAttribute("title", "me, you and 1 on Discord");
+    expect(thumbs).toHaveAttribute("title", "me, you, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
     expect(tada).toHaveAttribute("title", "1 on Discord");
   });
@@ -70,6 +70,17 @@ describe("ChatReactionList", () => {
     const [thumbs, tada] = screen.getAllByRole("button");
     expect(thumbs).toHaveAttribute("aria-pressed", "true");
     expect(tada).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("marks nothing as pressed before the visitor has a username", () => {
+    renderWithContext(
+      <ChatReactionList messageId="1" reactions={reactions} />,
+      { username: null },
+    );
+
+    for (const button of screen.getAllByRole("button")) {
+      expect(button).toHaveAttribute("aria-pressed", "false");
+    }
   });
 
   it("toggles the reaction when clicked", async () => {

@@ -1,9 +1,4 @@
-import { z } from "zod";
-
-/** One emoji as Discord stores a reaction's name, skin tones and ZWJ sequences included. */
-export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
-
-/** The picker's set, kept small since it ships to every visitor. */
+/** The picker's set, kept small since this module ships to every visitor's browser. */
 export const REACTION_EMOJI = [
   { emoji: "👍", name: "thumbsup" },
   { emoji: "👎", name: "thumbsdown" },
