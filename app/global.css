@@ -1423,7 +1423,6 @@ ul {
     padding: 0 1ch;
     border-radius: 1lh;
     background: var(--reaction-hover-bg);
-    backdrop-filter: blur(4px);
     /* Not visibility: hidden, which would drop the buttons from the tab order. */
     opacity: 0;
 
@@ -1446,6 +1445,8 @@ ul {
   &:focus-within > .actions,
   &:has(.chat-reaction-picker:popover-open) > .actions {
     opacity: 1;
+    /* Only while shown, so a long history doesn't keep a filter per message. */
+    backdrop-filter: blur(4px);
   }
 
   /* Touch has no hover to reveal them, so visitors never found reply. */
@@ -1455,7 +1456,6 @@ ul {
       display: inline-flex;
       padding: 0;
       background: none;
-      backdrop-filter: none;
       opacity: 1;
     }
   }
