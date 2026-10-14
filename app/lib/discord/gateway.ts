@@ -47,7 +47,10 @@ const ReactionClearDataSchema = z.object({
   emoji: z.object({ name: z.string().nullable() }).optional(),
 });
 
-const MessageDeleteDataSchema = z.object({ id: z.string() });
+const MessageDeleteDataSchema = z.union([
+  z.object({ id: z.string() }).transform(({ id }) => [id]),
+  z.object({ ids: z.array(z.string()) }).transform(({ ids }) => ids),
+]);
 
 /** Reactions Discord dropped from a message: one emoji's, or all when `emoji` is null. */
 export interface ReactionClear {
@@ -374,7 +377,8 @@ class DiscordGateway {
 
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
-      case "MESSAGE_DELETE": {
+      case "MESSAGE_DELETE":
+      case "MESSAGE_DELETE_BULK": {
         const parsed = MessageEventDataSchema.safeParse(data);
         if (
           parsed.success &&
@@ -390,13 +394,10 @@ class DiscordGateway {
             }
           }
 
-          if (eventName === "MESSAGE_DELETE") {
+          if (eventName.startsWith("MESSAGE_DELETE")) {
             const deleted = MessageDeleteDataSchema.safeParse(data);
-            if (deleted.success) {
-              this.#notifyClearSubscribers({
-                messageId: deleted.data.id,
-                emoji: null,
-              });
+            for (const messageId of deleted.data ?? []) {
+              this.#notifyClearSubscribers({ messageId, emoji: null });
             }
           }
         }

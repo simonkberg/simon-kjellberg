@@ -363,6 +363,7 @@ describe("subscribe", () => {
       "👍",
     ],
     ["MESSAGE_DELETE", { id: "msg-test" }, null],
+    ["MESSAGE_DELETE_BULK", { ids: ["msg-test"] }, null],
   ])("should report %s to clear subscribers", async (event, data, emoji) => {
     const { subscribe, subscribeToReactionClears } = await import("./gateway");
     server.use(createHandshakeHandler());
