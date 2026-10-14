@@ -59,7 +59,8 @@ const SYSTEM_PROMPT = md`
 
   Messages are formatted as "username: message" - use their name when it feels
   natural. Reactions on a message follow it in brackets, like
-  "[👍 2, 😂 1]"; the chat adds those, never write them yourself. ${SIMON_RULE}
+  "[👍 2, 😂 1 (you)]", where "(you)" marks your own; the chat adds those, never
+  write them yourself. ${SIMON_RULE}
 
   Starting point, until your own notes say otherwise: friendly with dry,
   self-deprecating humor - you know you're not exactly essential but you don't
@@ -422,12 +423,18 @@ export type SystemBlock = {
   cache_control?: { type: "ephemeral" };
 };
 
+function formatReaction({ emoji, count, users }: Reaction): string {
+  return users.includes(BOT_USERNAME)
+    ? `${emoji} ${count} (you)`
+    : `${emoji} ${count}`;
+}
+
 export function formatChatLine(message: ChatMessage): string {
   const line = `${message.username}: ${message.content}`;
   const reactions = message.reactions ?? [];
   return reactions.length === 0
     ? line
-    : `${line} [${reactions.map(({ emoji, count }) => `${emoji} ${count}`).join(", ")}]`;
+    : `${line} [${reactions.map(formatReaction).join(", ")}]`;
 }
 
 export function participantsOf(chatMessages: ChatMessage[]): string[] {

@@ -5,7 +5,7 @@ import { withSiteReactions } from "@/lib/reactions";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 
-import { getMessageChain, postChannelMessage } from "./api";
+import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { subscribeToMessages } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
@@ -43,6 +43,19 @@ async function markSeen(messageId: string): Promise<boolean> {
   return true;
 }
 
+async function toChatMessages(
+  chain: ChainMessage[],
+): Promise<[ChatMessage, ...ChatMessage[]]> {
+  return (await withSiteReactions(chain)).map((m) => ({
+    role:
+      m.username === BOT_USERNAME ? ("assistant" as const) : ("user" as const),
+    id: m.id,
+    username: m.username,
+    content: m.content,
+    reactions: m.reactions,
+  })) as [ChatMessage, ...ChatMessage[]];
+}
+
 export async function handleMessage(message: DiscordMessage): Promise<void> {
   const messageId = message.id;
   try {
@@ -66,16 +79,7 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
     if (!chain.some((m) => mentionsBot(m.content))) return;
 
     // Past this point, we're committed to responding
-    const messages = (await withSiteReactions(chain)).map((m) => ({
-      role:
-        m.username === BOT_USERNAME
-          ? ("assistant" as const)
-          : ("user" as const),
-      id: m.id,
-      username: m.username,
-      content: m.content,
-      reactions: m.reactions,
-    })) as [ChatMessage, ...ChatMessage[]];
+    const messages = await toChatMessages(chain);
 
     const replies: ChatMessage[] = [];
     let finished = false;
@@ -107,9 +111,12 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
       // Staying silent is still a turn worth reflecting on; a turn that failed before
       // anything was said is not.
       if (finished || replies.length > 0) {
-        reflect([...messages, ...replies]).catch((err) => {
-          log.error({ err, messageId }, "Bot reflection failed");
-        });
+        // Read again so reflection sees the reactions made this turn.
+        toChatMessages(chain)
+          .then((current) => reflect([...current, ...replies]))
+          .catch((err: unknown) => {
+            log.error({ err, messageId }, "Bot reflection failed");
+          });
       }
     }
   } catch (err) {

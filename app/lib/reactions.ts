@@ -53,12 +53,11 @@ export async function addReaction(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
+  if (inserted.rowsAffected === 0) return;
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
   } catch (err) {
-    // A concurrent request owns a row this insert didn't create.
-    if (inserted.rowsAffected === 0) throw err;
     await query(
       "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
       [messageId, emoji, username],
@@ -129,7 +128,7 @@ function mergeReactions<T extends Reactable<T>>(
   site: SiteReactions,
 ): T[] {
   return items.map((item) => {
-    const users = site.get(item.id) ?? new Map<string, string[]>();
+    const users = new Map(site.get(item.id));
     const reactions: Reaction[] = item.reactions.map((reaction) => {
       const siteUsers = users.get(reaction.emoji) ?? [];
       users.delete(reaction.emoji);

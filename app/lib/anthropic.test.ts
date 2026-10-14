@@ -1841,9 +1841,10 @@ describe("formatChatLine", () => {
         reactions: [
           { emoji: "👍", count: 2, users: [] },
           { emoji: "😂", count: 1, users: ["otter"] },
+          { emoji: "🔥", count: 2, users: ["otter", "simon-bot"] },
         ],
       }),
-    ).toBe("simon: nice one [👍 2, 😂 1]");
+    ).toBe("simon: nice one [👍 2, 😂 1, 🔥 2 (you)]");
   });
 
   it("leaves a message without reactions as it is", () => {

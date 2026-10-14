@@ -119,7 +119,7 @@ describe("toggleReaction", () => {
     await addReaction("1", "👍", alice);
 
     expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
-    expect(addBotReaction).toHaveBeenCalledTimes(2);
+    expect(addBotReaction).toHaveBeenCalledOnce();
   });
 
   it("adds nothing when Discord turns the reaction away", async () => {
@@ -142,7 +142,7 @@ describe("toggleReaction", () => {
     expect(log.error).toHaveBeenCalledOnce();
   });
 
-  it("keeps a row a concurrent add created when its own mirror fails", async () => {
+  it("leaves the mirror to the concurrent add that created the row", async () => {
     await query(
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",
     );
@@ -150,9 +150,9 @@ describe("toggleReaction", () => {
     vi.mocked(query)
       .mockResolvedValueOnce(emptyResult)
       .mockResolvedValueOnce(emptyResult);
-    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("429"));
 
-    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("429");
+    expect(await toggleReaction("1", "👍", alice)).toBe("added");
+    expect(addBotReaction).not.toHaveBeenCalled();
     expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
   });
 });

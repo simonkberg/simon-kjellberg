@@ -311,6 +311,37 @@ describe("handleMessage", () => {
     ]);
   });
 
+  it("should reflect with the reactions the bot made this turn", async () => {
+    vi.spyOn(log, "info").mockImplementation(() => {});
+    vi.mocked(getMessageChain).mockResolvedValue([
+      {
+        id: "msg-1",
+        type: 0,
+        username: "User1",
+        content: "thanks simon-bot",
+        reactions: [],
+      },
+    ]);
+    async function* mockResponse() {
+      await query(
+        "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '👍', 'simon-bot')",
+      );
+      yield "anytime";
+    }
+    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+
+    await handleMessage(createMessage({ content: "User1: thanks simon-bot" }));
+
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
+    expect(reflect).toHaveBeenCalledWith([
+      expect.objectContaining({
+        reactions: [{ emoji: "👍", count: 1, users: ["simon-bot"] }],
+      }),
+      { role: "assistant", username: "simon-bot", content: "anytime" },
+    ]);
+  });
+
   it("should reflect on the conversation after replying", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
@@ -332,6 +363,7 @@ describe("handleMessage", () => {
 
     await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
 
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       {
         role: "user",
@@ -372,6 +404,7 @@ describe("handleMessage", () => {
       "simon-bot",
       "msg-1",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       {
         role: "user",
@@ -412,6 +445,7 @@ describe("handleMessage", () => {
       { err: expect.any(Error), messageId: "msg-1" },
       "Bot message handling failed",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       {
         role: "user",
@@ -450,6 +484,7 @@ describe("handleMessage", () => {
       { messageId: "msg-1", replies: 0 },
       "Bot chose not to reply",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       {
         role: "user",
