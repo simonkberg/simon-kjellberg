@@ -1424,7 +1424,8 @@ ul {
     border-radius: 1lh;
     background: var(--reaction-hover-bg);
     backdrop-filter: blur(4px);
-    visibility: hidden;
+    /* Not visibility: hidden, which would drop the buttons from the tab order. */
+    opacity: 0;
 
     > button {
       color: var(--muted);
@@ -1444,7 +1445,7 @@ ul {
   &:hover > .actions,
   &:focus-within > .actions,
   &:has(.chat-reaction-picker:popover-open) > .actions {
-    visibility: visible;
+    opacity: 1;
   }
 
   /* Touch has no hover to reveal them, so visitors never found reply. */
@@ -1455,7 +1456,7 @@ ul {
       padding: 0;
       background: none;
       backdrop-filter: none;
-      visibility: visible;
+      opacity: 1;
     }
   }
 
