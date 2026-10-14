@@ -15,6 +15,7 @@ describe("replaceShortcodes", () => {
     ["`:joy:` :joy:", "`:joy:` 😂"],
     ["```\n:joy:\n``` :joy:", "```\n:joy:\n``` 😂"],
     ["see https://x.dev/:100:/ :100:", "see https://x.dev/:100:/ 💯"],
+    ["<:smile:123> <a:joy:456> :joy:", "<:smile:123> <a:joy:456> 😂"],
   ])("turns %j into %j", (text, expected) => {
     expect(replaceShortcodes(text)).toBe(expected);
   });

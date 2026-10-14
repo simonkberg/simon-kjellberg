@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -21,9 +21,24 @@ function renderWithContext(
   return context;
 }
 
+// happy-dom has no popover API, so the browser's beforetoggle is sent by hand.
+function openPicker() {
+  fireEvent(
+    screen.getByRole("menu", { hidden: true }),
+    Object.assign(new Event("beforetoggle"), { newState: "open" }),
+  );
+}
+
 describe("ChatReactionPicker", () => {
+  it("renders no emoji until opened", () => {
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+
+    expect(screen.queryAllByRole("menuitem", { hidden: true })).toEqual([]);
+  });
+
   it("offers every picker emoji with its shortcode", () => {
     renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
 
     const items = screen.getAllByRole("menuitem", { hidden: true });
     expect(items).toHaveLength(REACTION_EMOJI.length);
@@ -33,6 +48,7 @@ describe("ChatReactionPicker", () => {
 
   it("reacts with the picked emoji", async () => {
     const { react } = renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
 
     await userEvent.click(
       screen.getByRole("menuitem", { name: "tada", hidden: true }),

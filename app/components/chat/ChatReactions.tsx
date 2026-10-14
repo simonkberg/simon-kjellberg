@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useId } from "react";
+import { createContext, use, useId, useState } from "react";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
@@ -20,6 +20,8 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
 export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
   const { pending, react } = use(ChatReactionsContext);
   const pickerId = useId();
+  // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -38,20 +40,22 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
         role="menu"
         aria-label="Reactions"
         className="chat-reaction-picker"
+        onBeforeToggle={(event) => setOpen(event.newState === "open")}
       >
-        {REACTION_EMOJI.map(({ emoji, name }) => (
-          <button
-            key={name}
-            role="menuitem"
-            aria-label={name}
-            title={`:${name}:`}
-            popoverTarget={pickerId}
-            popoverTargetAction="hide"
-            onClick={() => react(messageId, emoji)}
-          >
-            {emoji}
-          </button>
-        ))}
+        {open &&
+          REACTION_EMOJI.map(({ emoji, name }) => (
+            <button
+              key={name}
+              role="menuitem"
+              aria-label={name}
+              title={`:${name}:`}
+              popoverTarget={pickerId}
+              popoverTargetAction="hide"
+              onClick={() => react(messageId, emoji)}
+            >
+              {emoji}
+            </button>
+          ))}
       </div>
     </>
   );
