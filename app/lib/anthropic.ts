@@ -429,16 +429,13 @@ function formatReaction({ emoji, count, users }: Reaction): string {
     : `${emoji} ${count}`;
 }
 
-const ENTITIES: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-};
-
 // Escaped so a message can't pass itself off as another one or forge reactions.
 function escapeXml(text: string): string {
-  return text.replace(/[&<>"]/g, (char) => ENTITIES[char] ?? char);
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 function formatMessage({ id, username, content, reactions = [] }: ChatMessage) {
