@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -221,6 +221,63 @@ describe("Chat", () => {
 
       expect(
         await screen.findByText("Rate limit exceeded."),
+      ).toBeInTheDocument();
+    });
+
+    it("shows the same error again on a repeated failure", async () => {
+      vi.mocked(reactToChatMessage).mockResolvedValue({
+        status: "error",
+        error: "Rate limit exceeded.",
+      });
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: [] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      const pill = screen.getByRole("button", { name: "👍 1" });
+      await userEvent.click(pill);
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Close notification" }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByText("Rate limit exceeded."),
+        ).not.toBeInTheDocument(),
+      );
+      await userEvent.click(pill);
+
+      expect(
+        await screen.findByText("Rate limit exceeded."),
+      ).toBeInTheDocument();
+    });
+
+    it("shows an error when the action itself fails", async () => {
+      vi.mocked(reactToChatMessage).mockRejectedValue(new Error("offline"));
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 1, users: [] }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        await screen.findByText("Failed to react to chat message"),
       ).toBeInTheDocument();
     });
   });

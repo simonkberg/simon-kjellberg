@@ -38,13 +38,25 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [reacting, startReacting] = useTransition();
-  const [reactionError, setReactionError] = useState<string>();
+  // Counted so the toast remounts and shows a repeated message again.
+  const [reactionError, setReactionError] = useState<{
+    message: string;
+    count: number;
+  }>();
 
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
-      const reaction = await reactToChatMessage(messageId, emoji);
-      setReactionError(
-        reaction.status === "error" ? reaction.error : undefined,
+      const reaction = await reactToChatMessage(messageId, emoji).catch(
+        () =>
+          ({
+            status: "error",
+            error: "Failed to react to chat message",
+          }) as const,
+      );
+      setReactionError((previous) =>
+        reaction.status === "error"
+          ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
+          : undefined,
       );
     });
   };
@@ -62,7 +74,11 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
     <ChatReactionsContext
       value={{ username: currentUsername, pending: reacting, react }}
     >
-      <ChatToast variant="error" message={reactionError} />
+      <ChatToast
+        key={reactionError?.count}
+        variant="error"
+        message={reactionError?.message}
+      />
       <ChatHistory
         messages={result.messages}
         replyToId={replyToId}
