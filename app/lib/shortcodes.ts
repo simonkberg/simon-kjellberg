@@ -1,8 +1,14 @@
 import "server-only";
-import { gemoji } from "gemoji";
+import emojiData from "emoji-datasource";
 
+// Slack's names, from the dataset it publishes; Discord publishes none.
 const EMOJI_BY_NAME = new Map(
-  gemoji.flatMap(({ emoji, names }) => names.map((name) => [name, emoji])),
+  emojiData.flatMap(({ unified, short_names }) => {
+    const emoji = String.fromCodePoint(
+      ...unified.split("-").map((hex) => Number.parseInt(hex, 16)),
+    );
+    return short_names.map((name) => [name, emoji] as const);
+  }),
 );
 
 // Code, links and Discord custom emoji are left as typed: the capture keeps them as odd-indexed parts.
