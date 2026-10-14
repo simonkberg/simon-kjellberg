@@ -185,7 +185,9 @@
   --code-radius: 0;
   --reaction-border: 1px solid var(--rule);
   --reaction-radius: var(--code-radius);
-  --reaction-bg: var(--wash);
+  --reaction-bg: color-mix(in oklch, var(--ink) 7%, transparent);
+  --reaction-hover-bg: color-mix(in oklch, var(--ink) 12%, transparent);
+  --reaction-pressed-bg: color-mix(in oklch, var(--accent) 22%, transparent);
   --code-size: inherit;
   --meta-size: inherit;
 
@@ -1439,20 +1441,19 @@ ul {
     margin-top: 0.25lh;
 
     > button {
-      padding: 0 0.75ch;
-      border: var(--reaction-border);
-      border-radius: var(--reaction-radius);
+      padding: 0 1ch;
+      border-radius: 1lh;
       background: var(--reaction-bg);
       color: var(--muted);
       font-size: var(--meta-size);
 
-      &[aria-pressed="true"] {
-        border-color: var(--accent);
-        color: var(--ink);
+      &:hover:not(:disabled) {
+        background: var(--reaction-hover-bg);
       }
 
-      &:hover:not(:disabled) {
-        border-color: var(--accent);
+      &[aria-pressed="true"] {
+        background: var(--reaction-pressed-bg);
+        color: var(--ink);
       }
 
       &:disabled {
