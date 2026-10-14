@@ -31,16 +31,10 @@ export async function toggleReaction(
   );
 
   if (rowsAffected > 0) {
-    const { rows } = await query(
-      "SELECT count(*) AS n FROM reactions WHERE message_id = ? AND emoji = ?",
-      [messageId, emoji],
-    );
-    if (Number(rows[0]?.["n"]) === 0) {
-      // The site counts from Turso, so a stale mirror only shows on Discord.
-      await removeBotReaction(messageId, emoji).catch((err: unknown) => {
-        log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-      });
-    }
+    // The site counts from Turso, so a stale mirror only shows on Discord.
+    await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
+      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+    });
     notifySubscribers();
     return "removed";
   }
@@ -64,6 +58,23 @@ export async function toggleReaction(
   }
   notifySubscribers();
   return "added";
+}
+
+async function countReactions(messageId: string, emoji: string) {
+  const { rows } = await query(
+    "SELECT count(*) AS n FROM reactions WHERE message_id = ? AND emoji = ?",
+    [messageId, emoji],
+  );
+  return Number(rows[0]?.["n"]);
+}
+
+async function dropMirrorIfUnused(messageId: string, emoji: string) {
+  if ((await countReactions(messageId, emoji)) > 0) return;
+  await removeBotReaction(messageId, emoji);
+  // An add between the count and the removal kept its row but found the mirror in place.
+  if ((await countReactions(messageId, emoji)) > 0) {
+    await addBotReaction(messageId, emoji);
+  }
 }
 
 /** Drops the site's rows for reactions Discord cleared, so they don't outlive the message or a moderator's clear. */

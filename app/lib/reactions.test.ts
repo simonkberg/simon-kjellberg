@@ -86,6 +86,33 @@ describe("toggleReaction", () => {
     expect(log.warn).toHaveBeenCalledOnce();
   });
 
+  it("still removes the reaction when counting the rest fails", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    await toggleReaction("1", "👍", alice);
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query)
+      .mockImplementationOnce(sqlite)
+      .mockRejectedValueOnce(new Error("blip"));
+
+    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    expect(log.warn).toHaveBeenCalledOnce();
+    expect(notifySubscribers).toHaveBeenCalledTimes(2);
+  });
+
+  it("restores the mirror when a reaction lands while it is dropped", async () => {
+    await toggleReaction("1", "👍", alice);
+    vi.mocked(addBotReaction).mockClear();
+    vi.mocked(removeBotReaction).mockImplementationOnce(async () => {
+      await query(
+        "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'bob')",
+      );
+    });
+
+    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
+    expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
+  });
+
   it("adds nothing when Discord turns the reaction away", async () => {
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
 

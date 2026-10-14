@@ -125,6 +125,10 @@ export async function reactToChatMessage(
 
     const request = await identifiers();
     if (request.ip !== undefined && isDeniedIp(request.ip)) {
+      log.info(
+        { ip: request.ip, action: "reactToChatMessage" },
+        "Denied a listed IP",
+      );
       return {
         status: "error",
         error: "Reacting from your network is blocked.",
