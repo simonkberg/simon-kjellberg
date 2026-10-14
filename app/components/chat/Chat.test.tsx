@@ -277,6 +277,7 @@ describe("Chat", () => {
               createMessage({
                 replies: [createMessage({ id: "reply-1", content: "Reply" })],
               }),
+              createMessage({ id: "msg-2", content: "Untouched" }),
             ],
           }),
         ),
