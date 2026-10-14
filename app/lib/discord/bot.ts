@@ -111,7 +111,7 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
       // Staying silent is still a turn worth reflecting on; a turn that failed before
       // anything was said is not.
       if (finished || replies.length > 0) {
-        // Read again so reflection sees the reactions made this turn.
+        // Re-reads the site's rows, so reflection sees the bot's own reactions from this turn.
         toChatMessages(chain)
           .then((current) => reflect([...current, ...replies]))
           .catch((err: unknown) => {
