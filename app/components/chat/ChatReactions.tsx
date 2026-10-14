@@ -37,8 +37,8 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
       <div
         id={pickerId}
         popover="auto"
-        role="menu"
-        aria-label="Reactions"
+        role="group"
+        aria-label="Pick a reaction"
         className="chat-reaction-picker"
         onBeforeToggle={(event) => setOpen(event.newState === "open")}
       >
@@ -46,7 +46,6 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
           REACTION_EMOJI.map(({ emoji, name }) => (
             <button
               key={name}
-              role="menuitem"
               aria-label={name}
               title={`:${name}:`}
               popoverTarget={pickerId}
