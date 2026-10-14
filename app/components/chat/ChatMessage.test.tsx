@@ -139,4 +139,14 @@ describe("ChatMessage", () => {
       );
     });
   });
+
+  it("shows only the text as a reply preview", () => {
+    const message = createMessage({
+      reactions: [{ emoji: "👍", count: 1, users: [] }],
+    });
+    render(<ChatMessage {...message} {...defaultReplyProps} preview />);
+
+    expect(screen.getByText("Hello, world!")).toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { hidden: true })).toEqual([]);
+  });
 });

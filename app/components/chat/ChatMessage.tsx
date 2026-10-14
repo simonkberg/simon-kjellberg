@@ -14,6 +14,8 @@ import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
 export interface ChatMessageProps extends Message {
   replyToId: string | null;
   setReplyToId: Dispatch<SetStateAction<string | null>>;
+  /** Shown above the input while replying: just the text, without controls or reactions. */
+  preview?: boolean;
 }
 
 export const ChatMessage = ({
@@ -25,6 +27,7 @@ export const ChatMessage = ({
   reactions,
   replyToId,
   setReplyToId,
+  preview = false,
 }: ChatMessageProps) => (
   <div
     className="chat-message"
@@ -40,19 +43,21 @@ export const ChatMessage = ({
         <RelativeTime date={timestamp} style="narrow" />
       </Suspense>
     </small>{" "}
-    <span className="actions">
-      <button
-        aria-label="Reply"
-        title="Reply"
-        className="reply"
-        onClick={() => setReplyToId(id)}
-        disabled={replyToId === id}
-      >
-        ↩
-      </button>
-      <ChatReactionPicker messageId={id} />
-    </span>
-    {reactions.length > 0 && (
+    {!preview && (
+      <span className="actions">
+        <button
+          aria-label="Reply"
+          title="Reply"
+          className="reply"
+          onClick={() => setReplyToId(id)}
+          disabled={replyToId === id}
+        >
+          ↩
+        </button>
+        <ChatReactionPicker messageId={id} />
+      </span>
+    )}
+    {!preview && reactions.length > 0 && (
       <ChatReactionList messageId={id} reactions={reactions} />
     )}
   </div>

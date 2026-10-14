@@ -151,6 +151,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
             replyToId={replyToId}
             setReplyToId={setReplyToId}
             {...replyToMessage}
+            preview
           />
           <button
             aria-label="Clear reply"
