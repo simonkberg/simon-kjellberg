@@ -674,7 +674,7 @@
 }
 
 html {
-  font-family: "Colour Emoji", var(--font-iosevka);
+  font-family: "Colour Emoji", var(--font-iosevka), monospace;
   font-size: 100%;
   line-height: var(--leading);
   -webkit-text-size-adjust: 100%;

@@ -52,9 +52,9 @@ const MessageDeleteDataSchema = z.union([
   z.object({ ids: z.array(z.string()) }).transform(({ ids }) => ids),
 ]);
 
-/** Reactions Discord dropped from a message: one emoji's, or all when `emoji` is null. */
+/** Reactions Discord dropped from messages: one emoji's, or all when `emoji` is null. */
 export interface ReactionClear {
-  messageId: string;
+  messageIds: string[];
   emoji: string | null;
 }
 
@@ -396,8 +396,11 @@ class DiscordGateway {
 
           if (eventName.startsWith("MESSAGE_DELETE")) {
             const deleted = MessageDeleteDataSchema.safeParse(data);
-            for (const messageId of deleted.data ?? []) {
-              this.#notifyClearSubscribers({ messageId, emoji: null });
+            if (deleted.success) {
+              this.#notifyClearSubscribers({
+                messageIds: deleted.data,
+                emoji: null,
+              });
             }
           }
         }
@@ -419,7 +422,7 @@ class DiscordGateway {
           const clear = ReactionClearDataSchema.safeParse(data);
           if (eventName === "MESSAGE_REACTION_REMOVE_ALL" && clear.success) {
             this.#notifyClearSubscribers({
-              messageId: clear.data.message_id,
+              messageIds: [clear.data.message_id],
               emoji: null,
             });
           }
@@ -429,7 +432,7 @@ class DiscordGateway {
             clear.data.emoji?.name
           ) {
             this.#notifyClearSubscribers({
-              messageId: clear.data.message_id,
+              messageIds: [clear.data.message_id],
               emoji: clear.data.emoji.name,
             });
           }

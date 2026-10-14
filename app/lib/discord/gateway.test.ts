@@ -363,7 +363,7 @@ describe("subscribe", () => {
       "👍",
     ],
     ["MESSAGE_DELETE", { id: "msg-test" }, null],
-    ["MESSAGE_DELETE_BULK", { ids: ["msg-test"] }, null],
+    ["MESSAGE_DELETE_BULK", { ids: ["msg-test", "msg-other"] }, null],
   ])("should report %s to clear subscribers", async (event, data, emoji) => {
     const { subscribe, subscribeToReactionClears } = await import("./gateway");
     server.use(createHandshakeHandler());
@@ -393,7 +393,7 @@ describe("subscribe", () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(callback).toHaveBeenCalledExactlyOnceWith({
-      messageId: "msg-test",
+      messageIds: "ids" in data ? data.ids : ["msg-test"],
       emoji,
     });
   });

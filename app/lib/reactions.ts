@@ -91,12 +91,12 @@ async function dropMirrorIfUnused(messageId: string, emoji: string) {
 
 /** Drops the site's rows for reactions Discord cleared, so they don't outlive the message or a moderator's clear. */
 export async function clearReactions({
-  messageId,
+  messageIds,
   emoji,
 }: ReactionClear): Promise<void> {
   await query(
-    "DELETE FROM reactions WHERE message_id = ? AND (? IS NULL OR emoji = ?)",
-    [messageId, emoji, emoji],
+    "DELETE FROM reactions WHERE message_id IN (SELECT value FROM json_each(?)) AND (? IS NULL OR emoji = ?)",
+    [JSON.stringify(messageIds), emoji, emoji],
   );
 }
 

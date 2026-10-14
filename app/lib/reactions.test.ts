@@ -208,7 +208,7 @@ describe("clearReactions", () => {
     await toggleReaction("1", "😂", alice);
     await toggleReaction("2", "👍", bob);
 
-    await clearReactions({ messageId: "1", emoji: "👍" });
+    await clearReactions({ messageIds: ["1"], emoji: "👍" });
     expect(await withSiteReactions([message("1"), message("2")])).toMatchObject(
       [
         { id: "1", reactions: [{ emoji: "😂" }] },
@@ -216,9 +216,25 @@ describe("clearReactions", () => {
       ],
     );
 
-    await clearReactions({ messageId: "1", emoji: null });
+    await clearReactions({ messageIds: ["1"], emoji: null });
     expect(await withSiteReactions([message("1")])).toMatchObject([
       { id: "1", reactions: [] },
+    ]);
+  });
+
+  it("drops several messages' rows at once", async () => {
+    await toggleReaction("1", "👍", alice);
+    await toggleReaction("2", "😂", bob);
+    await toggleReaction("3", "🎉", bob);
+
+    await clearReactions({ messageIds: ["1", "2"], emoji: null });
+
+    expect(
+      await withSiteReactions([message("1"), message("2"), message("3")]),
+    ).toMatchObject([
+      { reactions: [] },
+      { reactions: [] },
+      { reactions: [{ emoji: "🎉" }] },
     ]);
   });
 });
@@ -235,7 +251,7 @@ describe("startReactionCleanup", () => {
     await toggleReaction("1", "👍", alice);
     vi.mocked(notifySubscribers).mockClear();
 
-    startAndGetCallback()({ messageId: "1", emoji: null });
+    startAndGetCallback()({ messageIds: ["1"], emoji: null });
 
     await vi.waitFor(() => expect(notifySubscribers).toHaveBeenCalledOnce());
     expect(await withSiteReactions([message("1")])).toMatchObject([
@@ -247,7 +263,7 @@ describe("startReactionCleanup", () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValueOnce(new Error("down"));
 
-    startAndGetCallback()({ messageId: "1", emoji: "👍" });
+    startAndGetCallback()({ messageIds: ["1"], emoji: "👍" });
 
     await vi.waitFor(() => expect(log.error).toHaveBeenCalledOnce());
     expect(notifySubscribers).not.toHaveBeenCalled();
