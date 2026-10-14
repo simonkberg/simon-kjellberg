@@ -57,10 +57,10 @@ const SYSTEM_PROMPT = md`
   rewrite whenever you feel like it, and they take precedence over the starting
   point below.
 
-  Messages are formatted as "username: message" - use their name when it feels
-  natural. Reactions on a message follow it in brackets, like
-  "[👍 2, 😂 1 (you)]", where "(you)" marks your own; the chat adds those, never
-  write them yourself. ${SIMON_RULE}
+  The conversation arrives as <message> elements, oldest first, and the last one
+  is what you're answering. author is who wrote it, with "simon-bot" being you -
+  use their name when it feels natural - and reactions counts each emoji on it,
+  with "(you)" marking yours. Reply with just your message text. ${SIMON_RULE}
 
   Starting point, until your own notes say otherwise: friendly with dry,
   self-deprecating humor - you know you're not exactly essential but you don't
@@ -188,7 +188,7 @@ const reactInputSchema = z.object({
     .regex(/^\d+$/)
     .optional()
     .describe(
-      "Message to react to, from get_chat_history or search_messages; leave out for the message you're answering",
+      "id of the message to react to, from the conversation or a lookup tool; leave out for the message you're answering",
     ),
 });
 
@@ -429,12 +429,31 @@ function formatReaction({ emoji, count, users }: Reaction): string {
     : `${emoji} ${count}`;
 }
 
-export function formatChatLine(message: ChatMessage): string {
-  const line = `${message.username}: ${message.content}`;
-  const reactions = message.reactions ?? [];
-  return reactions.length === 0
-    ? line
-    : `${line} [${reactions.map(formatReaction).join(", ")}]`;
+const ENTITIES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+};
+
+// Escaped so a message can't pass itself off as another one or forge reactions.
+function escapeXml(text: string): string {
+  return text.replace(/[&<>"]/g, (char) => ENTITIES[char] ?? char);
+}
+
+function formatMessage({ id, username, content, reactions = [] }: ChatMessage) {
+  const attributes = [
+    ...(id === undefined ? [] : [`id="${escapeXml(id)}"`]),
+    `author="${escapeXml(username)}"`,
+    ...(reactions.length === 0
+      ? []
+      : [`reactions="${escapeXml(reactions.map(formatReaction).join(", "))}"`]),
+  ];
+  return `<message ${attributes.join(" ")}>${escapeXml(content)}</message>`;
+}
+
+export function formatConversation(chatMessages: ChatMessage[]): string {
+  return `<conversation>\n${chatMessages.map(formatMessage).join("\n")}\n</conversation>`;
 }
 
 export function participantsOf(chatMessages: ChatMessage[]): string[] {
@@ -601,10 +620,10 @@ export async function* runAgentLoop({
 export async function* createMessage(
   chatMessages: [ChatMessage, ...ChatMessage[]],
 ): AsyncGenerator<string, void, unknown> {
-  const messages: Message[] = chatMessages.map((m) => ({
-    role: m.role,
-    content: m.role === "assistant" ? m.content : formatChatLine(m),
-  }));
+  // One turn, so the bot's own messages carry their reactions like everyone else's.
+  const messages: Message[] = [
+    { role: "user", content: formatConversation(chatMessages) },
+  ];
 
   const system = await buildSystem(SYSTEM_PROMPT, participantsOf(chatMessages));
 
