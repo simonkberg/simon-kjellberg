@@ -1416,14 +1416,14 @@ ul {
   /* Floats over the message on hover, so hidden controls never wrap onto a line of their own. */
   > .actions {
     position: absolute;
-    inset-block-start: 0;
+    inset-block-end: 0;
     inset-inline-end: 0;
     display: flex;
     gap: 1ch;
-    padding: 0 0.75ch;
-    border: var(--reaction-border);
-    border-radius: var(--reaction-radius);
-    background: var(--surface);
+    padding: 0 1ch;
+    border-radius: 1lh;
+    background: var(--reaction-hover-bg);
+    backdrop-filter: blur(4px);
     visibility: hidden;
 
     > button {
@@ -1453,8 +1453,8 @@ ul {
       position: static;
       display: inline-flex;
       padding: 0;
-      border: none;
       background: none;
+      backdrop-filter: none;
       visibility: visible;
     }
   }
