@@ -1422,6 +1422,14 @@ ul {
     visibility: visible;
   }
 
+  /* Touch has no hover to reveal them, so visitors never found reply. */
+  @media (hover: none) {
+    > .reply,
+    > .react {
+      visibility: visible;
+    }
+  }
+
   > .reactions {
     display: flex;
     flex-wrap: wrap;
