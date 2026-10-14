@@ -129,6 +129,19 @@ describe("toggleReaction", () => {
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
   });
 
+  it("reports Discord's error when the rollback fails too", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query)
+      .mockImplementationOnce(sqlite)
+      .mockImplementationOnce(sqlite)
+      .mockRejectedValueOnce(new Error("blip"));
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
+
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
+    expect(log.error).toHaveBeenCalledOnce();
+  });
+
   it("keeps a row a concurrent add created when its own mirror fails", async () => {
     await query(
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",

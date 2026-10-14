@@ -62,7 +62,12 @@ export async function addReaction(
     await query(
       "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
       [messageId, emoji, username],
-    );
+    ).catch((rollbackErr: unknown) => {
+      log.error(
+        { err: rollbackErr, messageId, emoji },
+        "Failed to roll back an unmirrored reaction",
+      );
+    });
     throw err;
   }
   notifySubscribers();
