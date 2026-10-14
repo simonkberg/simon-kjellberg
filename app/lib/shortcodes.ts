@@ -16,7 +16,7 @@ export function replaceShortcodes(text: string): string {
       index % 2 === 1
         ? part
         : part.replace(
-            /:([\w+-]+):/g,
+            /(?<!\w):([\w+-]+):(?!\w)/g,
             (match, name: string) => EMOJI_BY_NAME.get(name) ?? match,
           ),
     )

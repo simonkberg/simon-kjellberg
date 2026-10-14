@@ -11,6 +11,8 @@ describe("replaceShortcodes", () => {
     [":thumbsup::100:", "👍💯"],
     [":not_an_emoji: stays", ":not_an_emoji: stays"],
     ["at 12:30:45", "at 12:30:45"],
+    ["ratio 3:100:5 and a:x:b", "ratio 3:100:5 and a:x:b"],
+    ["(:fire:)", "(🔥)"],
     ["no colons", "no colons"],
     ["`:joy:` :joy:", "`:joy:` 😂"],
     ["```\n:joy:\n``` :joy:", "```\n:joy:\n``` 😂"],
