@@ -95,7 +95,7 @@ describe("withSiteReactions", () => {
         reactions: [{ emoji: "👍", count: 1, users: [] }],
         replies: [message("2")],
       }),
-      message("3"),
+      message("3", { reactions: [{ emoji: "😮", count: 2, users: [] }] }),
     ]);
 
     expect(messages).toMatchObject([
@@ -109,7 +109,7 @@ describe("withSiteReactions", () => {
           { id: "2", reactions: [{ emoji: "🎉", count: 1, users: ["bob"] }] },
         ],
       },
-      { id: "3", reactions: [] },
+      { id: "3", reactions: [{ emoji: "😮", count: 2, users: [] }] },
     ]);
   });
 
