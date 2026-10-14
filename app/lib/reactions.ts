@@ -71,12 +71,10 @@ export async function clearReactions({
   messageId,
   emoji,
 }: ReactionClear): Promise<void> {
-  await (emoji === null
-    ? query("DELETE FROM reactions WHERE message_id = ?", [messageId])
-    : query("DELETE FROM reactions WHERE message_id = ? AND emoji = ?", [
-        messageId,
-        emoji,
-      ]));
+  await query(
+    "DELETE FROM reactions WHERE message_id = ? AND (? IS NULL OR emoji = ?)",
+    [messageId, emoji, emoji],
+  );
 }
 
 export function startReactionCleanup(): void {
