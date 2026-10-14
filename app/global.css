@@ -1449,6 +1449,13 @@ ul {
     backdrop-filter: blur(4px);
   }
 
+  /* Room for the toolbar where it floats over the end of the pill row. */
+  @media (hover: hover) and (pointer: fine) {
+    > .reactions {
+      padding-inline-end: 7ch;
+    }
+  }
+
   /* Touch has no hover to reveal them, so visitors never found reply. */
   @media (hover: none), (pointer: coarse) {
     > .actions {
