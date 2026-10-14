@@ -40,16 +40,18 @@ export const ChatMessage = ({
         <RelativeTime date={timestamp} style="narrow" />
       </Suspense>
     </small>{" "}
-    <button
-      aria-label="Reply"
-      title="Reply"
-      className="reply"
-      onClick={() => setReplyToId(id)}
-      disabled={replyToId === id}
-    >
-      ↩
-    </button>
-    <ChatReactionPicker messageId={id} />
+    <span className="actions">
+      <button
+        aria-label="Reply"
+        title="Reply"
+        className="reply"
+        onClick={() => setReplyToId(id)}
+        disabled={replyToId === id}
+      >
+        ↩
+      </button>
+      <ChatReactionPicker messageId={id} />
+    </span>
     {reactions.length > 0 && (
       <ChatReactionList messageId={id} reactions={reactions} />
     )}

@@ -1384,6 +1384,7 @@ ul {
 }
 
 .chat-message {
+  position: relative;
   text-wrap: pretty;
 
   > .user {
@@ -1412,39 +1413,48 @@ ul {
     font-size: var(--meta-size);
   }
 
-  > .reply,
-  > .react {
-    color: var(--muted);
+  /* Floats over the message on hover, so hidden controls never wrap onto a line of their own. */
+  > .actions {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    display: flex;
+    gap: 1ch;
+    padding: 0 0.75ch;
+    border: var(--reaction-border);
+    border-radius: var(--reaction-radius);
+    background: var(--surface);
     visibility: hidden;
 
-    &:hover,
-    &:focus-visible {
-      color: var(--accent);
-      visibility: visible;
+    > button {
+      color: var(--muted);
+
+      &:hover,
+      &:focus-visible {
+        color: var(--accent);
+      }
+    }
+
+    > .reply:disabled {
+      display: none;
     }
   }
 
-  > .reply:disabled {
-    visibility: hidden !important;
-  }
-
-  > .react {
-    margin-left: 1ch;
-  }
-
   /* Kept while its picker is open: the picker hides with its anchor, and Safari doesn't focus a clicked button. */
-  &:hover > .reply,
-  &:focus-within > .reply,
-  &:hover > .react,
-  &:focus-within > .react,
-  &:has(> .chat-reaction-picker:popover-open) > .react {
+  &:hover > .actions,
+  &:focus-within > .actions,
+  &:has(.chat-reaction-picker:popover-open) > .actions {
     visibility: visible;
   }
 
   /* Touch has no hover to reveal them, so visitors never found reply. */
   @media (hover: none), (pointer: coarse) {
-    > .reply,
-    > .react {
+    > .actions {
+      position: static;
+      display: inline-flex;
+      padding: 0;
+      border: none;
+      background: none;
       visibility: visible;
     }
   }
