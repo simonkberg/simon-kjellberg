@@ -42,7 +42,7 @@ export async function toggleReaction(
   }
 
   // The row goes in first so a concurrent removal counts it and keeps the mirror.
-  await query(
+  const inserted = await query(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
@@ -50,6 +50,8 @@ export async function toggleReaction(
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
   } catch (err) {
+    // A concurrent request owns a row this insert didn't create.
+    if (inserted.rowsAffected === 0) throw err;
     await query(
       "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
       [messageId, emoji, username],

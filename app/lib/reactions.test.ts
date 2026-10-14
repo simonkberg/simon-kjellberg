@@ -11,7 +11,7 @@ import { notifySubscribers } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -81,6 +81,20 @@ describe("toggleReaction", () => {
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
+  });
+
+  it("keeps a row a concurrent add created when its own mirror fails", async () => {
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",
+    );
+    // The concurrent request's row lands between this one's DELETE and INSERT.
+    vi.mocked(query)
+      .mockResolvedValueOnce(emptyResult)
+      .mockResolvedValueOnce(emptyResult);
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("429"));
+
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("429");
+    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
   });
 });
 
