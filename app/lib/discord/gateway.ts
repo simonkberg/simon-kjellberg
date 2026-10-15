@@ -144,7 +144,7 @@ class DiscordGateway {
     const before = this.#notifications;
     setTimeout(() => {
       if (this.#notifications === before) this.notifySubscribers();
-    }, ECHO_TIMEOUT_MS);
+    }, ECHO_TIMEOUT_MS).unref();
   }
 
   addMessageSubscriber(callback: MessageSubscriber): void {
