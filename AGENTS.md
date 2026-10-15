@@ -150,6 +150,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   others refresh only when the mirror changes, through its gateway echo. A failed or racing
   mirror change is logged, not retried, since it only shows on Discord.
   Gateway deletes and clears drop the rows before the gateway refreshes.
+  simon-bot reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
@@ -165,6 +166,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   server boot from `instrumentation.ts` — one long-lived Gateway subscription, not
   per-request — and dedupes replies and mentions through Turso's `seen_messages` (kept an hour) so multiple
   instances don't double-reply. Without Turso it doesn't reply at all, rather than twice.
+  The reply chain reaches it as one user turn of escaped `<message>` elements, its own
+  included, so ids, authors and reactions sit outside the text people can type.
 - **Turso:** the only datastore. `app/lib/turso.ts` calls its HTTP pipeline endpoint with raw
   `fetch`. `app/lib/migrations.ts` is an append-only list of idempotent statements applied
   at boot under a lock row in `locks`. Each records a checksum, and boot fails if an applied
