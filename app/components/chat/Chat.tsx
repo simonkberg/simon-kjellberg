@@ -1,15 +1,17 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useOptimistic, useState, useTransition } from "react";
 
-import type { ChatHistoryResult } from "@/actions/chat";
+import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
-import type { Message } from "@/lib/discord/api";
+import type { Message, Reaction } from "@/lib/discord/api";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
+import { ChatReactionsContext } from "./ChatReactions";
 import { ChatTip } from "./ChatTip";
+import { ChatToast } from "./ChatToast";
 
 const findMessageById = (messages: Message[], id: string): Message | null => {
   for (const message of messages) {
@@ -24,15 +26,100 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
+function toggleOwnReaction(
+  reactions: Reaction[],
+  emoji: string,
+  username: string,
+): Reaction[] {
+  const existing = reactions.find((reaction) => reaction.emoji === emoji);
+  if (!existing) {
+    return [...reactions, { emoji, count: 1, users: [username] }];
+  }
+  const updated = existing.users.includes(username)
+    ? {
+        ...existing,
+        count: existing.count - 1,
+        users: existing.users.filter((user) => user !== username),
+      }
+    : {
+        ...existing,
+        count: existing.count + 1,
+        users: [...existing.users, username],
+      };
+  return reactions
+    .map((reaction) => (reaction === existing ? updated : reaction))
+    .filter((reaction) => reaction.count > 0);
+}
+
+function withReactionToggled(
+  messages: Message[],
+  messageId: string,
+  emoji: string,
+  username: string,
+): Message[] {
+  return messages.map((message) => ({
+    ...message,
+    reactions:
+      message.id === messageId
+        ? toggleOwnReaction(message.reactions, emoji, username)
+        : message.reactions,
+    replies: withReactionToggled(message.replies, messageId, emoji, username),
+  }));
+}
+
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
+  username: Promise<string | null>;
 }
 
-export const Chat = ({ history, tipDismissed }: ChatProps) => {
+export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const result = use(history);
   const dismissed = use(tipDismissed);
+  const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [reacting, startReacting] = useTransition();
+  // Shown at once; the server's history replaces it when the action settles.
+  const [messages, toggleOptimistically] = useOptimistic(
+    result.status === "ok" ? result.messages : [],
+    (
+      current,
+      {
+        messageId,
+        emoji,
+        username,
+      }: { messageId: string; emoji: string; username: string },
+    ) => withReactionToggled(current, messageId, emoji, username),
+  );
+  // Counted so the toast remounts and shows a repeated message again.
+  const [reactionError, setReactionError] = useState<{
+    message: string;
+    count: number;
+  }>();
+
+  const react = (messageId: string, emoji: string) => {
+    startReacting(async () => {
+      // Without a session the server turns the reaction away.
+      if (currentUsername !== null) {
+        toggleOptimistically({ messageId, emoji, username: currentUsername });
+      }
+      const reaction = await reactToChatMessage(messageId, emoji).catch(
+        () =>
+          ({
+            status: "error",
+            error: "Failed to react to chat message",
+          }) as const,
+      );
+      // After an await, updates leave the transition unless wrapped again.
+      startReacting(() => {
+        setReactionError((previous) =>
+          reaction.status === "error"
+            ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
+            : undefined,
+        );
+      });
+    });
+  };
 
   if (result.status === "error") {
     return <p>Chat is temporarily unavailable :(</p>;
@@ -40,13 +127,20 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
 
   // @v8
   const replyToMessage = replyToId
-    ? findMessageById(result.messages, replyToId)
+    ? findMessageById(messages, replyToId)
     : null;
 
   return (
-    <>
+    <ChatReactionsContext
+      value={{ username: currentUsername, pending: reacting, react }}
+    >
+      <ChatToast
+        key={reactionError?.count}
+        variant="error"
+        message={reactionError?.message}
+      />
       <ChatHistory
-        messages={result.messages}
+        messages={messages}
         replyToId={replyToId}
         setReplyToId={setReplyToId}
       />
@@ -57,6 +151,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
             replyToId={replyToId}
             setReplyToId={setReplyToId}
             {...replyToMessage}
+            preview
           />
           <button
             aria-label="Clear reply"
@@ -71,6 +166,6 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
       <ChatInput replyToId={replyToId} setReplyToId={setReplyToId}>
         {!dismissed && <ChatTip />}
       </ChatInput>
-    </>
+    </ChatReactionsContext>
   );
 };

@@ -9,9 +9,13 @@ import { Markdown } from "@/components/Markdown";
 import { RelativeTime } from "@/components/RelativeTime";
 import type { Message } from "@/lib/discord/api";
 
+import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
+
 export interface ChatMessageProps extends Message {
   replyToId: string | null;
   setReplyToId: Dispatch<SetStateAction<string | null>>;
+  /** Shown above the input while replying: just the text, without controls or reactions. */
+  preview?: boolean;
 }
 
 export const ChatMessage = ({
@@ -20,8 +24,10 @@ export const ChatMessage = ({
   content,
   edited,
   timestamp,
+  reactions,
   replyToId,
   setReplyToId,
+  preview = false,
 }: ChatMessageProps) => (
   <div
     className="chat-message"
@@ -37,15 +43,25 @@ export const ChatMessage = ({
         <RelativeTime date={timestamp} style="narrow" />
       </Suspense>
     </small>{" "}
-    <button
-      aria-label="Reply"
-      title="Reply"
-      className="reply"
-      onClick={() => setReplyToId(id)}
-      disabled={replyToId === id}
-    >
-      ↩
-    </button>
+    {!preview && (
+      <>
+        <span className="actions">
+          <button
+            aria-label="Reply"
+            title="Reply"
+            className="reply"
+            onClick={() => setReplyToId(id)}
+            disabled={replyToId === id}
+          >
+            ↩
+          </button>
+          <ChatReactionPicker messageId={id} />
+        </span>
+        {reactions.length > 0 && (
+          <ChatReactionList messageId={id} reactions={reactions} />
+        )}
+      </>
+    )}
   </div>
 );
 
