@@ -225,12 +225,14 @@ export type Reaction = z.infer<typeof ReactionSchema>;
 
 // The bot's own reaction mirrors the site's, which are counted from Turso instead.
 function toReactions(msg: DiscordMessage): Reaction[] {
-  return (msg.reactions ?? []).flatMap(({ count, me, emoji }) => {
-    const discordCount = count - (me ? 1 : 0);
-    return emoji.id === null && emoji.name !== null && discordCount > 0
-      ? [{ emoji: emoji.name, count: discordCount, users: [] }]
-      : [];
-  });
+  const reactions: Reaction[] = [];
+  for (const { count, me, emoji } of msg.reactions ?? []) {
+    const discordCount = me ? count - 1 : count;
+    if (emoji.id === null && emoji.name !== null && discordCount > 0) {
+      reactions.push({ emoji: emoji.name, count: discordCount, users: [] });
+    }
+  }
+  return reactions;
 }
 
 const MessageSchema = z.object({

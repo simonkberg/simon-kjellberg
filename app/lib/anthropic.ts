@@ -439,13 +439,13 @@ function escapeXml(text: string): string {
 }
 
 function formatMessage({ id, username, content, reactions = [] }: ChatMessage) {
-  const attributes = [
-    ...(id === undefined ? [] : [`id="${escapeXml(id)}"`]),
-    `author="${escapeXml(username)}"`,
-    ...(reactions.length === 0
-      ? []
-      : [`reactions="${escapeXml(reactions.map(formatReaction).join(", "))}"`]),
-  ];
+  const attributes: string[] = [];
+  if (id !== undefined) attributes.push(`id="${escapeXml(id)}"`);
+  attributes.push(`author="${escapeXml(username)}"`);
+  if (reactions.length > 0) {
+    const counts = reactions.map(formatReaction).join(", ");
+    attributes.push(`reactions="${escapeXml(counts)}"`);
+  }
   return `<message ${attributes.join(" ")}>${escapeXml(content)}</message>`;
 }
 
