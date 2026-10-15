@@ -1,13 +1,11 @@
 import "server-only";
 import { z } from "zod";
 
-import { refreshChat } from "@/lib/chatUpdates";
 import {
   addBotReaction,
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
-import type { ReactionClear } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
@@ -35,7 +33,6 @@ export async function toggleReaction(
     await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
       log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
     });
-    refreshChat();
     return "removed";
   }
 
@@ -62,7 +59,6 @@ export async function addReaction(
     await deleteRow(messageId, emoji, username);
     throw err;
   }
-  refreshChat();
 }
 
 async function dropMirrorIfUnused(messageId: string, emoji: string) {
@@ -71,17 +67,6 @@ async function dropMirrorIfUnused(messageId: string, emoji: string) {
     [messageId, emoji],
   );
   if (rows.length === 0) await removeBotReaction(messageId, emoji);
-}
-
-/** Drops the site's rows for reactions Discord cleared, so they don't outlive the message or a moderator's clear. */
-export async function clearReactions({
-  messageIds,
-  emoji,
-}: ReactionClear): Promise<void> {
-  await query(
-    "DELETE FROM reactions WHERE message_id IN (SELECT value FROM json_each(?)) AND (? IS NULL OR emoji = ?)",
-    [JSON.stringify(messageIds), emoji, emoji],
-  );
 }
 
 type Reactable<T> = { id: string; reactions: Reaction[]; replies?: T[] };

@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { refreshChat } from "@/lib/chatUpdates";
 import {
   addBotReaction,
   type Message,
@@ -17,7 +16,6 @@ import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
 import {
   addReaction,
-  clearReactions,
   EmojiSchema,
   toggleReaction,
   withSiteReactions,
@@ -29,7 +27,6 @@ vi.mock(import("@/lib/discord/api"), () => ({
   addBotReaction: vi.fn(() => Promise.resolve()),
   removeBotReaction: vi.fn(() => Promise.resolve()),
 }));
-vi.mock(import("@/lib/chatUpdates"), () => ({ refreshChat: vi.fn() }));
 
 const alice = "alice" as Username;
 const bob = "bob" as Username;
@@ -53,11 +50,10 @@ beforeEach(() => {
 });
 
 describe("toggleReaction", () => {
-  it("adds a reaction, mirrors it on Discord and refreshes the streams", async () => {
+  it("adds a reaction and mirrors it on Discord", async () => {
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
 
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
-    expect(refreshChat).toHaveBeenCalledOnce();
   });
 
   it("keeps the bot's reaction while other visitors still react", async () => {
@@ -69,7 +65,6 @@ describe("toggleReaction", () => {
 
     expect(await toggleReaction("1", "👍", bob)).toBe("removed");
     expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
-    expect(refreshChat).toHaveBeenCalledTimes(4);
   });
 
   it("still removes the reaction when Discord fails to drop the mirror", async () => {
@@ -107,7 +102,6 @@ describe("toggleReaction", () => {
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
-    expect(refreshChat).not.toHaveBeenCalled();
   });
 
   it("leaves the mirror to the concurrent add that created the row", async () => {
@@ -167,43 +161,6 @@ describe("withSiteReactions", () => {
   it("skips the query without messages", async () => {
     expect(await withSiteReactions([])).toEqual([]);
     expect(query).not.toHaveBeenCalled();
-  });
-});
-
-describe("clearReactions", () => {
-  it("drops one emoji's rows or all of a message's", async () => {
-    await toggleReaction("1", "👍", alice);
-    await toggleReaction("1", "😂", alice);
-    await toggleReaction("2", "👍", bob);
-
-    await clearReactions({ messageIds: ["1"], emoji: "👍" });
-    expect(await withSiteReactions([message("1"), message("2")])).toMatchObject(
-      [
-        { id: "1", reactions: [{ emoji: "😂" }] },
-        { id: "2", reactions: [{ emoji: "👍" }] },
-      ],
-    );
-
-    await clearReactions({ messageIds: ["1"], emoji: null });
-    expect(await withSiteReactions([message("1")])).toMatchObject([
-      { id: "1", reactions: [] },
-    ]);
-  });
-
-  it("drops several messages' rows at once", async () => {
-    await toggleReaction("1", "👍", alice);
-    await toggleReaction("2", "😂", bob);
-    await toggleReaction("3", "🎉", bob);
-
-    await clearReactions({ messageIds: ["1", "2"], emoji: null });
-
-    expect(
-      await withSiteReactions([message("1"), message("2"), message("3")]),
-    ).toMatchObject([
-      { reactions: [] },
-      { reactions: [] },
-      { reactions: [{ emoji: "🎉" }] },
-    ]);
   });
 });
 

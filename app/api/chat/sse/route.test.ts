@@ -9,8 +9,7 @@ import {
   vi,
 } from "vitest";
 
-import { onChatRefresh } from "@/lib/chatUpdates";
-import { connect, subscribeToStatus } from "@/lib/discord/gateway";
+import { subscribe, subscribeToStatus } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 
 import { GET } from "./route";
@@ -20,9 +19,8 @@ vi.mock(import("next/server"), async (importOriginal) => {
   return { ...actual, connection: vi.fn() };
 });
 
-vi.mock(import("@/lib/chatUpdates"), () => ({ onChatRefresh: vi.fn() }));
 vi.mock(import("@/lib/discord/gateway"), () => ({
-  connect: vi.fn(),
+  subscribe: vi.fn(),
   subscribeToStatus: vi.fn(),
 }));
 
@@ -38,8 +36,7 @@ describe("GET /api/chat/sse", () => {
     vi.useFakeTimers();
     mockUnsubscribe = vi.fn();
     mockUnsubscribeStatus = vi.fn();
-    vi.mocked(onChatRefresh).mockReturnValue(mockUnsubscribe);
-    vi.mocked(connect).mockResolvedValue();
+    vi.mocked(subscribe).mockResolvedValue(mockUnsubscribe);
     vi.mocked(subscribeToStatus).mockReturnValue(mockUnsubscribeStatus);
   });
 
@@ -76,13 +73,12 @@ describe("GET /api/chat/sse", () => {
     reader.releaseLock();
   });
 
-  it("should subscribe to chat refreshes and connect the gateway", async () => {
+  it("should subscribe to gateway events", async () => {
     const controller = new AbortController();
     await GET(createRequest(controller.signal));
 
-    expect(onChatRefresh).toHaveBeenCalledOnce();
-    expect(onChatRefresh).toHaveBeenCalledWith(expect.any(Function));
-    expect(connect).toHaveBeenCalledOnce();
+    expect(subscribe).toHaveBeenCalledOnce();
+    expect(subscribe).toHaveBeenCalledWith(expect.any(Function));
 
     controller.abort();
   });
@@ -91,7 +87,8 @@ describe("GET /api/chat/sse", () => {
     const controller = new AbortController();
     const response = await GET(createRequest(controller.signal));
 
-    const onMessage = vi.mocked(onChatRefresh).mock.calls[0]![0];
+    // Get the callback passed to subscribe
+    const onMessage = vi.mocked(subscribe).mock.calls[0]![0];
 
     const reader = response.body!.getReader();
 
@@ -153,27 +150,14 @@ describe("GET /api/chat/sse", () => {
     reader.releaseLock();
   });
 
-  it("should return 503 without a ping interval when the gateway can't connect", async () => {
+  it("should return 503 without a ping interval when subscribing fails", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(connect).mockRejectedValue(new Error("Gateway closed"));
+    vi.mocked(subscribe).mockRejectedValue(new Error("Gateway closed"));
     const controller = new AbortController();
 
     const response = await GET(createRequest(controller.signal));
 
     expect(response.status).toBe(503);
-    expect(vi.getTimerCount()).toBe(0);
-    expect(onChatRefresh).not.toHaveBeenCalled();
-  });
-
-  it("should subscribe to nothing when the client left during the connect", async () => {
-    const controller = new AbortController();
-    vi.mocked(connect).mockImplementation(async () => controller.abort());
-
-    const response = await GET(createRequest(controller.signal));
-
-    expect(response.status).toBe(499);
-    expect(onChatRefresh).not.toHaveBeenCalled();
-    expect(subscribeToStatus).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -194,7 +178,7 @@ describe("GET /api/chat/sse", () => {
     const controller = new AbortController();
     const response = await GET(createRequest(controller.signal));
 
-    const onMessage = vi.mocked(onChatRefresh).mock.calls[0]![0];
+    const onMessage = vi.mocked(subscribe).mock.calls[0]![0];
     const onStatus = vi.mocked(subscribeToStatus).mock.calls[0]![0];
 
     controller.abort();

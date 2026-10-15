@@ -42,72 +42,14 @@ const ReadyDataSchema = z.object({
 
 const MessageEventDataSchema = z.object({ channel_id: z.string() });
 
-const ReactionClearDataSchema = z.object({
-  message_id: z.string(),
-  emoji: z.object({ name: z.string().nullable() }).optional(),
-});
-
-const MessageDeleteDataSchema = z.union([
-  z.object({ id: z.string() }).transform(({ id }) => [id]),
-  z.object({ ids: z.array(z.string()) }).transform(({ ids }) => ids),
-]);
-
-/** Reactions Discord dropped from messages: one emoji's, or all when `emoji` is null. */
-export interface ReactionClear {
-  messageIds: string[];
-  emoji: string | null;
-}
-
-function toReactionClear(
-  eventName: string,
-  data: unknown,
-): ReactionClear | undefined {
-  switch (eventName) {
-    case "MESSAGE_DELETE":
-    case "MESSAGE_DELETE_BULK": {
-      const deleted = MessageDeleteDataSchema.safeParse(data);
-      return deleted.success
-        ? { messageIds: deleted.data, emoji: null }
-        : undefined;
-    }
-    case "MESSAGE_REACTION_REMOVE_ALL":
-    case "MESSAGE_REACTION_REMOVE_EMOJI": {
-      const clear = ReactionClearDataSchema.safeParse(data);
-      if (!clear.success) return undefined;
-      const messageIds = [clear.data.message_id];
-      if (eventName === "MESSAGE_REACTION_REMOVE_ALL") {
-        return { messageIds, emoji: null };
-      }
-      const emoji = clear.data.emoji?.name;
-      return emoji ? { messageIds, emoji } : undefined;
-    }
-  }
-  return undefined;
-}
-
-/** A change in our channel; a new message carries it, and a deletion or reaction clear what it dropped. */
-export interface ChannelChange {
-  message?: DiscordMessage;
-  clear?: ReactionClear;
-}
-
-export type ChangeListener = (change: ChannelChange) => void;
-export type StatusListener = (ready: boolean) => void;
-
-function notifyAll<T>(listeners: Set<(value: T) => void>, value: T): void {
-  for (const listener of listeners) {
-    try {
-      listener(value);
-    } catch (err) {
-      log.error({ err }, "Gateway listener error");
-    }
-  }
-}
+export type MessageSubscriber = (message: DiscordMessage) => void;
+export type StatusSubscriber = (ready: boolean) => void;
 
 class DiscordGateway {
   #ws: WebSocket | null = null;
-  #changeListeners = new Set<ChangeListener>();
-  #statusListeners = new Set<StatusListener>();
+  #subscribers = new Set<() => void>();
+  #messageSubscribers = new Set<MessageSubscriber>();
+  #statusSubscribers = new Set<StatusSubscriber>();
 
   // Session state (for resume)
   #sessionId: string | null = null;
@@ -130,24 +72,60 @@ class DiscordGateway {
   // Set when no retry with this config can succeed; retrying would re-send IDENTIFY, and Discord resets the token past its daily limit.
   #fatal: Error | null = null;
 
-  listen(listener: ChangeListener): () => void {
-    this.#changeListeners.add(listener);
-    return () => {
-      this.#changeListeners.delete(listener);
-    };
+  addSubscriber(callback: () => void): void {
+    this.#subscribers.add(callback);
   }
 
-  listenToStatus(listener: StatusListener): () => void {
-    this.#statusListeners.add(listener);
-    return () => {
-      this.#statusListeners.delete(listener);
-    };
+  removeSubscriber(callback: () => void): void {
+    this.#subscribers.delete(callback);
+  }
+
+  #notifySubscribers(): void {
+    for (const callback of this.#subscribers) {
+      try {
+        callback();
+      } catch (err) {
+        log.error({ err }, "Subscriber callback error");
+      }
+    }
+  }
+
+  addMessageSubscriber(callback: MessageSubscriber): void {
+    this.#messageSubscribers.add(callback);
+  }
+
+  removeMessageSubscriber(callback: MessageSubscriber): void {
+    this.#messageSubscribers.delete(callback);
+  }
+
+  #notifyMessageSubscribers(message: DiscordMessage): void {
+    for (const callback of this.#messageSubscribers) {
+      try {
+        callback(message);
+      } catch (err) {
+        log.error({ err }, "Message subscriber callback error");
+      }
+    }
+  }
+
+  addStatusSubscriber(callback: StatusSubscriber): void {
+    this.#statusSubscribers.add(callback);
+  }
+
+  removeStatusSubscriber(callback: StatusSubscriber): void {
+    this.#statusSubscribers.delete(callback);
   }
 
   #setReady(ready: boolean): void {
     if (this.#ready === ready) return;
     this.#ready = ready;
-    notifyAll(this.#statusListeners, ready);
+    for (const callback of this.#statusSubscribers) {
+      try {
+        callback(ready);
+      } catch (err) {
+        log.error({ err }, "Status subscriber callback error");
+      }
+    }
   }
 
   connect(): Promise<void> {
@@ -371,21 +349,19 @@ class DiscordGateway {
       case "MESSAGE_REACTION_REMOVE_EMOJI": {
         const parsed = MessageEventDataSchema.safeParse(data);
         if (
-          !parsed.success ||
-          parsed.data.channel_id !== env.DISCORD_CHANNEL_ID
+          parsed.success &&
+          parsed.data.channel_id === env.DISCORD_CHANNEL_ID
         ) {
-          break;
-        }
-        log.debug({ event: eventName }, "Channel event for our channel");
+          log.debug({ event: eventName }, "Message event for our channel");
+          this.#notifySubscribers();
 
-        const message =
-          eventName === "MESSAGE_CREATE"
-            ? DiscordMessageSchema.safeParse(data).data
-            : undefined;
-        notifyAll(this.#changeListeners, {
-          message,
-          clear: toReactionClear(eventName, data),
-        });
+          if (eventName === "MESSAGE_CREATE") {
+            const parsedMessage = DiscordMessageSchema.safeParse(data);
+            if (parsedMessage.success) {
+              this.#notifyMessageSubscribers(parsedMessage.data);
+            }
+          }
+        }
         break;
       }
     }
@@ -434,30 +410,25 @@ function getGateway(): DiscordGateway {
   return getGlobal("simon.dev/discord-gateway", () => new DiscordGateway());
 }
 
-/** Calls `listener` on every change in our channel. Doesn't connect. */
-export function listen(listener: ChangeListener): () => void {
-  return getGateway().listen(listener);
+export async function subscribe(callback: () => void): Promise<() => void> {
+  const gw = getGateway();
+  gw.addSubscriber(callback);
+  await gw.connect();
+  return () => gw.removeSubscriber(callback);
 }
 
-export function connect(): Promise<void> {
-  return getGateway().connect();
-}
-
-export async function subscribe(listener: ChangeListener): Promise<() => void> {
-  const unsubscribe = listen(listener);
-  await connect();
-  return unsubscribe;
-}
-
-export function subscribeToMessages(
-  callback: (message: DiscordMessage) => void,
+export async function subscribeToMessages(
+  callback: MessageSubscriber,
 ): Promise<() => void> {
-  return subscribe(({ message }) => {
-    if (message) callback(message);
-  });
+  const gw = getGateway();
+  gw.addMessageSubscriber(callback);
+  await gw.connect();
+  return () => gw.removeMessageSubscriber(callback);
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */
-export function subscribeToStatus(listener: StatusListener): () => void {
-  return getGateway().listenToStatus(listener);
+export function subscribeToStatus(callback: StatusSubscriber): () => void {
+  const gw = getGateway();
+  gw.addStatusSubscriber(callback);
+  return () => gw.removeStatusSubscriber(callback);
 }
