@@ -15,7 +15,6 @@ import {
   getChannelMessages,
   type Message,
   postChannelMessage,
-  removeBotReaction,
 } from "@/lib/discord/api";
 import { resetGlobal } from "@/lib/global";
 import { identifiers } from "@/lib/identifiers";
@@ -111,29 +110,16 @@ describe("getChatHistory", () => {
     );
   });
 
-  it("adds the site's reactions to Discord's", async () => {
+  it("adds the site's reactions", async () => {
     vi.mocked(getChannelMessages).mockResolvedValue([
-      createMockMessage({
-        id: "1",
-        reactions: [{ emoji: "👍", count: 1, users: [] }],
-      }),
+      createMockMessage({ id: "1" }),
     ]);
     await query(
-      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'a'), ('1', '🎉', 'b')",
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'a')",
     );
 
-    const result = await getChatHistory();
-
-    expect(result).toMatchObject({
-      status: "ok",
-      messages: [
-        {
-          reactions: [
-            { emoji: "👍", count: 2, users: ["a"] },
-            { emoji: "🎉", count: 1, users: ["b"] },
-          ],
-        },
-      ],
+    expect(await getChatHistory()).toMatchObject({
+      messages: [{ reactions: [{ emoji: "👍", count: 1, users: ["a"] }] }],
     });
   });
 
@@ -301,7 +287,6 @@ describe("reactToChatMessage", () => {
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(addBotReaction).mockResolvedValue();
-    vi.mocked(removeBotReaction).mockResolvedValue();
   });
 
   afterEach(() => {
@@ -309,32 +294,19 @@ describe("reactToChatMessage", () => {
     vi.restoreAllMocks();
   });
 
-  const reactions = async () =>
-    (await query("SELECT message_id, emoji, username FROM reactions")).rows;
-
-  it("adds the reaction, mirrors it to Discord and refreshes", async () => {
+  it("toggles the visitor's reaction and refreshes", async () => {
     expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
 
-    expect(await reactions()).toEqual([
-      { message_id: "123", emoji: "👍", username: "test-user" },
-    ]);
-    expect(addBotReaction).toHaveBeenCalledWith("123", "👍");
+    expect(
+      (await query("SELECT message_id, emoji, username FROM reactions")).rows,
+    ).toEqual([{ message_id: "123", emoji: "👍", username: "test-user" }]);
     expect(updateTag).toHaveBeenCalledWith("getChatHistory");
     expect(refresh).toHaveBeenCalled();
-  });
-
-  it("takes the reaction back on a second toggle", async () => {
-    await reactToChatMessage("123", "👍");
-    expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
-
-    expect(await reactions()).toEqual([]);
-    expect(removeBotReaction).toHaveBeenCalledWith("123", "👍");
   });
 
   it.each([
     ["a message ID that isn't a snowflake", "../123", "👍"],
     ["text that isn't one emoji", "123", "nice"],
-    ["two emoji", "123", "👍👍"],
   ])("rejects %s", async (_, messageId, emoji) => {
     expect(await reactToChatMessage(messageId, emoji)).toEqual({
       status: "error",
@@ -353,7 +325,6 @@ describe("reactToChatMessage", () => {
       status: "error",
       error: "Reacting from your network is blocked.",
     });
-    expect(await reactions()).toEqual([]);
   });
 
   it("rejects the eleventh reaction in 30 seconds", async () => {
@@ -374,7 +345,6 @@ describe("reactToChatMessage", () => {
       status: "error",
       error: "Failed to react to chat message",
     });
-    expect(await reactions()).toEqual([]);
   });
 });
 

@@ -183,11 +183,6 @@
   --code-padding: 0 0.5ch;
   --code-border: none;
   --code-radius: 0;
-  --reaction-border: 1px solid var(--rule);
-  --reaction-radius: var(--code-radius);
-  --reaction-bg: color-mix(in oklch, var(--ink) 7%, transparent);
-  --reaction-hover-bg: color-mix(in oklch, var(--ink) 12%, transparent);
-  --reaction-pressed-bg: color-mix(in oklch, var(--accent) 22%, transparent);
   --code-size: inherit;
   --meta-size: inherit;
 
@@ -1422,7 +1417,7 @@ ul {
     gap: 1ch;
     padding: 0 1ch;
     border-radius: 1lh;
-    background: var(--reaction-hover-bg);
+    background: color-mix(in oklch, var(--ink) 12%, transparent);
     /* Not visibility: hidden, which would drop the buttons from the tab order. */
     opacity: 0;
 
@@ -1476,16 +1471,16 @@ ul {
     > button {
       padding: 0 1ch;
       border-radius: 1lh;
-      background: var(--reaction-bg);
+      background: color-mix(in oklch, var(--ink) 7%, transparent);
       color: var(--muted);
       font-size: var(--meta-size);
 
       &:hover:not(:disabled) {
-        background: var(--reaction-hover-bg);
+        background: color-mix(in oklch, var(--ink) 12%, transparent);
       }
 
       &[aria-pressed="true"] {
-        background: var(--reaction-pressed-bg);
+        background: color-mix(in oklch, var(--accent) 22%, transparent);
         color: var(--ink);
       }
 
@@ -1499,8 +1494,8 @@ ul {
 .chat-reaction-picker {
   grid-template-columns: repeat(8, 2.25em);
   padding: 0.5ch;
-  border: var(--reaction-border);
-  border-radius: var(--reaction-radius);
+  border: 1px solid var(--rule);
+  border-radius: var(--code-radius);
   background: var(--surface);
   color: var(--ink);
 

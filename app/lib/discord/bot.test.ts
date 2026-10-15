@@ -9,7 +9,7 @@ import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
-import { getMessageChain, postChannelMessage } from "./api";
+import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
 import { subscribeToMessages } from "./gateway";
 import type { DiscordMessage } from "./schemas";
@@ -50,6 +50,24 @@ function createMessage(
   };
 }
 
+function link(
+  id: string,
+  type: number,
+  username: string,
+  content: string,
+  reactions: ChainMessage["reactions"] = [],
+): ChainMessage {
+  return { id, type, username, content, reactions };
+}
+
+const heyTurn = {
+  role: "user",
+  id: "msg-1",
+  username: "User1",
+  content: "hey simon-bot",
+  reactions: [],
+};
+
 describe("handleMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,13 +90,7 @@ describe("handleMessage", () => {
         : sqlite(sql, args),
     );
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot!",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
     ]);
 
     async function* mockResponse() {
@@ -110,20 +122,8 @@ describe("handleMessage", () => {
 
   it("should not respond to a reply when nothing in the chain mentions the bot", async () => {
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hello",
-        reactions: [],
-      },
-      {
-        id: "msg-2",
-        type: 19,
-        username: "User2",
-        content: "hi",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hello"),
+      link("msg-2", 19, "User2", "hi"),
     ]);
 
     await handleMessage(
@@ -181,20 +181,8 @@ describe("handleMessage", () => {
   it("should respond when bot is mentioned in parent message", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot help",
-        reactions: [],
-      },
-      {
-        id: "msg-2",
-        type: 19,
-        username: "User2",
-        content: "thanks!",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot help"),
+      link("msg-2", 19, "User2", "thanks!"),
     ]);
 
     async function* mockResponse() {
@@ -222,27 +210,9 @@ describe("handleMessage", () => {
   it("should map bot messages to assistant role in conversation", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot!",
-        reactions: [],
-      },
-      {
-        id: "msg-2",
-        type: 19,
-        username: "simon-bot",
-        content: "hello there!",
-        reactions: [],
-      },
-      {
-        id: "msg-3",
-        type: 19,
-        username: "User1",
-        content: "thanks!",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
+      link("msg-2", 19, "simon-bot", "hello there!"),
+      link("msg-3", 19, "User1", "thanks!"),
     ]);
 
     async function* mockResponse() {
@@ -291,13 +261,9 @@ describe("handleMessage", () => {
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '😂', 'otter')",
     );
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [{ emoji: "😂", count: 1, users: [] }],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot", [
+        { emoji: "😂", count: 1, users: [] },
+      ]),
     ]);
     async function* mockResponse() {}
     vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
@@ -314,13 +280,7 @@ describe("handleMessage", () => {
   it("should reflect on the conversation after replying", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -334,13 +294,7 @@ describe("handleMessage", () => {
 
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      {
-        role: "user",
-        id: "msg-1",
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
       { role: "assistant", username: "simon-bot", content: "hello" },
     ]);
@@ -350,13 +304,7 @@ describe("handleMessage", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -375,13 +323,7 @@ describe("handleMessage", () => {
     );
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      {
-        role: "user",
-        id: "msg-1",
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
     ]);
   });
@@ -390,13 +332,7 @@ describe("handleMessage", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -416,13 +352,7 @@ describe("handleMessage", () => {
     );
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      {
-        role: "user",
-        id: "msg-1",
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
     ]);
   });
@@ -430,13 +360,7 @@ describe("handleMessage", () => {
   it("should reflect when the bot chose not to reply", async () => {
     const info = vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "simon",
-        content: "simon-bot try sounding less like grok please",
-        reactions: [],
-      },
+      link("msg-1", 0, "simon", "simon-bot try sounding less like grok please"),
     ]);
 
     async function* mockResponse() {}
@@ -468,13 +392,7 @@ describe("handleMessage", () => {
   it("should not reflect when the reply failed before anything was said", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     vi.mocked(createAnthropicMessage).mockImplementation(() => {
@@ -493,13 +411,7 @@ describe("handleMessage", () => {
     vi.mocked(reflect).mockRejectedValue(new Error("reflection broke"));
 
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -558,13 +470,7 @@ describe("handleMessage", () => {
   it("should post error message on post-commitment failure", async () => {
     const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot!",
-        reactions: [],
-      },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
     ]);
 
     async function* failingResponse(): AsyncGenerator<string> {

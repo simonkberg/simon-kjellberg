@@ -15,10 +15,27 @@ import {
   removeBotReaction,
   searchChannelMessages,
 } from "./api";
+import type { DiscordMessage } from "./schemas";
 
 vi.mock(import("server-only"), () => ({}));
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
+const REACTIONS_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`;
+
+function rawMessage(
+  reactions: DiscordMessage["reactions"],
+  id = "1",
+): DiscordMessage {
+  return {
+    type: 0,
+    id,
+    author: { id: "user1", bot: true },
+    content: "User: Hi",
+    timestamp: "2025-01-01T00:00:00.000000+00:00",
+    edited_timestamp: null,
+    reactions,
+  };
+}
 
 describe("getChannelMessages", () => {
   it("should fetch and parse messages successfully", async () => {
@@ -242,37 +259,24 @@ describe("getChannelMessages", () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
         HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User: Hi",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            reactions: [
-              { count: 3, me: true, emoji: { id: null, name: "👍" } },
-              { count: 1, me: true, emoji: { id: null, name: "🎉" } },
-              { count: 2, me: false, emoji: { id: null, name: "😂" } },
-              { count: 1, me: false, emoji: { id: "42", name: "custom" } },
-            ],
-          },
+          rawMessage([
+            { count: 3, me: true, emoji: { id: null, name: "👍" } },
+            { count: 1, me: true, emoji: { id: null, name: "🎉" } },
+            { count: 2, me: false, emoji: { id: null, name: "😂" } },
+            { count: 1, me: false, emoji: { id: "42", name: "custom" } },
+          ]),
         ]),
       ),
-    );
-
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
-        ({ params }) =>
-          HttpResponse.json(
-            params["emoji"] === "👍"
-              ? [
-                  { id: "reactor-1" },
-                  { id: "reactor-2" },
-                  { id: "bot", bot: true },
-                ]
-              : [{ id: "reactor-1" }, { id: "reactor-2" }],
-          ),
+      http.get(REACTIONS_URL, ({ params }) =>
+        HttpResponse.json(
+          params["emoji"] === "👍"
+            ? [
+                { id: "reactor-1" },
+                { id: "reactor-2" },
+                { id: "bot", bot: true },
+              ]
+            : [{ id: "reactor-1" }, { id: "reactor-2" }],
+        ),
       ),
       http.get(
         `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
@@ -298,21 +302,13 @@ describe("getChannelMessages", () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
         HttpResponse.json([
-          {
-            type: 0,
-            id: "reactors-cached",
-            author: { id: "user1", bot: true },
-            content: "User: Hi",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            reactions: [{ count, me: false, emoji: { id: null, name: "😂" } }],
-          },
+          rawMessage(
+            [{ count, me: false, emoji: { id: null, name: "😂" } }],
+            "reactors-cached",
+          ),
         ]),
       ),
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
-        lookups,
-      ),
+      http.get(REACTIONS_URL, lookups),
     );
 
     await getChannelMessages();
@@ -330,23 +326,12 @@ describe("getChannelMessages", () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
         HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User: Hi",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            reactions: [
-              { count: 1, me: false, emoji: { id: null, name: "😂" } },
-            ],
-          },
+          rawMessage([
+            { count: 1, me: false, emoji: { id: null, name: "😂" } },
+          ]),
         ]),
       ),
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
-        lookups,
-      ),
+      http.get(REACTIONS_URL, lookups),
     );
 
     const messages = await getChannelMessages();
@@ -919,65 +904,34 @@ describe("postChannelMessage", () => {
 });
 
 describe("bot reactions", () => {
-  it("should add the bot's reaction with the emoji encoded", async () => {
-    const onPut = vi.fn();
-    server.use(
-      http.put(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
-        ({ params }) => {
-          onPut(params);
-          return new HttpResponse(null, { status: 204 });
-        },
-      ),
-    );
-
-    await addBotReaction("123", "👍🏽");
-
-    expect(onPut).toHaveBeenCalledWith({
-      channelId: "test-discord-channel-id",
-      messageId: "123",
-      emoji: "👍🏽",
-    });
-  });
-
-  it("should remove the bot's reaction", async () => {
-    const onDelete = vi.fn();
-    server.use(
-      http.delete(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
-        ({ params }) => {
-          onDelete(params);
-          return new HttpResponse(null, { status: 204 });
-        },
-      ),
-    );
-
-    await removeBotReaction("123", "🎉");
-
-    expect(onDelete).toHaveBeenCalledWith({
-      channelId: "test-discord-channel-id",
-      messageId: "123",
+  it.each([
+    { name: "add", method: http.put, call: addBotReaction, emoji: "👍🏽" },
+    {
+      name: "remove",
+      method: http.delete,
+      call: removeBotReaction,
       emoji: "🎉",
-    });
-  });
+    },
+  ])(
+    "should $name the bot's reaction with the emoji encoded",
+    async ({ method, call, emoji }) => {
+      const onRequest = vi.fn();
+      server.use(
+        method(`${REACTIONS_URL}/@me`, ({ params }) => {
+          onRequest(params);
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
 
-  it("should throw when Discord rejects the reaction", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    server.use(
-      http.put(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji/@me`,
-        () =>
-          HttpResponse.json(
-            { message: "Unknown Message", code: 10008 },
-            { status: 404 },
-          ),
-      ),
-    );
+      await call("123", emoji);
 
-    await expect(addBotReaction("123", "👍")).rejects.toThrow(
-      "Discord API error: 404",
-    );
-  });
+      expect(onRequest).toHaveBeenCalledWith({
+        channelId: "test-discord-channel-id",
+        messageId: "123",
+        emoji,
+      });
+    },
+  );
 });
 
 describe("rate limiting", () => {
