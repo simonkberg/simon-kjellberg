@@ -24,6 +24,9 @@ const GATEWAY_INTENTS = (1 << 9) | (1 << 10); // GUILD_MESSAGES, GUILD_MESSAGE_R
 // Close codes that require fresh identify (not resume)
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
 // Close codes that are fatal (don't reconnect)
+// Discord's gateway echoes the bot's own reactions back well within this.
+const ECHO_TIMEOUT_MS = 3000;
+
 const FATAL_CLOSE_CODES = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
 
 const GatewayPayloadSchema = z.object({
@@ -95,6 +98,7 @@ class DiscordGateway {
   #messageSubscribers = new Set<MessageSubscriber>();
   #statusSubscribers = new Set<StatusSubscriber>();
   #clearSubscribers = new Set<ClearSubscriber>();
+  #notifications = 0;
 
   // Session state (for resume)
   #sessionId: string | null = null;
@@ -126,6 +130,7 @@ class DiscordGateway {
   }
 
   notifySubscribers(): void {
+    this.#notifications++;
     for (const callback of this.#subscribers) {
       try {
         callback();
@@ -133,6 +138,13 @@ class DiscordGateway {
         log.error({ err }, "Subscriber callback error");
       }
     }
+  }
+
+  notifySubscribersUnlessEchoed(): void {
+    const before = this.#notifications;
+    setTimeout(() => {
+      if (this.#notifications === before) this.notifySubscribers();
+    }, ECHO_TIMEOUT_MS);
   }
 
   addMessageSubscriber(callback: MessageSubscriber): void {
@@ -504,6 +516,11 @@ export async function subscribeToMessages(
 /** Tells this process's subscribers the channel changed without a gateway event. */
 export function notifySubscribers(): void {
   getGateway().notifySubscribers();
+}
+
+/** For a change Discord should echo back: refreshes anyway if no gateway event does soon. */
+export function notifySubscribersUnlessEchoed(): void {
+  getGateway().notifySubscribersUnlessEchoed();
 }
 
 /** Called when Discord drops a message's reactions, or the message itself; subscribers refresh once it settles. Doesn't connect. */

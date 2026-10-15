@@ -8,6 +8,7 @@ import {
 } from "@/lib/discord/api";
 import {
   notifySubscribers,
+  notifySubscribersUnlessEchoed,
   type ReactionClear,
   subscribeToReactionClears,
 } from "@/lib/discord/gateway";
@@ -41,7 +42,7 @@ export async function toggleReaction(
         return false;
       },
     );
-    refreshUnlessEchoed(mirrorChanged);
+    if (!mirrorChanged) notifySubscribers();
     return "removed";
   }
 
@@ -62,6 +63,7 @@ export async function addReaction(
   );
   if (inserted.rowsAffected === 0) return;
   const first = (await countReactions(messageId, emoji)) === 1;
+  if (first) notifySubscribersUnlessEchoed();
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
@@ -76,12 +78,8 @@ export async function addReaction(
     );
     throw err;
   }
-  refreshUnlessEchoed(first);
-}
-
-// A mirror change comes back from the gateway to every replica, this one included.
-function refreshUnlessEchoed(mirrorChanged: boolean): void {
-  if (!mirrorChanged) notifySubscribers();
+  // A mirror change comes back from the gateway to every replica, this one included.
+  if (!first) notifySubscribers();
 }
 
 async function countReactions(messageId: string, emoji: string) {
@@ -97,6 +95,7 @@ async function dropMirrorIfUnused(
   emoji: string,
 ): Promise<boolean> {
   if ((await countReactions(messageId, emoji)) > 0) return false;
+  notifySubscribersUnlessEchoed();
   await removeBotReaction(messageId, emoji);
   // An add between the count and the removal kept its row but found the mirror in place.
   if ((await countReactions(messageId, emoji)) > 0) {

@@ -9,6 +9,7 @@ import {
 } from "@/lib/discord/api";
 import {
   notifySubscribers,
+  notifySubscribersUnlessEchoed,
   subscribeToReactionClears,
 } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
@@ -35,6 +36,7 @@ vi.mock(import("@/lib/discord/api"), () => ({
 }));
 vi.mock(import("@/lib/discord/gateway"), () => ({
   notifySubscribers: vi.fn(),
+  notifySubscribersUnlessEchoed: vi.fn(),
   subscribeToReactionClears: vi.fn(() => () => {}),
 }));
 
@@ -65,6 +67,7 @@ describe("toggleReaction", () => {
 
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
     expect(notifySubscribers).not.toHaveBeenCalled();
+    expect(notifySubscribersUnlessEchoed).toHaveBeenCalledOnce();
   });
 
   it("refreshes the streams itself when the mirror doesn't change", async () => {
@@ -79,6 +82,7 @@ describe("toggleReaction", () => {
     await toggleReaction("1", "👍", alice);
     expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
     expect(notifySubscribers).toHaveBeenCalledTimes(2);
+    expect(notifySubscribersUnlessEchoed).toHaveBeenCalledTimes(2);
   });
 
   it("keeps the bot's reaction while other visitors still react", async () => {
