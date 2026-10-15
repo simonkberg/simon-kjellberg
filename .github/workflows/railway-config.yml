@@ -9,6 +9,8 @@ on:
     paths:
       - ".railway/**"
       - ".github/workflows/railway-config.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
 
 jobs:
   plan:
@@ -26,6 +28,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: npm install -g @railway/cli@5.68.0
       # Exits 2 when production doesn't match the file: apply it by hand, as documented in AGENTS.md.
-      - run: railway config plan --detailed-exit-code
+      - run: railway config plan --environment production --detailed-exit-code
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
