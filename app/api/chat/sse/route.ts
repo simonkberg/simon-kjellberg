@@ -1,6 +1,7 @@
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-import { subscribe, subscribeToStatus } from "@/lib/discord/gateway";
+import { onChatRefresh } from "@/lib/chatUpdates";
+import { connect, subscribeToStatus } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 
 // Send periodic pings to keep the connection alive and detect client disconnects.
@@ -18,15 +19,16 @@ export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
   let aborted = false;
 
-  let unsubscribe: () => void;
+  const unsubscribe = onChatRefresh(() => {
+    if (aborted) return;
+    void writer
+      .write(encoder.encode(`data: refresh\n\n`))
+      .catch(ignoreWriteErrors);
+  });
   try {
-    unsubscribe = await subscribe(() => {
-      if (aborted) return;
-      void writer
-        .write(encoder.encode(`data: refresh\n\n`))
-        .catch(ignoreWriteErrors);
-    });
+    await connect();
   } catch (err) {
+    unsubscribe();
     log.error({ err }, "Failed to subscribe to gateway");
     return new NextResponse(null, { status: 503 });
   }

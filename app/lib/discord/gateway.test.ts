@@ -364,13 +364,12 @@ describe("subscribe", () => {
     ],
     ["MESSAGE_DELETE", { id: "msg-test" }, null],
     ["MESSAGE_DELETE_BULK", { ids: ["msg-test", "msg-other"] }, null],
-  ])("should report %s to clear subscribers", async (event, data, emoji) => {
-    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+  ])("should report %s as a clear", async (event, data, emoji) => {
+    const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
 
     const callback = vi.fn();
-    subscribeToReactionClears(callback);
-    await subscribe(vi.fn());
+    await subscribe(callback);
 
     const client = getLastClient(gateway.clients);
     client?.send(
@@ -393,18 +392,17 @@ describe("subscribe", () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(callback).toHaveBeenCalledExactlyOnceWith({
-      messageIds: "ids" in data ? data.ids : ["msg-test"],
-      emoji,
+      message: undefined,
+      clear: { messageIds: "ids" in data ? data.ids : ["msg-test"], emoji },
     });
   });
 
   it("should not report a custom emoji's clear, a single removal or a malformed clear", async () => {
-    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+    const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
 
     const callback = vi.fn();
-    const unsubscribe = subscribeToReactionClears(callback);
-    await subscribe(vi.fn());
+    const unsubscribe = await subscribe(callback);
 
     const client = getLastClient(gateway.clients);
     client?.send(
@@ -448,8 +446,12 @@ describe("subscribe", () => {
       ),
     );
     await vi.advanceTimersByTimeAsync(0);
-    expect(callback).not.toHaveBeenCalled();
+    expect(callback).toHaveBeenCalledTimes(4);
+    expect(callback).not.toHaveBeenCalledWith(
+      expect.objectContaining({ clear: expect.anything() }),
+    );
 
+    callback.mockClear();
     unsubscribe();
     client?.send(
       createPayload(
@@ -461,120 +463,6 @@ describe("subscribe", () => {
     );
     await vi.advanceTimersByTimeAsync(0);
     expect(callback).not.toHaveBeenCalled();
-  });
-
-  it("should refresh subscribers once, after the clear subscribers settle", async () => {
-    const { subscribe, subscribeToReactionClears } = await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const cleared = Promise.withResolvers<void>();
-    subscribeToReactionClears(() => cleared.promise);
-    const callback = vi.fn();
-    await subscribe(callback);
-
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        { channel_id: "test-discord-channel-id", id: "msg-test" },
-        2,
-        "MESSAGE_DELETE",
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-    expect(callback).not.toHaveBeenCalled();
-
-    cleared.resolve();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(callback).toHaveBeenCalledOnce();
-  });
-
-  it("should log errors thrown by clear subscribers and still refresh", async () => {
-    const { subscribe, subscribeToReactionClears } = await import("./gateway");
-    const { log } = await import("@/lib/log");
-    server.use(createHandshakeHandler());
-
-    subscribeToReactionClears(() => {
-      throw new Error("boom");
-    });
-    const callback = vi.fn();
-    await subscribe(callback);
-
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        { channel_id: "test-discord-channel-id", id: "msg-test" },
-        2,
-        "MESSAGE_DELETE",
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-
-    expect(log.error).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error) }),
-      "Clear subscriber callback error",
-    );
-    expect(callback).toHaveBeenCalledOnce();
-  });
-
-  it("should refresh once when Discord echoes an expected change", async () => {
-    const { subscribe, notifySubscribersUnlessEchoed } =
-      await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    notifySubscribersUnlessEchoed();
-
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        { channel_id: "test-discord-channel-id", message_id: "msg-test" },
-        2,
-        "MESSAGE_REACTION_ADD",
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(5000);
-
-    expect(callback).toHaveBeenCalledOnce();
-  });
-
-  it("should refresh anyway when Discord sends no echo", async () => {
-    const { subscribe, notifySubscribersUnlessEchoed } =
-      await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    notifySubscribersUnlessEchoed();
-
-    await vi.advanceTimersByTimeAsync(2999);
-    expect(callback).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(1);
-    expect(callback).toHaveBeenCalledOnce();
-  });
-
-  it("should not refresh for a cancelled change", async () => {
-    const { subscribe, notifySubscribersUnlessEchoed } =
-      await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    notifySubscribersUnlessEchoed()();
-
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it("should notify subscribers on demand", async () => {
-    const { subscribe, notifySubscribers } = await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    notifySubscribers();
-
-    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it("should stop notifying after unsubscribe", async () => {
@@ -905,7 +793,7 @@ describe("subscribe", () => {
 
     expect(log.error).toHaveBeenCalledWith(
       { err: expect.any(Error) },
-      "Status subscriber callback error",
+      "Gateway listener error",
     );
     expect(onStatus).toHaveBeenCalledWith(false);
   });
@@ -1286,9 +1174,10 @@ describe("subscribe", () => {
 
       await vi.advanceTimersByTimeAsync(0);
 
-      // Refresh callback called with no args
-      expect(refreshCallback).toHaveBeenCalledTimes(1);
-      expect(refreshCallback).toHaveBeenCalledWith();
+      expect(refreshCallback).toHaveBeenCalledExactlyOnceWith({
+        message: expect.objectContaining({ id: "msg-789" }),
+        clear: undefined,
+      });
 
       // Message callback called with full message
       expect(messageCallback).toHaveBeenCalledTimes(1);

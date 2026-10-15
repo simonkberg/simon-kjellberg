@@ -1,10 +1,11 @@
 export async function register() {
   if (process.env["NEXT_RUNTIME"] === "nodejs") {
+    const { startChatUpdates } = await import("@/lib/chatUpdates");
     const { startBotSubscription } = await import("@/lib/discord/bot");
     const { refreshIpDenyList } = await import("@/lib/ipDenyList");
     const { bridgeConsole, log } = await import("@/lib/log");
     const { runMigrations } = await import("@/lib/migrations");
-    const { startReactionCleanup } = await import("@/lib/reactions");
+    const { clearReactions } = await import("@/lib/reactions");
     const { markReady } = await import("@/lib/readiness");
 
     bridgeConsole();
@@ -17,7 +18,7 @@ export async function register() {
       log.error({ err }, "Failed to run migrations");
     }
 
-    startReactionCleanup();
+    startChatUpdates(clearReactions);
     startBotSubscription()
       .then(() => markReady("bot"))
       .catch((err) => {

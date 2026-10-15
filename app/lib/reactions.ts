@@ -1,17 +1,13 @@
 import "server-only";
 import { z } from "zod";
 
+import { refreshChat, refreshChatUnlessEchoed } from "@/lib/chatUpdates";
 import {
   addBotReaction,
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
-import {
-  notifySubscribers,
-  notifySubscribersUnlessEchoed,
-  type ReactionClear,
-  subscribeToReactionClears,
-} from "@/lib/discord/gateway";
+import type { ReactionClear } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
@@ -42,7 +38,7 @@ export async function toggleReaction(
         return false;
       },
     );
-    if (!mirrorChanged) notifySubscribers();
+    if (!mirrorChanged) refreshChat();
     return "removed";
   }
 
@@ -63,7 +59,7 @@ export async function addReaction(
   );
   if (inserted.rowsAffected === 0) return;
   const first = (await countReactions(messageId, emoji)) === 1;
-  const cancelFallback = first ? notifySubscribersUnlessEchoed() : undefined;
+  const cancelFallback = first ? refreshChatUnlessEchoed() : undefined;
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
@@ -89,7 +85,7 @@ export async function addReaction(
     throw err;
   }
   // A mirror change comes back from the gateway to every replica, this one included.
-  if (!first) notifySubscribers();
+  if (!first) refreshChat();
 }
 
 async function countReactions(messageId: string, emoji: string) {
@@ -105,7 +101,7 @@ async function dropMirrorIfUnused(
   emoji: string,
 ): Promise<boolean> {
   if ((await countReactions(messageId, emoji)) > 0) return false;
-  notifySubscribersUnlessEchoed();
+  refreshChatUnlessEchoed();
   await removeBotReaction(messageId, emoji);
   // An add between the count and the removal kept its row but found the mirror in place.
   if ((await countReactions(messageId, emoji)) > 0) {
@@ -125,14 +121,6 @@ export async function clearReactions({
   await query(
     "DELETE FROM reactions WHERE message_id IN (SELECT value FROM json_each(?)) AND (? IS NULL OR emoji = ?)",
     [JSON.stringify(messageIds), emoji, emoji],
-  );
-}
-
-export function startReactionCleanup(): void {
-  subscribeToReactionClears((clear) =>
-    clearReactions(clear).catch((err: unknown) => {
-      log.error({ err, ...clear }, "Failed to clear reactions");
-    }),
   );
 }
 

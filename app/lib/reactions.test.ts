@@ -2,16 +2,12 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { refreshChat, refreshChatUnlessEchoed } from "@/lib/chatUpdates";
 import {
   addBotReaction,
   type Message,
   removeBotReaction,
 } from "@/lib/discord/api";
-import {
-  notifySubscribers,
-  notifySubscribersUnlessEchoed,
-  subscribeToReactionClears,
-} from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
@@ -23,7 +19,6 @@ import {
   addReaction,
   clearReactions,
   EmojiSchema,
-  startReactionCleanup,
   toggleReaction,
   withSiteReactions,
 } from "./reactions";
@@ -34,10 +29,9 @@ vi.mock(import("@/lib/discord/api"), () => ({
   addBotReaction: vi.fn(() => Promise.resolve()),
   removeBotReaction: vi.fn(() => Promise.resolve()),
 }));
-vi.mock(import("@/lib/discord/gateway"), () => ({
-  notifySubscribers: vi.fn(),
-  notifySubscribersUnlessEchoed: vi.fn(),
-  subscribeToReactionClears: vi.fn(() => () => {}),
+vi.mock(import("@/lib/chatUpdates"), () => ({
+  refreshChat: vi.fn(),
+  refreshChatUnlessEchoed: vi.fn(),
 }));
 
 const alice = "alice" as Username;
@@ -66,23 +60,23 @@ describe("toggleReaction", () => {
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
 
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
-    expect(notifySubscribers).not.toHaveBeenCalled();
-    expect(notifySubscribersUnlessEchoed).toHaveBeenCalledOnce();
+    expect(refreshChat).not.toHaveBeenCalled();
+    expect(refreshChatUnlessEchoed).toHaveBeenCalledOnce();
   });
 
   it("refreshes the streams itself when the mirror doesn't change", async () => {
     await toggleReaction("1", "👍", alice);
 
     await toggleReaction("1", "👍", bob);
-    expect(notifySubscribers).toHaveBeenCalledOnce();
+    expect(refreshChat).toHaveBeenCalledOnce();
 
     await toggleReaction("1", "👍", bob);
-    expect(notifySubscribers).toHaveBeenCalledTimes(2);
+    expect(refreshChat).toHaveBeenCalledTimes(2);
 
     await toggleReaction("1", "👍", alice);
     expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
-    expect(notifySubscribers).toHaveBeenCalledTimes(2);
-    expect(notifySubscribersUnlessEchoed).toHaveBeenCalledTimes(2);
+    expect(refreshChat).toHaveBeenCalledTimes(2);
+    expect(refreshChatUnlessEchoed).toHaveBeenCalledTimes(2);
   });
 
   it("keeps the bot's reaction while other visitors still react", async () => {
@@ -115,7 +109,7 @@ describe("toggleReaction", () => {
 
     expect(await toggleReaction("1", "👍", alice)).toBe("removed");
     expect(log.warn).toHaveBeenCalledOnce();
-    expect(notifySubscribers).toHaveBeenCalledOnce();
+    expect(refreshChat).toHaveBeenCalledOnce();
   });
 
   it("restores the mirror when a reaction lands while it is dropped", async () => {
@@ -159,9 +153,7 @@ describe("toggleReaction", () => {
 
   it("adds nothing when Discord turns the reaction away", async () => {
     const cancelFallback = vi.fn();
-    vi.mocked(notifySubscribersUnlessEchoed).mockReturnValueOnce(
-      cancelFallback,
-    );
+    vi.mocked(refreshChatUnlessEchoed).mockReturnValueOnce(cancelFallback);
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
@@ -301,35 +293,6 @@ describe("clearReactions", () => {
       { reactions: [] },
       { reactions: [{ emoji: "🎉" }] },
     ]);
-  });
-});
-
-describe("startReactionCleanup", () => {
-  function startAndGetCallback() {
-    startReactionCleanup();
-    const callback = vi.mocked(subscribeToReactionClears).mock.calls[0]?.[0];
-    if (!callback) throw new Error("not subscribed");
-    return callback;
-  }
-
-  it("clears rows on Discord's clears, leaving the refresh to the gateway", async () => {
-    await toggleReaction("1", "👍", alice);
-
-    await startAndGetCallback()({ messageIds: ["1"], emoji: null });
-
-    expect(notifySubscribers).not.toHaveBeenCalled();
-    expect(await withSiteReactions([message("1")])).toMatchObject([
-      { reactions: [] },
-    ]);
-  });
-
-  it("logs a failed clear", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(query).mockRejectedValueOnce(new Error("down"));
-
-    await startAndGetCallback()({ messageIds: ["1"], emoji: "👍" });
-
-    expect(log.error).toHaveBeenCalledOnce();
   });
 });
 

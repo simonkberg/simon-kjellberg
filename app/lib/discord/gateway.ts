@@ -26,9 +26,6 @@ const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
 // Close codes that are fatal (don't reconnect)
 const FATAL_CLOSE_CODES = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
 
-// Discord's gateway echoes the bot's own reactions back well within this.
-const ECHO_TIMEOUT_MS = 3000;
-
 const GatewayPayloadSchema = z.object({
   op: z.number(),
   d: z.unknown(),
@@ -88,17 +85,29 @@ function toReactionClear(
   return undefined;
 }
 
-export type MessageSubscriber = (message: DiscordMessage) => void;
-export type StatusSubscriber = (ready: boolean) => void;
-export type ClearSubscriber = (clear: ReactionClear) => Promise<void> | void;
+/** A change in our channel; a new message carries it, and a deletion or reaction clear what it dropped. */
+export interface ChannelChange {
+  message?: DiscordMessage;
+  clear?: ReactionClear;
+}
+
+export type ChangeListener = (change: ChannelChange) => void;
+export type StatusListener = (ready: boolean) => void;
+
+function notifyAll<T>(listeners: Set<(value: T) => void>, value: T): void {
+  for (const listener of listeners) {
+    try {
+      listener(value);
+    } catch (err) {
+      log.error({ err }, "Gateway listener error");
+    }
+  }
+}
 
 class DiscordGateway {
   #ws: WebSocket | null = null;
-  #subscribers = new Set<() => void>();
-  #messageSubscribers = new Set<MessageSubscriber>();
-  #statusSubscribers = new Set<StatusSubscriber>();
-  #clearSubscribers = new Set<ClearSubscriber>();
-  #notifications = 0;
+  #changeListeners = new Set<ChangeListener>();
+  #statusListeners = new Set<StatusListener>();
 
   // Session state (for resume)
   #sessionId: string | null = null;
@@ -121,92 +130,24 @@ class DiscordGateway {
   // Set when no retry with this config can succeed; retrying would re-send IDENTIFY, and Discord resets the token past its daily limit.
   #fatal: Error | null = null;
 
-  addSubscriber(callback: () => void): void {
-    this.#subscribers.add(callback);
+  listen(listener: ChangeListener): () => void {
+    this.#changeListeners.add(listener);
+    return () => {
+      this.#changeListeners.delete(listener);
+    };
   }
 
-  removeSubscriber(callback: () => void): void {
-    this.#subscribers.delete(callback);
-  }
-
-  notifySubscribers(): void {
-    this.#notifications++;
-    for (const callback of this.#subscribers) {
-      try {
-        callback();
-      } catch (err) {
-        log.error({ err }, "Subscriber callback error");
-      }
-    }
-  }
-
-  notifySubscribersUnlessEchoed(): () => void {
-    const before = this.#notifications;
-    const timer = setTimeout(() => {
-      if (this.#notifications === before) this.notifySubscribers();
-    }, ECHO_TIMEOUT_MS).unref();
-    return () => clearTimeout(timer);
-  }
-
-  addMessageSubscriber(callback: MessageSubscriber): void {
-    this.#messageSubscribers.add(callback);
-  }
-
-  removeMessageSubscriber(callback: MessageSubscriber): void {
-    this.#messageSubscribers.delete(callback);
-  }
-
-  #notifyMessageSubscribers(message: DiscordMessage): void {
-    for (const callback of this.#messageSubscribers) {
-      try {
-        callback(message);
-      } catch (err) {
-        log.error({ err }, "Message subscriber callback error");
-      }
-    }
-  }
-
-  addClearSubscriber(callback: ClearSubscriber): void {
-    this.#clearSubscribers.add(callback);
-  }
-
-  removeClearSubscriber(callback: ClearSubscriber): void {
-    this.#clearSubscribers.delete(callback);
-  }
-
-  // Subscribers refresh once the clear is applied, so they never read the rows it drops.
-  async #clearThenNotify(clear: ReactionClear): Promise<void> {
-    const results = await Promise.allSettled(
-      [...this.#clearSubscribers].map((callback) =>
-        Promise.try(() => callback(clear)),
-      ),
-    );
-    for (const result of results) {
-      if (result.status === "rejected") {
-        log.error({ err: result.reason }, "Clear subscriber callback error");
-      }
-    }
-    this.notifySubscribers();
-  }
-
-  addStatusSubscriber(callback: StatusSubscriber): void {
-    this.#statusSubscribers.add(callback);
-  }
-
-  removeStatusSubscriber(callback: StatusSubscriber): void {
-    this.#statusSubscribers.delete(callback);
+  listenToStatus(listener: StatusListener): () => void {
+    this.#statusListeners.add(listener);
+    return () => {
+      this.#statusListeners.delete(listener);
+    };
   }
 
   #setReady(ready: boolean): void {
     if (this.#ready === ready) return;
     this.#ready = ready;
-    for (const callback of this.#statusSubscribers) {
-      try {
-        callback(ready);
-      } catch (err) {
-        log.error({ err }, "Status subscriber callback error");
-      }
-    }
+    notifyAll(this.#statusListeners, ready);
   }
 
   connect(): Promise<void> {
@@ -437,19 +378,14 @@ class DiscordGateway {
         }
         log.debug({ event: eventName }, "Channel event for our channel");
 
-        const clear = toReactionClear(eventName, data);
-        if (clear) {
-          void this.#clearThenNotify(clear);
-        } else {
-          this.notifySubscribers();
-        }
-
-        if (eventName === "MESSAGE_CREATE") {
-          const parsedMessage = DiscordMessageSchema.safeParse(data);
-          if (parsedMessage.success) {
-            this.#notifyMessageSubscribers(parsedMessage.data);
-          }
-        }
+        const message =
+          eventName === "MESSAGE_CREATE"
+            ? DiscordMessageSchema.safeParse(data).data
+            : undefined;
+        notifyAll(this.#changeListeners, {
+          message,
+          clear: toReactionClear(eventName, data),
+        });
         break;
       }
     }
@@ -498,44 +434,30 @@ function getGateway(): DiscordGateway {
   return getGlobal("simon.dev/discord-gateway", () => new DiscordGateway());
 }
 
-export async function subscribe(callback: () => void): Promise<() => void> {
-  const gw = getGateway();
-  gw.addSubscriber(callback);
-  await gw.connect();
-  return () => gw.removeSubscriber(callback);
+/** Calls `listener` on every change in our channel. Doesn't connect. */
+export function listen(listener: ChangeListener): () => void {
+  return getGateway().listen(listener);
 }
 
-export async function subscribeToMessages(
-  callback: MessageSubscriber,
+export function connect(): Promise<void> {
+  return getGateway().connect();
+}
+
+export async function subscribe(listener: ChangeListener): Promise<() => void> {
+  const unsubscribe = listen(listener);
+  await connect();
+  return unsubscribe;
+}
+
+export function subscribeToMessages(
+  callback: (message: DiscordMessage) => void,
 ): Promise<() => void> {
-  const gw = getGateway();
-  gw.addMessageSubscriber(callback);
-  await gw.connect();
-  return () => gw.removeMessageSubscriber(callback);
-}
-
-/** Tells this process's subscribers the channel changed without a gateway event. */
-export function notifySubscribers(): void {
-  getGateway().notifySubscribers();
-}
-
-/** For a change Discord should echo back: refreshes anyway if no gateway event does soon. Armed before the change, since the echo can beat Discord's response; returns a cancel for a change that failed. */
-export function notifySubscribersUnlessEchoed(): () => void {
-  return getGateway().notifySubscribersUnlessEchoed();
-}
-
-/** Called when Discord drops a message's reactions, or the message itself; subscribers refresh once it settles. Doesn't connect. */
-export function subscribeToReactionClears(
-  callback: ClearSubscriber,
-): () => void {
-  const gw = getGateway();
-  gw.addClearSubscriber(callback);
-  return () => gw.removeClearSubscriber(callback);
+  return subscribe(({ message }) => {
+    if (message) callback(message);
+  });
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */
-export function subscribeToStatus(callback: StatusSubscriber): () => void {
-  const gw = getGateway();
-  gw.addStatusSubscriber(callback);
-  return () => gw.removeStatusSubscriber(callback);
+export function subscribeToStatus(listener: StatusListener): () => void {
+  return getGateway().listenToStatus(listener);
 }
