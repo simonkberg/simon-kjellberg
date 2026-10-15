@@ -1184,6 +1184,29 @@ describe("subscribe", () => {
       );
     });
 
+    it("should refresh but skip message subscribers for a malformed MESSAGE_CREATE", async () => {
+      const { subscribe, subscribeToMessages } = await import("./gateway");
+      server.use(createHandshakeHandler());
+
+      const refreshCallback = vi.fn();
+      const messageCallback = vi.fn();
+      await subscribe(refreshCallback);
+      await subscribeToMessages(messageCallback);
+
+      getLastClient(gateway.clients)?.send(
+        createPayload(
+          GatewayOpcode.DISPATCH,
+          { channel_id: "test-discord-channel-id" },
+          2,
+          "MESSAGE_CREATE",
+        ),
+      );
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(refreshCallback).toHaveBeenCalledOnce();
+      expect(messageCallback).not.toHaveBeenCalled();
+    });
+
     it("should notify both refresh and message subscribers", async () => {
       const { subscribe, subscribeToMessages } = await import("./gateway");
       server.use(createHandshakeHandler());
