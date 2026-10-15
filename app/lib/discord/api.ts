@@ -80,7 +80,7 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    const json = await response.json();
+    const json = response.status === 204 ? null : await response.json();
 
     if (response.status === 429) {
       retries++;
@@ -214,6 +214,25 @@ const discordMessageLoader = new DataLoader<string, DiscordMessage>(
 
 const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 
+const ReactionSchema = z.object({
+  emoji: z.string(),
+  count: z.number(),
+  /** Site visitors who reacted; the rest of `count` reacted on Discord. */
+  users: z.array(z.string()),
+});
+
+export type Reaction = z.infer<typeof ReactionSchema>;
+
+// The bot's own reaction mirrors the site's, which are counted from Turso instead.
+function toReactions(msg: DiscordMessage): Reaction[] {
+  return (msg.reactions ?? []).flatMap(({ count, me, emoji }) => {
+    const discordCount = count - (me ? 1 : 0);
+    return emoji.id === null && emoji.name !== null && discordCount > 0
+      ? [{ emoji: emoji.name, count: discordCount, users: [] }]
+      : [];
+  });
+}
+
 const MessageSchema = z.object({
   id: z.string(),
   user: UserSchema,
@@ -221,6 +240,7 @@ const MessageSchema = z.object({
   content: z.string(),
   edited: z.boolean(),
   timestamp: z.string().pipe(z.coerce.date()),
+  reactions: z.array(ReactionSchema),
   get replies() {
     return z.array(MessageSchema);
   },
@@ -261,6 +281,7 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
         content,
         edited: discordMessage.edited_timestamp !== null,
         timestamp: discordMessage.timestamp,
+        reactions: toReactions(discordMessage),
         replies: [],
       });
     });
@@ -295,6 +316,7 @@ export type ChainMessage = {
   type: number;
   username: string;
   content: string;
+  reactions: Reaction[];
 };
 
 const MAX_CHAIN_DEPTH = 50;
@@ -315,7 +337,13 @@ export async function getMessageChain(
 
     const { username, content } = await resolveMessageContent(response);
 
-    chain.unshift({ id: response.id, type: response.type, username, content });
+    chain.unshift({
+      id: response.id,
+      type: response.type,
+      username,
+      content,
+      reactions: toReactions(response),
+    });
 
     currentId = response.message_reference?.message_id;
   }
@@ -406,6 +434,24 @@ export async function postChannelMessage(
   );
 
   return response.id;
+}
+
+function botReactionEndpoint(messageId: string, emoji: string): string {
+  return `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`;
+}
+
+export async function addBotReaction(
+  messageId: string,
+  emoji: string,
+): Promise<void> {
+  await call("PUT", botReactionEndpoint(messageId, emoji), z.null());
+}
+
+export async function removeBotReaction(
+  messageId: string,
+  emoji: string,
+): Promise<void> {
+  await call("DELETE", botReactionEndpoint(messageId, emoji), z.null());
 }
 
 function flattenSettledPromises<T>(

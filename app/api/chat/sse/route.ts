@@ -1,6 +1,7 @@
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-import { subscribe, subscribeToStatus } from "@/lib/discord/gateway";
+import { onChatRefresh } from "@/lib/chatUpdates";
+import { connect, subscribeToStatus } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 
 // Send periodic pings to keep the connection alive and detect client disconnects.
@@ -18,18 +19,20 @@ export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
   let aborted = false;
 
-  let unsubscribe: () => void;
   try {
-    unsubscribe = await subscribe(() => {
-      if (aborted) return;
-      void writer
-        .write(encoder.encode(`data: refresh\n\n`))
-        .catch(ignoreWriteErrors);
-    });
+    await connect();
   } catch (err) {
-    log.error({ err }, "Failed to subscribe to gateway");
+    log.error({ err }, "Failed to connect to gateway");
     return new NextResponse(null, { status: 503 });
   }
+  // Abort events don't replay, so a client gone during the connect never cleans up.
+  if (request.signal.aborted) return new NextResponse(null, { status: 499 });
+  const unsubscribe = onChatRefresh(() => {
+    if (aborted) return;
+    void writer
+      .write(encoder.encode(`data: refresh\n\n`))
+      .catch(ignoreWriteErrors);
+  });
 
   // The client counts an open stream as live; this tells it when the gateway
   // behind it drops and comes back.
