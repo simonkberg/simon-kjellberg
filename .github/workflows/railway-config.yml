@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: railwayapp/config@9e17d413dbe219f19d62538d9c06b5dbb5e9abf8 # v1.2.0
+      - uses: railwayapp/config@f1f0c715716fe035319b0a716b95c6e83e0f6595 # main, v1.2.0 runs npm install
         with:
           command: plan
           railway-token: ${{ secrets.RAILWAY_TOKEN }}
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - uses: railwayapp/config@9e17d413dbe219f19d62538d9c06b5dbb5e9abf8 # v1.2.0
+      - uses: railwayapp/config@f1f0c715716fe035319b0a716b95c6e83e0f6595 # main, v1.2.0 runs npm install
         with:
           command: apply
           railway-token: ${{ secrets.RAILWAY_TOKEN }}

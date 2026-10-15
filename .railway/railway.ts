@@ -1,7 +1,7 @@
 import { defineRailway, github, preserve, project, service } from "railway/iac";
 // Railway records this name as the owner of the service; renaming it needs `railway config partials transfer`.
 export const partial = "simon.dev";
-export default defineRailway(() => {
+export default defineRailway((ctx) => {
   const simonDev = service("simon.dev", {
     source: github("simonkberg/simon.dev", { checkSuites: false }),
     deploy: {
@@ -9,7 +9,7 @@ export default defineRailway(() => {
     },
     healthcheck: "/health",
     replicas: { "europe-west4-drams3a": 2 },
-    domains: ["simon.dev"],
+    domains: ctx.isEnvironment("production") ? ["simon.dev"] : [],
     networking: { privateNetworkEndpoint: "simon-dev" },
     env: {
       ANTHROPIC_API_KEY: preserve(),
