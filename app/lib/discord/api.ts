@@ -255,7 +255,7 @@ async function getReactors({ messageId, emoji }: ReactorsKey) {
   );
 }
 
-// Keyed by count too, so history refetches reactors only when a reaction changes.
+// Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
 const reactorsLoader = new DataLoader<ReactorsKey, string[], string>(
   (keys) =>
     Promise.allSettled(keys.map(getReactors)).then(flattenSettledPromises),
@@ -272,12 +272,13 @@ async function withDiscordReactors(
 ): Promise<Reaction[]> {
   return Promise.all(
     reactions.map(async (reaction) => {
-      const { emoji, count } = reaction;
+      const key = { messageId, emoji: reaction.emoji, count: reaction.count };
       try {
-        const users = await reactorsLoader.load({ messageId, emoji, count });
+        const users = await reactorsLoader.load(key);
         return { ...reaction, users };
       } catch (err) {
-        log.warn({ err, messageId, emoji }, "Failed to load reactors");
+        reactorsLoader.clear(key);
+        log.warn({ err, ...key }, "Failed to load reactors");
         return reaction;
       }
     }),

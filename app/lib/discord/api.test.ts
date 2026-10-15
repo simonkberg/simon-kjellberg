@@ -326,6 +326,7 @@ describe("getChannelMessages", () => {
 
   it("should still count Discord reactions when their names fail to load", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
+    const lookups = vi.fn(() => new HttpResponse(null, { status: 500 }));
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
         HttpResponse.json([
@@ -344,7 +345,7 @@ describe("getChannelMessages", () => {
       ),
       http.get(
         `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
-        () => new HttpResponse(null, { status: 500 }),
+        lookups,
       ),
     );
 
@@ -354,6 +355,9 @@ describe("getChannelMessages", () => {
       { emoji: "😂", count: 1, users: [] },
     ]);
     expect(log.warn).toHaveBeenCalledOnce();
+
+    await getChannelMessages();
+    expect(lookups).toHaveBeenCalledTimes(2);
   });
 
   it("should handle replies as nested messages with multiple levels", async () => {
