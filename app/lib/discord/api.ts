@@ -239,30 +239,45 @@ const ReactorsResponseSchema = z.array(
   z.object({ id: z.string(), bot: z.boolean().optional() }),
 );
 
+type ReactorsKey = { messageId: string; emoji: string; count: number };
+
 // Names who reacted on Discord, skipping bots so the mirror doesn't name itself.
+async function getReactors({ messageId, emoji }: ReactorsKey) {
+  const reactors = await call(
+    "GET",
+    `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`,
+    ReactorsResponseSchema,
+    { limit: 100 },
+  );
+  const people = reactors.filter(({ bot }) => !bot);
+  return Promise.all(
+    people.map(async ({ id }) => (await userLoader.load(id)).name),
+  );
+}
+
+// Keyed by count too, so history refetches reactors only when a reaction changes.
+const reactorsLoader = new DataLoader<ReactorsKey, string[], string>(
+  (keys) =>
+    Promise.allSettled(keys.map(getReactors)).then(flattenSettledPromises),
+  {
+    cacheKeyFn: ({ messageId, emoji, count }) =>
+      `${messageId}/${emoji}/${count}`,
+    cacheMap: new LruMap(100),
+  },
+);
+
 async function withDiscordReactors(
   messageId: string,
   reactions: Reaction[],
 ): Promise<Reaction[]> {
   return Promise.all(
     reactions.map(async (reaction) => {
+      const { emoji, count } = reaction;
       try {
-        const reactors = await call(
-          "GET",
-          `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(reaction.emoji)}`,
-          ReactorsResponseSchema,
-          { limit: 100 },
-        );
-        const people = reactors.filter(({ bot }) => !bot);
-        const users = await Promise.all(
-          people.map(async ({ id }) => (await userLoader.load(id)).name),
-        );
+        const users = await reactorsLoader.load({ messageId, emoji, count });
         return { ...reaction, users };
       } catch (err) {
-        log.warn(
-          { err, messageId, emoji: reaction.emoji },
-          "Failed to load reactors",
-        );
+        log.warn({ err, messageId, emoji }, "Failed to load reactors");
         return reaction;
       }
     }),

@@ -147,7 +147,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
   with its own reaction while any remain, so Discord shows site reactions as one. History
   adds those rows to Discord's counts minus the bot's, and names Discord's non-bot reactors
-  with one request per Discord reaction, falling back to a count. A toggle refreshes its own replica;
+  with a request per Discord reaction, cached until its count changes, falling back to a count. A toggle refreshes its own replica;
   others refresh only when the mirror changes, through its gateway echo. A failed or racing
   mirror change is logged, not retried, since it only shows on Discord.
   Gateway deletes and clears drop the rows before the gateway refreshes.

@@ -292,6 +292,38 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should look up Discord reactors again only when their count changes", async () => {
+    let count = 1;
+    const lookups = vi.fn(() => HttpResponse.json([]));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            type: 0,
+            id: "reactors-cached",
+            author: { id: "user1", bot: true },
+            content: "User: Hi",
+            timestamp: "2025-01-01T00:00:00.000000+00:00",
+            edited_timestamp: null,
+            reactions: [{ count, me: false, emoji: { id: null, name: "😂" } }],
+          },
+        ]),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
+        lookups,
+      ),
+    );
+
+    await getChannelMessages();
+    await getChannelMessages();
+    expect(lookups).toHaveBeenCalledOnce();
+
+    count = 2;
+    await getChannelMessages();
+    expect(lookups).toHaveBeenCalledTimes(2);
+  });
+
   it("should still count Discord reactions when their names fail to load", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(
