@@ -73,8 +73,7 @@ export async function addReaction(
         );
       },
     );
-    // A PUT that timed out or lost its connection can still land after its row is gone.
-    if (err instanceof DOMException || err instanceof TypeError) {
+    if (mayHaveLanded(err)) {
       void dropMirrorIfUnused(messageId, emoji).catch((dropErr: unknown) => {
         log.warn(
           { err: dropErr, messageId, emoji },
@@ -86,6 +85,14 @@ export async function addReaction(
   }
   // A mirror change comes back from the gateway to every replica, this one included.
   if (!first) refreshChat();
+}
+
+/** A PUT that timed out or lost its connection can still land after its row is gone. */
+function mayHaveLanded(err: unknown): boolean {
+  return (
+    (err instanceof DOMException && err.name === "TimeoutError") ||
+    (err instanceof TypeError && err.message === "fetch failed")
+  );
 }
 
 async function countReactions(messageId: string, emoji: string) {

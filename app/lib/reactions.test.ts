@@ -159,6 +159,7 @@ describe("toggleReaction", () => {
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
     expect(cancelFallback).toHaveBeenCalledOnce();
+    expect(removeBotReaction).not.toHaveBeenCalled();
   });
 
   it("drops a mirror whose timed-out PUT may still have landed", async () => {
