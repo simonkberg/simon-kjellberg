@@ -123,11 +123,14 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
             error: "Failed to react to chat message",
           }) as const,
       );
-      setReactionError((previous) =>
-        reaction.status === "error"
-          ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
-          : undefined,
-      );
+      // After an await, updates leave the transition unless wrapped again.
+      startReacting(() => {
+        setReactionError((previous) =>
+          reaction.status === "error"
+            ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
+            : undefined,
+        );
+      });
     });
   };
 
