@@ -54,7 +54,7 @@ export function startChatUpdates(
       refreshChat();
       return;
     }
-    void applyClear(clear)
+    void Promise.try(() => applyClear(clear))
       .catch((err: unknown) => {
         log.error({ err, ...clear }, "Failed to clear reactions");
       })

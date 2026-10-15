@@ -125,12 +125,20 @@ describe("startChatUpdates", () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
-  it("logs a failed clear and still refreshes", async () => {
+  it.each([
+    ["rejects", () => Promise.reject(new Error("down"))],
+    [
+      "throws",
+      () => {
+        throw new Error("down");
+      },
+    ],
+  ])("logs a clear that %s and still refreshes", async (_, applyClear) => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     const callback = vi.fn();
     onChatRefresh(callback);
 
-    startAndGetListener(() => Promise.reject(new Error("down")))({ clear });
+    startAndGetListener(applyClear)({ clear });
     await vi.advanceTimersByTimeAsync(0);
 
     expect(log.error).toHaveBeenCalledWith(

@@ -19,19 +19,18 @@ export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
   let aborted = false;
 
+  try {
+    await connect();
+  } catch (err) {
+    log.error({ err }, "Failed to connect to gateway");
+    return new NextResponse(null, { status: 503 });
+  }
   const unsubscribe = onChatRefresh(() => {
     if (aborted) return;
     void writer
       .write(encoder.encode(`data: refresh\n\n`))
       .catch(ignoreWriteErrors);
   });
-  try {
-    await connect();
-  } catch (err) {
-    unsubscribe();
-    log.error({ err }, "Failed to subscribe to gateway");
-    return new NextResponse(null, { status: 503 });
-  }
 
   // The client counts an open stream as live; this tells it when the gateway
   // behind it drops and comes back.

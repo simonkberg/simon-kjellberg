@@ -162,7 +162,7 @@ describe("GET /api/chat/sse", () => {
 
     expect(response.status).toBe(503);
     expect(vi.getTimerCount()).toBe(0);
-    expect(mockUnsubscribe).toHaveBeenCalledOnce();
+    expect(onChatRefresh).not.toHaveBeenCalled();
   });
 
   it("should cleanup on abort", async () => {
