@@ -180,14 +180,16 @@ describe("toggleReaction", () => {
     );
   });
 
-  it("logs a failed drop after a timed-out PUT", async () => {
+  it("logs a failed drop after a PUT that lost its connection", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(addBotReaction).mockRejectedValueOnce(
-      new DOMException("timed out", "TimeoutError"),
+      new TypeError("fetch failed"),
     );
     vi.mocked(removeBotReaction).mockRejectedValueOnce(new Error("down"));
 
-    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("timed out");
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow(
+      "fetch failed",
+    );
     await vi.waitFor(() => expect(log.warn).toHaveBeenCalledOnce());
   });
 

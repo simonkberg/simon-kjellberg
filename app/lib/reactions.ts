@@ -77,12 +77,12 @@ export async function addReaction(
         );
       },
     );
-    // A timed-out PUT can still land after its row is gone.
-    if (err instanceof DOMException && err.name === "TimeoutError") {
+    // A PUT that timed out or lost its connection can still land after its row is gone.
+    if (err instanceof DOMException || err instanceof TypeError) {
       void dropMirrorIfUnused(messageId, emoji).catch((dropErr: unknown) => {
         log.warn(
           { err: dropErr, messageId, emoji },
-          "Failed to drop a timed-out bot reaction",
+          "Failed to drop an unconfirmed bot reaction",
         );
       });
     }
