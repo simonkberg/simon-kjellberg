@@ -35,10 +35,13 @@ export async function toggleReaction(
 
   if (rowsAffected > 0) {
     // The site counts from Turso, so a stale mirror only shows on Discord.
-    await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
-      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-    });
-    notifySubscribers();
+    const mirrorChanged = await dropMirrorIfUnused(messageId, emoji).catch(
+      (err: unknown) => {
+        log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+        return false;
+      },
+    );
+    refreshUnlessEchoed(mirrorChanged);
     return "removed";
   }
 
@@ -58,6 +61,7 @@ export async function addReaction(
     [messageId, emoji, username],
   );
   if (inserted.rowsAffected === 0) return;
+  const first = (await countReactions(messageId, emoji)) === 1;
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
@@ -72,7 +76,12 @@ export async function addReaction(
     );
     throw err;
   }
-  notifySubscribers();
+  refreshUnlessEchoed(first);
+}
+
+// A mirror change comes back from the gateway to every replica, this one included.
+function refreshUnlessEchoed(mirrorChanged: boolean): void {
+  if (!mirrorChanged) notifySubscribers();
 }
 
 async function countReactions(messageId: string, emoji: string) {
@@ -83,13 +92,17 @@ async function countReactions(messageId: string, emoji: string) {
   return Number(rows[0]?.["n"]);
 }
 
-async function dropMirrorIfUnused(messageId: string, emoji: string) {
-  if ((await countReactions(messageId, emoji)) > 0) return;
+async function dropMirrorIfUnused(
+  messageId: string,
+  emoji: string,
+): Promise<boolean> {
+  if ((await countReactions(messageId, emoji)) > 0) return false;
   await removeBotReaction(messageId, emoji);
   // An add between the count and the removal kept its row but found the mirror in place.
   if ((await countReactions(messageId, emoji)) > 0) {
     await addBotReaction(messageId, emoji);
   }
+  return true;
 }
 
 /** Drops the site's rows for reactions Discord cleared, so they don't outlive the message or a moderator's clear. */
@@ -104,12 +117,11 @@ export async function clearReactions({
 }
 
 export function startReactionCleanup(): void {
-  subscribeToReactionClears((clear) => {
-    // Unconditional: the gateway's refresh may have read rows another replica deleted since.
-    clearReactions(clear).then(notifySubscribers, (err: unknown) => {
+  subscribeToReactionClears((clear) =>
+    clearReactions(clear).catch((err: unknown) => {
       log.error({ err, ...clear }, "Failed to clear reactions");
-    });
-  });
+    }),
+  );
 }
 
 type Reactable<T> = { id: string; reactions: Reaction[]; replies?: T[] };

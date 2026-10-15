@@ -398,7 +398,7 @@ describe("subscribe", () => {
     });
   });
 
-  it("should not report a custom emoji's clear, a single removal or a malformed delete", async () => {
+  it("should not report a custom emoji's clear, a single removal or a malformed clear", async () => {
     const { subscribe, subscribeToReactionClears } = await import("./gateway");
     server.use(createHandshakeHandler());
 
@@ -439,6 +439,14 @@ describe("subscribe", () => {
         "MESSAGE_DELETE",
       ),
     );
+    client?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id" },
+        5,
+        "MESSAGE_REACTION_REMOVE_ALL",
+      ),
+    );
     await vi.advanceTimersByTimeAsync(0);
     expect(callback).not.toHaveBeenCalled();
 
@@ -447,7 +455,7 @@ describe("subscribe", () => {
       createPayload(
         GatewayOpcode.DISPATCH,
         { channel_id: "test-discord-channel-id", message_id: "msg-test" },
-        5,
+        6,
         "MESSAGE_REACTION_REMOVE_ALL",
       ),
     );
@@ -455,7 +463,32 @@ describe("subscribe", () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
-  it("should log errors thrown by clear subscribers", async () => {
+  it("should refresh subscribers once, after the clear subscribers settle", async () => {
+    const { subscribe, subscribeToReactionClears } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const cleared = Promise.withResolvers<void>();
+    subscribeToReactionClears(() => cleared.promise);
+    const callback = vi.fn();
+    await subscribe(callback);
+
+    getLastClient(gateway.clients)?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", id: "msg-test" },
+        2,
+        "MESSAGE_DELETE",
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(callback).not.toHaveBeenCalled();
+
+    cleared.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(callback).toHaveBeenCalledOnce();
+  });
+
+  it("should log errors thrown by clear subscribers and still refresh", async () => {
     const { subscribe, subscribeToReactionClears } = await import("./gateway");
     const { log } = await import("@/lib/log");
     server.use(createHandshakeHandler());
@@ -463,7 +496,8 @@ describe("subscribe", () => {
     subscribeToReactionClears(() => {
       throw new Error("boom");
     });
-    await subscribe(vi.fn());
+    const callback = vi.fn();
+    await subscribe(callback);
 
     getLastClient(gateway.clients)?.send(
       createPayload(
@@ -479,6 +513,7 @@ describe("subscribe", () => {
       expect.objectContaining({ err: expect.any(Error) }),
       "Clear subscriber callback error",
     );
+    expect(callback).toHaveBeenCalledOnce();
   });
 
   it("should notify subscribers on demand", async () => {

@@ -58,9 +58,36 @@ export interface ReactionClear {
   emoji: string | null;
 }
 
+function toReactionClear(
+  eventName: string,
+  data: unknown,
+): ReactionClear | undefined {
+  switch (eventName) {
+    case "MESSAGE_DELETE":
+    case "MESSAGE_DELETE_BULK": {
+      const deleted = MessageDeleteDataSchema.safeParse(data);
+      return deleted.success
+        ? { messageIds: deleted.data, emoji: null }
+        : undefined;
+    }
+    case "MESSAGE_REACTION_REMOVE_ALL":
+    case "MESSAGE_REACTION_REMOVE_EMOJI": {
+      const clear = ReactionClearDataSchema.safeParse(data);
+      if (!clear.success) return undefined;
+      const messageIds = [clear.data.message_id];
+      if (eventName === "MESSAGE_REACTION_REMOVE_ALL") {
+        return { messageIds, emoji: null };
+      }
+      const emoji = clear.data.emoji?.name;
+      return emoji ? { messageIds, emoji } : undefined;
+    }
+  }
+  return undefined;
+}
+
 export type MessageSubscriber = (message: DiscordMessage) => void;
 export type StatusSubscriber = (ready: boolean) => void;
-export type ClearSubscriber = (clear: ReactionClear) => void;
+export type ClearSubscriber = (clear: ReactionClear) => Promise<void> | void;
 
 class DiscordGateway {
   #ws: WebSocket | null = null;
@@ -134,14 +161,19 @@ class DiscordGateway {
     this.#clearSubscribers.delete(callback);
   }
 
-  #notifyClearSubscribers(clear: ReactionClear): void {
-    for (const callback of this.#clearSubscribers) {
-      try {
-        callback(clear);
-      } catch (err) {
-        log.error({ err }, "Clear subscriber callback error");
+  // Subscribers refresh once the clear is applied, so they never read the rows it drops.
+  async #clearThenNotify(clear: ReactionClear): Promise<void> {
+    const results = await Promise.allSettled(
+      [...this.#clearSubscribers].map((callback) =>
+        Promise.try(() => callback(clear)),
+      ),
+    );
+    for (const result of results) {
+      if (result.status === "rejected") {
+        log.error({ err: result.reason }, "Clear subscriber callback error");
       }
     }
+    this.notifySubscribers();
   }
 
   addStatusSubscriber(callback: StatusSubscriber): void {
@@ -378,62 +410,31 @@ class DiscordGateway {
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
       case "MESSAGE_DELETE":
-      case "MESSAGE_DELETE_BULK": {
-        const parsed = MessageEventDataSchema.safeParse(data);
-        if (
-          parsed.success &&
-          parsed.data.channel_id === env.DISCORD_CHANNEL_ID
-        ) {
-          log.debug({ event: eventName }, "Message event for our channel");
-          this.notifySubscribers();
-
-          if (eventName === "MESSAGE_CREATE") {
-            const parsedMessage = DiscordMessageSchema.safeParse(data);
-            if (parsedMessage.success) {
-              this.#notifyMessageSubscribers(parsedMessage.data);
-            }
-          }
-
-          if (eventName.startsWith("MESSAGE_DELETE")) {
-            const deleted = MessageDeleteDataSchema.safeParse(data);
-            if (deleted.success) {
-              this.#notifyClearSubscribers({
-                messageIds: deleted.data,
-                emoji: null,
-              });
-            }
-          }
-        }
-        break;
-      }
-
+      case "MESSAGE_DELETE_BULK":
       case "MESSAGE_REACTION_ADD":
       case "MESSAGE_REACTION_REMOVE":
       case "MESSAGE_REACTION_REMOVE_ALL":
       case "MESSAGE_REACTION_REMOVE_EMOJI": {
         const parsed = MessageEventDataSchema.safeParse(data);
         if (
-          parsed.success &&
-          parsed.data.channel_id === env.DISCORD_CHANNEL_ID
+          !parsed.success ||
+          parsed.data.channel_id !== env.DISCORD_CHANNEL_ID
         ) {
-          log.debug({ event: eventName }, "Reaction event for our channel");
-          this.notifySubscribers();
+          break;
+        }
+        log.debug({ event: eventName }, "Channel event for our channel");
 
-          const clear =
-            eventName === "MESSAGE_REACTION_REMOVE_ALL" ||
-            eventName === "MESSAGE_REACTION_REMOVE_EMOJI"
-              ? ReactionClearDataSchema.safeParse(data)
-              : undefined;
-          if (clear?.success) {
-            const messageIds = [clear.data.message_id];
-            if (eventName === "MESSAGE_REACTION_REMOVE_ALL") {
-              this.#notifyClearSubscribers({ messageIds, emoji: null });
-            } else if (clear.data.emoji?.name) {
-              this.#notifyClearSubscribers({
-                messageIds,
-                emoji: clear.data.emoji.name,
-              });
-            }
+        const clear = toReactionClear(eventName, data);
+        if (clear) {
+          void this.#clearThenNotify(clear);
+        } else {
+          this.notifySubscribers();
+        }
+
+        if (eventName === "MESSAGE_CREATE") {
+          const parsedMessage = DiscordMessageSchema.safeParse(data);
+          if (parsedMessage.success) {
+            this.#notifyMessageSubscribers(parsedMessage.data);
           }
         }
         break;
@@ -505,7 +506,7 @@ export function notifySubscribers(): void {
   getGateway().notifySubscribers();
 }
 
-/** Called when Discord drops a message's reactions, or the message itself; doesn't connect. */
+/** Called when Discord drops a message's reactions, or the message itself; subscribers refresh once it settles. Doesn't connect. */
 export function subscribeToReactionClears(
   callback: ClearSubscriber,
 ): () => void {

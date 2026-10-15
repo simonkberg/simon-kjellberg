@@ -60,11 +60,25 @@ beforeEach(() => {
 });
 
 describe("toggleReaction", () => {
-  it("adds a reaction, mirrors it on Discord and notifies subscribers", async () => {
+  it("adds a reaction and mirrors it on Discord, whose echo refreshes the streams", async () => {
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
 
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
+    expect(notifySubscribers).not.toHaveBeenCalled();
+  });
+
+  it("refreshes the streams itself when the mirror doesn't change", async () => {
+    await toggleReaction("1", "👍", alice);
+
+    await toggleReaction("1", "👍", bob);
     expect(notifySubscribers).toHaveBeenCalledOnce();
+
+    await toggleReaction("1", "👍", bob);
+    expect(notifySubscribers).toHaveBeenCalledTimes(2);
+
+    await toggleReaction("1", "👍", alice);
+    expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
+    expect(notifySubscribers).toHaveBeenCalledTimes(2);
   });
 
   it("keeps the bot's reaction while other visitors still react", async () => {
@@ -97,7 +111,7 @@ describe("toggleReaction", () => {
 
     expect(await toggleReaction("1", "👍", alice)).toBe("removed");
     expect(log.warn).toHaveBeenCalledOnce();
-    expect(notifySubscribers).toHaveBeenCalledTimes(2);
+    expect(notifySubscribers).toHaveBeenCalledOnce();
   });
 
   it("restores the mirror when a reaction lands while it is dropped", async () => {
@@ -133,6 +147,7 @@ describe("toggleReaction", () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     const sqlite = vi.mocked(query).getMockImplementation()!;
     vi.mocked(query)
+      .mockImplementationOnce(sqlite)
       .mockImplementationOnce(sqlite)
       .mockImplementationOnce(sqlite)
       .mockRejectedValueOnce(new Error("blip"));
@@ -247,13 +262,12 @@ describe("startReactionCleanup", () => {
     return callback;
   }
 
-  it("clears rows on Discord's clears, then refreshes", async () => {
+  it("clears rows on Discord's clears, leaving the refresh to the gateway", async () => {
     await toggleReaction("1", "👍", alice);
-    vi.mocked(notifySubscribers).mockClear();
 
-    startAndGetCallback()({ messageIds: ["1"], emoji: null });
+    await startAndGetCallback()({ messageIds: ["1"], emoji: null });
 
-    await vi.waitFor(() => expect(notifySubscribers).toHaveBeenCalledOnce());
+    expect(notifySubscribers).not.toHaveBeenCalled();
     expect(await withSiteReactions([message("1")])).toMatchObject([
       { reactions: [] },
     ]);
@@ -263,10 +277,9 @@ describe("startReactionCleanup", () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValueOnce(new Error("down"));
 
-    startAndGetCallback()({ messageIds: ["1"], emoji: "👍" });
+    await startAndGetCallback()({ messageIds: ["1"], emoji: "👍" });
 
-    await vi.waitFor(() => expect(log.error).toHaveBeenCalledOnce());
-    expect(notifySubscribers).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledOnce();
   });
 });
 

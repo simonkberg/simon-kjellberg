@@ -133,9 +133,10 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.
 - **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
   with its own reaction while any remain, so Discord shows site reactions as one. History
-  adds those rows to Discord's counts minus the bot's. Other replicas' streams refresh only
-  when the mirror changes (an emoji's first site reaction or its last removal), via its
-  gateway events, which also drop the rows for a deleted message or a moderator's clear.
+  adds those rows to Discord's counts minus the bot's. A mirror change (an emoji's first site
+  reaction or its last removal) refreshes every replica through its gateway echo, so a toggle
+  refreshes its own replica directly only when the mirror stays put; other replicas miss those
+  until their next refresh. Gateway deletes and clears drop the rows before the gateway refreshes.
   simon-bot reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
   `:shortcodes:` in posts become emoji (`app/lib/shortcodes.ts`).
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
