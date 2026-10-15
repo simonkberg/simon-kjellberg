@@ -217,7 +217,7 @@ const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 const ReactionSchema = z.object({
   emoji: z.string(),
   count: z.number(),
-  /** Site visitors who reacted; the rest of `count` reacted on Discord. */
+  /** Who reacted, where known; the rest of `count` reacted on Discord. */
   users: z.array(z.string()),
 });
 
@@ -233,6 +233,40 @@ function toReactions(msg: DiscordMessage): Reaction[] {
     }
   }
   return reactions;
+}
+
+const ReactorsResponseSchema = z.array(
+  z.object({ id: z.string(), bot: z.boolean().optional() }),
+);
+
+// Names who reacted on Discord, skipping bots so the mirror doesn't name itself.
+async function withDiscordReactors(
+  messageId: string,
+  reactions: Reaction[],
+): Promise<Reaction[]> {
+  return Promise.all(
+    reactions.map(async (reaction) => {
+      try {
+        const reactors = await call(
+          "GET",
+          `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(reaction.emoji)}`,
+          ReactorsResponseSchema,
+          { limit: 100 },
+        );
+        const people = reactors.filter(({ bot }) => !bot);
+        const users = await Promise.all(
+          people.map(async ({ id }) => (await userLoader.load(id)).name),
+        );
+        return { ...reaction, users };
+      } catch (err) {
+        log.warn(
+          { err, messageId, emoji: reaction.emoji },
+          "Failed to load reactors",
+        );
+        return reaction;
+      }
+    }),
+  );
 }
 
 const MessageSchema = z.object({
@@ -283,7 +317,10 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
         content,
         edited: discordMessage.edited_timestamp !== null,
         timestamp: discordMessage.timestamp,
-        reactions: toReactions(discordMessage),
+        reactions: await withDiscordReactors(
+          discordMessage.id,
+          toReactions(discordMessage),
+        ),
         replies: [],
       });
     });

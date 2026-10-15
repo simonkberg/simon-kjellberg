@@ -110,7 +110,7 @@ function mergeReactions<T extends Reactable<T>>(
       return {
         ...reaction,
         count: reaction.count + siteUsers.length,
-        users: siteUsers,
+        users: [...reaction.users, ...siteUsers],
       };
     });
     for (const [emoji, siteUsers] of users) {

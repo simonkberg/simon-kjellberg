@@ -134,7 +134,7 @@ describe("withSiteReactions", () => {
 
     const messages = await withSiteReactions([
       message("1", {
-        reactions: [{ emoji: "👍", count: 1, users: [] }],
+        reactions: [{ emoji: "👍", count: 1, users: ["simon"] }],
         replies: [message("2")],
       }),
       message("3", { reactions: [{ emoji: "😮", count: 2, users: [] }] }),
@@ -144,7 +144,7 @@ describe("withSiteReactions", () => {
       {
         id: "1",
         reactions: [
-          { emoji: "👍", count: 3, users: ["alice", "bob"] },
+          { emoji: "👍", count: 3, users: ["simon", "alice", "bob"] },
           { emoji: "😂", count: 1, users: ["alice"] },
         ],
         replies: [

@@ -260,12 +260,68 @@ describe("getChannelMessages", () => {
       ),
     );
 
+    server.use(
+      http.get(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
+        ({ params }) =>
+          HttpResponse.json(
+            params["emoji"] === "👍"
+              ? [
+                  { id: "reactor-1" },
+                  { id: "reactor-2" },
+                  { id: "bot", bot: true },
+                ]
+              : [{ id: "reactor-1" }, { id: "reactor-2" }],
+          ),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
+        ({ params }) =>
+          HttpResponse.json({
+            user: { username: String(params["userId"]), global_name: null },
+            nick: params["userId"] === "reactor-1" ? "simon" : null,
+          }),
+      ),
+    );
+
     const messages = await getChannelMessages();
 
     expect(messages[0]?.reactions).toEqual([
-      { emoji: "👍", count: 2, users: [] },
-      { emoji: "😂", count: 2, users: [] },
+      { emoji: "👍", count: 2, users: ["simon", "reactor-2"] },
+      { emoji: "😂", count: 2, users: ["simon", "reactor-2"] },
     ]);
+  });
+
+  it("should still count Discord reactions when their names fail to load", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            type: 0,
+            id: "1",
+            author: { id: "user1", bot: true },
+            content: "User: Hi",
+            timestamp: "2025-01-01T00:00:00.000000+00:00",
+            edited_timestamp: null,
+            reactions: [
+              { count: 1, me: false, emoji: { id: null, name: "😂" } },
+            ],
+          },
+        ]),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`,
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions).toEqual([
+      { emoji: "😂", count: 1, users: [] },
+    ]);
+    expect(log.warn).toHaveBeenCalledOnce();
   });
 
   it("should handle replies as nested messages with multiple levels", async () => {
