@@ -165,6 +165,18 @@ describe("GET /api/chat/sse", () => {
     expect(onChatRefresh).not.toHaveBeenCalled();
   });
 
+  it("should subscribe to nothing when the client left during the connect", async () => {
+    const controller = new AbortController();
+    vi.mocked(connect).mockImplementation(async () => controller.abort());
+
+    const response = await GET(createRequest(controller.signal));
+
+    expect(response.status).toBe(499);
+    expect(onChatRefresh).not.toHaveBeenCalled();
+    expect(subscribeToStatus).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("should cleanup on abort", async () => {
     const controller = new AbortController();
     await GET(createRequest(controller.signal));

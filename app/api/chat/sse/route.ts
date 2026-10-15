@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     log.error({ err }, "Failed to connect to gateway");
     return new NextResponse(null, { status: 503 });
   }
+  // Abort events don't replay, so a client gone during the connect never cleans up.
+  if (request.signal.aborted) return new NextResponse(null, { status: 499 });
   const unsubscribe = onChatRefresh(() => {
     if (aborted) return;
     void writer
