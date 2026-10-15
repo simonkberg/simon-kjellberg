@@ -24,10 +24,10 @@ const GATEWAY_INTENTS = (1 << 9) | (1 << 10); // GUILD_MESSAGES, GUILD_MESSAGE_R
 // Close codes that require fresh identify (not resume)
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
 // Close codes that are fatal (don't reconnect)
+const FATAL_CLOSE_CODES = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
+
 // Discord's gateway echoes the bot's own reactions back well within this.
 const ECHO_TIMEOUT_MS = 3000;
-
-const FATAL_CLOSE_CODES = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
 
 const GatewayPayloadSchema = z.object({
   op: z.number(),
@@ -140,11 +140,12 @@ class DiscordGateway {
     }
   }
 
-  notifySubscribersUnlessEchoed(): void {
+  notifySubscribersUnlessEchoed(): () => void {
     const before = this.#notifications;
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (this.#notifications === before) this.notifySubscribers();
     }, ECHO_TIMEOUT_MS).unref();
+    return () => clearTimeout(timer);
   }
 
   addMessageSubscriber(callback: MessageSubscriber): void {
@@ -518,9 +519,9 @@ export function notifySubscribers(): void {
   getGateway().notifySubscribers();
 }
 
-/** For a change Discord should echo back: refreshes anyway if no gateway event does soon. */
-export function notifySubscribersUnlessEchoed(): void {
-  getGateway().notifySubscribersUnlessEchoed();
+/** For a change Discord should echo back: refreshes anyway if no gateway event does soon. Armed before the change, since the echo can beat Discord's response; returns a cancel for a change that failed. */
+export function notifySubscribersUnlessEchoed(): () => void {
+  return getGateway().notifySubscribersUnlessEchoed();
 }
 
 /** Called when Discord drops a message's reactions, or the message itself; subscribers refresh once it settles. Doesn't connect. */

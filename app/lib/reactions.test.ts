@@ -141,10 +141,15 @@ describe("toggleReaction", () => {
   });
 
   it("adds nothing when Discord turns the reaction away", async () => {
+    const cancelFallback = vi.fn();
+    vi.mocked(notifySubscribersUnlessEchoed).mockReturnValueOnce(
+      cancelFallback,
+    );
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
+    expect(cancelFallback).toHaveBeenCalledOnce();
   });
 
   it("reports Discord's error when the rollback fails too", async () => {

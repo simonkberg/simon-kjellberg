@@ -63,11 +63,12 @@ export async function addReaction(
   );
   if (inserted.rowsAffected === 0) return;
   const first = (await countReactions(messageId, emoji)) === 1;
-  if (first) notifySubscribersUnlessEchoed();
+  const cancelFallback = first ? notifySubscribersUnlessEchoed() : undefined;
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
   } catch (err) {
+    cancelFallback?.();
     await deleteRow(messageId, emoji, username).catch(
       (rollbackErr: unknown) => {
         log.error(

@@ -553,6 +553,19 @@ describe("subscribe", () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
+  it("should not refresh for a cancelled change", async () => {
+    const { subscribe, notifySubscribersUnlessEchoed } =
+      await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    await subscribe(callback);
+    notifySubscribersUnlessEchoed()();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
   it("should notify subscribers on demand", async () => {
     const { subscribe, notifySubscribers } = await import("./gateway");
     server.use(createHandshakeHandler());
