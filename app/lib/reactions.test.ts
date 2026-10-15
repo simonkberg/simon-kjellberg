@@ -132,6 +132,23 @@ describe("toggleReaction", () => {
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
   });
 
+  it("logs a failed restore of the mirror on its own", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    await toggleReaction("1", "👍", alice);
+    vi.mocked(removeBotReaction).mockImplementationOnce(async () => {
+      await query(
+        "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'bob')",
+      );
+    });
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("429"));
+
+    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.anything(),
+      "Failed to restore bot reaction",
+    );
+  });
+
   it("keeps one reaction when the same one is added twice", async () => {
     await addReaction("1", "👍", alice);
     await addReaction("1", "👍", alice);
@@ -150,6 +167,28 @@ describe("toggleReaction", () => {
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
     expect(cancelFallback).toHaveBeenCalledOnce();
+  });
+
+  it("drops a mirror whose timed-out PUT may still have landed", async () => {
+    vi.mocked(addBotReaction).mockRejectedValueOnce(
+      new DOMException("timed out", "TimeoutError"),
+    );
+
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("timed out");
+    await vi.waitFor(() =>
+      expect(removeBotReaction).toHaveBeenCalledWith("1", "👍"),
+    );
+  });
+
+  it("logs a failed drop after a timed-out PUT", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    vi.mocked(addBotReaction).mockRejectedValueOnce(
+      new DOMException("timed out", "TimeoutError"),
+    );
+    vi.mocked(removeBotReaction).mockRejectedValueOnce(new Error("down"));
+
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("timed out");
+    await vi.waitFor(() => expect(log.warn).toHaveBeenCalledOnce());
   });
 
   it("reports Discord's error when the rollback fails too", async () => {

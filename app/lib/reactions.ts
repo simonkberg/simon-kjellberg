@@ -77,6 +77,15 @@ export async function addReaction(
         );
       },
     );
+    // A timed-out PUT can still land after its row is gone.
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      void dropMirrorIfUnused(messageId, emoji).catch((dropErr: unknown) => {
+        log.warn(
+          { err: dropErr, messageId, emoji },
+          "Failed to drop a timed-out bot reaction",
+        );
+      });
+    }
     throw err;
   }
   // A mirror change comes back from the gateway to every replica, this one included.
@@ -100,7 +109,10 @@ async function dropMirrorIfUnused(
   await removeBotReaction(messageId, emoji);
   // An add between the count and the removal kept its row but found the mirror in place.
   if ((await countReactions(messageId, emoji)) > 0) {
-    await addBotReaction(messageId, emoji);
+    // The next add puts the mirror back, so a failure here only lasts until then.
+    await addBotReaction(messageId, emoji).catch((err: unknown) => {
+      log.warn({ err, messageId, emoji }, "Failed to restore bot reaction");
+    });
   }
   return true;
 }
