@@ -389,6 +389,34 @@ describe("handleMessage", () => {
     ]);
   });
 
+  it("should reflect on what the bot reacted with", async () => {
+    vi.mocked(getMessageChain).mockResolvedValue([
+      link("msg-1", 0, "User1", "thanks simon-bot"),
+    ]);
+
+    async function* mockResponse() {
+      await query(
+        "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '👍', 'simon-bot')",
+      );
+      // A react-only turn says nothing.
+      yield* [];
+    }
+    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+
+    await handleMessage(createMessage({ content: "thanks simon-bot" }));
+
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
+    expect(reflect).toHaveBeenCalledWith([
+      {
+        role: "user",
+        id: "msg-1",
+        username: "User1",
+        content: "thanks simon-bot",
+        reactions: [{ emoji: "👍", count: 1, users: ["simon-bot"] }],
+      },
+    ]);
+  });
+
   it("should not reflect when the reply failed before anything was said", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([

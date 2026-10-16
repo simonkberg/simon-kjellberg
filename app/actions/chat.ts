@@ -128,7 +128,7 @@ export async function reactToChatMessage(
   emoji: string,
 ): Promise<ReactToChatMessageResult> {
   try {
-    const id = z.string().regex(/^\d+$/).parse(messageId);
+    const id = z.string().max(20).regex(/^\d+$/).parse(messageId);
     const reaction = EmojiSchema.parse(emoji);
 
     const { username } = await getSession();
