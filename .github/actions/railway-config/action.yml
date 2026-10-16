@@ -16,13 +16,11 @@ runs:
   using: composite
   steps:
     - uses: ./.github/actions/setup
-    - run: npm install -g @railway/cli@5.68.0
-      shell: bash
     # Without --confirm-destructive, an apply that would delete something fails and is left to a human.
     - run: |
         echo '```' >> "$GITHUB_STEP_SUMMARY"
         trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
-        railway config "$COMMAND" --environment "$ENVIRONMENT" ${{ inputs.command == 'apply' && '--yes' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
+        pnpm exec railway config "$COMMAND" --environment "$ENVIRONMENT" ${{ inputs.command == 'apply' && '--yes' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
       shell: bash
       env:
         COMMAND: ${{ inputs.command }}
