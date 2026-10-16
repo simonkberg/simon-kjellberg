@@ -113,7 +113,7 @@ describe("ChatHistory", () => {
     const article = (content: string) =>
       screen.getByText(content).closest("article")!;
 
-    it("makes the newest message the only tab stop", async () => {
+    it("makes the bottom message the only tab stop", async () => {
       const user = userEvent.setup();
       render(<ChatHistory messages={messages} {...defaultReplyProps} />);
 
@@ -148,6 +148,15 @@ describe("ChatHistory", () => {
       expect(article("Reply")).toHaveFocus();
     });
 
+    it("leaves arrow keys with modifiers to the browser", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      await user.keyboard("{Meta>}{ArrowUp}{/Meta}");
+      expect(article("Last")).toHaveFocus();
+    });
+
     it("keeps the tab stop on the message last focused", async () => {
       const user = userEvent.setup();
       render(<ChatHistory messages={messages} {...defaultReplyProps} />);
@@ -162,7 +171,7 @@ describe("ChatHistory", () => {
       expect(article("First")).toHaveFocus();
     });
 
-    it("falls back to the newest message when the tab stop is removed", async () => {
+    it("falls back to the bottom message when the tab stop is removed", async () => {
       const user = userEvent.setup();
       const { rerender } = render(
         <ChatHistory messages={messages} {...defaultReplyProps} />,

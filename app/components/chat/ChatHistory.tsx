@@ -103,7 +103,7 @@ export const ChatHistory = ({
 }: ChatHistoryProps) => {
   const [focusedId, setFocusedId] = useState<string>();
   const ids = messageIds(messages);
-  // The newest message until another is focused, and again if that one is deleted.
+  // The bottom message, beside the input, until another is focused or after that one is deleted.
   const tabStop =
     focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
 
@@ -116,6 +116,9 @@ export const ChatHistory = ({
   const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!(event.target instanceof HTMLElement)) return;
     if (!event.target.matches(".chat-message")) return;
+    // Leaves shortcuts like Cmd+ArrowDown (scroll to the end) to the browser.
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
     const messages = [
       ...event.currentTarget.querySelectorAll<HTMLElement>(".chat-message"),
     ];
