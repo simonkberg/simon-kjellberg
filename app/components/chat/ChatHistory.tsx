@@ -1,11 +1,53 @@
 "use client";
 
 import { animated, useTransition } from "@react-spring/web";
-import type { Dispatch, SetStateAction } from "react";
+import {
+  type Dispatch,
+  type FocusEvent,
+  type KeyboardEvent,
+  type SetStateAction,
+  useState,
+} from "react";
 
 import type { Message } from "@/lib/discord/api";
 
 import { ChatMessage } from "./ChatMessage";
+
+const messageIds = (messages: Message[]): string[] =>
+  messages.flatMap((message) => [message.id, ...messageIds(message.replies)]);
+
+const messageElements = (root: Element) => [
+  ...root.querySelectorAll<HTMLElement>(".chat-message"),
+];
+
+function setTabStop(root: Element, id: string | undefined) {
+  for (const message of messageElements(root)) {
+    const tabIndex = message.dataset["id"] === id ? 0 : -1;
+    const controls = message.querySelectorAll<HTMLElement>("a[href], button");
+    for (const element of [message, ...controls]) {
+      element.tabIndex = tabIndex;
+    }
+  }
+}
+
+function focusTarget(
+  elements: HTMLElement[],
+  current: number,
+  key: string,
+): HTMLElement | undefined {
+  switch (key) {
+    case "ArrowUp":
+      return elements[current - 1];
+    case "ArrowDown":
+      return elements[current + 1];
+    case "Home":
+      return elements[0];
+    case "End":
+      return elements.at(-1);
+    default:
+      return undefined;
+  }
+}
 
 interface ChatHistoryMessagesProps {
   messages: Message[];
@@ -69,9 +111,48 @@ export const ChatHistory = ({
   replyToId,
   setReplyToId,
 }: ChatHistoryProps) => {
+  const [focusedId, setFocusedId] = useState<string>();
+  const ids = messageIds(messages);
+  // The bottom message, beside the input, until another is focused.
+  const tabStop =
+    focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
+
+  // Observed rather than set on render: the reaction picker mounts its buttons from its own state.
+  const rovingTabStop = (root: HTMLDivElement) => {
+    setTabStop(root, tabStop);
+    const observer = new MutationObserver(() => setTabStop(root, tabStop));
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  };
+
+  const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
+    setFocusedId(
+      event.target.closest<HTMLElement>(".chat-message")?.dataset["id"],
+    );
+  };
+
+  const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Leaves shortcuts like Cmd+ArrowDown to the browser.
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
+    const elements = messageElements(event.currentTarget);
+    const current = elements.findIndex((element) => element === event.target);
+    if (current === -1) return;
+    const target = focusTarget(elements, current, event.key);
+    if (!target) return;
+    event.preventDefault();
+    target.focus();
+  };
+
   return (
     <div className="chat-history">
-      <div className="scrollable">
+      <div
+        ref={rovingTabStop}
+        className="scrollable"
+        role="presentation"
+        onFocus={trackFocus}
+        onKeyDown={navigate}
+      >
         <ul className="content">
           <ChatHistoryMessages
             messages={messages}

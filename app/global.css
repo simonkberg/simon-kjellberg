@@ -183,6 +183,7 @@
   --code-padding: 0 0.5ch;
   --code-border: none;
   --code-radius: 0;
+  --pill-radius: 0;
   --code-size: inherit;
   --meta-size: inherit;
 
@@ -478,6 +479,7 @@
   --code-padding: 0.05em 0.4ch;
   --code-border: 1px solid var(--rule);
   --code-radius: 3px;
+  --pill-radius: 1lh;
   --code-size: 0.925em;
   --meta-size: 0.8rem;
   --replying-padding: 0.35rem 3ch 0.35rem 1ch;
@@ -1335,6 +1337,8 @@ ul {
     > .content {
       margin: 0;
       padding-block: var(--history-padding);
+      /* Room for a focused message's outline, which the scroller would clip. */
+      padding-inline: 4px;
 
       > li + li {
         margin-top: var(--message-gap);
@@ -1383,6 +1387,13 @@ ul {
 .chat-message {
   position: relative;
   text-wrap: pretty;
+  /* Keeps a message focused by arrow keys clear of the history's edge fades. */
+  scroll-margin-block: var(--fade);
+  border-radius: var(--code-radius);
+
+  &:focus-visible {
+    background: var(--wash);
+  }
 
   > .user {
     font-weight: bold;
@@ -1418,7 +1429,7 @@ ul {
     display: flex;
     gap: 1ch;
     padding: 0 1ch;
-    border-radius: 1lh;
+    border-radius: var(--pill-radius);
     background: color-mix(in oklch, var(--ink) 12%, transparent);
     /* Not visibility: hidden, which would drop the buttons from the tab order. */
     opacity: 0;
@@ -1471,7 +1482,7 @@ ul {
 
     > button {
       padding: 0 1ch;
-      border-radius: 1lh;
+      border-radius: var(--pill-radius);
       background: color-mix(in oklch, var(--ink) 7%, transparent);
       color: var(--muted);
       font-size: var(--meta-size);

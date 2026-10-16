@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Message } from "@/lib/discord/api";
@@ -87,5 +88,163 @@ describe("ChatHistory", () => {
 
     expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  describe("keyboard navigation", () => {
+    const message = (
+      id: string,
+      content: string,
+      replies: Message[] = [],
+    ): Message => ({
+      id,
+      content,
+      user: { name: "User", color: "hsl(0 100% 50%)" },
+      edited: false,
+      timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+      reactions: [],
+      replies,
+    });
+
+    const messages = [
+      message("1", "First", [message("2", "Reply")]),
+      message("3", "Last"),
+    ];
+
+    const article = (content: string) =>
+      screen.getByText(content).closest("article")!;
+
+    it("makes the bottom message the only tab stop", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      expect(article("Last")).toHaveFocus();
+
+      await user.tab();
+      expect(
+        within(article("Last")).getByRole("button", { name: "Reply" }),
+      ).toHaveFocus();
+      await user.tab();
+      await user.tab();
+      expect(document.body).toHaveFocus();
+    });
+
+    it("moves between messages and replies with arrow keys, Home and End", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      await user.keyboard("{ArrowUp}");
+      expect(article("Reply")).toHaveFocus();
+      await user.keyboard("{ArrowUp}");
+      expect(article("First")).toHaveFocus();
+      await user.keyboard("{ArrowUp}");
+      expect(article("First")).toHaveFocus();
+      await user.keyboard("{End}");
+      expect(article("Last")).toHaveFocus();
+      await user.keyboard("{Home}");
+      expect(article("First")).toHaveFocus();
+      await user.keyboard("{ArrowDown}");
+      expect(article("Reply")).toHaveFocus();
+    });
+
+    it("ignores arrow keys from inside a message", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      await user.tab();
+      await user.keyboard("{ArrowUp}");
+      expect(
+        within(article("Last")).getByRole("button", { name: "Reply" }),
+      ).toHaveFocus();
+    });
+
+    it("takes links in other messages out of the tab order", () => {
+      render(
+        <ChatHistory
+          messages={[
+            message("1", "[First](https://example.com)"),
+            message("3", "[Last](https://example.com)"),
+          ]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      expect(screen.getByRole("link", { name: "First" })).toHaveAttribute(
+        "tabindex",
+        "-1",
+      );
+      expect(screen.getByRole("link", { name: "Last" })).toHaveAttribute(
+        "tabindex",
+        "0",
+      );
+    });
+
+    it("leaves arrow keys with modifiers to the browser", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      await user.keyboard("{Meta>}{ArrowUp}{/Meta}");
+      expect(article("Last")).toHaveFocus();
+    });
+
+    it("keeps the tab stop on the message last focused", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.click(
+        within(article("First")).getByRole("button", { name: "Reply" }),
+      );
+      expect(article("First")).toHaveAttribute("tabindex", "0");
+      expect(article("Last")).toHaveAttribute("tabindex", "-1");
+
+      await user.tab({ shift: true });
+      expect(article("First")).toHaveFocus();
+    });
+
+    it("falls back to the bottom message when the tab stop is removed", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(
+        <ChatHistory messages={messages} {...defaultReplyProps} />,
+      );
+
+      await user.tab();
+      await user.keyboard("{ArrowUp}");
+      rerender(
+        <ChatHistory
+          messages={[message("1", "First"), message("3", "Last")]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      expect(article("Last")).toHaveAttribute("tabindex", "0");
+    });
+
+    it("takes controls added to other messages out of the tab order", async () => {
+      const { rerender } = render(
+        <ChatHistory messages={messages} {...defaultReplyProps} />,
+      );
+
+      rerender(
+        <ChatHistory
+          messages={[
+            {
+              ...message("1", "First"),
+              reactions: [{ emoji: "👍", count: 1, users: [] }],
+            },
+            message("3", "Last"),
+          ]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      await waitFor(() =>
+        expect(
+          within(article("First")).getByRole("button", { name: /👍/ }),
+        ).toHaveAttribute("tabindex", "-1"),
+      );
+    });
   });
 });

@@ -29,8 +29,9 @@ export const ChatMessage = ({
   setReplyToId,
   preview = false,
 }: ChatMessageProps) => (
-  <div
+  <article
     className="chat-message"
+    data-id={id}
     style={{ "--user-color": user.color } as CSSProperties}
   >
     <span className="user">{user.name}: </span>
@@ -62,7 +63,7 @@ export const ChatMessage = ({
         )}
       </>
     )}
-  </div>
+  </article>
 );
 
 export default ChatMessage;
