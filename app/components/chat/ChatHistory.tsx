@@ -16,20 +16,34 @@ import { ChatMessage } from "./ChatMessage";
 const messageIds = (messages: Message[]): string[] =>
   messages.flatMap((message) => [message.id, ...messageIds(message.replies)]);
 
+const messageElements = (root: Element) => [
+  ...root.querySelectorAll<HTMLElement>(".chat-message"),
+];
+
+function setTabStop(root: Element, id: string | undefined) {
+  for (const message of messageElements(root)) {
+    const tabIndex = message.dataset["id"] === id ? 0 : -1;
+    const controls = message.querySelectorAll<HTMLElement>("a[href], button");
+    for (const element of [message, ...controls]) {
+      element.tabIndex = tabIndex;
+    }
+  }
+}
+
 function focusTarget(
-  messages: HTMLElement[],
+  elements: HTMLElement[],
   current: number,
   key: string,
 ): HTMLElement | undefined {
   switch (key) {
     case "ArrowUp":
-      return messages[current - 1];
+      return elements[current - 1];
     case "ArrowDown":
-      return messages[current + 1];
+      return elements[current + 1];
     case "Home":
-      return messages[0];
+      return elements[0];
     case "End":
-      return messages.at(-1);
+      return elements.at(-1);
     default:
       return undefined;
   }
@@ -99,29 +113,15 @@ export const ChatHistory = ({
 }: ChatHistoryProps) => {
   const [focusedId, setFocusedId] = useState<string>();
   const ids = messageIds(messages);
-  // The bottom message, beside the input, until another is focused or after that one is deleted.
+  // The bottom message, beside the input, until another is focused.
   const tabStop =
     focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
 
-  // In the DOM rather than props, so every control a message renders follows its message,
-  // including ones it mounts from its own state, like the reaction picker.
-  const applyTabStop = (scrollable: HTMLDivElement) => {
-    const apply = () => {
-      for (const message of scrollable.querySelectorAll<HTMLElement>(
-        ".chat-message",
-      )) {
-        const tabIndex = message.dataset["id"] === tabStop ? 0 : -1;
-        message.tabIndex = tabIndex;
-        for (const control of message.querySelectorAll<HTMLElement>(
-          "a[href], button",
-        )) {
-          control.tabIndex = tabIndex;
-        }
-      }
-    };
-    apply();
-    const observer = new MutationObserver(apply);
-    observer.observe(scrollable, { childList: true, subtree: true });
+  // Observed rather than set on render: the reaction picker mounts its buttons from its own state.
+  const rovingTabStop = (root: HTMLDivElement) => {
+    setTabStop(root, tabStop);
+    const observer = new MutationObserver(() => setTabStop(root, tabStop));
+    observer.observe(root, { childList: true, subtree: true });
     return () => observer.disconnect();
   };
 
@@ -131,14 +131,11 @@ export const ChatHistory = ({
     );
   };
 
-  // Only from the message itself, so keys inside the reaction picker stay its own.
   const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Leaves shortcuts like Cmd+ArrowDown (scroll to the end) to the browser.
+    // Leaves shortcuts like Cmd+ArrowDown to the browser.
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
       return;
-    const elements = [
-      ...event.currentTarget.querySelectorAll<HTMLElement>(".chat-message"),
-    ];
+    const elements = messageElements(event.currentTarget);
     const current = elements.findIndex((element) => element === event.target);
     if (current === -1) return;
     const target = focusTarget(elements, current, event.key);
@@ -149,9 +146,8 @@ export const ChatHistory = ({
 
   return (
     <div className="chat-history">
-      {/* Only catches what bubbles up from the messages, as jsx-a11y suggests. */}
       <div
-        ref={applyTabStop}
+        ref={rovingTabStop}
         className="scrollable"
         role="presentation"
         onFocus={trackFocus}
