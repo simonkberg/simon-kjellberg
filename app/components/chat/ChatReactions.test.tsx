@@ -143,6 +143,14 @@ describe("ChatReactionList", () => {
     expect(openTips()).toEqual([]);
   });
 
+  it("hides the tooltip when focus moves on", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+
+    await userEvent.tab();
+    await userEvent.tab();
+    expect(openTips()).toEqual(["1 on Discord"]);
+  });
+
   it("shows who reacted on a long press instead of toggling", () => {
     vi.useFakeTimers();
     const { react } = renderWithContext(
@@ -162,6 +170,41 @@ describe("ChatReactionList", () => {
     vi.useRealTimers();
   });
 
+  // happy-dom matches :focus-visible on every focus and :hover never, so these stub the browser's answer.
+  it("shows nothing when a click focuses a pill", () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+    const fire = screen.getAllByRole("button")[2]!;
+
+    vi.spyOn(fire, "matches").mockReturnValue(false);
+    fireEvent.focus(fire);
+
+    expect(openTips()).toEqual([]);
+  });
+
+  it("keeps the tooltip on a blur under the pointer, as when a click disables the pill", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+    const fire = screen.getAllByRole("button")[2]!;
+
+    await userEvent.hover(fire);
+    vi.spyOn(fire, "matches").mockReturnValue(true);
+    fireEvent.blur(fire);
+
+    expect(openTips()).toEqual(["alice and bob"]);
+  });
+
+  it("shows nothing when a press turns into a scroll", () => {
+    vi.useFakeTimers();
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+    const fire = screen.getAllByRole("button")[2]!;
+
+    fireEvent.pointerDown(fire, { pointerType: "touch" });
+    fireEvent.pointerCancel(fire, { pointerType: "touch" });
+    vi.advanceTimersByTime(500);
+
+    expect(openTips()).toEqual([]);
+    vi.useRealTimers();
+  });
+
   it("toggles on a short tap", () => {
     vi.useFakeTimers();
     const { react } = renderWithContext(
@@ -169,10 +212,12 @@ describe("ChatReactionList", () => {
     );
     const fire = screen.getAllByRole("button")[2]!;
 
+    fireEvent.pointerEnter(fire, { pointerType: "touch" });
     fireEvent.pointerDown(fire, { pointerType: "touch" });
     vi.advanceTimersByTime(100);
     fireEvent.pointerUp(fire, { pointerType: "touch" });
     fireEvent.click(fire);
+    fireEvent.pointerLeave(fire, { pointerType: "touch" });
     vi.advanceTimersByTime(500);
 
     expect(openTips()).toEqual([]);
