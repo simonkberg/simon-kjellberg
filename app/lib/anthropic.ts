@@ -30,7 +30,7 @@ import {
   recall,
   remember,
 } from "@/lib/memory";
-import { addReaction, EmojiSchema } from "@/lib/reactions";
+import { addReaction, EmojiSchema, MessageIdSchema } from "@/lib/reactions";
 import type { Username } from "@/lib/session";
 import { getStats, periods as wakatimePeriods } from "@/lib/wakaTime";
 
@@ -183,13 +183,9 @@ const searchMessagesInputSchema = z.object({
 const reactInputSchema = z.object({
   // Checked against EmojiSchema when run: its `v`-flag pattern isn't valid JSON Schema.
   emoji: z.string().describe("One emoji, like 😂"),
-  message_id: z
-    .string()
-    .regex(/^\d+$/)
-    .optional()
-    .describe(
-      "id of the message to react to, from the conversation or a lookup tool; leave out for the message you're answering",
-    ),
+  message_id: MessageIdSchema.optional().describe(
+    "id of the message to react to, from the conversation or a lookup tool; leave out for the message you're answering",
+  ),
 });
 
 const rememberInputSchema = z.object({
@@ -424,9 +420,7 @@ export type SystemBlock = {
 };
 
 function formatReaction({ emoji, count, users }: Reaction): string {
-  return users.includes(BOT_USERNAME)
-    ? `${emoji} ${count} (you)`
-    : `${emoji} ${count}`;
+  return `${emoji} ${count}${users.includes(BOT_USERNAME) ? " (you)" : ""}`;
 }
 
 // Escaped so a message can't pass itself off as another one or forge reactions.

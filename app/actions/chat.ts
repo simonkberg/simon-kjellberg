@@ -16,6 +16,7 @@ import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   EmojiSchema,
+  MessageIdSchema,
   toggleReaction,
   withSiteReactions,
 } from "@/lib/reactions";
@@ -128,7 +129,7 @@ export async function reactToChatMessage(
   emoji: string,
 ): Promise<ReactToChatMessageResult> {
   try {
-    const id = z.string().max(20).regex(/^\d+$/).parse(messageId);
+    const id = MessageIdSchema.parse(messageId);
     const reaction = EmojiSchema.parse(emoji);
 
     const { username } = await getSession();

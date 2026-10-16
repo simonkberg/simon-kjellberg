@@ -258,18 +258,14 @@ type ReactorsKey = { messageId: string; emoji: string; count: number };
 async function getReactors({ messageId, emoji }: ReactorsKey) {
   const reactors = await call(
     "GET",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`,
+    reactionEndpoint(messageId, emoji),
     ReactorsResponseSchema,
     { limit: 100 },
   );
   const people = reactors.filter(({ bot }) => !bot);
   const users = await userLoader.loadMany(people.map(({ id }) => id));
-  const names: string[] = [];
-  for (const user of users) {
-    // A reactor who left the server has no member to name, so they stay in the count.
-    if (!(user instanceof Error)) names.push(user.name);
-  }
-  return names;
+  // A reactor who left the server has no member to name, so they stay in the count.
+  return users.flatMap((user) => (user instanceof Error ? [] : [user.name]));
 }
 
 // Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
@@ -342,7 +338,10 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
     discordMessageLoader.prime(discordMessage.id, discordMessage);
 
     const message = Promise.try(async () => {
-      const { username, content } = await resolveMessageContent(discordMessage);
+      const [{ username, content }, reactions] = await Promise.all([
+        resolveMessageContent(discordMessage),
+        withDiscordReactors(discordMessage.id, toReactions(discordMessage)),
+      ]);
 
       return MessageSchema.decode({
         id: discordMessage.id,
@@ -350,10 +349,7 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
         content,
         edited: discordMessage.edited_timestamp !== null,
         timestamp: discordMessage.timestamp,
-        reactions: await withDiscordReactors(
-          discordMessage.id,
-          toReactions(discordMessage),
-        ),
+        reactions,
         replies: [],
       });
     });
@@ -508,8 +504,12 @@ export async function postChannelMessage(
   return response.id;
 }
 
+function reactionEndpoint(messageId: string, emoji: string): string {
+  return `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`;
+}
+
 function botReactionEndpoint(messageId: string, emoji: string): string {
-  return `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`;
+  return `${reactionEndpoint(messageId, emoji)}/@me`;
 }
 
 export async function addBotReaction(

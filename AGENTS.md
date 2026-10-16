@@ -145,13 +145,10 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.
 - **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
   with its own reaction while any remain, so Discord shows site reactions as one. History
-  adds those rows to Discord's counts minus the bot's, and names Discord's non-bot reactors
-  with a request per Discord reaction, cached until its count changes. Other tabs refresh
-  only on a channel event, so a toggle that leaves the mirror unchanged reaches them on the
-  next one. Mirror failures are logged and races left alone, neither retried, since they
-  only show on Discord; a clear on Discord leaves the site's rows, and a deleted message's
-  rows are never shown.
-  simon-bot reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
+  adds those rows to Discord's counts minus the bot's. Other tabs refresh only on a channel
+  event, so a toggle that leaves the mirror unchanged reaches them on the next one. Mirror
+  failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
+  reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.

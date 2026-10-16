@@ -35,17 +35,14 @@ function toggleOwnReaction(
   if (!existing) {
     return [...reactions, { emoji, count: 1, users: [username] }];
   }
-  const updated = existing.users.includes(username)
-    ? {
-        ...existing,
-        count: existing.count - 1,
-        users: existing.users.filter((user) => user !== username),
-      }
-    : {
-        ...existing,
-        count: existing.count + 1,
-        users: [...existing.users, username],
-      };
+  const mine = existing.users.includes(username);
+  const updated = {
+    ...existing,
+    count: existing.count + (mine ? -1 : 1),
+    users: mine
+      ? existing.users.filter((user) => user !== username)
+      : [...existing.users, username],
+  };
   return reactions
     .map((reaction) => (reaction === existing ? updated : reaction))
     .filter((reaction) => reaction.count > 0);
@@ -57,14 +54,20 @@ function withReactionToggled(
   emoji: string,
   username: string,
 ): Message[] {
-  return messages.map((message) => ({
-    ...message,
-    reactions:
-      message.id === messageId
-        ? toggleOwnReaction(message.reactions, emoji, username)
-        : message.reactions,
-    replies: withReactionToggled(message.replies, messageId, emoji, username),
-  }));
+  // Untouched messages keep their identity, so only the toggled one re-renders.
+  return messages.map((message) => {
+    if (message.id === messageId) {
+      return {
+        ...message,
+        reactions: toggleOwnReaction(message.reactions, emoji, username),
+      };
+    }
+    if (!findMessageById(message.replies, messageId)) return message;
+    return {
+      ...message,
+      replies: withReactionToggled(message.replies, messageId, emoji, username),
+    };
+  });
 }
 
 export interface ChatProps {
