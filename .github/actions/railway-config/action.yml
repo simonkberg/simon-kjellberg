@@ -1,0 +1,31 @@
+name: Railway config
+description: Plan or apply .railway/railway.ts to one environment and write the output to the job summary.
+
+inputs:
+  command:
+    description: plan or apply
+    required: true
+  environment:
+    description: Railway environment name
+    required: true
+  token:
+    description: Railway workspace token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup
+    - run: npm install -g @railway/cli@5.68.0
+      shell: bash
+    # Without --confirm-destructive, an apply that would delete something fails and is left to a human.
+    - run: |
+        echo '```' >> "$GITHUB_STEP_SUMMARY"
+        trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
+        railway config "$COMMAND" --environment "$ENVIRONMENT" ${{ inputs.command == 'apply' && '--yes' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
+      shell: bash
+      env:
+        COMMAND: ${{ inputs.command }}
+        ENVIRONMENT: ${{ inputs.environment }}
+        RAILWAY_API_TOKEN: ${{ inputs.token }}
+        RAILWAY_PROJECT_ID: 8690fc81-5c07-4648-b2b8-5661eb0ffec1
