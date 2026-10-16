@@ -231,21 +231,24 @@ describe("runMigrationsUntilApplied", () => {
     vi.useRealTimers();
   });
 
-  it("should retry with backoff until Turso answers", async () => {
+  it("should retry with capped backoff until Turso answers", async () => {
     const outage = new Error("The operation was aborted due to timeout");
-    vi.mocked(query)
-      .mockRejectedValueOnce(outage)
-      .mockRejectedValueOnce(outage)
-      .mockImplementation(sqlite);
+    const failures = 6;
+    for (let i = 0; i < failures; i++) {
+      vi.mocked(query).mockRejectedValueOnce(outage);
+    }
+    vi.mocked(query).mockImplementation(sqlite);
 
     const running = runMigrationsUntilApplied();
-    await vi.advanceTimersByTimeAsync(3_000);
+    await vi.runAllTimersAsync();
     await running;
 
     expect(await appliedVersions()).toHaveLength(MIGRATIONS.length);
-    expect(vi.mocked(log.error).mock.calls).toEqual([
-      [{ err: outage, retryInMs: 1_000 }, "Failed to run migrations, retrying"],
-      [{ err: outage, retryInMs: 2_000 }, "Failed to run migrations, retrying"],
-    ]);
+    expect(vi.mocked(log.error).mock.calls.map(([fields]) => fields)).toEqual(
+      [1_000, 2_000, 4_000, 8_000, 16_000, 30_000].map((retryInMs) => ({
+        err: outage,
+        retryInMs,
+      })),
+    );
   });
 });
