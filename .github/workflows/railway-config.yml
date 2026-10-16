@@ -57,6 +57,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/railway-cli
+      - name: Inspect token shape (temporary)
+        run: |
+          printf 'length=%s\n' "${#RAILWAY_TOKEN}"
+          [[ "$RAILWAY_TOKEN" =~ [[:space:]] ]] && echo "contains whitespace" || echo "no whitespace"
+          [[ "$RAILWAY_TOKEN" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] && echo "uuid-shaped" || echo "not uuid-shaped"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
       - run: *run
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
