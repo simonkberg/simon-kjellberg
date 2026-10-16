@@ -328,26 +328,26 @@ describe("reactToChatMessage", () => {
     });
   });
 
-  it("rejects the eleventh reaction in 30 seconds", async () => {
-    for (let i = 0; i < 10; i++) {
+  it("rejects the 31st reaction in a minute", async () => {
+    for (let i = 0; i < 30; i++) {
       expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
     }
 
     expect(await reactToChatMessage("123", "👍")).toEqual({
       status: "error",
-      error: "Rate limit exceeded. Wait 30 seconds before trying again.",
+      error: "Rate limit exceeded. Wait 60 seconds before trying again.",
     });
   });
 
   it("counts malformed reactions against the limit", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
       await reactToChatMessage("not-an-id", "👍");
     }
 
     expect(await reactToChatMessage("123", "👍")).toEqual({
       status: "error",
-      error: "Rate limit exceeded. Wait 30 seconds before trying again.",
+      error: "Rate limit exceeded. Wait 60 seconds before trying again.",
     });
   });
 

@@ -117,7 +117,8 @@ export async function postChatMessage(
   }
 }
 
-const REACTION_RATE_LIMIT = { limit: 10, windowMs: 30_000 };
+// Each click counts, and trying a few emoji on and off is quick.
+const REACTION_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
 // Discord's "Maximum number of reactions reached (20)".
 const MAX_REACTIONS_CODE = 30010;
 
