@@ -31,50 +31,54 @@ export const ChatMessage = ({
   setReplyToId,
   preview = false,
   active = false,
-}: ChatMessageProps) => (
-  <article
-    className="chat-message"
-    data-id={id}
-    style={{ "--user-color": user.color } as CSSProperties}
-    tabIndex={preview ? undefined : active ? 0 : -1}
-  >
-    <span className="user">{user.name}: </span>
-    <div className="text">
-      <Markdown source={content} linkTabIndex={preview || active ? 0 : -1} />
-    </div>
-    {edited && <small className="edited"> (edited) </small>}{" "}
-    <small className="timestamp">
-      <Suspense>
-        <RelativeTime date={timestamp} style="narrow" />
-      </Suspense>
-    </small>{" "}
-    {!preview && (
-      <>
-        <span className="actions">
-          <button
-            aria-label="Reply"
-            title="Reply"
-            className="reply"
-            onClick={() => setReplyToId(id)}
-            disabled={replyToId === id}
-            tabIndex={active ? 0 : -1}
-          >
-            ↩
-          </button>
-          {reactions.length === 0 && (
-            <ChatReactionPicker messageId={id} tabIndex={active ? 0 : -1} />
+}: ChatMessageProps) => {
+  const tabIndex = preview || active ? 0 : -1;
+
+  return (
+    <article
+      className="chat-message"
+      data-id={id}
+      style={{ "--user-color": user.color } as CSSProperties}
+      tabIndex={preview ? undefined : tabIndex}
+    >
+      <span className="user">{user.name}: </span>
+      <div className="text">
+        <Markdown source={content} linkTabIndex={tabIndex} />
+      </div>
+      {edited && <small className="edited"> (edited) </small>}{" "}
+      <small className="timestamp">
+        <Suspense>
+          <RelativeTime date={timestamp} style="narrow" />
+        </Suspense>
+      </small>{" "}
+      {!preview && (
+        <>
+          <span className="actions">
+            <button
+              aria-label="Reply"
+              title="Reply"
+              className="reply"
+              onClick={() => setReplyToId(id)}
+              disabled={replyToId === id}
+              tabIndex={tabIndex}
+            >
+              ↩
+            </button>
+            {reactions.length === 0 && (
+              <ChatReactionPicker messageId={id} tabIndex={tabIndex} />
+            )}
+          </span>
+          {reactions.length > 0 && (
+            <ChatReactionList
+              messageId={id}
+              reactions={reactions}
+              tabIndex={tabIndex}
+            />
           )}
-        </span>
-        {reactions.length > 0 && (
-          <ChatReactionList
-            messageId={id}
-            reactions={reactions}
-            tabIndex={active ? 0 : -1}
-          />
-        )}
-      </>
-    )}
-  </article>
-);
+        </>
+      )}
+    </article>
+  );
+};
 
 export default ChatMessage;

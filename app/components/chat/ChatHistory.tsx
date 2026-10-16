@@ -118,12 +118,12 @@ export const ChatHistory = ({
     // Leaves shortcuts like Cmd+ArrowDown (scroll to the end) to the browser.
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
       return;
-    const messages = [
+    const elements = [
       ...event.currentTarget.querySelectorAll<HTMLElement>(".chat-message"),
     ];
-    const current = messages.findIndex((message) => message === event.target);
+    const current = elements.findIndex((element) => element === event.target);
     if (current === -1) return;
-    const target = focusTarget(messages, current, event.key);
+    const target = focusTarget(elements, current, event.key);
     if (!target) return;
     event.preventDefault();
     target.focus();
