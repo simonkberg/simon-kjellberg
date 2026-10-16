@@ -8,7 +8,7 @@ on:
     branches: [main]
     paths:
       - ".railway/**"
-      - ".github/actions/railway-cli/**"
+      - ".github/actions/setup/**"
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -17,7 +17,7 @@ on:
     branches: [main]
     paths:
       - ".railway/**"
-      - ".github/actions/railway-cli/**"
+      - ".github/actions/setup/**"
       - ".github/workflows/railway-config.yml"
 
 # Serialize applies; a newer PR push cancels its stale plan.
@@ -44,7 +44,8 @@ jobs:
       ENVIRONMENT: production
     steps: &steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/railway-cli
+      - uses: ./.github/actions/setup
+      - run: npm install -g @railway/cli@5.68.0
       - run: |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
