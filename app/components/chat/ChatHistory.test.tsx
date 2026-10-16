@@ -175,9 +175,8 @@ describe("ChatHistory", () => {
         "tabindex",
         "-1",
       );
-      expect(screen.getByRole("link", { name: "Last" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "Last" })).not.toHaveAttribute(
         "tabindex",
-        "0",
       );
     });
 

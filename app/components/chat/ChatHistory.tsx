@@ -22,10 +22,14 @@ const messageElements = (root: Element) => [
 
 function setTabStop(root: Element, id: string | undefined) {
   for (const message of messageElements(root)) {
-    const tabIndex = message.dataset["id"] === id ? 0 : -1;
-    const controls = message.querySelectorAll<HTMLElement>("a[href], button");
-    for (const element of [message, ...controls]) {
-      element.tabIndex = tabIndex;
+    const active = message.dataset["id"] === id;
+    message.tabIndex = active ? 0 : -1;
+    for (const control of message.querySelectorAll<HTMLElement>(
+      "a[href], button",
+    )) {
+      // Not 0: Safari would then tab to these even where it skips every other button and link.
+      if (active) control.removeAttribute("tabindex");
+      else control.tabIndex = -1;
     }
   }
 }
