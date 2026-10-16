@@ -47,7 +47,7 @@ jobs:
       - run: npm install -g @railway/cli@5.68.0
       - run: |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          railway config "$COMMAND" --environment "$ENVIRONMENT" --yes | tee -a "$GITHUB_STEP_SUMMARY"
+          railway config "$COMMAND" --environment "$ENVIRONMENT" $FLAGS | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   plan-testing:
@@ -67,6 +67,7 @@ jobs:
     env:
       COMMAND: apply
       ENVIRONMENT: testing
+      FLAGS: --yes
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
     steps: *steps
 
@@ -77,5 +78,6 @@ jobs:
     env:
       COMMAND: apply
       ENVIRONMENT: production
+      FLAGS: --yes
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps: *steps
