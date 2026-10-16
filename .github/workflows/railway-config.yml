@@ -12,7 +12,7 @@ on:
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
-  # Dependency bumps are planned on their PRs but never applied, so they can't overwrite dashboard changes.
+  # Dependency bumps are planned but never applied, so they can't overwrite dashboard changes.
   push:
     branches: [main]
     paths:
@@ -20,7 +20,7 @@ on:
       - ".github/actions/railway-cli/**"
       - ".github/workflows/railway-config.yml"
 
-# Applies never overlap, and a newer merge supersedes a pending one; a newer PR push replaces its stale plan.
+# Serialize applies; a newer PR push cancels its stale plan.
 concurrency:
   group: railway-config-${{ github.event_name == 'push' && 'apply' || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -30,14 +30,12 @@ defaults:
   run:
     shell: bash
 
-# One job per environment, never a matrix: each token is read only by the step that runs the CLI,
-# not by the installs before it, and is named literally so no other secret reaches the runner.
-# Without --confirm-destructive, an apply that would delete something fails and is left to a human.
-# Railway rejects the testing project token, so testing logs in with a workspace token instead.
+# One job per environment, never a matrix or secrets[...]: either sends every secret to the runner.
+# Railway rejects the testing project token, so testing logs in with a workspace token.
 jobs:
   plan-production:
     name: Plan (production)
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     env:
       COMMAND: plan
@@ -48,13 +46,13 @@ jobs:
       - run: &run |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
-          railway config "$COMMAND" --environment "$ENVIRONMENT" $FLAGS | tee -a "$GITHUB_STEP_SUMMARY"
+          railway config $COMMAND --environment "$ENVIRONMENT" | tee -a "$GITHUB_STEP_SUMMARY"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   plan-testing:
     name: Plan (testing)
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     env:
       COMMAND: plan
@@ -72,10 +70,9 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      COMMAND: apply
+      COMMAND: apply --yes
       ENVIRONMENT: testing
       RAILWAY_PROJECT_ID: 8690fc81-5c07-4648-b2b8-5661eb0ffec1
-      FLAGS: --yes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/railway-cli
@@ -88,9 +85,8 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      COMMAND: apply
+      COMMAND: apply --yes
       ENVIRONMENT: production
-      FLAGS: --yes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/railway-cli

@@ -10,7 +10,7 @@ runs:
       with:
         node-version: 24.22.0
         cache: "pnpm"
-    - run: pnpm install --frozen-lockfile
+    - run: pnpm install --frozen-lockfile --ignore-scripts
       shell: bash
     - run: npm install -g @railway/cli@5.68.0
       shell: bash
