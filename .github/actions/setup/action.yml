@@ -1,0 +1,14 @@
+name: Setup
+description: Install Node from .nvmrc and the project's dependencies.
+
+runs:
+  using: composite
+  steps:
+    - run: corepack enable
+      shell: bash
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        cache: "pnpm"
+    - run: pnpm install --frozen-lockfile
+      shell: bash

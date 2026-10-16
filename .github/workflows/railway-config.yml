@@ -8,26 +8,69 @@ on:
     branches: [main]
     paths:
       - ".railway/**"
+      - ".github/actions/**"
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
+  # Dependency bumps are planned but never applied, so they can't overwrite dashboard changes.
+  push:
+    branches: [main]
+    paths:
+      - ".railway/**"
+      - ".github/actions/railway-config/**"
+      - ".github/workflows/railway-config.yml"
 
+# Serialize applies; a newer PR push cancels its stale plan.
+concurrency:
+  group: railway-config-${{ github.event_name == 'push' && 'apply' || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# One job per environment, never a matrix or secrets[...]: either sends every secret to the runner.
 jobs:
-  plan:
+  plan-production:
     name: Plan (production)
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: corepack enable
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/railway-config
         with:
-          node-version: 24.22.0
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
-      - run: npm install -g @railway/cli@5.68.0
-      # Exits 2 when production doesn't match the file: apply it by hand, as documented in AGENTS.md.
-      - run: railway config plan --environment production --detailed-exit-code
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          command: plan
+          environment: production
+          token: ${{ secrets.RAILWAY_API_TOKEN }}
+
+  plan-testing:
+    name: Plan (testing)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-config
+        with:
+          command: plan
+          environment: testing
+          token: ${{ secrets.RAILWAY_API_TOKEN }}
+
+  apply-testing:
+    name: Apply (testing)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-config
+        with:
+          command: apply
+          environment: testing
+          token: ${{ secrets.RAILWAY_API_TOKEN }}
+
+  apply-production:
+    name: Apply (production)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-config
+        with:
+          command: apply
+          environment: production
+          token: ${{ secrets.RAILWAY_API_TOKEN }}
