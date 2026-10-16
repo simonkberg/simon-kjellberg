@@ -19,7 +19,8 @@ const GatewayOpcode = {
 } as const;
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
-const GATEWAY_INTENTS = (1 << 9) | (1 << 10); // GUILD_MESSAGES, GUILD_MESSAGE_REACTIONS
+// MESSAGE_CONTENT too, or a Discord user's text arrives empty and their mentions never match.
+const GATEWAY_INTENTS = (1 << 9) | (1 << 10) | (1 << 15); // GUILD_MESSAGES, GUILD_MESSAGE_REACTIONS, MESSAGE_CONTENT
 
 // Close codes that require fresh identify (not resume)
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
