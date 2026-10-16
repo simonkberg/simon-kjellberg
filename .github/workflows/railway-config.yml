@@ -33,6 +33,7 @@ defaults:
 # One job per environment, never a matrix: each token is read only by the step that runs the CLI,
 # not by the installs before it, and is named literally so no other secret reaches the runner.
 # Without --confirm-destructive, an apply that would delete something fails and is left to a human.
+# Railway rejects the testing project token, so testing logs in with a workspace token instead.
 jobs:
   plan-production:
     name: Plan (production)
@@ -58,12 +59,13 @@ jobs:
     env:
       COMMAND: plan
       ENVIRONMENT: testing
+      RAILWAY_PROJECT_ID: 8690fc81-5c07-4648-b2b8-5661eb0ffec1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/railway-cli
       - run: *run
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
 
   apply-testing:
     name: Apply (testing)
@@ -72,13 +74,14 @@ jobs:
     env:
       COMMAND: apply
       ENVIRONMENT: testing
+      RAILWAY_PROJECT_ID: 8690fc81-5c07-4648-b2b8-5661eb0ffec1
       FLAGS: --yes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/railway-cli
       - run: *run
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
 
   apply-production:
     name: Apply (production)
