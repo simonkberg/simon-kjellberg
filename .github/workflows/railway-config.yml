@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths: &paths
       - ".railway/**"
+      - ".github/actions/railway-cli/**"
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -26,7 +27,7 @@ defaults:
     shell: bash
 
 # One job per environment, never a matrix: each token is read only by the step that runs the CLI,
-# not by the installs before it.
+# not by the installs before it, and is named literally so no other secret reaches the runner.
 # Without --confirm-destructive, an apply that would delete something fails and is left to a human.
 jobs:
   plan-production:
@@ -36,22 +37,15 @@ jobs:
     env:
       COMMAND: plan
       ENVIRONMENT: production
-      TOKEN_SECRET: RAILWAY_TOKEN
-    steps: &steps
+    steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: corepack enable
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24.22.0
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
-      - run: npm install -g @railway/cli@5.68.0
-      - run: |
+      - uses: ./.github/actions/railway-cli
+      - run: &run |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
           railway config "$COMMAND" --environment "$ENVIRONMENT" $FLAGS | tee -a "$GITHUB_STEP_SUMMARY"
         env:
-          RAILWAY_TOKEN: ${{ secrets[env.TOKEN_SECRET] }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   plan-testing:
     name: Plan (testing)
@@ -60,8 +54,12 @@ jobs:
     env:
       COMMAND: plan
       ENVIRONMENT: testing
-      TOKEN_SECRET: RAILWAY_TOKEN_TESTING
-    steps: *steps
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-cli
+      - run: *run
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
 
   apply-testing:
     name: Apply (testing)
@@ -71,8 +69,12 @@ jobs:
       COMMAND: apply
       ENVIRONMENT: testing
       FLAGS: --yes
-      TOKEN_SECRET: RAILWAY_TOKEN_TESTING
-    steps: *steps
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-cli
+      - run: *run
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
 
   apply-production:
     name: Apply (production)
@@ -82,5 +84,9 @@ jobs:
       COMMAND: apply
       ENVIRONMENT: production
       FLAGS: --yes
-      TOKEN_SECRET: RAILWAY_TOKEN
-    steps: *steps
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/railway-cli
+      - run: *run
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
