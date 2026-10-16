@@ -147,7 +147,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
   Railway polls it at deploy time, so a replica that cannot reach Turso or Discord never
-  takes traffic and the previous deploy keeps serving.
+  takes traffic and the previous deploy keeps serving. Migrations retry with backoff until
+  they apply, so a Turso blip at boot delays a deploy instead of failing it. The bot starts
+  only after, since it hears Discord before the replica takes traffic.
 - **Logging:** pino (`app/lib/log.ts`), one JSON line per entry so Railway indexes it.
   `instrumentation.ts` bridges `console.*` into it, so Next's own errors (and its
   `NEXT_PRIVATE_DEBUG_CACHE` output) arrive structured too; `LOG_LEVEL` filters both.

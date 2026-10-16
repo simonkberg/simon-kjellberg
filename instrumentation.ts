@@ -3,20 +3,19 @@ export async function register() {
     const { startBotSubscription } = await import("@/lib/discord/bot");
     const { refreshIpDenyList } = await import("@/lib/ipDenyList");
     const { bridgeConsole, log } = await import("@/lib/log");
-    const { runMigrations } = await import("@/lib/migrations");
+    const { runMigrationsUntilApplied } = await import("@/lib/migrations");
     const { markReady } = await import("@/lib/readiness");
 
     bridgeConsole();
     void refreshIpDenyList();
 
-    try {
-      await runMigrations();
-      markReady("migrations");
-    } catch (err) {
-      log.error({ err }, "Failed to run migrations");
-    }
-
-    startBotSubscription()
+    // Not awaited, so /health can answer 503 while Turso is out.
+    runMigrationsUntilApplied()
+      .then(() => {
+        markReady("migrations");
+        // After migrations, so new bot code never meets an old schema.
+        return startBotSubscription();
+      })
       .then(() => markReady("bot"))
       .catch((err) => {
         log.error({ err }, "Failed to start bot subscription");
