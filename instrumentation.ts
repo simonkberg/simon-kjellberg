@@ -3,18 +3,14 @@ export async function register() {
     const { startBotSubscription } = await import("@/lib/discord/bot");
     const { refreshIpDenyList } = await import("@/lib/ipDenyList");
     const { bridgeConsole, log } = await import("@/lib/log");
-    const { runMigrations } = await import("@/lib/migrations");
+    const { runMigrationsUntilApplied } = await import("@/lib/migrations");
     const { markReady } = await import("@/lib/readiness");
 
     bridgeConsole();
     void refreshIpDenyList();
 
-    try {
-      await runMigrations();
-      markReady("migrations");
-    } catch (err) {
-      log.error({ err }, "Failed to run migrations");
-    }
+    // Not awaited, so /health can answer 503 while Turso is out.
+    void runMigrationsUntilApplied().then(() => markReady("migrations"));
 
     startBotSubscription()
       .then(() => markReady("bot"))

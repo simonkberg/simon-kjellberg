@@ -39,6 +39,8 @@ const LOCK_TTL_MS = 30_000;
 const LOCK_RETRY_MS = 500;
 // Longer than the lease, so a holder that died is outwaited.
 const LOCK_WAIT_MS = 45_000;
+const RETRY_MIN_MS = 1_000;
+const RETRY_MAX_MS = 30_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -147,5 +149,24 @@ export async function runMigrations(): Promise<void> {
     ]).catch((err: unknown) => {
       log.warn({ err }, "Failed to release the migrations lock");
     });
+  }
+}
+
+/** Retries with backoff for as long as it takes; Railway's health check decides when to give up. */
+export async function runMigrationsUntilApplied(): Promise<void> {
+  for (
+    let delayMs = RETRY_MIN_MS;
+    ;
+    delayMs = Math.min(delayMs * 2, RETRY_MAX_MS)
+  ) {
+    try {
+      return await runMigrations();
+    } catch (err) {
+      log.error(
+        { err, retryInMs: delayMs },
+        "Failed to run migrations, retrying",
+      );
+      await sleep(delayMs);
+    }
   }
 }

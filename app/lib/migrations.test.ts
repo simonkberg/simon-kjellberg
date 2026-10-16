@@ -6,7 +6,11 @@ import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
-import { MIGRATIONS, runMigrations } from "./migrations";
+import {
+  MIGRATIONS,
+  runMigrations,
+  runMigrationsUntilApplied,
+} from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
@@ -211,5 +215,37 @@ describe("runMigrations", () => {
       { err: expect.any(Error) },
       "Failed to release the migrations lock",
     );
+  });
+});
+
+describe("runMigrationsUntilApplied", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.spyOn(log, "info").mockImplementation(() => {});
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    sqlite = createSqliteQuery();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("should retry with backoff until Turso answers", async () => {
+    const outage = new Error("The operation was aborted due to timeout");
+    vi.mocked(query)
+      .mockRejectedValueOnce(outage)
+      .mockRejectedValueOnce(outage)
+      .mockImplementation(sqlite);
+
+    const running = runMigrationsUntilApplied();
+    await vi.advanceTimersByTimeAsync(3_000);
+    await running;
+
+    expect(await appliedVersions()).toHaveLength(MIGRATIONS.length);
+    expect(vi.mocked(log.error).mock.calls).toEqual([
+      [{ err: outage, retryInMs: 1_000 }, "Failed to run migrations, retrying"],
+      [{ err: outage, retryInMs: 2_000 }, "Failed to run migrations, retrying"],
+    ]);
   });
 });
