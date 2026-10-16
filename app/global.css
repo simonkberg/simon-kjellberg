@@ -1532,6 +1532,8 @@ ul {
     margin: 0.25lh 0;
     inset: auto;
     position-area: block-start span-inline-end;
+    /* Safari stretches a box with normal alignment to fill its whole area. */
+    place-self: end start;
     position-try-fallbacks:
       flip-block,
       flip-inline,
