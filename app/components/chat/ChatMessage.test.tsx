@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -138,6 +138,32 @@ describe("ChatMessage", () => {
         "reply",
       );
     });
+  });
+
+  it("offers adding a reaction from the toolbar while there are none", () => {
+    const message = createMessage();
+    render(<ChatMessage {...message} {...defaultReplyProps} />);
+
+    expect(
+      screen.getByRole("button", { name: "Add reaction" }),
+    ).toHaveTextContent("☺");
+    expect(screen.queryByRole("group", { name: "Reactions" })).toBeNull();
+  });
+
+  it("offers adding a reaction beside the existing ones", () => {
+    const message = createMessage({
+      reactions: [{ emoji: "👍", count: 1, users: [] }],
+    });
+    render(<ChatMessage {...message} {...defaultReplyProps} />);
+
+    const add = screen.getByRole("button", { name: "Add reaction" });
+    expect(add).toHaveTextContent("+");
+    expect(
+      within(screen.getByRole("group", { name: "Reactions" })).getByRole(
+        "button",
+        { name: "Add reaction" },
+      ),
+    ).toBe(add);
   });
 
   it("shows only the text as a reply preview", () => {

@@ -90,12 +90,13 @@ describe("ChatReactionList", () => {
   it("shows each reaction with its count and who reacted", () => {
     renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
 
-    const [thumbs, tada, fire] = screen.getAllByRole("button");
+    const [thumbs, tada, fire, add] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
     expect(thumbs).toHaveAttribute("title", "You, alice, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
     expect(tada).toHaveAttribute("title", "1 on Discord");
     expect(fire).toHaveAttribute("title", "alice and bob");
+    expect(add).toHaveAccessibleName("Add reaction");
   });
 
   it("marks the visitor's own reactions as pressed", () => {

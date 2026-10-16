@@ -15,7 +15,13 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
-export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
+export const ChatReactionPicker = ({
+  messageId,
+  glyph = "☺",
+}: {
+  messageId: string;
+  glyph?: string;
+}) => {
   const { reacting, react } = use(ChatReactionsContext);
   const pickerId = useId();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
@@ -30,7 +36,7 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
         popoverTarget={pickerId}
         disabled={reacting.has(messageId)}
       >
-        ☺
+        {glyph}
       </button>
       <div
         id={pickerId}
@@ -90,6 +96,7 @@ export const ChatReactionList = ({
           {reaction.emoji} <span className="count">{reaction.count}</span>
         </button>
       ))}
+      <ChatReactionPicker messageId={messageId} glyph="+" />
     </div>
   );
 };
