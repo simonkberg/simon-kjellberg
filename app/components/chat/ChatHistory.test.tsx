@@ -160,6 +160,27 @@ describe("ChatHistory", () => {
       ).toHaveFocus();
     });
 
+    it("takes links in other messages out of the tab order", () => {
+      render(
+        <ChatHistory
+          messages={[
+            message("1", "[First](https://example.com)"),
+            message("3", "[Last](https://example.com)"),
+          ]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      expect(screen.getByRole("link", { name: "First" })).toHaveAttribute(
+        "tabindex",
+        "-1",
+      );
+      expect(screen.getByRole("link", { name: "Last" })).toHaveAttribute(
+        "tabindex",
+        "0",
+      );
+    });
+
     it("leaves arrow keys with modifiers to the browser", async () => {
       const user = userEvent.setup();
       render(<ChatHistory messages={messages} {...defaultReplyProps} />);

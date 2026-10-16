@@ -40,7 +40,7 @@ export const ChatMessage = ({
   >
     <span className="user">{user.name}: </span>
     <div className="text">
-      <Markdown source={content} />
+      <Markdown source={content} linkTabIndex={active ? 0 : -1} />
     </div>
     {edited && <small className="edited"> (edited) </small>}{" "}
     <small className="timestamp">
