@@ -1468,7 +1468,6 @@ ul {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5ch;
-    margin-top: 0.25lh;
 
     > button {
       padding: 0 1ch;
