@@ -10,16 +10,15 @@ export async function register() {
     void refreshIpDenyList();
 
     // Not awaited, so /health can answer 503 while Turso is out.
-    void (async () => {
-      await runMigrationsUntilApplied();
-      markReady("migrations");
-      // After migrations, so new bot code never meets an old schema.
-      try {
-        await startBotSubscription();
-        markReady("bot");
-      } catch (err) {
+    runMigrationsUntilApplied()
+      .then(() => {
+        markReady("migrations");
+        // After migrations, so new bot code never meets an old schema.
+        return startBotSubscription();
+      })
+      .then(() => markReady("bot"))
+      .catch((err) => {
         log.error({ err }, "Failed to start bot subscription");
-      }
-    })();
+      });
   }
 }
