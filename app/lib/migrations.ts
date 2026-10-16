@@ -154,11 +154,8 @@ export async function runMigrations(): Promise<void> {
 
 /** Retries with backoff for as long as it takes; Railway's health check decides when to give up. */
 export async function runMigrationsUntilApplied(): Promise<void> {
-  for (
-    let delayMs = RETRY_MIN_MS;
-    ;
-    delayMs = Math.min(delayMs * 2, RETRY_MAX_MS)
-  ) {
+  let delayMs = RETRY_MIN_MS;
+  while (true) {
     try {
       return await runMigrations();
     } catch (err) {
@@ -167,6 +164,7 @@ export async function runMigrationsUntilApplied(): Promise<void> {
         "Failed to run migrations, retrying",
       );
       await sleep(delayMs);
+      delayMs = Math.min(delayMs * 2, RETRY_MAX_MS);
     }
   }
 }
