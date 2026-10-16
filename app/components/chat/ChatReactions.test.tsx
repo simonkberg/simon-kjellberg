@@ -89,16 +89,18 @@ describe("ChatReactionList", () => {
   const reactions: Reaction[] = [
     { emoji: "👍", count: 3, users: ["me", "you"] },
     { emoji: "🎉", count: 1, users: [] },
+    { emoji: "🔥", count: 2, users: ["you", "them"] },
   ];
 
   it("shows each reaction with its count and who reacted", () => {
     renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
 
-    const [thumbs, tada] = screen.getAllByRole("button");
+    const [thumbs, tada, fire] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
     expect(thumbs).toHaveAttribute("title", "me, you, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
     expect(tada).toHaveAttribute("title", "1 on Discord");
+    expect(fire).toHaveAttribute("title", "you and them");
   });
 
   it("marks the visitor's own reactions as pressed", () => {
