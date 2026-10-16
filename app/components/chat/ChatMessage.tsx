@@ -55,7 +55,7 @@ export const ChatMessage = ({
           >
             ↩
           </button>
-          <ChatReactionPicker messageId={id} />
+          {reactions.length === 0 && <ChatReactionPicker messageId={id} />}
         </span>
         {reactions.length > 0 && (
           <ChatReactionList messageId={id} reactions={reactions} />

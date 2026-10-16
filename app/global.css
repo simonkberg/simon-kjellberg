@@ -1449,7 +1449,7 @@ ul {
   /* Room for the toolbar where it floats over the end of the pill row. */
   @media (hover: hover) and (pointer: fine) {
     > .reactions {
-      padding-inline-end: 7ch;
+      padding-inline-end: 4ch;
     }
   }
 
