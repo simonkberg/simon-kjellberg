@@ -1387,6 +1387,11 @@ ul {
   text-wrap: pretty;
   /* Keeps a message focused by arrow keys clear of the history's edge fades. */
   scroll-margin-block: var(--fade);
+  border-radius: var(--code-radius);
+
+  &:focus-visible {
+    background: var(--wash);
+  }
 
   > .user {
     font-weight: bold;
