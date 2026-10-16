@@ -122,6 +122,25 @@ describe("ChatReactionList", () => {
     }
   });
 
+  it("marks the visitor's reactions once their username arrives", () => {
+    const context = {
+      username: null,
+      reacting: new Set<string>(),
+      react: vi.fn(),
+    };
+    const list = (username: string | null) => (
+      <ChatReactionsContext value={{ ...context, username }}>
+        <ChatReactionList messageId="1" reactions={reactions} />
+      </ChatReactionsContext>
+    );
+    const { rerender } = render(list(null));
+
+    rerender(list("me"));
+
+    const [thumbs] = screen.getAllByRole("button");
+    expect(thumbs).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("toggles the reaction when clicked", async () => {
     const { react } = renderWithContext(
       <ChatReactionList messageId="1" reactions={reactions} />,
