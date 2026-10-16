@@ -232,6 +232,8 @@ const ReactionSchema = z.object({
   count: z.number(),
   /** Who reacted, where known; the rest of `count` reacted on Discord. */
   users: z.array(z.string()),
+  /** The visitor's own, set per request by the page; `users` then leaves them out. */
+  mine: z.boolean().optional(),
 });
 
 export type Reaction = z.infer<typeof ReactionSchema>;

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   addBotReaction,
+  type Message,
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
@@ -112,6 +113,29 @@ function mergeReactions<T extends Reactable<T>>(
     return item.replies
       ? { ...item, reactions, replies: mergeReactions(item.replies, site) }
       : { ...item, reactions };
+  });
+}
+
+/** Marks the visitor's own reactions, which the shared, cached history can't know. */
+export function markOwnReactions(
+  messages: Message[],
+  username: string,
+): Message[] {
+  return messages.map((message) => {
+    const reactions = message.reactions.map((reaction) =>
+      reaction.users.includes(username)
+        ? {
+            ...reaction,
+            mine: true,
+            users: reaction.users.filter((user) => user !== username),
+          }
+        : reaction,
+    );
+    return {
+      ...message,
+      reactions,
+      replies: markOwnReactions(message.replies, username),
+    };
   });
 }
 

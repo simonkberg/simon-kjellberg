@@ -30,15 +30,10 @@ describe("Chat", () => {
     );
   });
 
-  const chatElement = (
-    result: ChatHistoryResult,
-    dismissed = false,
-    username = "TestUser",
-  ) => (
+  const chatElement = (result: ChatHistoryResult, dismissed = false) => (
     <Chat
       history={Promise.resolve(result)}
       tipDismissed={Promise.resolve(dismissed)}
-      username={Promise.resolve(username)}
     />
   );
 
@@ -190,14 +185,13 @@ describe("Chat", () => {
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
 
-    const renderReactions = (reactions: Reaction[], username = "TestUser") =>
+    const renderReactions = (reactions: Reaction[]) =>
       act(async () =>
         render(
-          chatElement(
-            { status: "ok", messages: [createMessage({ reactions })] },
-            false,
-            username,
-          ),
+          chatElement({
+            status: "ok",
+            messages: [createMessage({ reactions })],
+          }),
         ),
       );
 
@@ -217,7 +211,7 @@ describe("Chat", () => {
 
       const pill = screen.getByRole("button", { name: "👍 2" });
       expect(pill).toHaveAttribute("aria-pressed", "true");
-      expect(pill).toHaveAttribute("title", "TestUser and 1 on Discord");
+      expect(pill).toHaveAttribute("title", "You and 1 on Discord");
       expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
         "aria-pressed",
         "false",
@@ -227,7 +221,7 @@ describe("Chat", () => {
 
     it("drops a pill at once when the last reaction is taken back", async () => {
       const settle = holdReaction();
-      await renderReactions([{ emoji: "👍", count: 1, users: ["TestUser"] }]);
+      await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 

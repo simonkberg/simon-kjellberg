@@ -17,6 +17,7 @@ import { MIGRATIONS } from "./migrations";
 import {
   addReaction,
   EmojiSchema,
+  markOwnReactions,
   toggleReaction,
   withSiteReactions,
 } from "./reactions";
@@ -130,6 +131,34 @@ describe("toggleReaction", () => {
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
     expect(addBotReaction).not.toHaveBeenCalled();
     expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+  });
+});
+
+describe("markOwnReactions", () => {
+  it("marks the visitor's reactions and leaves them out of the names, replies included", () => {
+    const messages = [
+      message("1", {
+        reactions: [
+          { emoji: "👍", count: 2, users: ["alice", "bob"] },
+          { emoji: "🎉", count: 1, users: ["bob"] },
+        ],
+        replies: [
+          message("2", {
+            reactions: [{ emoji: "😂", count: 1, users: ["alice"] }],
+          }),
+        ],
+      }),
+    ];
+
+    const [marked] = markOwnReactions(messages, "alice");
+
+    expect(marked?.reactions).toEqual([
+      { emoji: "👍", count: 2, users: ["bob"], mine: true },
+      { emoji: "🎉", count: 1, users: ["bob"] },
+    ]);
+    expect(marked?.replies[0]?.reactions).toEqual([
+      { emoji: "😂", count: 1, users: [], mine: true },
+    ]);
   });
 });
 

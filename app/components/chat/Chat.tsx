@@ -26,22 +26,15 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
-function toggleOwnReaction(
-  reactions: Reaction[],
-  emoji: string,
-  username: string,
-): Reaction[] {
+function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
   if (!existing) {
-    return [...reactions, { emoji, count: 1, users: [username] }];
+    return [...reactions, { emoji, count: 1, users: [], mine: true }];
   }
-  const mine = existing.users.includes(username);
   const updated = {
     ...existing,
-    count: existing.count + (mine ? -1 : 1),
-    users: mine
-      ? existing.users.filter((user) => user !== username)
-      : [...existing.users, username],
+    count: existing.count + (existing.mine ? -1 : 1),
+    mine: !existing.mine,
   };
   return reactions
     .map((reaction) => (reaction === existing ? updated : reaction))
@@ -52,20 +45,19 @@ function withReactionToggled(
   messages: Message[],
   messageId: string,
   emoji: string,
-  username: string,
 ): Message[] {
   // Untouched messages keep their identity, so only the toggled one re-renders.
   return messages.map((message) => {
     if (message.id === messageId) {
       return {
         ...message,
-        reactions: toggleOwnReaction(message.reactions, emoji, username),
+        reactions: toggleOwnReaction(message.reactions, emoji),
       };
     }
     if (!findMessageById(message.replies, messageId)) return message;
     return {
       ...message,
-      replies: withReactionToggled(message.replies, messageId, emoji, username),
+      replies: withReactionToggled(message.replies, messageId, emoji),
     };
   });
 }
@@ -73,13 +65,11 @@ function withReactionToggled(
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
-  username: Promise<string>;
 }
 
-export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
+export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const result = use(history);
   const dismissed = use(tipDismissed);
-  const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [, startReacting] = useTransition();
   // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
@@ -90,14 +80,8 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   // Shown at once; the server's history replaces it when the action settles.
   const [messages, toggleOptimistically] = useOptimistic(
     result.status === "ok" ? result.messages : [],
-    (
-      current,
-      {
-        messageId,
-        emoji,
-        username,
-      }: { messageId: string; emoji: string; username: string },
-    ) => withReactionToggled(current, messageId, emoji, username),
+    (current, { messageId, emoji }: { messageId: string; emoji: string }) =>
+      withReactionToggled(current, messageId, emoji),
   );
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
@@ -108,7 +92,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
       markReacting(messageId);
-      toggleOptimistically({ messageId, emoji, username: currentUsername });
+      toggleOptimistically({ messageId, emoji });
       const reaction = await reactToChatMessage(messageId, emoji).catch(
         () =>
           ({
@@ -137,9 +121,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
     : null;
 
   return (
-    <ChatReactionsContext
-      value={{ username: currentUsername, reacting, react }}
-    >
+    <ChatReactionsContext value={{ reacting, react }}>
       <ChatToast
         key={reactionError?.count}
         variant="error"

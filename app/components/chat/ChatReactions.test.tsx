@@ -16,12 +16,7 @@ function renderWithContext(
   ui: React.ReactNode,
   value: Partial<ChatReactionsContextValue> = {},
 ) {
-  const context = {
-    username: "me",
-    reacting: new Set<string>(),
-    react: vi.fn(),
-    ...value,
-  };
+  const context = { reacting: new Set<string>(), react: vi.fn(), ...value };
   render(<ChatReactionsContext value={context}>{ui}</ChatReactionsContext>);
   return context;
 }
@@ -87,9 +82,9 @@ describe("ChatReactionPicker", () => {
 
 describe("ChatReactionList", () => {
   const reactions: Reaction[] = [
-    { emoji: "👍", count: 3, users: ["me", "you"] },
+    { emoji: "👍", count: 3, users: ["alice"], mine: true },
     { emoji: "🎉", count: 1, users: [] },
-    { emoji: "🔥", count: 2, users: ["you", "them"] },
+    { emoji: "🔥", count: 2, users: ["alice", "bob"] },
   ];
 
   it("shows each reaction with its count and who reacted", () => {
@@ -97,10 +92,10 @@ describe("ChatReactionList", () => {
 
     const [thumbs, tada, fire] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
-    expect(thumbs).toHaveAttribute("title", "me, you, and 1 on Discord");
+    expect(thumbs).toHaveAttribute("title", "You, alice, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
     expect(tada).toHaveAttribute("title", "1 on Discord");
-    expect(fire).toHaveAttribute("title", "you and them");
+    expect(fire).toHaveAttribute("title", "alice and bob");
   });
 
   it("marks the visitor's own reactions as pressed", () => {
@@ -109,25 +104,6 @@ describe("ChatReactionList", () => {
     const [thumbs, tada] = screen.getAllByRole("button");
     expect(thumbs).toHaveAttribute("aria-pressed", "true");
     expect(tada).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("follows the visitor's username", () => {
-    const context = {
-      username: "nobody",
-      reacting: new Set<string>(),
-      react: vi.fn(),
-    };
-    const list = (username: string) => (
-      <ChatReactionsContext value={{ ...context, username }}>
-        <ChatReactionList messageId="1" reactions={reactions} />
-      </ChatReactionsContext>
-    );
-    const { rerender } = render(list("nobody"));
-
-    rerender(list("me"));
-
-    const [thumbs] = screen.getAllByRole("button");
-    expect(thumbs).toHaveAttribute("aria-pressed", "true");
   });
 
   it("toggles the reaction when clicked", async () => {

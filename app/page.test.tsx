@@ -51,11 +51,10 @@ vi.mock(import("@/actions/wakaTime"), () => ({
 
 // Mock components that use() their promise props to trigger Suspense
 vi.mock(import("@/components/chat/Chat"), () => ({
-  Chat: ({ history, tipDismissed, username }: ChatProps) => {
-    use(history);
+  Chat: ({ history, tipDismissed }: ChatProps) => {
+    const result = use(history);
     use(tipDismissed);
-    use(username);
-    return <div data-testid="chat" />;
+    return <div data-testid="chat" data-status={result.status} />;
   },
 }));
 
@@ -261,6 +260,20 @@ describe("RootPage", () => {
       await act(async () => render(<RootPage />));
 
       expect(getChatTipDismissed).toHaveBeenCalled();
+    });
+
+    it("should pass a failed history through", async () => {
+      vi.mocked(getChatHistory).mockResolvedValueOnce({
+        status: "error",
+        error: "Failed",
+      });
+
+      await act(async () => render(<RootPage />));
+
+      expect(screen.getByTestId("chat")).toHaveAttribute(
+        "data-status",
+        "error",
+      );
     });
 
     it("should show loader while chat history is loading", async () => {

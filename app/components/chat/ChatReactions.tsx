@@ -6,13 +6,11 @@ import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
 export interface ChatReactionsContextValue {
-  username: string;
   reacting: ReadonlySet<string>;
   react: (messageId: string, emoji: string) => void;
 }
 
 export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
-  username: "",
   reacting: new Set(),
   react: () => {},
 });
@@ -62,10 +60,11 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
 
 const reactorList = new Intl.ListFormat("en", { type: "conjunction" });
 
-function describeReactors({ count, users }: Reaction): string {
-  const onDiscord = count - users.length;
+function describeReactors({ count, users, mine }: Reaction): string {
+  const named = mine ? ["You", ...users] : users;
+  const onDiscord = count - named.length;
   return reactorList.format(
-    onDiscord > 0 ? [...users, `${onDiscord} on Discord`] : users,
+    onDiscord > 0 ? [...named, `${onDiscord} on Discord`] : named,
   );
 }
 
@@ -76,14 +75,14 @@ export const ChatReactionList = ({
   messageId: string;
   reactions: Reaction[];
 }) => {
-  const { username, reacting, react } = use(ChatReactionsContext);
+  const { reacting, react } = use(ChatReactionsContext);
 
   return (
     <div className="reactions" role="group" aria-label="Reactions">
       {reactions.map((reaction) => (
         <button
           key={reaction.emoji}
-          aria-pressed={reaction.users.includes(username)}
+          aria-pressed={reaction.mine === true}
           title={describeReactors(reaction)}
           disabled={reacting.has(messageId)}
           onClick={() => react(messageId, reaction.emoji)}
