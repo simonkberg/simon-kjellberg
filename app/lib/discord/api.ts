@@ -22,6 +22,18 @@ const RateLimitResponseSchema = z.object({
   code: z.number().optional(),
 });
 
+const ErrorResponseSchema = z.object({ code: z.number() });
+
+export class DiscordApiError extends Error {
+  readonly code: number | undefined;
+
+  constructor(message: string, code: number | undefined) {
+    super(message);
+    this.name = "DiscordApiError";
+    this.code = code;
+  }
+}
+
 // Per-endpoint rate limit tracking: endpoint → timestamp until which requests should wait
 const rateLimitUntil = new Map<string, number>();
 
@@ -80,7 +92,7 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    const json = await response.json();
+    const json = response.status === 204 ? null : await response.json();
 
     if (response.status === 429) {
       retries++;
@@ -126,8 +138,9 @@ async function call<T extends z.ZodType>(
         { endpoint, status: response.status, body: json },
         "Discord API call failed",
       );
-      throw new Error(
+      throw new DiscordApiError(
         `Discord API error: ${response.status} ${response.statusText}`,
+        ErrorResponseSchema.safeParse(json).data?.code,
       );
     }
 
@@ -214,6 +227,79 @@ const discordMessageLoader = new DataLoader<string, DiscordMessage>(
 
 const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 
+const ReactionSchema = z.object({
+  emoji: z.string(),
+  count: z.number(),
+  /** Who reacted, where known; the rest of `count` reacted on Discord. */
+  users: z.array(z.string()),
+  /** The visitor's own, set per request by the page; `users` then leaves them out. */
+  mine: z.boolean().optional(),
+});
+
+export type Reaction = z.infer<typeof ReactionSchema>;
+
+// The bot's own reaction mirrors the site's, which are counted from Turso instead.
+function toReactions(msg: DiscordMessage): Reaction[] {
+  const reactions: Reaction[] = [];
+  for (const { count, me, emoji } of msg.reactions ?? []) {
+    const discordCount = me ? count - 1 : count;
+    if (emoji.id === null && emoji.name !== null && discordCount > 0) {
+      reactions.push({ emoji: emoji.name, count: discordCount, users: [] });
+    }
+  }
+  return reactions;
+}
+
+const ReactorsResponseSchema = z.array(
+  z.object({ id: z.string(), bot: z.boolean().optional() }),
+);
+
+type ReactorsKey = { messageId: string; emoji: string; count: number };
+
+// Names who reacted on Discord, skipping bots so the mirror doesn't name itself.
+async function getReactors({ messageId, emoji }: ReactorsKey) {
+  const reactors = await call(
+    "GET",
+    reactionEndpoint(messageId, emoji),
+    ReactorsResponseSchema,
+    { limit: 100 },
+  );
+  const people = reactors.filter(({ bot }) => !bot);
+  const users = await userLoader.loadMany(people.map(({ id }) => id));
+  // A reactor who left the server has no member to name, so they stay in the count.
+  return users.flatMap((user) => (user instanceof Error ? [] : [user.name]));
+}
+
+// Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
+const reactorsLoader = new DataLoader<ReactorsKey, string[], string>(
+  (keys) =>
+    Promise.allSettled(keys.map(getReactors)).then(flattenSettledPromises),
+  {
+    cacheKeyFn: ({ messageId, emoji, count }) =>
+      `${messageId}/${emoji}/${count}`,
+    cacheMap: new LruMap(100),
+  },
+);
+
+async function withDiscordReactors(
+  messageId: string,
+  reactions: Reaction[],
+): Promise<Reaction[]> {
+  return Promise.all(
+    reactions.map(async (reaction) => {
+      const key = { messageId, emoji: reaction.emoji, count: reaction.count };
+      try {
+        const users = await reactorsLoader.load(key);
+        return { ...reaction, users };
+      } catch (err) {
+        reactorsLoader.clear(key);
+        log.warn({ err, ...key }, "Failed to load reactors");
+        return reaction;
+      }
+    }),
+  );
+}
+
 const MessageSchema = z.object({
   id: z.string(),
   user: UserSchema,
@@ -221,6 +307,7 @@ const MessageSchema = z.object({
   content: z.string(),
   edited: z.boolean(),
   timestamp: z.string().pipe(z.coerce.date()),
+  reactions: z.array(ReactionSchema),
   get replies() {
     return z.array(MessageSchema);
   },
@@ -253,7 +340,10 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
     discordMessageLoader.prime(discordMessage.id, discordMessage);
 
     const message = Promise.try(async () => {
-      const { username, content } = await resolveMessageContent(discordMessage);
+      const [{ username, content }, reactions] = await Promise.all([
+        resolveMessageContent(discordMessage),
+        withDiscordReactors(discordMessage.id, toReactions(discordMessage)),
+      ]);
 
       return MessageSchema.decode({
         id: discordMessage.id,
@@ -261,6 +351,7 @@ export async function getChannelMessages(limit = 100): Promise<Message[]> {
         content,
         edited: discordMessage.edited_timestamp !== null,
         timestamp: discordMessage.timestamp,
+        reactions,
         replies: [],
       });
     });
@@ -295,6 +386,7 @@ export type ChainMessage = {
   type: number;
   username: string;
   content: string;
+  reactions: Reaction[];
 };
 
 const MAX_CHAIN_DEPTH = 50;
@@ -315,7 +407,13 @@ export async function getMessageChain(
 
     const { username, content } = await resolveMessageContent(response);
 
-    chain.unshift({ id: response.id, type: response.type, username, content });
+    chain.unshift({
+      id: response.id,
+      type: response.type,
+      username,
+      content,
+      reactions: toReactions(response),
+    });
 
     currentId = response.message_reference?.message_id;
   }
@@ -406,6 +504,28 @@ export async function postChannelMessage(
   );
 
   return response.id;
+}
+
+function reactionEndpoint(messageId: string, emoji: string): string {
+  return `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`;
+}
+
+function botReactionEndpoint(messageId: string, emoji: string): string {
+  return `${reactionEndpoint(messageId, emoji)}/@me`;
+}
+
+export async function addBotReaction(
+  messageId: string,
+  emoji: string,
+): Promise<void> {
+  await call("PUT", botReactionEndpoint(messageId, emoji), z.null());
+}
+
+export async function removeBotReaction(
+  messageId: string,
+  emoji: string,
+): Promise<void> {
+  await call("DELETE", botReactionEndpoint(messageId, emoji), z.null());
 }
 
 function flattenSettledPromises<T>(

@@ -19,6 +19,8 @@ import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
 import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
+import { markOwnReactions } from "@/lib/reactions";
+import { getSession } from "@/lib/session";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -31,7 +33,14 @@ export default function RootPage() {
   // Keeps cached data out of the static shell so it never goes stale, see AGENTS.md
   const request = io();
   const stats = request.then(getWakaTimeStats);
-  const history = request.then(getChatHistory);
+  const history = Promise.all([
+    request.then(getChatHistory),
+    getSession(),
+  ]).then(([result, { username }]) =>
+    result.status === "ok"
+      ? { ...result, messages: markOwnReactions(result.messages, username) }
+      : result,
+  );
   const recentTracks = request.then(getRecentTracks);
   const tipDismissed = getChatTipDismissed();
 

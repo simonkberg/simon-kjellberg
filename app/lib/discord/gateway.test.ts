@@ -298,6 +298,30 @@ describe("subscribe", () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    "MESSAGE_REACTION_ADD",
+    "MESSAGE_REACTION_REMOVE",
+    "MESSAGE_REACTION_REMOVE_ALL",
+    "MESSAGE_REACTION_REMOVE_EMOJI",
+  ])("should notify subscribers on %s", async (event) => {
+    const { subscribe } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    const callback = vi.fn();
+    await subscribe(callback);
+    getLastClient(gateway.clients)?.send(
+      createPayload(
+        GatewayOpcode.DISPATCH,
+        { channel_id: "test-discord-channel-id", message_id: "msg-test" },
+        2,
+        event,
+      ),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(callback).toHaveBeenCalledOnce();
+  });
+
   it("should ignore messages from other channels", async () => {
     const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());

@@ -1,15 +1,14 @@
 import "server-only";
-import { type ChatMessage, createMessage } from "@/lib/anthropic";
+import { BOT_USERNAME, type ChatMessage, createMessage } from "@/lib/anthropic";
 import { log } from "@/lib/log";
+import { withSiteReactions } from "@/lib/reactions";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 
-import type { Username } from "../session";
-import { getMessageChain, postChannelMessage } from "./api";
+import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { subscribeToMessages } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
-const BOT_USERNAME = "simon-bot" as Username;
 const BOT_PREFIX = `${BOT_USERNAME}: `;
 const BOT_MENTION_PATTERN = /\bsimon[- ]?bot\b/i;
 
@@ -32,6 +31,19 @@ async function pruneSeen(): Promise<void> {
   } catch (err) {
     log.warn({ err }, "Failed to prune seen messages");
   }
+}
+
+async function toChatMessages(
+  chain: ChainMessage[],
+): Promise<[ChatMessage, ...ChatMessage[]]> {
+  return (await withSiteReactions(chain)).map((m) => ({
+    role:
+      m.username === BOT_USERNAME ? ("assistant" as const) : ("user" as const),
+    id: m.id,
+    username: m.username,
+    content: m.content,
+    reactions: m.reactions,
+  })) as [ChatMessage, ...ChatMessage[]];
 }
 
 async function markSeen(messageId: string): Promise<boolean> {
@@ -67,14 +79,7 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
     if (!chain.some((m) => mentionsBot(m.content))) return;
 
     // Past this point, we're committed to responding
-    const messages = chain.map((m) => ({
-      role:
-        m.username === BOT_USERNAME
-          ? ("assistant" as const)
-          : ("user" as const),
-      username: m.username,
-      content: m.content,
-    })) as [ChatMessage, ...ChatMessage[]];
+    const messages = await toChatMessages(chain);
 
     const replies: ChatMessage[] = [];
     let finished = false;
@@ -106,9 +111,12 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
       // Staying silent is still a turn worth reflecting on; a turn that failed before
       // anything was said is not.
       if (finished || replies.length > 0) {
-        reflect([...messages, ...replies]).catch((err) => {
-          log.error({ err, messageId }, "Bot reflection failed");
-        });
+        // The site's reactions again, so reflection sees the bot's from this turn.
+        toChatMessages(chain)
+          .then((transcript) => reflect([...transcript, ...replies]))
+          .catch((err) => {
+            log.error({ err, messageId }, "Bot reflection failed");
+          });
       }
     }
   } catch (err) {

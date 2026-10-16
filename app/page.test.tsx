@@ -10,6 +10,7 @@ import type { RecentTracksListProps } from "@/components/RecentTracksList";
 import type { StatsListProps } from "@/components/StatsList";
 import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
+import type { Username } from "@/lib/session";
 
 import RootPage, { viewport } from "./page";
 
@@ -30,6 +31,12 @@ vi.mock(import("@/lib/chatTip"), () => ({
   getChatTipDismissed: vi.fn(() => Promise.resolve(false)),
 }));
 
+vi.mock(import("@/lib/session"), () => ({
+  getSession: vi.fn(() =>
+    Promise.resolve({ username: "TestUser" as Username }),
+  ),
+}));
+
 vi.mock(import("@/actions/lastfm"), () => ({
   getRecentTracks: vi.fn(() =>
     Promise.resolve<GetRecentTracksResult>({ status: "ok", tracks: [] }),
@@ -45,9 +52,9 @@ vi.mock(import("@/actions/wakaTime"), () => ({
 // Mock components that use() their promise props to trigger Suspense
 vi.mock(import("@/components/chat/Chat"), () => ({
   Chat: ({ history, tipDismissed }: ChatProps) => {
-    use(history);
+    const result = use(history);
     use(tipDismissed);
-    return <div data-testid="chat" />;
+    return <div data-testid="chat" data-status={result.status} />;
   },
 }));
 
@@ -253,6 +260,20 @@ describe("RootPage", () => {
       await act(async () => render(<RootPage />));
 
       expect(getChatTipDismissed).toHaveBeenCalled();
+    });
+
+    it("should pass a failed history through", async () => {
+      vi.mocked(getChatHistory).mockResolvedValueOnce({
+        status: "error",
+        error: "Failed",
+      });
+
+      await act(async () => render(<RootPage />));
+
+      expect(screen.getByTestId("chat")).toHaveAttribute(
+        "data-status",
+        "error",
+      );
     });
 
     it("should show loader while chat history is loading", async () => {

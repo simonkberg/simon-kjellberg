@@ -9,7 +9,7 @@ import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
-import { getMessageChain, postChannelMessage } from "./api";
+import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
 import { subscribeToMessages } from "./gateway";
 import type { DiscordMessage } from "./schemas";
@@ -50,6 +50,24 @@ function createMessage(
   };
 }
 
+function link(
+  id: string,
+  type: number,
+  username: string,
+  content: string,
+  reactions: ChainMessage["reactions"] = [],
+): ChainMessage {
+  return { id, type, username, content, reactions };
+}
+
+const heyTurn = {
+  role: "user",
+  id: "msg-1",
+  username: "User1",
+  content: "hey simon-bot",
+  reactions: [],
+};
+
 describe("handleMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,7 +90,7 @@ describe("handleMessage", () => {
         : sqlite(sql, args),
     );
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot!" },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
     ]);
 
     async function* mockResponse() {
@@ -104,8 +122,8 @@ describe("handleMessage", () => {
 
   it("should not respond to a reply when nothing in the chain mentions the bot", async () => {
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hello" },
-      { id: "msg-2", type: 19, username: "User2", content: "hi" },
+      link("msg-1", 0, "User1", "hello"),
+      link("msg-2", 19, "User2", "hi"),
     ]);
 
     await handleMessage(
@@ -163,13 +181,8 @@ describe("handleMessage", () => {
   it("should respond when bot is mentioned in parent message", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "User1",
-        content: "hey simon-bot help",
-      },
-      { id: "msg-2", type: 19, username: "User2", content: "thanks!" },
+      link("msg-1", 0, "User1", "hey simon-bot help"),
+      link("msg-2", 19, "User2", "thanks!"),
     ]);
 
     async function* mockResponse() {
@@ -197,9 +210,9 @@ describe("handleMessage", () => {
   it("should map bot messages to assistant role in conversation", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot!" },
-      { id: "msg-2", type: 19, username: "simon-bot", content: "hello there!" },
-      { id: "msg-3", type: 19, username: "User1", content: "thanks!" },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
+      link("msg-2", 19, "simon-bot", "hello there!"),
+      link("msg-3", 19, "User1", "thanks!"),
     ]);
 
     async function* mockResponse() {
@@ -218,16 +231,56 @@ describe("handleMessage", () => {
     );
 
     expect(createAnthropicMessage).toHaveBeenCalledWith([
-      { role: "user", username: "User1", content: "hey simon-bot!" },
-      { role: "assistant", username: "simon-bot", content: "hello there!" },
-      { role: "user", username: "User1", content: "thanks!" },
+      {
+        role: "user",
+        id: "msg-1",
+        username: "User1",
+        content: "hey simon-bot!",
+        reactions: [],
+      },
+      {
+        role: "assistant",
+        id: "msg-2",
+        username: "simon-bot",
+        content: "hello there!",
+        reactions: [],
+      },
+      {
+        role: "user",
+        id: "msg-3",
+        username: "User1",
+        content: "thanks!",
+        reactions: [],
+      },
+    ]);
+  });
+
+  it("should show the bot each message's reactions, the site's included", async () => {
+    vi.spyOn(log, "info").mockImplementation(() => {});
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '😂', 'otter')",
+    );
+    vi.mocked(getMessageChain).mockResolvedValue([
+      link("msg-1", 0, "User1", "hey simon-bot", [
+        { emoji: "😂", count: 1, users: [] },
+      ]),
+    ]);
+    async function* mockResponse() {}
+    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+
+    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+
+    expect(createAnthropicMessage).toHaveBeenCalledWith([
+      expect.objectContaining({
+        reactions: [{ emoji: "😂", count: 2, users: ["otter"] }],
+      }),
     ]);
   });
 
   it("should reflect on the conversation after replying", async () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot" },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -239,8 +292,9 @@ describe("handleMessage", () => {
 
     await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
 
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      { role: "user", username: "User1", content: "hey simon-bot" },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
       { role: "assistant", username: "simon-bot", content: "hello" },
     ]);
@@ -250,7 +304,7 @@ describe("handleMessage", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot" },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -267,8 +321,9 @@ describe("handleMessage", () => {
       "simon-bot",
       "msg-1",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      { role: "user", username: "User1", content: "hey simon-bot" },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
     ]);
   });
@@ -277,7 +332,7 @@ describe("handleMessage", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot" },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -295,8 +350,9 @@ describe("handleMessage", () => {
       { err: expect.any(Error), messageId: "msg-1" },
       "Bot message handling failed",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
-      { role: "user", username: "User1", content: "hey simon-bot" },
+      heyTurn,
       { role: "assistant", username: "simon-bot", content: "one sec" },
     ]);
   });
@@ -304,12 +360,7 @@ describe("handleMessage", () => {
   it("should reflect when the bot chose not to reply", async () => {
     const info = vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      {
-        id: "msg-1",
-        type: 0,
-        username: "simon",
-        content: "simon-bot try sounding less like grok please",
-      },
+      link("msg-1", 0, "simon", "simon-bot try sounding less like grok please"),
     ]);
 
     async function* mockResponse() {}
@@ -326,11 +377,42 @@ describe("handleMessage", () => {
       { messageId: "msg-1", replies: 0 },
       "Bot chose not to reply",
     );
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       {
         role: "user",
+        id: "msg-1",
         username: "simon",
         content: "simon-bot try sounding less like grok please",
+        reactions: [],
+      },
+    ]);
+  });
+
+  it("should reflect on what the bot reacted with", async () => {
+    vi.mocked(getMessageChain).mockResolvedValue([
+      link("msg-1", 0, "User1", "thanks simon-bot"),
+    ]);
+
+    async function* mockResponse() {
+      await query(
+        "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '👍', 'simon-bot')",
+      );
+      // A react-only turn says nothing.
+      yield* [];
+    }
+    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+
+    await handleMessage(createMessage({ content: "thanks simon-bot" }));
+
+    await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
+    expect(reflect).toHaveBeenCalledWith([
+      {
+        role: "user",
+        id: "msg-1",
+        username: "User1",
+        content: "thanks simon-bot",
+        reactions: [{ emoji: "👍", count: 1, users: ["simon-bot"] }],
       },
     ]);
   });
@@ -338,7 +420,7 @@ describe("handleMessage", () => {
   it("should not reflect when the reply failed before anything was said", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot" },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     vi.mocked(createAnthropicMessage).mockImplementation(() => {
@@ -357,7 +439,7 @@ describe("handleMessage", () => {
     vi.mocked(reflect).mockRejectedValue(new Error("reflection broke"));
 
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot" },
+      link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
 
     async function* mockResponse() {
@@ -416,7 +498,7 @@ describe("handleMessage", () => {
   it("should post error message on post-commitment failure", async () => {
     const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
-      { id: "msg-1", type: 0, username: "User1", content: "hey simon-bot!" },
+      link("msg-1", 0, "User1", "hey simon-bot!"),
     ]);
 
     async function* failingResponse(): AsyncGenerator<string> {

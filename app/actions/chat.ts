@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
+  DiscordApiError,
   getChannelMessages,
   type Message,
   postChannelMessage,
@@ -13,7 +14,13 @@ import { identifiers } from "@/lib/identifiers";
 import { isDeniedIp } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rateLimit";
-import { getSession } from "@/lib/session";
+import {
+  EmojiSchema,
+  MessageIdSchema,
+  toggleReaction,
+  withSiteReactions,
+} from "@/lib/reactions";
+import { getSession, type Username } from "@/lib/session";
 
 export type ChatHistoryResult =
   | { status: "ok"; messages: Message[] }
@@ -25,7 +32,7 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
   cacheTag("getChatHistory");
 
   try {
-    const messages = await getChannelMessages();
+    const messages = await withSiteReactions(await getChannelMessages());
     return { status: "ok", messages };
   } catch (err) {
     log.error({ err, action: "getChatHistory" }, "Error fetching chat history");
@@ -34,6 +41,28 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
 }
 
 const RATE_LIMIT = { limit: 5, windowMs: 30_000 };
+
+async function admit(
+  action: string,
+  verb: string,
+  ip: string | undefined,
+  username: Username,
+  limits: { limit: number; windowMs: number },
+): Promise<{ status: "error"; error: string } | null> {
+  if (ip !== undefined && isDeniedIp(ip)) {
+    log.info({ ip, action }, "Denied a listed IP");
+    return { status: "error", error: `${verb} from your network is blocked.` };
+  }
+
+  const result = await rateLimit(`${action}:${ip ?? username}`, limits);
+  if (!result.success) {
+    return {
+      status: "error",
+      error: `Rate limit exceeded. Wait ${result.retryAfterSeconds} seconds before trying again.`,
+    };
+  }
+  return null;
+}
 
 export async function refreshChatHistory() {
   updateTag("getChatHistory");
@@ -53,35 +82,24 @@ export async function postChatMessage(
   formData: FormData,
 ): Promise<PostChatMessageResult> {
   try {
+    const { username } = await getSession();
+
+    // Admitted first, so malformed requests count against the limit too.
+    const request = await identifiers();
+    const denied = await admit(
+      "postChatMessage",
+      "Posting",
+      request.ip,
+      username,
+      RATE_LIMIT,
+    );
+    if (denied) return denied;
+
     const text = z.string().trim().min(1).parse(formData.get("text"));
     const replyToId = z
       .string()
       .optional()
       .parse(formData.get("replyToId") ?? undefined);
-
-    const { username } = await getSession();
-
-    const request = await identifiers();
-    if (request.ip !== undefined && isDeniedIp(request.ip)) {
-      log.info(
-        { ip: request.ip, action: "postChatMessage" },
-        "Denied a listed IP",
-      );
-      return {
-        status: "error",
-        error: "Posting from your network is blocked.",
-      };
-    }
-
-    const identifier = request.ip ?? username;
-    const result = await rateLimit(`postChatMessage:${identifier}`, RATE_LIMIT);
-
-    if (!result.success) {
-      return {
-        status: "error",
-        error: `Rate limit exceeded. Wait ${result.retryAfterSeconds} seconds before trying again.`,
-      };
-    }
 
     const messageId = await postChannelMessage(text, username, replyToId);
 
@@ -96,5 +114,61 @@ export async function postChatMessage(
   } catch (err) {
     log.error({ err, action: "postChatMessage" }, "Error posting chat message");
     return { status: "error", error: "Failed to post chat message" };
+  }
+}
+
+// Each click counts, and trying a few emoji on and off is quick.
+const REACTION_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
+// Discord's "Maximum number of reactions reached (20)".
+const MAX_REACTIONS_CODE = 30010;
+
+export type ReactToChatMessageResult =
+  | { status: "ok" }
+  | { status: "error"; error: string };
+
+export async function reactToChatMessage(
+  messageId: string,
+  emoji: string,
+): Promise<ReactToChatMessageResult> {
+  try {
+    const { username } = await getSession();
+
+    const { ip } = await identifiers();
+    const denied = await admit(
+      "reactToChatMessage",
+      "Reacting",
+      ip,
+      username,
+      REACTION_RATE_LIMIT,
+    );
+    if (denied) return denied;
+
+    const id = MessageIdSchema.parse(messageId);
+    const reaction = EmojiSchema.parse(emoji);
+
+    const change = await toggleReaction(id, reaction, username);
+    log.info(
+      {
+        username,
+        messageId: id,
+        emoji: reaction,
+        change,
+        action: "reactToChatMessage",
+      },
+      "Toggled reaction",
+    );
+
+    updateTag("getChatHistory");
+    refresh();
+    return { status: "ok" };
+  } catch (err) {
+    if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
+      return { status: "error", error: "Discord allows 20 emoji per message" };
+    }
+    log.error(
+      { err, action: "reactToChatMessage" },
+      "Error reacting to chat message",
+    );
+    return { status: "error", error: "Failed to react to chat message" };
   }
 }

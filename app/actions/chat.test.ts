@@ -6,10 +6,13 @@ import {
   dismissChatTip,
   getChatHistory,
   postChatMessage,
+  reactToChatMessage,
   refreshChatHistory,
 } from "@/actions/chat";
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
+  addBotReaction,
+  DiscordApiError,
   getChannelMessages,
   type Message,
   postChannelMessage,
@@ -52,6 +55,7 @@ function createMockMessage(overrides: Partial<Message> = {}): Message {
     content: "Hello, world!",
     edited: false,
     timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+    reactions: [],
     replies: [],
     ...overrides,
   };
@@ -74,6 +78,10 @@ afterEach(() => {
 });
 
 describe("getChatHistory", () => {
+  beforeEach(() => {
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  });
+
   it("returns messages on success", async () => {
     const mockMessages = [
       createMockMessage({ id: "1", content: "First message" }),
@@ -101,6 +109,19 @@ describe("getChatHistory", () => {
       { err: error, action: "getChatHistory" },
       "Error fetching chat history",
     );
+  });
+
+  it("adds the site's reactions", async () => {
+    vi.mocked(getChannelMessages).mockResolvedValue([
+      createMockMessage({ id: "1" }),
+    ]);
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'a')",
+    );
+
+    expect(await getChatHistory()).toMatchObject({
+      messages: [{ reactions: [{ emoji: "👍", count: 1, users: ["a"] }] }],
+    });
   });
 
   it("sets cache life and tag", async () => {
@@ -253,6 +274,104 @@ describe("postChatMessage", () => {
     const result = await postChatMessage(formData);
 
     expect(result.status).toBe("error");
+  });
+});
+
+describe("reactToChatMessage", () => {
+  beforeEach(async () => {
+    vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
+    vi.spyOn(log, "info").mockImplementation(() => {});
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    resetGlobal("simon.dev/rate-limit-blocked");
+    resetGlobal("simon.dev/ip-deny-list");
+    server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
+    await refreshIpDenyList();
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(addBotReaction).mockResolvedValue();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("toggles the visitor's reaction and refreshes", async () => {
+    expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
+
+    expect(
+      (await query("SELECT message_id, emoji, username FROM reactions")).rows,
+    ).toEqual([{ message_id: "123", emoji: "👍", username: "test-user" }]);
+    expect(updateTag).toHaveBeenCalledWith("getChatHistory");
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a message ID that isn't a snowflake", "../123", "👍"],
+    ["text that isn't one emoji", "123", "nice"],
+  ])("rejects %s", async (_, messageId, emoji) => {
+    expect(await reactToChatMessage(messageId, emoji)).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
+    expect(addBotReaction).not.toHaveBeenCalled();
+  });
+
+  it("turns away an IP on the deny list", async () => {
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "6.6.6.6",
+      userAgent: "vitest",
+    });
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Reacting from your network is blocked.",
+    });
+  });
+
+  it("rejects the 31st reaction in a minute", async () => {
+    for (let i = 0; i < 30; i++) {
+      expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
+    }
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Rate limit exceeded. Wait 60 seconds before trying again.",
+    });
+  });
+
+  it("counts malformed reactions against the limit", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    for (let i = 0; i < 30; i++) {
+      await reactToChatMessage("not-an-id", "👍");
+    }
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Rate limit exceeded. Wait 60 seconds before trying again.",
+    });
+  });
+
+  it("returns error when Discord rejects the reaction", async () => {
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("Unknown"));
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
+  });
+
+  it("explains Discord's cap on emoji per message", async () => {
+    // The module is automocked, so the constructor doesn't set the code.
+    vi.mocked(addBotReaction).mockRejectedValueOnce(
+      Object.assign(new DiscordApiError("Discord API error", 30010), {
+        code: 30010,
+      }),
+    );
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Discord allows 20 emoji per message",
+    });
   });
 });
 

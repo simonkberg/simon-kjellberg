@@ -1,13 +1,21 @@
-import { act, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ChatHistoryResult } from "@/actions/chat";
-import type { Message } from "@/lib/discord/api";
+import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
+import type { Message, Reaction } from "@/lib/discord/api";
 
 import { Chat } from "./Chat";
 
 vi.mock(import("server-only"), () => ({}));
+vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
 
 describe("Chat", () => {
   beforeEach(() => {
@@ -35,6 +43,7 @@ describe("Chat", () => {
     user: { name: "TestUser", color: "hsl(0 100% 50%)" },
     edited: false,
     timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+    reactions: [],
     replies: [],
     ...overrides,
   });
@@ -170,6 +179,175 @@ describe("Chat", () => {
 
       // Reply preview should be hidden since the message no longer exists
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("reactions", () => {
+    const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
+
+    const renderReactions = (reactions: Reaction[]) =>
+      act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [createMessage({ reactions })],
+          }),
+        ),
+      );
+
+    // React holds every transition until all pending actions settle, so each test settles its own.
+    function holdReaction() {
+      const { promise, resolve } =
+        Promise.withResolvers<Awaited<ReturnType<typeof reactToChatMessage>>>();
+      vi.mocked(reactToChatMessage).mockReturnValue(promise);
+      return () => act(async () => resolve({ status: "ok" }));
+    }
+
+    it("shows a reaction at once while the server catches up", async () => {
+      const settle = holdReaction();
+      await renderReactions([...thumbs, { emoji: "🎉", count: 1, users: [] }]);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      const pill = screen.getByRole("button", { name: "👍 2" });
+      expect(pill).toHaveAttribute("aria-pressed", "true");
+      expect(pill).toHaveAttribute("title", "You and 1 on Discord");
+      expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+      await settle();
+    });
+
+    it("drops a pill at once when the last reaction is taken back", async () => {
+      const settle = holdReaction();
+      await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        screen.queryByRole("button", { name: /👍/ }),
+      ).not.toBeInTheDocument();
+      await settle();
+    });
+
+    it("shows a reply's new reaction at once", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                replies: [createMessage({ id: "reply-1", content: "Reply" })],
+              }),
+              createMessage({ id: "msg-2", content: "Untouched" }),
+            ],
+          }),
+        ),
+      );
+
+      const picker = screen.getAllByRole("group", {
+        name: "Pick a reaction",
+        hidden: true,
+      })[1]!;
+      fireEvent(
+        picker,
+        Object.assign(new Event("beforetoggle"), { newState: "open" }),
+      );
+      await userEvent.click(
+        within(picker).getByRole("button", { name: "tada", hidden: true }),
+      );
+
+      expect(reactToChatMessage).toHaveBeenCalledWith("reply-1", "🎉");
+      expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await settle();
+    });
+
+    it("keeps other messages reactable while one reaction is pending", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({ reactions: thumbs }),
+              createMessage({ id: "msg-2", content: "Other" }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
+      const [busy, free] = screen.getAllByRole("button", {
+        name: "Add reaction",
+      });
+      expect(busy).toBeDisabled();
+      expect(free).toBeEnabled();
+      await settle();
+    });
+
+    it.each([
+      {
+        failure: "the server turns it away",
+        mock: () =>
+          vi
+            .mocked(reactToChatMessage)
+            .mockResolvedValue({
+              status: "error",
+              error: "Rate limit exceeded.",
+            }),
+        error: "Rate limit exceeded.",
+      },
+      {
+        failure: "the action itself fails",
+        mock: () =>
+          vi.mocked(reactToChatMessage).mockRejectedValue(new Error("offline")),
+        error: "Failed to react to chat message",
+      },
+    ])(
+      "puts the reaction back and says why when $failure",
+      async ({ mock, error }) => {
+        mock();
+        await renderReactions(thumbs);
+
+        await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+        expect(await screen.findByText(error)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+          "aria-pressed",
+          "false",
+        );
+      },
+    );
+
+    it("shows the same error again on a repeated failure", async () => {
+      vi.mocked(reactToChatMessage).mockResolvedValue({
+        status: "error",
+        error: "Rate limit exceeded.",
+      });
+      await renderReactions(thumbs);
+
+      const pill = screen.getByRole("button", { name: "👍 1" });
+      await userEvent.click(pill);
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Close notification" }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByText("Rate limit exceeded."),
+        ).not.toBeInTheDocument(),
+      );
+      await userEvent.click(pill);
+
+      expect(
+        await screen.findByText("Rate limit exceeded."),
+      ).toBeInTheDocument();
     });
   });
 });

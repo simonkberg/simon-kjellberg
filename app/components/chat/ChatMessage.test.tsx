@@ -15,6 +15,7 @@ describe("ChatMessage", () => {
     user: mockUser,
     edited: false,
     timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+    reactions: [],
     replies: [],
     ...overrides,
   });
@@ -137,5 +138,15 @@ describe("ChatMessage", () => {
         "reply",
       );
     });
+  });
+
+  it("shows only the text as a reply preview", () => {
+    const message = createMessage({
+      reactions: [{ emoji: "👍", count: 1, users: [] }],
+    });
+    render(<ChatMessage {...message} {...defaultReplyProps} preview />);
+
+    expect(screen.getByText("Hello, world!")).toBeInTheDocument();
+    expect(screen.queryAllByRole("button", { hidden: true })).toEqual([]);
   });
 });

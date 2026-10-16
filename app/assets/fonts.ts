@@ -9,4 +9,5 @@ export const iosevka = localFont({
   ],
   display: "swap",
   fallback: ["monospace"],
+  variable: "--font-iosevka",
 });

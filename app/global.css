@@ -654,7 +654,24 @@
   box-sizing: border-box;
 }
 
+/* Iosevka draws some emoji (🙂 😐 🖤 🔔 ❤) as text, so emoji get a colour font first.
+   Joiners and tags too, or 😮‍💨 and subdivision flags split into their parts. */
+@font-face {
+  font-family: "Colour Emoji";
+  src:
+    local("Apple Color Emoji"), local("Segoe UI Emoji"), local("SegoeUIEmoji"),
+    local("Noto Color Emoji"), local("NotoColorEmoji");
+  unicode-range:
+    U+231A-231B, U+23E9-23EC, U+23F0, U+23F3, U+25FD-25FE, U+2614-2615,
+    U+2648-2653, U+267F, U+2693, U+26A1, U+26AA-26AB, U+26BD-26BE, U+26C4-26C5,
+    U+26CE, U+26D4, U+26EA, U+26F2-26F3, U+26F5, U+26FA, U+26FD, U+2705,
+    U+270A-270B, U+2728, U+274C, U+274E, U+2753-2755, U+2757, U+2795-2797,
+    U+2764, U+27B0, U+27BF, U+2B1B-2B1C, U+2B50, U+2B55, U+FE0F, U+200D,
+    U+1F000-1FAFF, U+E0020-E007F;
+}
+
 html {
+  font-family: "Colour Emoji", var(--font-iosevka), monospace;
   font-size: 100%;
   line-height: var(--leading);
   -webkit-text-size-adjust: 100%;
@@ -1364,6 +1381,7 @@ ul {
 }
 
 .chat-message {
+  position: relative;
   text-wrap: pretty;
 
   > .user {
@@ -1392,24 +1410,122 @@ ul {
     font-size: var(--meta-size);
   }
 
-  > .reply {
-    color: var(--muted);
-    visibility: hidden;
+  /* Floats over the message on hover, so hidden controls never wrap onto a line of their own. */
+  > .actions {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-end: 0;
+    display: flex;
+    gap: 1ch;
+    padding: 0 1ch;
+    border-radius: 1lh;
+    background: color-mix(in oklch, var(--ink) 12%, transparent);
+    /* Not visibility: hidden, which would drop the buttons from the tab order. */
+    opacity: 0;
 
-    &:hover,
-    &:focus-visible {
-      color: var(--accent);
-      visibility: visible;
+    > button {
+      color: var(--muted);
+
+      &:hover,
+      &:focus-visible {
+        color: var(--accent);
+      }
     }
 
-    &:disabled {
-      visibility: hidden !important;
+    > .reply:disabled {
+      display: none;
     }
   }
 
-  &:hover > .reply,
-  &:focus-within > .reply {
-    visibility: visible;
+  /* Kept while its picker is open: the picker hides with its anchor, and Safari doesn't focus a clicked button. */
+  &:hover > .actions,
+  &:focus-within > .actions,
+  &:has(.chat-reaction-picker:popover-open) > .actions {
+    opacity: 1;
+    /* Only while shown, so a long history doesn't keep a filter per message. */
+    backdrop-filter: blur(4px);
+  }
+
+  /* Room for the toolbar where it floats over the end of the pill row. */
+  @media (hover: hover) and (pointer: fine) {
+    > .reactions {
+      padding-inline-end: 7ch;
+    }
+  }
+
+  /* Touch has no hover to reveal them, so visitors never found reply. */
+  @media (hover: none), (pointer: coarse) {
+    > .actions {
+      position: static;
+      display: inline-flex;
+      padding: 0;
+      background: none;
+      opacity: 1;
+    }
+  }
+
+  > .reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5ch;
+    margin-top: 0.25lh;
+
+    > button {
+      padding: 0 1ch;
+      border-radius: 1lh;
+      background: color-mix(in oklch, var(--ink) 7%, transparent);
+      color: var(--muted);
+      font-size: var(--meta-size);
+
+      &:hover:not(:disabled) {
+        background: color-mix(in oklch, var(--ink) 12%, transparent);
+      }
+
+      &[aria-pressed="true"] {
+        background: color-mix(in oklch, var(--accent) 22%, transparent);
+        color: var(--ink);
+      }
+
+      &:disabled {
+        cursor: progress;
+      }
+    }
+  }
+}
+
+.chat-reaction-picker {
+  grid-template-columns: repeat(8, 2.25em);
+  padding: 0.5ch;
+  border: 1px solid var(--rule);
+  border-radius: var(--code-radius);
+  background: var(--surface);
+  color: var(--ink);
+
+  &:popover-open {
+    display: grid;
+  }
+
+  > button {
+    padding-block: 0.25em;
+    font-size: 1.25rem;
+    line-height: 1;
+    text-align: center;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--wash);
+    }
+  }
+
+  /* Opens above its button; without anchor positioning it stays centred. */
+  @supports (position-area: top) {
+    margin: 0.25lh 0;
+    inset: auto;
+    position-area: block-start span-inline-end;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
   }
 }
 

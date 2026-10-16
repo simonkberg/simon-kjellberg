@@ -19,7 +19,7 @@ const GatewayOpcode = {
 } as const;
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
-const GATEWAY_INTENTS = 1 << 9; // GUILD_MESSAGES
+const GATEWAY_INTENTS = (1 << 9) | (1 << 10); // GUILD_MESSAGES, GUILD_MESSAGE_REACTIONS
 
 // Close codes that require fresh identify (not resume)
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
@@ -341,7 +341,12 @@ class DiscordGateway {
 
       case "MESSAGE_CREATE":
       case "MESSAGE_UPDATE":
-      case "MESSAGE_DELETE": {
+      case "MESSAGE_DELETE":
+      case "MESSAGE_DELETE_BULK":
+      case "MESSAGE_REACTION_ADD":
+      case "MESSAGE_REACTION_REMOVE":
+      case "MESSAGE_REACTION_REMOVE_ALL":
+      case "MESSAGE_REACTION_REMOVE_EMOJI": {
         const parsed = MessageEventDataSchema.safeParse(data);
         if (
           parsed.success &&

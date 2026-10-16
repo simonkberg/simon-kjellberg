@@ -143,6 +143,15 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Chat stream:** `ChatStream` (in the chat's title bar) owns the SSE connection and shows
   its state: `live`, `connecting` or `offline`. The route sends a named `status` event when
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.
+- **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
+  with its own reaction while any remain, so Discord shows site reactions as one. History
+  adds those rows to Discord's counts minus the bot's; the page marks the visitor's own as
+  `mine`, since the cached history is shared. Other tabs refresh only on a channel
+  event, so a toggle that leaves the mirror unchanged reaches them on the next one. Mirror
+  failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
+  reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
+- **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
+  so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
@@ -158,6 +167,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   server boot from `instrumentation.ts` — one long-lived Gateway subscription, not
   per-request — and dedupes replies and mentions through Turso's `seen_messages` (kept an hour) so multiple
   instances don't double-reply. Without Turso it doesn't reply at all, rather than twice.
+  The reply chain reaches it as one user turn of escaped `<message>` elements, its own
+  included, so ids, authors and reactions sit outside the text people can type.
 - **Turso:** the only datastore. `app/lib/turso.ts` calls its HTTP pipeline endpoint with raw
   `fetch`. `app/lib/migrations.ts` is an append-only list of idempotent statements applied
   at boot under a lock row in `locks`. Each records a checksum, and boot fails if an applied

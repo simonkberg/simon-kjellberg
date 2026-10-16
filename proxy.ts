@@ -6,24 +6,25 @@ import { decrypt, encrypt, UsernameSchema } from "@/lib/session";
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
 
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next();
-
   const cookie = request.cookies.get("session");
   const session = await decrypt(cookie?.value);
-
-  response.cookies.set(
-    "session",
-    await encrypt(session ?? { username: UsernameSchema.parse(randomName()) }),
-    {
-      httpOnly: true,
-      secure: true,
-      maxAge: ONE_YEAR_SECONDS,
-      // Strict withholds this on a link into the site from elsewhere, and the
-      // miss mints a new username over the old one.
-      sameSite: "lax",
-      path: "/",
-    },
+  const token = await encrypt(
+    session ?? { username: UsernameSchema.parse(randomName()) },
   );
+
+  // Forwarded too, so the request that mints a session already renders with it.
+  request.cookies.set("session", token);
+  const response = NextResponse.next({ request: { headers: request.headers } });
+
+  response.cookies.set("session", token, {
+    httpOnly: true,
+    secure: true,
+    maxAge: ONE_YEAR_SECONDS,
+    // Strict withholds this on a link into the site from elsewhere, and the
+    // miss mints a new username over the old one.
+    sameSite: "lax",
+    path: "/",
+  });
 
   return response;
 }

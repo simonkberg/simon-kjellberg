@@ -16,6 +16,7 @@ describe("ChatHistory", () => {
         user: { name: "User1", color: "hsl(0 100% 50%)" },
         edited: false,
         timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+        reactions: [],
         replies: [],
       },
       {
@@ -24,6 +25,7 @@ describe("ChatHistory", () => {
         user: { name: "User2", color: "hsl(120 100% 50%)" },
         edited: false,
         timestamp: new Date("2025-01-01T00:01:00.000000+00:00"),
+        reactions: [],
         replies: [
           {
             id: "1234567890345678",
@@ -31,6 +33,7 @@ describe("ChatHistory", () => {
             user: { name: "User3", color: "hsl(240 100% 50%)" },
             edited: false,
             timestamp: new Date("2025-01-01T00:02:00.000000+00:00"),
+            reactions: [],
             replies: [
               {
                 id: "1234567890567890",
@@ -38,6 +41,7 @@ describe("ChatHistory", () => {
                 user: { name: "User5", color: "hsl(180 100% 50%)" },
                 edited: false,
                 timestamp: new Date("2025-01-01T00:03:00.000000+00:00"),
+                reactions: [],
                 replies: [
                   {
                     id: "1234567890678901",
@@ -45,6 +49,7 @@ describe("ChatHistory", () => {
                     user: { name: "User6", color: "hsl(300 100% 50%)" },
                     edited: false,
                     timestamp: new Date("2025-01-01T00:04:00.000000+00:00"),
+                    reactions: [],
                     replies: [],
                   },
                 ],
@@ -57,6 +62,7 @@ describe("ChatHistory", () => {
             user: { name: "User4", color: "hsl(60 100% 50%)" },
             edited: true,
             timestamp: new Date("2025-01-01T00:05:00.000000+00:00"),
+            reactions: [],
             replies: [],
           },
         ],

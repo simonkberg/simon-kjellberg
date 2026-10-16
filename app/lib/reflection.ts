@@ -5,7 +5,7 @@ import md from "string-dedent";
 import {
   buildSystem,
   type ChatMessage,
-  formatChatLine,
+  formatConversation,
   MEMORY_TOOLS,
   participantsOf,
   runAgentLoop,
@@ -45,12 +45,7 @@ export async function reflect(transcript: ChatMessage[]): Promise<void> {
   await Array.fromAsync(
     runAgentLoop({
       system: await buildSystem(REFLECTION_PROMPT, participantsOf(transcript)),
-      messages: [
-        {
-          role: "user",
-          content: `<conversation>\n${transcript.map(formatChatLine).join("\n")}\n</conversation>`,
-        },
-      ],
+      messages: [{ role: "user", content: formatConversation(transcript) }],
       tools: MEMORY_TOOLS,
       effort: "high",
       timeoutMs: TIMEOUT_MS,
