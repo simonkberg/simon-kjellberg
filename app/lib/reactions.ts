@@ -56,7 +56,13 @@ export async function addReaction(
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);
   } catch (err) {
-    await deleteRow(messageId, emoji, username);
+    // Discord's error is the one the visitor needs, so a failed rollback only logs.
+    await deleteRow(messageId, emoji, username).catch((rollbackErr: unknown) =>
+      log.warn(
+        { err: rollbackErr, messageId, emoji },
+        "Failed to roll back reaction",
+      ),
+    );
     throw err;
   }
 }
