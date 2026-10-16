@@ -15,7 +15,7 @@ on:
     branches: [main]
     paths: *paths
 
-# Applies queue behind each other instead of racing; a newer PR push replaces its stale plan.
+# Applies never overlap, and a newer merge supersedes a pending one; a newer PR push replaces its stale plan.
 concurrency:
   group: railway-config-${{ github.event_name == 'push' && 'apply' || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -25,7 +25,8 @@ defaults:
   run:
     shell: bash
 
-# One job per environment, never a matrix: each token stays in the one job that uses it.
+# One job per environment, never a matrix: each token is read only by the step that runs the CLI,
+# not by the installs before it.
 # Without --confirm-destructive, an apply that would delete something fails and is left to a human.
 jobs:
   plan-production:
@@ -35,7 +36,7 @@ jobs:
     env:
       COMMAND: plan
       ENVIRONMENT: production
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      TOKEN_SECRET: RAILWAY_TOKEN
     steps: &steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: corepack enable
@@ -47,8 +48,10 @@ jobs:
       - run: npm install -g @railway/cli@5.68.0
       - run: |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          trap 'echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"' EXIT
           railway config "$COMMAND" --environment "$ENVIRONMENT" $FLAGS | tee -a "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+        env:
+          RAILWAY_TOKEN: ${{ secrets[env.TOKEN_SECRET] }}
 
   plan-testing:
     name: Plan (testing)
@@ -57,7 +60,7 @@ jobs:
     env:
       COMMAND: plan
       ENVIRONMENT: testing
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+      TOKEN_SECRET: RAILWAY_TOKEN_TESTING
     steps: *steps
 
   apply-testing:
@@ -68,16 +71,16 @@ jobs:
       COMMAND: apply
       ENVIRONMENT: testing
       FLAGS: --yes
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+      TOKEN_SECRET: RAILWAY_TOKEN_TESTING
     steps: *steps
 
   apply-production:
     name: Apply (production)
-    needs: apply-testing
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
       COMMAND: apply
       ENVIRONMENT: production
       FLAGS: --yes
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      TOKEN_SECRET: RAILWAY_TOKEN
     steps: *steps
