@@ -90,6 +90,10 @@ const ChatReactionPill = ({
 
   const show = (source: HTMLElement) => tip.current?.showPopover({ source });
   const hide = () => tip.current?.hidePopover();
+  // Hover and keyboard focus share the tooltip, and Safari blurs a clicked pill as it disables.
+  const release = (button: HTMLElement) => {
+    if (!button.matches(":hover, :focus-visible")) hide();
+  };
 
   return (
     <>
@@ -101,18 +105,16 @@ const ChatReactionPill = ({
           if (event.pointerType !== "touch") show(event.currentTarget);
         }}
         onPointerLeave={(event) => {
-          if (event.pointerType !== "touch") hide();
+          if (event.pointerType !== "touch") release(event.currentTarget);
         }}
         onFocus={(event) => {
           if (event.currentTarget.matches(":focus-visible")) {
             show(event.currentTarget);
           }
         }}
-        // Safari blurs the button when a click disables it, under a pointer that's still on it.
-        onBlur={(event) => {
-          if (!event.currentTarget.matches(":hover")) hide();
-        }}
+        onBlur={(event) => release(event.currentTarget)}
         onKeyDown={(event) => {
+          press.current.held = false;
           if (event.key === "Escape") hide();
         }}
         // Touch has no hover, so a long press shows who reacted instead of toggling.
@@ -131,9 +133,14 @@ const ChatReactionPill = ({
         }}
         onPointerUp={() => clearTimeout(press.current.timer)}
         onPointerCancel={() => clearTimeout(press.current.timer)}
-        onClick={() => {
-          if (press.current.held) press.current.held = false;
-          else react(messageId, reaction.emoji);
+        onClick={(event) => {
+          if (press.current.held) {
+            press.current.held = false;
+            return;
+          }
+          react(messageId, reaction.emoji);
+          // Chrome moves focus off the pill this disables without a blur.
+          if (event.detail === 0) hide();
         }}
       >
         {reaction.emoji} <span className="count">{reaction.count}</span>

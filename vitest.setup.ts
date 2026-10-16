@@ -9,12 +9,21 @@ Globals.assign({ skipAnimation: true });
 configure({ reactStrictMode: true });
 
 // happy-dom has no popover API: these mark an open popover with an attribute tests can query.
-if ("HTMLElement" in globalThis) {
+if (
+  "HTMLElement" in globalThis &&
+  typeof HTMLElement.prototype.showPopover !== "function"
+) {
+  const setOpen = (element: HTMLElement, open: boolean) => {
+    if (!element.hasAttribute("popover")) {
+      throw new DOMException("Not a popover", "NotSupportedError");
+    }
+    element.toggleAttribute("data-popover-open", open);
+  };
   HTMLElement.prototype.showPopover = function () {
-    this.toggleAttribute("data-popover-open", true);
+    setOpen(this, true);
   };
   HTMLElement.prototype.hidePopover = function () {
-    this.toggleAttribute("data-popover-open", false);
+    setOpen(this, false);
   };
 }
 

@@ -143,6 +143,28 @@ describe("ChatReactionList", () => {
     expect(openTips()).toEqual([]);
   });
 
+  it("hides the tooltip when Enter toggles the focused pill", async () => {
+    const { react } = renderWithContext(
+      <ChatReactionList messageId="1" reactions={reactions} />,
+    );
+
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+
+    expect(react).toHaveBeenCalledWith("1", "👍");
+    expect(openTips()).toEqual([]);
+  });
+
+  it("keeps a focused pill's tooltip when the pointer leaves it", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+
+    await userEvent.tab();
+    await userEvent.hover(screen.getAllByRole("button")[0]!);
+    await userEvent.unhover(screen.getAllByRole("button")[0]!);
+
+    expect(openTips()).toEqual(["You, alice, and 1 on Discord"]);
+  });
+
   it("hides the tooltip when focus moves on", async () => {
     renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
 
@@ -190,6 +212,23 @@ describe("ChatReactionList", () => {
     fireEvent.blur(fire);
 
     expect(openTips()).toEqual(["alice and bob"]);
+  });
+
+  it("toggles from the keyboard after a long press that ended off the pill", () => {
+    vi.useFakeTimers();
+    const { react } = renderWithContext(
+      <ChatReactionList messageId="1" reactions={reactions} />,
+    );
+    const fire = screen.getAllByRole("button")[2]!;
+
+    fireEvent.pointerDown(fire, { pointerType: "touch" });
+    vi.advanceTimersByTime(500);
+    fireEvent.pointerUp(fire, { pointerType: "touch" });
+    fireEvent.keyDown(fire, { key: "Enter" });
+    fireEvent.click(fire);
+
+    expect(react).toHaveBeenCalledWith("1", "🔥");
+    vi.useRealTimers();
   });
 
   it("shows nothing when a press turns into a scroll", () => {
