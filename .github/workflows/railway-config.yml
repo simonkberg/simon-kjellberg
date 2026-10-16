@@ -17,7 +17,7 @@ on:
     branches: [main]
     paths:
       - ".railway/**"
-      - ".github/actions/**"
+      - ".github/actions/railway-config/**"
       - ".github/workflows/railway-config.yml"
 
 # Serialize applies; a newer PR push cancels its stale plan.
