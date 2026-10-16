@@ -59,7 +59,7 @@ jobs:
       - uses: ./.github/actions/railway-cli
       - run: *run
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
 
   apply-testing:
     name: Apply (testing)
