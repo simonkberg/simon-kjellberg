@@ -276,6 +276,31 @@ describe("Chat", () => {
       await settle();
     });
 
+    it("keeps other messages reactable while one reaction is pending", async () => {
+      const settle = holdReaction();
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({ reactions: thumbs }),
+              createMessage({ id: "msg-2", content: "Other" }),
+            ],
+          }),
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
+      const [busy, free] = screen.getAllByRole("button", {
+        name: "Add reaction",
+      });
+      expect(busy).toBeDisabled();
+      expect(free).toBeEnabled();
+      await settle();
+    });
+
     it("waits for the server before a visitor has a username", async () => {
       await renderReactions(thumbs, null);
 

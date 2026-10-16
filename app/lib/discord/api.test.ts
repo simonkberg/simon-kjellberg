@@ -964,6 +964,23 @@ describe("bot reactions", () => {
       });
     },
   );
+
+  it("should carry Discord's error code", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () =>
+        HttpResponse.json(
+          { message: "Maximum number of reactions reached (20)", code: 30010 },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    await expect(addBotReaction("123", "👍")).rejects.toMatchObject({
+      name: "DiscordApiError",
+      code: 30010,
+    });
+  });
 });
 
 describe("rate limiting", () => {

@@ -12,6 +12,7 @@ import {
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
   addBotReaction,
+  DiscordApiError,
   getChannelMessages,
   type Message,
   postChannelMessage,
@@ -344,6 +345,20 @@ describe("reactToChatMessage", () => {
     expect(await reactToChatMessage("123", "👍")).toEqual({
       status: "error",
       error: "Failed to react to chat message",
+    });
+  });
+
+  it("explains Discord's cap on emoji per message", async () => {
+    // The module is automocked, so the constructor doesn't set the code.
+    vi.mocked(addBotReaction).mockRejectedValueOnce(
+      Object.assign(new DiscordApiError("Discord API error", 30010), {
+        code: 30010,
+      }),
+    );
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Discord allows 20 emoji per message",
     });
   });
 });

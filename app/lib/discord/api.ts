@@ -22,6 +22,18 @@ const RateLimitResponseSchema = z.object({
   code: z.number().optional(),
 });
 
+const ErrorResponseSchema = z.object({ code: z.number() });
+
+export class DiscordApiError extends Error {
+  readonly code: number | undefined;
+
+  constructor(message: string, code: number | undefined) {
+    super(message);
+    this.name = "DiscordApiError";
+    this.code = code;
+  }
+}
+
 // Per-endpoint rate limit tracking: endpoint → timestamp until which requests should wait
 const rateLimitUntil = new Map<string, number>();
 
@@ -126,8 +138,9 @@ async function call<T extends z.ZodType>(
         { endpoint, status: response.status, body: json },
         "Discord API call failed",
       );
-      throw new Error(
+      throw new DiscordApiError(
         `Discord API error: ${response.status} ${response.statusText}`,
+        ErrorResponseSchema.safeParse(json).data?.code,
       );
     }
 

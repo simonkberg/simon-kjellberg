@@ -16,7 +16,12 @@ function renderWithContext(
   ui: React.ReactNode,
   value: Partial<ChatReactionsContextValue> = {},
 ) {
-  const context = { username: "me", pending: false, react: vi.fn(), ...value };
+  const context = {
+    username: "me",
+    reacting: new Set<string>(),
+    react: vi.fn(),
+    ...value,
+  };
   render(<ChatReactionsContext value={context}>{ui}</ChatReactionsContext>);
   return context;
 }
@@ -63,10 +68,20 @@ describe("ChatReactionPicker", () => {
     expect(react).toHaveBeenCalledWith("1", "🎉");
   });
 
-  it("disables the button while a reaction is pending", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />, { pending: true });
+  it("disables the button only while its own message's reaction is pending", () => {
+    renderWithContext(
+      <>
+        <ChatReactionPicker messageId="1" />
+        <ChatReactionPicker messageId="2" />
+      </>,
+      { reacting: new Set(["1"]) },
+    );
 
-    expect(screen.getByRole("button", { name: "Add reaction" })).toBeDisabled();
+    const [busy, free] = screen.getAllByRole("button", {
+      name: "Add reaction",
+    });
+    expect(busy).toBeDisabled();
+    expect(free).toBeEnabled();
   });
 });
 

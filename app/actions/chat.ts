@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
+  DiscordApiError,
   getChannelMessages,
   type Message,
   postChannelMessage,
@@ -115,6 +116,8 @@ export async function postChatMessage(
 }
 
 const REACTION_RATE_LIMIT = { limit: 10, windowMs: 30_000 };
+// Discord's "Maximum number of reactions reached (20)".
+const MAX_REACTIONS_CODE = 30010;
 
 export type ReactToChatMessageResult =
   | { status: "ok" }
@@ -156,6 +159,9 @@ export async function reactToChatMessage(
     refresh();
     return { status: "ok" };
   } catch (err) {
+    if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
+      return { status: "error", error: "Discord allows 20 emoji per message" };
+    }
     log.error(
       { err, action: "reactToChatMessage" },
       "Error reacting to chat message",

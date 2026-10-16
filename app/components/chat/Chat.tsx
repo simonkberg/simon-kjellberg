@@ -78,7 +78,12 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const dismissed = use(tipDismissed);
   const currentUsername = use(username);
   const [replyToId, setReplyToId] = useState<string | null>(null);
-  const [reacting, startReacting] = useTransition();
+  const [, startReacting] = useTransition();
+  // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
+  const [reacting, markReacting] = useOptimistic(
+    new Set<string>(),
+    (ids, messageId: string) => new Set(ids).add(messageId),
+  );
   // Shown at once; the server's history replaces it when the action settles.
   const [messages, toggleOptimistically] = useOptimistic(
     result.status === "ok" ? result.messages : [],
@@ -99,6 +104,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
 
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
+      markReacting(messageId);
       // Without a session the server turns the reaction away.
       if (currentUsername !== null) {
         toggleOptimistically({ messageId, emoji, username: currentUsername });
@@ -132,7 +138,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
 
   return (
     <ChatReactionsContext
-      value={{ username: currentUsername, pending: reacting, react }}
+      value={{ username: currentUsername, reacting, react }}
     >
       <ChatToast
         key={reactionError?.count}

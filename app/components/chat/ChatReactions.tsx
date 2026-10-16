@@ -7,18 +7,18 @@ import { REACTION_EMOJI } from "@/lib/emoji";
 
 export interface ChatReactionsContextValue {
   username: string | null;
-  pending: boolean;
+  reacting: ReadonlySet<string>;
   react: (messageId: string, emoji: string) => void;
 }
 
 export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   username: null,
-  pending: false,
+  reacting: new Set(),
   react: () => {},
 });
 
 export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
-  const { pending, react } = use(ChatReactionsContext);
+  const { reacting, react } = use(ChatReactionsContext);
   const pickerId = useId();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
   const [open, setOpen] = useState(false);
@@ -30,7 +30,7 @@ export const ChatReactionPicker = ({ messageId }: { messageId: string }) => {
         title="Add reaction"
         className="react"
         popoverTarget={pickerId}
-        disabled={pending}
+        disabled={reacting.has(messageId)}
       >
         ☺
       </button>
@@ -76,7 +76,7 @@ export const ChatReactionList = ({
   messageId: string;
   reactions: Reaction[];
 }) => {
-  const { username, pending, react } = use(ChatReactionsContext);
+  const { username, reacting, react } = use(ChatReactionsContext);
 
   return (
     <div className="reactions" role="group" aria-label="Reactions">
@@ -85,7 +85,7 @@ export const ChatReactionList = ({
           key={reaction.emoji}
           aria-pressed={username !== null && reaction.users.includes(username)}
           title={describeReactors(reaction)}
-          disabled={pending}
+          disabled={reacting.has(messageId)}
           onClick={() => react(messageId, reaction.emoji)}
         >
           {reaction.emoji} <span className="count">{reaction.count}</span>
