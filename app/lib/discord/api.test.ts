@@ -296,6 +296,38 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should skip Discord reactors who left the server", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage(
+            [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
+            "reactors-left",
+          ),
+        ]),
+      ),
+      http.get(REACTIONS_URL, () =>
+        HttpResponse.json([{ id: "reactor-stays" }, { id: "reactor-left" }]),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
+        ({ params }) =>
+          params["userId"] === "reactor-left"
+            ? HttpResponse.json({ message: "Unknown Member" }, { status: 404 })
+            : HttpResponse.json({
+                user: { username: "stays", global_name: null },
+                nick: null,
+              }),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions).toEqual([
+      { emoji: "😂", count: 2, users: ["stays"] },
+    ]);
+  });
+
   it("should look up Discord reactors again only when their count changes", async () => {
     let count = 1;
     const lookups = vi.fn(() => HttpResponse.json([]));

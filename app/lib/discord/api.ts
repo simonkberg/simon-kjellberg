@@ -250,9 +250,13 @@ async function getReactors({ messageId, emoji }: ReactorsKey) {
     { limit: 100 },
   );
   const people = reactors.filter(({ bot }) => !bot);
-  return Promise.all(
-    people.map(async ({ id }) => (await userLoader.load(id)).name),
-  );
+  const users = await userLoader.loadMany(people.map(({ id }) => id));
+  const names: string[] = [];
+  for (const user of users) {
+    // A reactor who left the server has no member to name, so they stay in the count.
+    if (!(user instanceof Error)) names.push(user.name);
+  }
+  return names;
 }
 
 // Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
