@@ -175,4 +175,14 @@ describe("ChatMessage", () => {
     expect(screen.getByText("Hello, world!")).toBeInTheDocument();
     expect(screen.queryAllByRole("button", { hidden: true })).toEqual([]);
   });
+
+  it("keeps links in a reply preview in the tab order", () => {
+    const message = createMessage({ content: "[Link](https://example.com)" });
+    render(<ChatMessage {...message} {...defaultReplyProps} preview />);
+
+    expect(screen.getByRole("link", { name: "Link" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+  });
 });
