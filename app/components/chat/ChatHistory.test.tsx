@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -222,7 +222,7 @@ describe("ChatHistory", () => {
       expect(article("Last")).toHaveAttribute("tabindex", "0");
     });
 
-    it("takes controls added to other messages out of the tab order", () => {
+    it("takes controls added to other messages out of the tab order", async () => {
       const { rerender } = render(
         <ChatHistory messages={messages} {...defaultReplyProps} />,
       );
@@ -240,9 +240,11 @@ describe("ChatHistory", () => {
         />,
       );
 
-      expect(
-        within(article("First")).getByRole("button", { name: /👍/ }),
-      ).toHaveAttribute("tabindex", "-1");
+      await waitFor(() =>
+        expect(
+          within(article("First")).getByRole("button", { name: /👍/ }),
+        ).toHaveAttribute("tabindex", "-1"),
+      );
     });
   });
 });

@@ -6,8 +6,6 @@ import {
   type FocusEvent,
   type KeyboardEvent,
   type SetStateAction,
-  useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -105,22 +103,27 @@ export const ChatHistory = ({
   const tabStop =
     focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
 
-  const scrollable = useRef<HTMLDivElement>(null);
-
-  // In the DOM rather than props, so every control a message renders follows its message.
-  useEffect(() => {
-    for (const message of scrollable.current?.querySelectorAll<HTMLElement>(
-      ".chat-message",
-    ) ?? []) {
-      const tabIndex = message.dataset["id"] === tabStop ? 0 : -1;
-      message.tabIndex = tabIndex;
-      for (const control of message.querySelectorAll<HTMLElement>(
-        "a[href], button",
+  // In the DOM rather than props, so every control a message renders follows its message,
+  // including ones it mounts from its own state, like the reaction picker.
+  const applyTabStop = (scrollable: HTMLDivElement) => {
+    const apply = () => {
+      for (const message of scrollable.querySelectorAll<HTMLElement>(
+        ".chat-message",
       )) {
-        control.tabIndex = tabIndex;
+        const tabIndex = message.dataset["id"] === tabStop ? 0 : -1;
+        message.tabIndex = tabIndex;
+        for (const control of message.querySelectorAll<HTMLElement>(
+          "a[href], button",
+        )) {
+          control.tabIndex = tabIndex;
+        }
       }
-    }
-  });
+    };
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(scrollable, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  };
 
   const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
     setFocusedId(
@@ -148,7 +151,7 @@ export const ChatHistory = ({
     <div className="chat-history">
       {/* Only catches what bubbles up from the messages, as jsx-a11y suggests. */}
       <div
-        ref={scrollable}
+        ref={applyTabStop}
         className="scrollable"
         role="presentation"
         onFocus={trackFocus}
