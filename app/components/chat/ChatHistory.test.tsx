@@ -175,10 +175,29 @@ describe("ChatHistory", () => {
         "tabindex",
         "-1",
       );
-      expect(screen.getByRole("link", { name: "Last" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "Last" })).not.toHaveAttribute(
         "tabindex",
-        "0",
       );
+    });
+
+    it("moves the controls' tab order with the tab stop", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      const reply = (content: string) =>
+        within(article(content)).getByRole("button", { name: "Reply" });
+
+      await user.tab();
+      await user.keyboard("{ArrowUp}");
+      await waitFor(() =>
+        expect(reply("Last")).toHaveAttribute("tabindex", "-1"),
+      );
+      expect(reply("Reply")).not.toHaveAttribute("tabindex");
+
+      await user.keyboard("{ArrowDown}");
+      await waitFor(() =>
+        expect(reply("Last")).not.toHaveAttribute("tabindex"),
+      );
+      expect(reply("Reply")).toHaveAttribute("tabindex", "-1");
     });
 
     it("leaves arrow keys with modifiers to the browser", async () => {

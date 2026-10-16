@@ -1532,6 +1532,8 @@ ul {
     margin: 0.25lh 0;
     inset: auto;
     position-area: block-start span-inline-end;
+    /* Not the popover's fit-content: Safari stretches a grid sized that way over the whole area. */
+    height: auto;
     position-try-fallbacks:
       flip-block,
       flip-inline,
