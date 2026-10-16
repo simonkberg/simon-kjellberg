@@ -18,11 +18,9 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
 export const ChatReactionPicker = ({
   messageId,
   glyph = "☺",
-  tabIndex,
 }: {
   messageId: string;
   glyph?: string;
-  tabIndex?: number;
 }) => {
   const { reacting, react } = use(ChatReactionsContext);
   const pickerId = useId();
@@ -37,7 +35,6 @@ export const ChatReactionPicker = ({
         className="react"
         popoverTarget={pickerId}
         disabled={reacting.has(messageId)}
-        tabIndex={tabIndex}
       >
         {glyph}
       </button>
@@ -80,11 +77,9 @@ function describeReactors({ count, users, mine }: Reaction): string {
 export const ChatReactionList = ({
   messageId,
   reactions,
-  tabIndex,
 }: {
   messageId: string;
   reactions: Reaction[];
-  tabIndex?: number;
 }) => {
   const { reacting, react } = use(ChatReactionsContext);
 
@@ -97,12 +92,11 @@ export const ChatReactionList = ({
           title={describeReactors(reaction)}
           disabled={reacting.has(messageId)}
           onClick={() => react(messageId, reaction.emoji)}
-          tabIndex={tabIndex}
         >
           {reaction.emoji} <span className="count">{reaction.count}</span>
         </button>
       ))}
-      <ChatReactionPicker messageId={messageId} glyph="+" tabIndex={tabIndex} />
+      <ChatReactionPicker messageId={messageId} glyph="+" />
     </div>
   );
 };

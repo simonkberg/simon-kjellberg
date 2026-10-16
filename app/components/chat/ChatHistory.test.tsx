@@ -221,5 +221,28 @@ describe("ChatHistory", () => {
 
       expect(article("Last")).toHaveAttribute("tabindex", "0");
     });
+
+    it("takes controls added to other messages out of the tab order", () => {
+      const { rerender } = render(
+        <ChatHistory messages={messages} {...defaultReplyProps} />,
+      );
+
+      rerender(
+        <ChatHistory
+          messages={[
+            {
+              ...message("1", "First"),
+              reactions: [{ emoji: "👍", count: 1, users: [] }],
+            },
+            message("3", "Last"),
+          ]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      expect(
+        within(article("First")).getByRole("button", { name: /👍/ }),
+      ).toHaveAttribute("tabindex", "-1");
+    });
   });
 });

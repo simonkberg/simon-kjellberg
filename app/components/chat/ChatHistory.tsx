@@ -6,6 +6,8 @@ import {
   type FocusEvent,
   type KeyboardEvent,
   type SetStateAction,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -37,7 +39,6 @@ function focusTarget(
 
 interface ChatHistoryMessagesProps {
   messages: Message[];
-  tabStop: string | undefined;
   replyToId: string | null;
   setReplyToId: Dispatch<SetStateAction<string | null>>;
   nested?: boolean;
@@ -46,7 +47,6 @@ interface ChatHistoryMessagesProps {
 const ChatHistoryMessages = ({
   messages,
   nested = false,
-  tabStop,
   replyToId,
   setReplyToId,
 }: ChatHistoryMessagesProps) => {
@@ -69,7 +69,6 @@ const ChatHistoryMessages = ({
         >
           <ChatMessage
             {...item}
-            active={item.id === tabStop}
             replyToId={replyToId}
             setReplyToId={setReplyToId}
           />
@@ -77,7 +76,6 @@ const ChatHistoryMessages = ({
             <ul>
               <ChatHistoryMessages
                 messages={item.replies}
-                tabStop={tabStop}
                 replyToId={replyToId}
                 setReplyToId={setReplyToId}
                 nested
@@ -107,6 +105,23 @@ export const ChatHistory = ({
   const tabStop =
     focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
 
+  const scrollable = useRef<HTMLDivElement>(null);
+
+  // In the DOM rather than props, so every control a message renders follows its message.
+  useEffect(() => {
+    for (const message of scrollable.current?.querySelectorAll<HTMLElement>(
+      ".chat-message",
+    ) ?? []) {
+      const tabIndex = message.dataset["id"] === tabStop ? 0 : -1;
+      message.tabIndex = tabIndex;
+      for (const control of message.querySelectorAll<HTMLElement>(
+        "a[href], button",
+      )) {
+        control.tabIndex = tabIndex;
+      }
+    }
+  });
+
   const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
     setFocusedId(
       event.target.closest<HTMLElement>(".chat-message")?.dataset["id"],
@@ -133,6 +148,7 @@ export const ChatHistory = ({
     <div className="chat-history">
       {/* Only catches what bubbles up from the messages, as jsx-a11y suggests. */}
       <div
+        ref={scrollable}
         className="scrollable"
         role="presentation"
         onFocus={trackFocus}
@@ -141,7 +157,6 @@ export const ChatHistory = ({
         <ul className="content">
           <ChatHistoryMessages
             messages={messages}
-            tabStop={tabStop}
             replyToId={replyToId}
             setReplyToId={setReplyToId}
           />

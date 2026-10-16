@@ -22,14 +22,13 @@ type InlineNode =
 const sanitizeUrl = (target?: string): string | undefined =>
   SimpleMarkdown.sanitizeUrl(target) ?? undefined;
 
-const renderNodes = (nodes: InlineNode[], tabIndex?: number): ReactNode[] =>
-  nodes.map((node, index) => renderNode(node, index, tabIndex));
+const renderNodes = (nodes: InlineNode[]): ReactNode[] =>
+  nodes.map((node, index) => renderNode(node, index));
 
 /** No `default`: excluding `undefined` makes a missing case a compile error. */
 const renderNode = (
   node: InlineNode,
   key: number,
-  tabIndex?: number,
 ): Exclude<ReactNode, undefined> => {
   switch (node.type) {
     case "text":
@@ -37,23 +36,23 @@ const renderNode = (
     case "br":
       return <br key={key} />;
     case "em":
-      return <em key={key}>{renderNodes(node.content, tabIndex)}</em>;
+      return <em key={key}>{renderNodes(node.content)}</em>;
     case "strong":
-      return <strong key={key}>{renderNodes(node.content, tabIndex)}</strong>;
+      return <strong key={key}>{renderNodes(node.content)}</strong>;
     case "u":
-      return <u key={key}>{renderNodes(node.content, tabIndex)}</u>;
+      return <u key={key}>{renderNodes(node.content)}</u>;
     case "del":
-      return <del key={key}>{renderNodes(node.content, tabIndex)}</del>;
+      return <del key={key}>{renderNodes(node.content)}</del>;
     case "inlineCode":
       return <code key={key}>{node.content}</code>;
     case "link": {
       const href = sanitizeUrl(node.target);
       // Not a link: an href-less `<a>` looks like one but has no link role.
       return href === undefined ? (
-        <Fragment key={key}>{renderNodes(node.content, tabIndex)}</Fragment>
+        <Fragment key={key}>{renderNodes(node.content)}</Fragment>
       ) : (
-        <a key={key} href={href} title={node.title} tabIndex={tabIndex}>
-          {renderNodes(node.content, tabIndex)}
+        <a key={key} href={href} title={node.title}>
+          {renderNodes(node.content)}
         </a>
       );
     }
@@ -66,15 +65,8 @@ const renderNode = (
 
 export interface MarkdownProps {
   source: string;
-  /** For links, so a container managing its own tab order can take them out of it. */
-  linkTabIndex?: number;
 }
 
-export const Markdown = ({ source, linkTabIndex }: MarkdownProps) => (
-  <>
-    {renderNodes(
-      SimpleMarkdown.defaultInlineParse(source) as InlineNode[],
-      linkTabIndex,
-    )}
-  </>
+export const Markdown = ({ source }: MarkdownProps) => (
+  <>{renderNodes(SimpleMarkdown.defaultInlineParse(source) as InlineNode[])}</>
 );
