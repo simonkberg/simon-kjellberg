@@ -1335,6 +1335,8 @@ ul {
     > .content {
       margin: 0;
       padding-block: var(--history-padding);
+      /* Room for a focused message's outline, which the scroller would clip. */
+      padding-inline: 4px;
 
       > li + li {
         margin-top: var(--message-gap);
@@ -1383,11 +1385,6 @@ ul {
 .chat-message {
   position: relative;
   text-wrap: pretty;
-
-  /* Inset, since the history clips anything past its edges. */
-  &:focus-visible {
-    outline-offset: -2px;
-  }
 
   > .user {
     font-weight: bold;
