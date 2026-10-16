@@ -62,6 +62,9 @@ function withReactionToggled(
   });
 }
 
+// Shared, so the passthrough keeps its identity while nothing is pending.
+const NOT_REACTING: ReadonlySet<string> = new Set();
+
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
@@ -74,8 +77,9 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const [, startReacting] = useTransition();
   // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
   const [reacting, markReacting] = useOptimistic(
-    new Set<string>(),
-    (ids, messageId: string) => new Set(ids).add(messageId),
+    NOT_REACTING,
+    (ids, messageId: string): ReadonlySet<string> =>
+      new Set(ids).add(messageId),
   );
   // Shown at once; the server's history replaces it when the action settles.
   const [messages, toggleOptimistically] = useOptimistic(
