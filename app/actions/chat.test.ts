@@ -339,6 +339,18 @@ describe("reactToChatMessage", () => {
     });
   });
 
+  it("counts malformed reactions against the limit", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    for (let i = 0; i < 10; i++) {
+      await reactToChatMessage("not-an-id", "👍");
+    }
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Rate limit exceeded. Wait 30 seconds before trying again.",
+    });
+  });
+
   it("returns error when Discord rejects the reaction", async () => {
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("Unknown"));
 

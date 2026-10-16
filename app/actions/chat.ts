@@ -82,14 +82,9 @@ export async function postChatMessage(
   formData: FormData,
 ): Promise<PostChatMessageResult> {
   try {
-    const text = z.string().trim().min(1).parse(formData.get("text"));
-    const replyToId = z
-      .string()
-      .optional()
-      .parse(formData.get("replyToId") ?? undefined);
-
     const { username } = await getSession();
 
+    // Admitted first, so malformed requests count against the limit too.
     const request = await identifiers();
     const denied = await admit(
       "postChatMessage",
@@ -99,6 +94,12 @@ export async function postChatMessage(
       RATE_LIMIT,
     );
     if (denied) return denied;
+
+    const text = z.string().trim().min(1).parse(formData.get("text"));
+    const replyToId = z
+      .string()
+      .optional()
+      .parse(formData.get("replyToId") ?? undefined);
 
     const messageId = await postChannelMessage(text, username, replyToId);
 
@@ -129,9 +130,6 @@ export async function reactToChatMessage(
   emoji: string,
 ): Promise<ReactToChatMessageResult> {
   try {
-    const id = MessageIdSchema.parse(messageId);
-    const reaction = EmojiSchema.parse(emoji);
-
     const { username } = await getSession();
 
     const { ip } = await identifiers();
@@ -143,6 +141,9 @@ export async function reactToChatMessage(
       REACTION_RATE_LIMIT,
     );
     if (denied) return denied;
+
+    const id = MessageIdSchema.parse(messageId);
+    const reaction = EmojiSchema.parse(emoji);
 
     const change = await toggleReaction(id, reaction, username);
     log.info(
