@@ -654,7 +654,8 @@
   box-sizing: border-box;
 }
 
-/* Iosevka draws some emoji (🙂 😐 🖤 🔔 ❤) as text, so emoji get a colour font first. */
+/* Iosevka draws some emoji (🙂 😐 🖤 🔔 ❤) as text, so emoji get a colour font first.
+   Joiners and tags too, or 😮‍💨 and subdivision flags split into their parts. */
 @font-face {
   font-family: "Colour Emoji";
   src:
@@ -665,7 +666,8 @@
     U+2648-2653, U+267F, U+2693, U+26A1, U+26AA-26AB, U+26BD-26BE, U+26C4-26C5,
     U+26CE, U+26D4, U+26EA, U+26F2-26F3, U+26F5, U+26FA, U+26FD, U+2705,
     U+270A-270B, U+2728, U+274C, U+274E, U+2753-2755, U+2757, U+2795-2797,
-    U+2764, U+27B0, U+27BF, U+2B1B-2B1C, U+2B50, U+2B55, U+FE0F, U+1F000-1FAFF;
+    U+2764, U+27B0, U+27BF, U+2B1B-2B1C, U+2B50, U+2B55, U+FE0F, U+200D,
+    U+1F000-1FAFF, U+E0020-E007F;
 }
 
 html {
