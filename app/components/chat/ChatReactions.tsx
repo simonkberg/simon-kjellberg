@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useId, useState } from "react";
+import { createContext, use, useId, useRef, useState } from "react";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
@@ -74,29 +74,99 @@ function describeReactors({ count, users, mine }: Reaction): string {
   );
 }
 
+const LONG_PRESS_MS = 500;
+
+const ChatReactionPill = ({
+  messageId,
+  reaction,
+}: {
+  messageId: string;
+  reaction: Reaction;
+}) => {
+  const { reacting, react } = use(ChatReactionsContext);
+  const tipId = useId();
+  const tip = useRef<HTMLSpanElement>(null);
+  const press = useRef<{ timer?: number; held?: boolean }>({});
+
+  const show = (source: HTMLElement) => tip.current?.showPopover({ source });
+  const hide = () => tip.current?.hidePopover();
+
+  return (
+    <>
+      <button
+        aria-pressed={reaction.mine === true}
+        aria-describedby={tipId}
+        disabled={reacting.has(messageId)}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== "touch") show(event.currentTarget);
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType !== "touch") hide();
+        }}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(":focus-visible")) {
+            show(event.currentTarget);
+          }
+        }}
+        // Safari blurs the button when a click disables it, under a pointer that's still on it.
+        onBlur={(event) => {
+          if (!event.currentTarget.matches(":hover")) hide();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") hide();
+        }}
+        // Touch has no hover, so a long press shows who reacted instead of toggling.
+        onPointerDown={(event) => {
+          press.current.held = false;
+          if (event.pointerType !== "touch") return;
+          const button = event.currentTarget;
+          press.current.timer = window.setTimeout(() => {
+            press.current.held = true;
+            show(button);
+            document.addEventListener("pointerdown", hide, {
+              capture: true,
+              once: true,
+            });
+          }, LONG_PRESS_MS);
+        }}
+        onPointerUp={() => clearTimeout(press.current.timer)}
+        onPointerCancel={() => clearTimeout(press.current.timer)}
+        onClick={() => {
+          if (press.current.held) press.current.held = false;
+          else react(messageId, reaction.emoji);
+        }}
+      >
+        {reaction.emoji} <span className="count">{reaction.count}</span>
+      </button>
+      <span
+        ref={tip}
+        id={tipId}
+        // Not hint, whose light dismiss closes it on the click or tap that reveals it.
+        popover="manual"
+        role="tooltip"
+        className="chat-reaction-tip"
+      >
+        {describeReactors(reaction)}
+      </span>
+    </>
+  );
+};
+
 export const ChatReactionList = ({
   messageId,
   reactions,
 }: {
   messageId: string;
   reactions: Reaction[];
-}) => {
-  const { reacting, react } = use(ChatReactionsContext);
-
-  return (
-    <div className="reactions" role="group" aria-label="Reactions">
-      {reactions.map((reaction) => (
-        <button
-          key={reaction.emoji}
-          aria-pressed={reaction.mine === true}
-          title={describeReactors(reaction)}
-          disabled={reacting.has(messageId)}
-          onClick={() => react(messageId, reaction.emoji)}
-        >
-          {reaction.emoji} <span className="count">{reaction.count}</span>
-        </button>
-      ))}
-      <ChatReactionPicker messageId={messageId} glyph="+" />
-    </div>
-  );
-};
+}) => (
+  <div className="reactions" role="group" aria-label="Reactions">
+    {reactions.map((reaction) => (
+      <ChatReactionPill
+        key={reaction.emoji}
+        messageId={messageId}
+        reaction={reaction}
+      />
+    ))}
+    <ChatReactionPicker messageId={messageId} glyph="+" />
+  </div>
+);

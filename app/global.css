@@ -1486,6 +1486,10 @@ ul {
       background: color-mix(in oklch, var(--ink) 7%, transparent);
       color: var(--muted);
       font-size: var(--meta-size);
+      /* A long press shows the tooltip, not a text selection or callout. */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
 
       &:hover:not(:disabled) {
         background: color-mix(in oklch, var(--ink) 12%, transparent);
@@ -1500,6 +1504,27 @@ ul {
         cursor: progress;
       }
     }
+  }
+}
+
+.chat-reaction-tip {
+  max-inline-size: 40ch;
+  padding: 0 1ch;
+  border: 1px solid var(--rule);
+  border-radius: var(--code-radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--meta-size);
+  pointer-events: none;
+
+  @supports (position-area: top) {
+    margin: 0 0 0.25lh;
+    inset: auto;
+    position-area: block-start span-inline-end;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
   }
 }
 

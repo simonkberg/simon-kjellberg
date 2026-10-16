@@ -81,6 +81,12 @@ describe("ChatReactionPicker", () => {
 });
 
 describe("ChatReactionList", () => {
+  const openTips = () =>
+    screen
+      .queryAllByRole("tooltip", { hidden: true })
+      .filter((tip) => tip.hasAttribute("data-popover-open"))
+      .map((tip) => tip.textContent);
+
   const reactions: Reaction[] = [
     { emoji: "👍", count: 3, users: ["alice"], mine: true },
     { emoji: "🎉", count: 1, users: [] },
@@ -92,10 +98,10 @@ describe("ChatReactionList", () => {
 
     const [thumbs, tada, fire, add] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
-    expect(thumbs).toHaveAttribute("title", "You, alice, and 1 on Discord");
+    expect(thumbs).toHaveAccessibleDescription("You, alice, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
-    expect(tada).toHaveAttribute("title", "1 on Discord");
-    expect(fire).toHaveAttribute("title", "alice and bob");
+    expect(tada).toHaveAccessibleDescription("1 on Discord");
+    expect(fire).toHaveAccessibleDescription("alice and bob");
     expect(add).toHaveAccessibleName("Add reaction");
   });
 
@@ -115,5 +121,62 @@ describe("ChatReactionList", () => {
     await userEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
+  });
+
+  it("shows who reacted while hovered", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+
+    await userEvent.hover(screen.getAllByRole("button")[2]!);
+    expect(openTips()).toEqual(["alice and bob"]);
+
+    await userEvent.unhover(screen.getAllByRole("button")[2]!);
+    expect(openTips()).toEqual([]);
+  });
+
+  it("shows who reacted on keyboard focus until Escape", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+
+    await userEvent.tab();
+    expect(openTips()).toEqual(["You, alice, and 1 on Discord"]);
+
+    await userEvent.keyboard("{Escape}");
+    expect(openTips()).toEqual([]);
+  });
+
+  it("shows who reacted on a long press instead of toggling", () => {
+    vi.useFakeTimers();
+    const { react } = renderWithContext(
+      <ChatReactionList messageId="1" reactions={reactions} />,
+    );
+    const fire = screen.getAllByRole("button")[2]!;
+
+    fireEvent.pointerDown(fire, { pointerType: "touch" });
+    vi.advanceTimersByTime(500);
+    fireEvent.pointerUp(fire, { pointerType: "touch" });
+    fireEvent.click(fire);
+    expect(openTips()).toEqual(["alice and bob"]);
+    expect(react).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(document.body, { pointerType: "touch" });
+    expect(openTips()).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it("toggles on a short tap", () => {
+    vi.useFakeTimers();
+    const { react } = renderWithContext(
+      <ChatReactionList messageId="1" reactions={reactions} />,
+    );
+    const fire = screen.getAllByRole("button")[2]!;
+
+    fireEvent.pointerDown(fire, { pointerType: "touch" });
+    vi.advanceTimersByTime(100);
+    fireEvent.pointerUp(fire, { pointerType: "touch" });
+    fireEvent.click(fire);
+    vi.advanceTimersByTime(500);
+
+    expect(openTips()).toEqual([]);
+    expect(react).toHaveBeenCalledWith("1", "🔥");
+    vi.useRealTimers();
   });
 });
