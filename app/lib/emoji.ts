@@ -32,4 +32,12 @@ export const REACTION_EMOJI = [
   { emoji: "🙏", name: "pray" },
   { emoji: "👏", name: "clap" },
   { emoji: "✨", name: "sparkles" },
+  { emoji: "🙃", name: "upside_down" },
+  { emoji: "🤣", name: "rolling_on_the_floor_laughing" },
+  { emoji: "😍", name: "heart_eyes" },
+  { emoji: "😎", name: "sunglasses" },
+  { emoji: "🤖", name: "robot" },
+  { emoji: "🙌", name: "raised_hands" },
+  { emoji: "👋", name: "wave" },
+  { emoji: "🚀", name: "rocket" },
 ] as const;
