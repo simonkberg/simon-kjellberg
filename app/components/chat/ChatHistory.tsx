@@ -108,25 +108,22 @@ export const ChatHistory = ({
     focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
 
   const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
-    const message = event.target.closest<HTMLElement>(".chat-message");
-    if (message?.dataset["id"]) setFocusedId(message.dataset["id"]);
+    setFocusedId(
+      event.target.closest<HTMLElement>(".chat-message")?.dataset["id"],
+    );
   };
 
   // Only from the message itself, so keys inside the reaction picker stay its own.
   const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!(event.target instanceof HTMLElement)) return;
-    if (!event.target.matches(".chat-message")) return;
     // Leaves shortcuts like Cmd+ArrowDown (scroll to the end) to the browser.
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
       return;
     const messages = [
       ...event.currentTarget.querySelectorAll<HTMLElement>(".chat-message"),
     ];
-    const target = focusTarget(
-      messages,
-      messages.indexOf(event.target),
-      event.key,
-    );
+    const current = messages.findIndex((message) => message === event.target);
+    if (current === -1) return;
+    const target = focusTarget(messages, current, event.key);
     if (!target) return;
     event.preventDefault();
     target.focus();

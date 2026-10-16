@@ -148,6 +148,18 @@ describe("ChatHistory", () => {
       expect(article("Reply")).toHaveFocus();
     });
 
+    it("ignores arrow keys from inside a message", async () => {
+      const user = userEvent.setup();
+      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+
+      await user.tab();
+      await user.tab();
+      await user.keyboard("{ArrowUp}");
+      expect(
+        within(article("Last")).getByRole("button", { name: "Reply" }),
+      ).toHaveFocus();
+    });
+
     it("leaves arrow keys with modifiers to the browser", async () => {
       const user = userEvent.setup();
       render(<ChatHistory messages={messages} {...defaultReplyProps} />);
