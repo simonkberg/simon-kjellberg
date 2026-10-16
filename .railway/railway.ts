@@ -8,7 +8,7 @@ export default defineRailway((ctx) => {
     deploy: {
       limitOverride: { containers: { cpu: 1, memoryBytes: 2147483648 } },
       // testing is the template PR previews copy, so they get one replica that sleeps when idle.
-      sleepApplication: !production,
+      sleepApplication: production ? undefined : true,
     },
     healthcheck: "/health",
     replicas: { "europe-west4-drams3a": production ? 2 : 1 },
