@@ -6,19 +6,37 @@ permissions:
 on:
   pull_request:
     branches: [main]
-    paths:
+    paths: &paths
       - ".railway/**"
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
+  push:
+    branches: [main]
+    paths: *paths
 
+# Applies queue behind each other instead of racing; a newer PR push replaces its stale plan.
+concurrency:
+  group: railway-config-${{ github.event_name == 'push' && 'apply' || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# An explicit shell adds pipefail, so a failed command isn't hidden behind tee.
+defaults:
+  run:
+    shell: bash
+
+# One job per environment, never a matrix: each token stays in the one job that uses it.
+# Without --confirm-destructive, an apply that would delete something fails and is left to a human.
 jobs:
-  plan:
+  plan-production:
     name: Plan (production)
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-
-    steps:
+    env:
+      COMMAND: plan
+      ENVIRONMENT: production
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps: &steps
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -27,7 +45,37 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: npm install -g @railway/cli@5.68.0
-      # Exits 2 when production doesn't match the file: apply it by hand, as documented in AGENTS.md.
-      - run: railway config plan --environment production --detailed-exit-code
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          railway config "$COMMAND" --environment "$ENVIRONMENT" --yes | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  plan-testing:
+    name: Plan (testing)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      COMMAND: plan
+      ENVIRONMENT: testing
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+    steps: *steps
+
+  apply-testing:
+    name: Apply (testing)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      COMMAND: apply
+      ENVIRONMENT: testing
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_TESTING }}
+    steps: *steps
+
+  apply-production:
+    name: Apply (production)
+    needs: apply-testing
+    runs-on: ubuntu-latest
+    env:
+      COMMAND: apply
+      ENVIRONMENT: production
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps: *steps

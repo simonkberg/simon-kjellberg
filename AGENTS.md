@@ -55,12 +55,12 @@ BuildKit cache mounts are used for pnpm store and Next.js build cache. Build arg
 
 ### Railway
 
-Service config lives in `.railway/railway.ts` (Railway IaC). Nothing applies it
-automatically: deploys don't read it, and `.github/workflows/railway-config.yml` only fails a
-PR when production doesn't match the file. After changing it, run
-`railway config plan --environment <env>` and then `railway config apply --environment <env>`
-for both `production` and `testing`. `testing` never runs; it's the template PR previews
-copy when a PR opens, so previews of a PR that changes the config still run the old one.
+Service config lives in `.railway/railway.ts` (Railway IaC). Deploys don't read it;
+`.github/workflows/railway-config.yml` plans it for `production` and `testing` on PRs (see the
+job summary) and applies it to both on merge. An apply that would delete something fails
+there and needs a hand `railway config apply --environment <env>`. `testing` never runs;
+it's the template PR previews copy when a PR opens, so previews of a PR that changes the
+config still run the old one.
 
 Variables are `managed`, so a new env var must be added there too or apply deletes it. Don't
 set `builder`: Railway doesn't store it, so the plan never settles.
