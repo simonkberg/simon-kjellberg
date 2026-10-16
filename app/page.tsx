@@ -19,7 +19,7 @@ import { Subtitle } from "@/components/Subtitle";
 import { Terminal } from "@/components/Terminal";
 import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
-import { getUsername } from "@/lib/session";
+import { getSession } from "@/lib/session";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -35,7 +35,7 @@ export default function RootPage() {
   const history = request.then(getChatHistory);
   const recentTracks = request.then(getRecentTracks);
   const tipDismissed = getChatTipDismissed();
-  const username = getUsername();
+  const username = getSession().then((session) => session.username);
 
   return (
     <Page>

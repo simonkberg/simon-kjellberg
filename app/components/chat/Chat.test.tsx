@@ -33,7 +33,7 @@ describe("Chat", () => {
   const chatElement = (
     result: ChatHistoryResult,
     dismissed = false,
-    username: string | null = "TestUser",
+    username = "TestUser",
   ) => (
     <Chat
       history={Promise.resolve(result)}
@@ -190,10 +190,7 @@ describe("Chat", () => {
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
 
-    const renderReactions = (
-      reactions: Reaction[],
-      username: string | null = "TestUser",
-    ) =>
+    const renderReactions = (reactions: Reaction[], username = "TestUser") =>
       act(async () =>
         render(
           chatElement(
@@ -298,17 +295,6 @@ describe("Chat", () => {
       });
       expect(busy).toBeDisabled();
       expect(free).toBeEnabled();
-      await settle();
-    });
-
-    it("waits for the server before a visitor has a username", async () => {
-      await renderReactions(thumbs, null);
-
-      const settle = holdReaction();
-      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
-
-      expect(reactToChatMessage).toHaveBeenCalledWith("msg-1", "👍");
-      expect(screen.getByRole("button", { name: "👍 1" })).toBeInTheDocument();
       await settle();
     });
 

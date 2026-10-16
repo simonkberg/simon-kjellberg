@@ -111,29 +111,18 @@ describe("ChatReactionList", () => {
     expect(tada).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("marks nothing as pressed before the visitor has a username", () => {
-    renderWithContext(
-      <ChatReactionList messageId="1" reactions={reactions} />,
-      { username: null },
-    );
-
-    for (const button of screen.getAllByRole("button")) {
-      expect(button).toHaveAttribute("aria-pressed", "false");
-    }
-  });
-
-  it("marks the visitor's reactions once their username arrives", () => {
+  it("follows the visitor's username", () => {
     const context = {
-      username: null,
+      username: "nobody",
       reacting: new Set<string>(),
       react: vi.fn(),
     };
-    const list = (username: string | null) => (
+    const list = (username: string) => (
       <ChatReactionsContext value={{ ...context, username }}>
         <ChatReactionList messageId="1" reactions={reactions} />
       </ChatReactionsContext>
     );
-    const { rerender } = render(list(null));
+    const { rerender } = render(list("nobody"));
 
     rerender(list("me"));
 

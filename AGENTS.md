@@ -149,6 +149,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   event, so a toggle that leaves the mirror unchanged reaches them on the next one. Mirror
   failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
+- **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
+  so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.

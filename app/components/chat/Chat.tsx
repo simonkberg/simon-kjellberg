@@ -73,7 +73,7 @@ function withReactionToggled(
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
   tipDismissed: Promise<boolean>;
-  username: Promise<string | null>;
+  username: Promise<string>;
 }
 
 export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
@@ -108,10 +108,7 @@ export const Chat = ({ history, tipDismissed, username }: ChatProps) => {
   const react = (messageId: string, emoji: string) => {
     startReacting(async () => {
       markReacting(messageId);
-      // Without a session the server turns the reaction away.
-      if (currentUsername !== null) {
-        toggleOptimistically({ messageId, emoji, username: currentUsername });
-      }
+      toggleOptimistically({ messageId, emoji, username: currentUsername });
       const reaction = await reactToChatMessage(messageId, emoji).catch(
         () =>
           ({

@@ -52,8 +52,3 @@ export async function getSession() {
 
   return session;
 }
-
-/** The visitor's username, or null before the proxy has set their session cookie. */
-export async function getUsername(): Promise<Username | null> {
-  return (await readSession())?.username ?? null;
-}

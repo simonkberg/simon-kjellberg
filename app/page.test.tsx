@@ -10,6 +10,7 @@ import type { RecentTracksListProps } from "@/components/RecentTracksList";
 import type { StatsListProps } from "@/components/StatsList";
 import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
+import type { Username } from "@/lib/session";
 
 import RootPage, { viewport } from "./page";
 
@@ -31,7 +32,9 @@ vi.mock(import("@/lib/chatTip"), () => ({
 }));
 
 vi.mock(import("@/lib/session"), () => ({
-  getUsername: vi.fn(() => Promise.resolve(null)),
+  getSession: vi.fn(() =>
+    Promise.resolve({ username: "TestUser" as Username }),
+  ),
 }));
 
 vi.mock(import("@/actions/lastfm"), () => ({

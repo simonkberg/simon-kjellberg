@@ -6,13 +6,13 @@ import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
 export interface ChatReactionsContextValue {
-  username: string | null;
+  username: string;
   reacting: ReadonlySet<string>;
   react: (messageId: string, emoji: string) => void;
 }
 
 export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
-  username: null,
+  username: "",
   reacting: new Set(),
   react: () => {},
 });
@@ -83,7 +83,7 @@ export const ChatReactionList = ({
       {reactions.map((reaction) => (
         <button
           key={reaction.emoji}
-          aria-pressed={username !== null && reaction.users.includes(username)}
+          aria-pressed={reaction.users.includes(username)}
           title={describeReactors(reaction)}
           disabled={reacting.has(messageId)}
           onClick={() => react(messageId, reaction.emoji)}
