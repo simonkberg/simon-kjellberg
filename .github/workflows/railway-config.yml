@@ -6,15 +6,19 @@ permissions:
 on:
   pull_request:
     branches: [main]
-    paths: &paths
+    paths:
       - ".railway/**"
       - ".github/actions/railway-cli/**"
       - ".github/workflows/railway-config.yml"
       - "package.json"
       - "pnpm-lock.yaml"
+  # Dependency bumps are planned on their PRs but never applied, so they can't overwrite dashboard changes.
   push:
     branches: [main]
-    paths: *paths
+    paths:
+      - ".railway/**"
+      - ".github/actions/railway-cli/**"
+      - ".github/workflows/railway-config.yml"
 
 # Applies never overlap, and a newer merge supersedes a pending one; a newer PR push replaces its stale plan.
 concurrency:
