@@ -1384,6 +1384,11 @@ ul {
   position: relative;
   text-wrap: pretty;
 
+  /* Inset, since the history clips anything past its edges. */
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+
   > .user {
     font-weight: bold;
     color: light-dark(

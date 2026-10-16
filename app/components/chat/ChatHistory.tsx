@@ -1,14 +1,43 @@
 "use client";
 
 import { animated, useTransition } from "@react-spring/web";
-import type { Dispatch, SetStateAction } from "react";
+import {
+  type Dispatch,
+  type FocusEvent,
+  type KeyboardEvent,
+  type SetStateAction,
+  useState,
+} from "react";
 
 import type { Message } from "@/lib/discord/api";
 
 import { ChatMessage } from "./ChatMessage";
 
+const messageIds = (messages: Message[]): string[] =>
+  messages.flatMap((message) => [message.id, ...messageIds(message.replies)]);
+
+function focusTarget(
+  messages: HTMLElement[],
+  current: number,
+  key: string,
+): HTMLElement | undefined {
+  switch (key) {
+    case "ArrowUp":
+      return messages[current - 1];
+    case "ArrowDown":
+      return messages[current + 1];
+    case "Home":
+      return messages[0];
+    case "End":
+      return messages.at(-1);
+    default:
+      return undefined;
+  }
+}
+
 interface ChatHistoryMessagesProps {
   messages: Message[];
+  tabStop: string | undefined;
   replyToId: string | null;
   setReplyToId: Dispatch<SetStateAction<string | null>>;
   nested?: boolean;
@@ -17,6 +46,7 @@ interface ChatHistoryMessagesProps {
 const ChatHistoryMessages = ({
   messages,
   nested = false,
+  tabStop,
   replyToId,
   setReplyToId,
 }: ChatHistoryMessagesProps) => {
@@ -39,6 +69,7 @@ const ChatHistoryMessages = ({
         >
           <ChatMessage
             {...item}
+            active={item.id === tabStop}
             replyToId={replyToId}
             setReplyToId={setReplyToId}
           />
@@ -46,6 +77,7 @@ const ChatHistoryMessages = ({
             <ul>
               <ChatHistoryMessages
                 messages={item.replies}
+                tabStop={tabStop}
                 replyToId={replyToId}
                 setReplyToId={setReplyToId}
                 nested
@@ -69,12 +101,47 @@ export const ChatHistory = ({
   replyToId,
   setReplyToId,
 }: ChatHistoryProps) => {
+  const [focusedId, setFocusedId] = useState<string>();
+  const ids = messageIds(messages);
+  // The newest message until another is focused, and again if that one is deleted.
+  const tabStop =
+    focusedId !== undefined && ids.includes(focusedId) ? focusedId : ids.at(-1);
+
+  const trackFocus = (event: FocusEvent<HTMLDivElement>) => {
+    const message = event.target.closest<HTMLElement>(".chat-message");
+    if (message?.dataset["id"]) setFocusedId(message.dataset["id"]);
+  };
+
+  // Only from the message itself, so keys inside the reaction picker stay its own.
+  const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!(event.target instanceof HTMLElement)) return;
+    if (!event.target.matches(".chat-message")) return;
+    const messages = [
+      ...event.currentTarget.querySelectorAll<HTMLElement>(".chat-message"),
+    ];
+    const target = focusTarget(
+      messages,
+      messages.indexOf(event.target),
+      event.key,
+    );
+    if (!target) return;
+    event.preventDefault();
+    target.focus();
+  };
+
   return (
     <div className="chat-history">
-      <div className="scrollable">
+      {/* Only catches what bubbles up from the messages, as jsx-a11y suggests. */}
+      <div
+        className="scrollable"
+        role="presentation"
+        onFocus={trackFocus}
+        onKeyDown={navigate}
+      >
         <ul className="content">
           <ChatHistoryMessages
             messages={messages}
+            tabStop={tabStop}
             replyToId={replyToId}
             setReplyToId={setReplyToId}
           />

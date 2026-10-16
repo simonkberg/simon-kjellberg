@@ -16,6 +16,8 @@ export interface ChatMessageProps extends Message {
   setReplyToId: Dispatch<SetStateAction<string | null>>;
   /** Shown above the input while replying: just the text, without controls or reactions. */
   preview?: boolean;
+  /** The history's one tab stop; arrow keys move it between messages. */
+  active?: boolean;
 }
 
 export const ChatMessage = ({
@@ -28,10 +30,13 @@ export const ChatMessage = ({
   replyToId,
   setReplyToId,
   preview = false,
+  active = false,
 }: ChatMessageProps) => (
-  <div
+  <article
     className="chat-message"
+    data-id={id}
     style={{ "--user-color": user.color } as CSSProperties}
+    tabIndex={preview ? undefined : active ? 0 : -1}
   >
     <span className="user">{user.name}: </span>
     <div className="text">
@@ -52,17 +57,24 @@ export const ChatMessage = ({
             className="reply"
             onClick={() => setReplyToId(id)}
             disabled={replyToId === id}
+            tabIndex={active ? 0 : -1}
           >
             ↩
           </button>
-          {reactions.length === 0 && <ChatReactionPicker messageId={id} />}
+          {reactions.length === 0 && (
+            <ChatReactionPicker messageId={id} tabIndex={active ? 0 : -1} />
+          )}
         </span>
         {reactions.length > 0 && (
-          <ChatReactionList messageId={id} reactions={reactions} />
+          <ChatReactionList
+            messageId={id}
+            reactions={reactions}
+            tabIndex={active ? 0 : -1}
+          />
         )}
       </>
     )}
-  </div>
+  </article>
 );
 
 export default ChatMessage;
