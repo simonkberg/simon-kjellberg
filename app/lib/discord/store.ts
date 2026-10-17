@@ -16,12 +16,14 @@ export type StoreSource = {
   fetchMessages(): Promise<DiscordMessage[]>;
   /** One message, for a reply chain reaching past the window. */
   fetchMessage(id: string): Promise<DiscordMessage>;
-  /** Who reacted with an emoji, bots left out. */
-  fetchReactorIds(messageId: string, emoji: string): Promise<string[]>;
+  /** Everyone who reacted with an emoji. */
+  fetchReactors(messageId: string, emoji: string): Promise<Reactor[]>;
   /** A member's display name, or `undefined` for someone no longer in the server. */
   fetchMemberName(userId: string): Promise<string | undefined>;
   botUserId(): string | null;
 };
+
+export type Reactor = { id: string; bot?: boolean | undefined };
 
 type Reaction = NonNullable<DiscordMessage["reactions"]>[number];
 type Emoji = Reaction["emoji"];
@@ -39,7 +41,7 @@ export class ChannelStore {
   #messages = new Map<string, DiscordMessage>();
   // Per message, per emoji: who reacted, once known. A reaction the gateway saw start is always known.
   #reactors = new Map<string, Map<string, Set<string>>>();
-  #reactorFetches = new Map<string, Promise<string[]>>();
+  #reactorFetches = new Map<string, Promise<Reactor[]>>();
   #names = new LruMap<string, Promise<string | undefined>>(1000);
   // Messages before the window, for reply chains; events drop the ones they change.
   #older = new LruMap<string, Promise<DiscordMessage>>(WINDOW);
@@ -99,14 +101,17 @@ export class ChannelStore {
 
     const key = `${messageId}/${emoji}`;
     const fetch = this.#shared(this.#reactorFetches, key, () =>
-      this.#source.fetchReactorIds(messageId, emoji),
+      this.#source.fetchReactors(messageId, emoji),
     );
-    const ids = await fetch;
+    const reactors = await fetch;
+    // Bots aren't named, and the mirror would name itself.
+    const ids = reactors.flatMap((r) => (r.bot ? [] : [r.id]));
     // Events drop a fetch they make stale, so one still held is current.
     if (this.#reactorFetches.get(key) === fetch) {
       this.#reactorFetches.delete(key);
       if (this.#messages.has(messageId)) {
         this.#reactorsOf(messageId).set(emoji, new Set(ids));
+        this.#recount(messageId, emoji, reactors);
       }
     }
     const settled = this.#reactors.get(messageId)?.get(emoji);
@@ -115,6 +120,28 @@ export class ChannelStore {
       return this.#reactorIds(messageId, emoji, false).catch(() => ids);
     }
     return ids;
+  }
+
+  // An event the seed already counted can't be told apart until now.
+  #recount(messageId: string, name: string, reactors: Reactor[]): void {
+    const reaction = this.#messages
+      .get(messageId)
+      ?.reactions?.find((r) => r.emoji.id === null && r.emoji.name === name);
+    const me = reactors.some((r) => r.id === this.#source.botUserId());
+    if (
+      !reaction ||
+      (reaction.count === reactors.length && reaction.me === me)
+    ) {
+      return;
+    }
+    this.#updateReactions(messageId, (rs) =>
+      reactors.length === 0
+        ? rs.filter((r) => r !== reaction)
+        : rs.map((r) =>
+            r === reaction ? { ...r, count: reactors.length, me } : r,
+          ),
+    );
+    this.#notify();
   }
 
   memberName(userId: string): Promise<string | undefined> {
@@ -168,7 +195,8 @@ export class ChannelStore {
             displayName(message.author, member),
           );
         }
-        if (!isShown(message)) return;
+        // A seed can already hold it, with reactions this copy lacks.
+        if (!isShown(message) || this.#messages.has(message.id)) return;
         this.#messages.set(message.id, message);
         for (const id of this.#messages.keys()) {
           if (this.#messages.size <= WINDOW) break;
@@ -179,9 +207,16 @@ export class ChannelStore {
       case "MESSAGE_UPDATE": {
         const existing = this.#messages.get(event.d.id);
         if (!existing) return;
-        // An author can't change, and an update's copy may be partial.
-        const { reactions: _, author: __, ...update } = event.d;
-        this.#messages.set(existing.id, { ...existing, ...update });
+        // An update's copy may be partial, and only an edit's fields can change.
+        const {
+          content = existing.content,
+          edited_timestamp = existing.edited_timestamp,
+        } = event.d;
+        this.#messages.set(existing.id, {
+          ...existing,
+          content,
+          edited_timestamp,
+        });
         return;
       }
       case "MESSAGE_DELETE":

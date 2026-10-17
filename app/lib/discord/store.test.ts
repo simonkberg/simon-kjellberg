@@ -4,7 +4,7 @@ import { log } from "@/lib/log";
 import { mockEnv } from "@/mocks/env";
 
 import type { DiscordMessage } from "./schemas";
-import { ChannelStore, type StoreSource, WINDOW } from "./store";
+import { ChannelStore, type Reactor, type StoreSource, WINDOW } from "./store";
 
 vi.mock(import("server-only"), () => ({}));
 
@@ -28,13 +28,17 @@ function createStore(messages: DiscordMessage[] = [message("1")]) {
   const source = {
     fetchMessages: vi.fn<StoreSource["fetchMessages"]>(async () => messages),
     fetchMessage: vi.fn<StoreSource["fetchMessage"]>(async (id) => message(id)),
-    fetchReactorIds: vi.fn<StoreSource["fetchReactorIds"]>(async () => []),
+    fetchReactors: vi.fn<StoreSource["fetchReactors"]>(async () => []),
     fetchMemberName: vi.fn<StoreSource["fetchMemberName"]>(
       async (id) => `member ${id}`,
     ),
     botUserId: () => BOT,
   };
   return { store: new ChannelStore(source), source };
+}
+
+function users(ids: string[]): Reactor[] {
+  return ids.map((id) => ({ id }));
 }
 
 function reacted(id: string) {
@@ -219,7 +223,7 @@ describe("ChannelStore", () => {
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
-    source.fetchReactorIds.mockResolvedValue(["user-2", "user-3"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2", "user-3"]));
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
     await vi.advanceTimersByTimeAsync(10_000);
     expect(source.fetchMessages).toHaveBeenCalledTimes(5);
@@ -268,8 +272,12 @@ describe("ChannelStore", () => {
   });
 
   it("should not count a reaction twice when the seed already holds it", async () => {
-    const { store } = createStore([
+    const { store, source } = createStore([
       message("1", { reactions: [{ count: 2, me: true, emoji: SMILE }] }),
+    ]);
+    source.fetchReactors.mockResolvedValue([
+      { id: BOT, bot: true },
+      { id: "user-3" },
     ]);
     await store.messages();
     await store.reactorIds("1", "😄");
@@ -343,13 +351,37 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
   });
 
+  it("should correct a count from who reacted once it's fetched", async () => {
+    const { store, source } = createStore([reacted("1"), reacted("2")]);
+    source.fetchReactors
+      .mockResolvedValueOnce([{ id: "user-2" }])
+      .mockResolvedValueOnce([]);
+    await store.messages();
+    const listener = vi.fn();
+    store.listen(listener);
+
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+    expect((await stored(store, "1"))?.reactions).toMatchObject([{ count: 2 }]);
+    listener.mockClear();
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
+    expect((await stored(store, "1"))?.reactions).toMatchObject([{ count: 1 }]);
+    expect(listener).toHaveBeenCalledOnce();
+
+    expect(await store.reactorIds("2", "😄")).toEqual([]);
+    expect((await stored(store, "2"))?.reactions).toEqual([]);
+
+    await store.reactorIds("1", "😄");
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it("should keep a newer reactor fetch when an older one fails", async () => {
     const { store, source } = createStore([
       message("1", { reactions: [{ count: 2, me: false, emoji: SMILE }] }),
     ]);
-    const first = Promise.withResolvers<string[]>();
-    const second = Promise.withResolvers<string[]>();
-    source.fetchReactorIds
+    const first = Promise.withResolvers<Reactor[]>();
+    const second = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise);
     await store.messages();
@@ -360,17 +392,17 @@ describe("ChannelStore", () => {
     first.reject(new Error("down"));
     await expect(failed).rejects.toThrow("down");
     const again = store.reactorIds("1", "😄");
-    second.resolve(["user-3"]);
+    second.resolve(users(["user-3"]));
 
     expect(await ids).toEqual(["user-3"]);
     expect(await again).toEqual(["user-3"]);
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(2);
   });
 
   it("should drop reactor fetches when every reaction is cleared", async () => {
     const { store, source } = createStore([reacted("1")]);
-    const fetch = Promise.withResolvers<string[]>();
-    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    const fetch = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors.mockReturnValueOnce(fetch.promise);
     await store.messages();
 
     const ids = store.reactorIds("1", "😄");
@@ -378,7 +410,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_REMOVE_ALL",
       d: { channel_id: CHANNEL, message_id: "1" },
     });
-    fetch.resolve(["user-2"]);
+    fetch.resolve(users(["user-2"]));
     await ids;
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
 
@@ -434,12 +466,12 @@ describe("ChannelStore", () => {
 
   it("should not keep who reacted to a message outside the window", async () => {
     const { store, source } = createStore();
-    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2"]));
     await store.messages();
 
     expect(await store.reactorIds("old", "😄")).toEqual(["user-2"]);
     await store.reactorIds("old", "😄");
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(2);
   });
 
   it("should only drop the cleared message's reactor fetches", async () => {
@@ -448,7 +480,7 @@ describe("ChannelStore", () => {
       message("1", { reactions }),
       message("2", { reactions }),
     ]);
-    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2"]));
     await store.messages();
 
     const ids = [store.reactorIds("1", "😄"), store.reactorIds("2", "😄")];
@@ -459,7 +491,7 @@ describe("ChannelStore", () => {
     await Promise.all(ids);
     await store.reactorIds("2", "😄");
 
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(3);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(3);
   });
 
   it("should count a reaction beside others and skip a nameless reactor", async () => {
@@ -491,14 +523,14 @@ describe("ChannelStore", () => {
 
   it("should hand back who reacted as an event settled it mid-fetch", async () => {
     const { store, source } = createStore([reacted("1")]);
-    const fetch = Promise.withResolvers<string[]>();
-    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    const fetch = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors.mockReturnValueOnce(fetch.promise);
     await store.messages();
 
     const ids = store.reactorIds("1", "😄");
     store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
-    fetch.resolve(["user-2"]);
+    fetch.resolve(users(["user-2"]));
 
     expect(await ids).toEqual(["user-3"]);
   });
@@ -577,7 +609,7 @@ describe("ChannelStore", () => {
       message("2", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
       message("3"),
     ]);
-    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2"]));
     await store.messages();
     await store.reactorIds("1", "😄");
     await store.reactorIds("2", "😄");
@@ -595,7 +627,7 @@ describe("ChannelStore", () => {
     await store.reactorIds("1", "😄");
     await store.reactorIds("2", "😄");
     await store.find("old");
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(3);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(3);
     expect(source.fetchMessage).toHaveBeenCalledOnce();
   });
 
@@ -612,8 +644,29 @@ describe("ChannelStore", () => {
 
     await store.reactorIds("1", "😄");
     await store.find("old");
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(2);
     expect(source.fetchMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it("should keep a seeded copy over a late create and only take an edit's fields", async () => {
+    const { store } = createStore([reacted("1")]);
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("1"), channel_id: CHANNEL },
+    });
+    store.apply({
+      t: "MESSAGE_UPDATE",
+      d: { id: "1", channel_id: CHANNEL, type: 7, edited_timestamp: "later" },
+    });
+
+    expect(await stored(store, "1")).toMatchObject({
+      type: 0,
+      content: "message 1",
+      edited_timestamp: "later",
+      reactions: [{ count: 1 }],
+    });
   });
 
   it("should ignore an update for a message outside the window", async () => {
@@ -662,8 +715,8 @@ describe("ChannelStore", () => {
 
   it("should share one fetch of who reacted, and skip it for a deleted message", async () => {
     const { store, source } = createStore([reacted("1")]);
-    const fetch = Promise.withResolvers<string[]>();
-    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    const fetch = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors.mockReturnValueOnce(fetch.promise);
     await store.messages();
 
     source.fetchMessages.mockResolvedValue([]);
@@ -671,18 +724,18 @@ describe("ChannelStore", () => {
     const first = store.reactorIds("1", "😄");
     const second = store.reactorIds("1", "😄");
     store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "1" } });
-    fetch.resolve(["user-2"]);
+    fetch.resolve(users(["user-2"]));
 
     expect(await first).toEqual(["user-2"]);
     expect(await second).toEqual(["user-2"]);
-    expect(source.fetchReactorIds).toHaveBeenCalledOnce();
+    expect(source.fetchReactors).toHaveBeenCalledOnce();
   });
 
   it("should fetch who reacted again after a failure", async () => {
     const { store, source } = createStore([reacted("1")]);
-    source.fetchReactorIds
+    source.fetchReactors
       .mockRejectedValueOnce(new Error("down"))
-      .mockResolvedValue(["user-2"]);
+      .mockResolvedValue(users(["user-2"]));
     await store.messages();
 
     await expect(store.reactorIds("1", "😄")).rejects.toThrow("down");
@@ -754,7 +807,7 @@ describe("ChannelStore", () => {
   it("should fetch who reacted when a reaction comes without member data", async () => {
     const { store, source } = createStore();
     await store.messages();
-    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2"]));
 
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
     store.apply({
@@ -764,7 +817,7 @@ describe("ChannelStore", () => {
 
     expect((await stored(store, "1"))?.reactions).toMatchObject([{ count: 2 }]);
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
-    expect(source.fetchReactorIds).toHaveBeenCalledOnce();
+    expect(source.fetchReactors).toHaveBeenCalledOnce();
   });
 
   it("should keep a looked-up name over an event without member data", async () => {
@@ -830,26 +883,26 @@ describe("ChannelStore", () => {
 
   it("should fetch who reacted to a seeded reaction once, then follow events", async () => {
     const { store, source } = createStore([reacted("1")]);
-    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2"]));
     await store.messages();
 
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
-    expect(source.fetchReactorIds).toHaveBeenCalledOnce();
+    expect(source.fetchReactors).toHaveBeenCalledOnce();
   });
 
   it("should keep the first fetch's reactors when fetching again fails", async () => {
     const { store, source } = createStore([reacted("1")]);
-    const first = Promise.withResolvers<string[]>();
-    source.fetchReactorIds
+    const first = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors
       .mockReturnValueOnce(first.promise)
       .mockRejectedValueOnce(new Error("down"));
     await store.messages();
 
     const ids = store.reactorIds("1", "😄");
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
-    first.resolve(["user-2"]);
+    first.resolve(users(["user-2"]));
 
     expect(await ids).toEqual(["user-2"]);
   });
@@ -862,7 +915,7 @@ describe("ChannelStore", () => {
       store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
       return [message("1")];
     });
-    source.fetchReactorIds.mockResolvedValue(["user-2", "user-3"]);
+    source.fetchReactors.mockResolvedValue(users(["user-2", "user-3"]));
     await store.messages();
 
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
@@ -872,19 +925,19 @@ describe("ChannelStore", () => {
 
   it("should fetch who reacted again when an event makes a fetch stale", async () => {
     const { store, source } = createStore([reacted("1")]);
-    const first = Promise.withResolvers<string[]>();
-    source.fetchReactorIds
+    const first = Promise.withResolvers<Reactor[]>();
+    source.fetchReactors
       .mockReturnValueOnce(first.promise)
-      .mockResolvedValue(["user-2", "user-3"]);
+      .mockResolvedValue(users(["user-2", "user-3"]));
     await store.messages();
 
     const stale = store.reactorIds("1", "😄");
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
-    first.resolve(["user-2"]);
+    first.resolve(users(["user-2"]));
 
     expect(await stale).toEqual(["user-2", "user-3"]);
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
-    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+    expect(source.fetchReactors).toHaveBeenCalledTimes(2);
   });
 
   it("should clear reactions by message and by emoji", async () => {

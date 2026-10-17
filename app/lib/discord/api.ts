@@ -15,7 +15,7 @@ import {
   displayName,
   GuildMemberSchema,
 } from "./schemas";
-import { ChannelStore, WINDOW } from "./store";
+import { ChannelStore, type Reactor, WINDOW } from "./store";
 
 const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
@@ -260,9 +260,9 @@ const ReactorsResponseSchema = z.array(
 
 const REACTORS_PAGE = 100;
 
-// Pages through everyone, since the store keeps the set as exact. Skips bots so the mirror doesn't name itself.
-async function getReactorIds(messageId: string, emoji: string) {
-  const ids: string[] = [];
+// Pages through everyone, since the store keeps the set as exact.
+async function getReactors(messageId: string, emoji: string) {
+  const reactors: Reactor[] = [];
   let after: string | undefined;
   for (;;) {
     const page = await call(
@@ -271,9 +271,9 @@ async function getReactorIds(messageId: string, emoji: string) {
       ReactorsResponseSchema,
       after ? { limit: REACTORS_PAGE, after } : { limit: REACTORS_PAGE },
     );
-    for (const { id, bot } of page) if (!bot) ids.push(id);
+    reactors.push(...page);
     after = page.at(-1)?.id;
-    if (page.length < REACTORS_PAGE || !after) return ids;
+    if (page.length < REACTORS_PAGE || !after) return reactors;
   }
 }
 
@@ -292,7 +292,7 @@ function getStore(): ChannelStore {
     const store = new ChannelStore({
       fetchMessages: getRecentMessages,
       fetchMessage: getMessage,
-      fetchReactorIds: getReactorIds,
+      fetchReactors: getReactors,
       fetchMemberName: getMemberName,
       botUserId: getBotUserId,
     });
