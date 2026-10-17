@@ -127,6 +127,18 @@ describe("ChatEmojiInput", () => {
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
   });
 
+  it("forgets a dismissal once the message is sent", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "hi :S");
+    await screen.findByRole("listbox");
+    await user.keyboard("{Escape}{Enter}");
+    await waitFor(() => expect(input).toHaveValue(""));
+    await user.paste(":S");
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
   it("chooses the first with an up or down arrow when none is", async () => {
     const { user, input } = setup();
 

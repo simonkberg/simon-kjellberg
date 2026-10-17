@@ -85,13 +85,11 @@ export const ChatEmojiInput = ({
     const next = typedShortcode(input)?.query;
     setTyped((previous) => {
       if (next === undefined) return null;
-      if (previous?.query !== next) {
-        return { query: next, value: input.value, dismissed: false };
-      }
       // Unchanged on a caret move, so React can skip the render.
-      return previous.value === input.value
-        ? previous
-        : { ...previous, value: input.value };
+      if (previous?.query === next && previous.value === input.value) {
+        return previous;
+      }
+      return { query: next, value: input.value, dismissed: false };
     });
   }
 
@@ -99,11 +97,11 @@ export const ChatEmojiInput = ({
     setTyped((previous) => previous && { ...previous, dismissed: true });
   }
 
-  function pick(emoji: string) {
+  function pick(glyph: string) {
     const input = ref.current;
     const shortcode = input && typedShortcode(input);
     if (!input || !shortcode) return;
-    input.setRangeText(emoji, shortcode.start, shortcode.end, "end");
+    input.setRangeText(glyph, shortcode.start, shortcode.end, "end");
     setTyped(null);
     onValueChange(input.value);
     input.focus();
