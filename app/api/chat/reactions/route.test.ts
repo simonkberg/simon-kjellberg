@@ -11,7 +11,7 @@ import { identifiers } from "@/lib/identifiers";
 import { IP_DENY_LIST_URL, refreshIpDenyList } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
-import type { Username } from "@/lib/session";
+import { decrypt, type Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 import { server } from "@/mocks/node";
 import { createSqliteQuery } from "@/mocks/sqlite";
@@ -26,9 +26,7 @@ vi.mock(import("@/lib/identifiers"), () => ({
   ),
 }));
 vi.mock(import("@/lib/session"), () => ({
-  getSession: vi.fn(() =>
-    Promise.resolve({ username: "test-user" as Username }),
-  ),
+  decrypt: vi.fn(() => Promise.resolve({ username: "test-user" as Username })),
 }));
 vi.mock(import("@/lib/discord/api"));
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
@@ -81,6 +79,19 @@ describe("POST /api/chat/reactions", () => {
       (await query("SELECT message_id, emoji, username FROM reactions")).rows,
     ).toEqual([{ message_id: "123", emoji: "👍", username: "test-user" }]);
     expect(revalidateTag).toHaveBeenCalledWith("getChatHistory", { expire: 0 });
+  });
+
+  it("asks a visitor without a session to reload", async () => {
+    vi.mocked(decrypt).mockResolvedValueOnce(undefined);
+
+    expect(
+      await result(await react({ messageId: "123", emoji: "👍" })),
+    ).toEqual({
+      status: 401,
+      body: { status: "error", error: "Reload the page to react" },
+    });
+    expect(log.error).not.toHaveBeenCalled();
+    expect(addBotReaction).not.toHaveBeenCalled();
   });
 
   it("accepts the host a proxy forwarded", async () => {

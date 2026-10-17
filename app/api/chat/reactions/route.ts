@@ -6,12 +6,9 @@ import { admit } from "@/lib/admit";
 import { DiscordApiError } from "@/lib/discord/api";
 import { identifiers } from "@/lib/identifiers";
 import { log } from "@/lib/log";
+import type { ReactionResult } from "@/lib/reactionResult";
 import { EmojiSchema, MessageIdSchema, toggleReaction } from "@/lib/reactions";
-import { getSession } from "@/lib/session";
-
-export type ReactionResult =
-  | { status: "ok" }
-  | { status: "error"; error: string };
+import { decrypt } from "@/lib/session";
 
 const BodySchema = z.object({ messageId: MessageIdSchema, emoji: EmojiSchema });
 
@@ -38,8 +35,14 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 403 });
   }
 
+  // The proxy doesn't run on /api, so a visitor without a page's session has none.
+  const session = await decrypt(request.cookies.get("session")?.value);
+  if (!session) {
+    return respond({ status: "error", error: "Reload the page to react" }, 401);
+  }
+
   try {
-    const { username } = await getSession();
+    const { username } = session;
 
     const { ip } = await identifiers();
     const denied = await admit(

@@ -4,11 +4,14 @@ import { useRouter } from "next/navigation";
 import { startTransition, use, useState } from "react";
 
 import type { ChatHistoryResult } from "@/actions/chat";
-import type { ReactionResult } from "@/api/chat/reactions/route";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
 import { TooltipButton } from "@/components/Tooltip";
 import type { Message, Reaction } from "@/lib/discord/api";
+import {
+  type ReactionResult,
+  ReactionResultSchema,
+} from "@/lib/reactionResult";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
@@ -29,41 +32,54 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
-function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
+interface OwnReaction {
+  emoji: string;
+  mine: boolean;
+}
+
+function setOwnReaction(
+  reactions: Reaction[],
+  { emoji, mine }: OwnReaction,
+): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
   if (!existing) {
-    return [...reactions, { emoji, count: 1, users: [], mine: true }];
+    return mine
+      ? [...reactions, { emoji, count: 1, users: [], mine }]
+      : reactions;
   }
+  if (Boolean(existing.mine) === mine) return reactions;
   const updated = {
     ...existing,
-    count: existing.count + (existing.mine ? -1 : 1),
-    mine: !existing.mine,
+    count: existing.count + (mine ? 1 : -1),
+    mine,
   };
   return reactions
     .map((reaction) => (reaction === existing ? updated : reaction))
     .filter((reaction) => reaction.count > 0);
 }
 
-function withReactionToggled(
+function withOwnReaction(
   messages: Message[],
   messageId: string,
-  emoji: string,
+  own: OwnReaction,
 ): Message[] {
   // Untouched messages keep their identity, so only the toggled one re-renders.
   return messages.map((message) => {
     if (message.id === messageId) {
-      return {
-        ...message,
-        reactions: toggleOwnReaction(message.reactions, emoji),
-      };
+      return { ...message, reactions: setOwnReaction(message.reactions, own) };
     }
     if (!findMessageById(message.replies, messageId)) return message;
     return {
       ...message,
-      replies: withReactionToggled(message.replies, messageId, emoji),
+      replies: withOwnReaction(message.replies, messageId, own),
     };
   });
 }
+
+const REACTION_FAILED: ReactionResult = {
+  status: "error",
+  error: "Failed to react to chat message",
+};
 
 async function postReaction(
   messageId: string,
@@ -75,13 +91,18 @@ async function postReaction(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageId, emoji }),
     });
-    return (await response.json()) as ReactionResult;
+    const result = ReactionResultSchema.safeParse(await response.json());
+    if (!result.success || (!response.ok && result.data.status === "ok")) {
+      return REACTION_FAILED;
+    }
+    return result.data;
   } catch {
-    return { status: "error", error: "Failed to react to chat message" };
+    return REACTION_FAILED;
   }
 }
 
-const NOT_REACTING: ReadonlyMap<string, string> = new Map();
+// The end state, not a toggle, so a history that already has it isn't flipped back.
+const NOT_REACTING: ReadonlyMap<string, OwnReaction> = new Map();
 
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
@@ -98,8 +119,8 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const [pending, setPending] = useState(NOT_REACTING);
   const reacting = new Set(pending.keys());
   let messages = result.status === "ok" ? result.messages : [];
-  for (const [messageId, emoji] of pending) {
-    messages = withReactionToggled(messages, messageId, emoji);
+  for (const [messageId, own] of pending) {
+    messages = withOwnReaction(messages, messageId, own);
   }
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
@@ -108,7 +129,12 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   }>();
 
   const react = (messageId: string, emoji: string) => {
-    setPending((current) => new Map(current).set(messageId, emoji));
+    // One toggle per message at a time, as its buttons are disabled while one is pending.
+    if (pending.has(messageId)) return;
+    const mine = !findMessageById(messages, messageId)?.reactions.find(
+      (reaction) => reaction.emoji === emoji,
+    )?.mine;
+    setPending((current) => new Map(current).set(messageId, { emoji, mine }));
     void postReaction(messageId, emoji).then((reaction) => {
       // One transition, so the toggle shows until the refreshed history replaces it.
       startTransition(() => {

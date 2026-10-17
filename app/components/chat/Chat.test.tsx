@@ -11,8 +11,8 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChatHistoryResult } from "@/actions/chat";
-import type { ReactionResult } from "@/api/chat/reactions/route";
 import type { Message, Reaction } from "@/lib/discord/api";
+import type { ReactionResult } from "@/lib/reactionResult";
 import { server } from "@/mocks/node";
 
 import { Chat } from "./Chat";
@@ -258,6 +258,31 @@ describe("Chat", () => {
       await settle();
     });
 
+    it("keeps a pending reaction a refreshed history already has", async () => {
+      const settle = holdReaction();
+      const { rerender } = await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await act(async () =>
+        rerender(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({
+                reactions: [{ emoji: "👍", count: 2, users: [], mine: true }],
+              }),
+            ],
+          }),
+        ),
+      );
+
+      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await settle();
+    });
+
     it("drops a pill at once when the last reaction is taken back", async () => {
       const settle = holdReaction();
       await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
@@ -394,6 +419,17 @@ describe("Chat", () => {
       {
         failure: "the response isn't a result",
         respond: () => new HttpResponse(null, { status: 403 }),
+        error: "Failed to react to chat message",
+      },
+      {
+        failure: "the result isn't one it knows",
+        respond: () => HttpResponse.json({ status: "maybe" }),
+        error: "Failed to react to chat message",
+      },
+      {
+        failure: "the status says it failed",
+        respond: () =>
+          HttpResponse.json<ReactionResult>({ status: "ok" }, { status: 500 }),
         error: "Failed to react to chat message",
       },
       {
