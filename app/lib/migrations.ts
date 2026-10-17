@@ -6,6 +6,7 @@ import { batch, query } from "@/lib/turso";
 
 // Append only, and never edit an entry once applied: boot fails on a changed
 // checksum. Each entry is one statement, applied and recorded in one transaction.
+// Inside a transaction, so PRAGMA, VACUUM and multi-statement strings don't belong here.
 export const MIGRATIONS: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS memories (
     id INTEGER PRIMARY KEY,

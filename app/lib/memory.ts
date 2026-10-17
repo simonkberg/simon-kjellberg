@@ -227,7 +227,7 @@ export async function buildMemoryContext(
       .filter((category) => category !== undefined);
     const shown = [...new Set([...Object.keys(CORE_CATEGORIES), ...people])];
 
-    const [memoryResult, countResult] = await batch([
+    const [{ rows: memoryRows }, { rows: countRows }] = await batch([
       {
         sql: `SELECT id, category, content, created_at FROM memories
          WHERE category IN (${shown.map(() => "?").join(", ")})
@@ -238,8 +238,6 @@ export async function buildMemoryContext(
         sql: "SELECT category, COUNT(*) AS count FROM memories GROUP BY category ORDER BY category",
       },
     ]);
-    const memoryRows = memoryResult?.rows ?? [];
-    const countRows = countResult?.rows ?? [];
 
     const byCategory = new Map<string, Memory[]>();
     for (const row of memoryRows) {

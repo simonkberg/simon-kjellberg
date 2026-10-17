@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 
-import type { batch, query, QueryResult, Row } from "@/lib/turso";
+import type { batch, BatchResults, query, QueryResult, Row } from "@/lib/turso";
 
 export const emptyResult: QueryResult = {
   rows: [],
@@ -37,7 +37,7 @@ export function sqliteBatch(run: typeof query): typeof batch {
       for (const { sql, args } of statements)
         results.push(await run(sql, args));
       await run("COMMIT");
-      return results;
+      return results as BatchResults<typeof statements>;
     } catch (err) {
       await run("ROLLBACK").catch(() => {});
       throw err;

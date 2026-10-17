@@ -86,6 +86,9 @@ function pipelineUrl(): string {
 }
 
 export type Statement = { sql: string; args?: Value[] };
+export type BatchResults<T extends readonly Statement[]> = {
+  -readonly [K in keyof T]: QueryResult;
+};
 
 function encodeStatement({ sql, args = [] }: Statement) {
   return { sql, args: args.map(encodeValue) };
@@ -155,8 +158,10 @@ export async function query(
 }
 
 /** Runs the statements in one request and one transaction: all of them apply, or none. */
-export async function batch(statements: Statement[]): Promise<QueryResult[]> {
-  const commit = statements.length + 1;
+export async function batch<const T extends readonly Statement[]>(
+  statements: T,
+): Promise<BatchResults<T>> {
+  const commitStep = statements.length + 1;
   const response = await pipeline({
     type: "batch",
     batch: {
@@ -167,11 +172,11 @@ export async function batch(statements: Statement[]): Promise<QueryResult[]> {
           stmt: encodeStatement(statement),
         })),
         {
-          condition: { type: "ok", step: commit - 1 },
+          condition: { type: "ok", step: commitStep - 1 },
           stmt: { sql: "COMMIT" },
         },
         {
-          condition: { type: "not", cond: { type: "ok", step: commit } },
+          condition: { type: "not", cond: { type: "ok", step: commitStep } },
           stmt: { sql: "ROLLBACK" },
         },
       ],
@@ -182,14 +187,14 @@ export async function batch(statements: Statement[]): Promise<QueryResult[]> {
   }
 
   const { step_results, step_errors } = response.result;
-  const error = step_errors.slice(0, commit + 1).find((e) => e !== null);
+  const error = step_errors.slice(0, commitStep + 1).find((e) => e !== null);
   if (error) {
     throw new Error(`Turso query error: ${error.message}`);
   }
-  return step_results.slice(1, commit).map((result) => {
-    if (!result) throw new Error("Turso skipped a statement");
-    return decodeResult(result);
-  });
+  return z
+    .array(stmtResultSchema)
+    .parse(step_results.slice(1, commitStep))
+    .map(decodeResult) as BatchResults<T>;
 }
 
 export function keepWarm(): void {

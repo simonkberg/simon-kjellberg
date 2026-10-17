@@ -298,6 +298,16 @@ describe("batch", () => {
     ).rejects.toThrow("Turso query error: no such table: nope");
   });
 
+  it("should throw when the result is not a batch result", async () => {
+    server.use(
+      http.post(PIPELINE_URL, () => HttpResponse.json(pipelineResponse())),
+    );
+
+    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
+      "Turso returned unexpected execute result",
+    );
+  });
+
   it("should throw when the commit fails", async () => {
     server.use(
       http.post(PIPELINE_URL, () =>
