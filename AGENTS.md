@@ -142,9 +142,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   its events. Renders call Discord only for what a session hasn't seen yet: a name not on
   an event's `member` (looked up once per session) and who reacted to a seeded reaction
   (once). Otherwise only a reply chain reaching past the window, search and writes use
-  REST, where a rate-limit "gate" prevents retry
-  storms on 429s. Messages from the site carry a
-  `username: content` prefix for attribution.
+  REST, where a rate-limit "gate" per route (every route on a global 429) prevents
+  retry storms. Messages from the site carry a `username: content` prefix for attribution.
 - **Chat stream:** `ChatStream` (in the chat's title bar) owns the SSE connection and shows
   its state: `live`, `connecting` or `offline`. The route sends a named `status` event when
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.

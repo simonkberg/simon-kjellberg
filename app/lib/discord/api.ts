@@ -40,8 +40,31 @@ export class DiscordApiError extends Error {
   }
 }
 
-// Per-endpoint rate limit tracking: endpoint → timestamp until which requests should wait
+// Route (or GLOBAL_GATE) → timestamp until which requests should wait
 const rateLimitUntil = new Map<string, number>();
+const GLOBAL_GATE = "global";
+
+// Discord limits by route, so a 429 for one message holds back requests for the others.
+function routeOf(endpoint: string): string {
+  return endpoint
+    .split("/")
+    .map((segment, i, segments) => {
+      if (segments[i - 1] === "reactions") return ":emoji";
+      return /^\d+$/.test(segment) ? ":id" : segment;
+    })
+    .join("/");
+}
+
+function gateUntil(route: string): number {
+  let until = 0;
+  for (const key of [route, GLOBAL_GATE]) {
+    const value = rateLimitUntil.get(key);
+    if (value === undefined) continue;
+    if (value <= Date.now()) rateLimitUntil.delete(key);
+    else until = Math.max(until, value);
+  }
+  return until;
+}
 
 /** @internal Exported for test cleanup only */
 export function _resetRateLimitState(): void {
@@ -50,7 +73,7 @@ export function _resetRateLimitState(): void {
 
 /** @internal Exported for testing the gate timeout path */
 export function _setRateLimitGate(endpoint: string, until: number): void {
-  rateLimitUntil.set(endpoint, until);
+  rateLimitUntil.set(routeOf(endpoint), until);
 }
 
 async function call<T extends z.ZodType>(
@@ -67,25 +90,22 @@ async function call<T extends z.ZodType>(
     }
   }
 
+  const route = routeOf(endpoint);
   const startTime = performance.now();
   let retries = 0;
 
   while (true) {
-    // Wait for any active rate limit gate on this endpoint
-    const waitUntil = rateLimitUntil.get(endpoint);
-    if (waitUntil != null) {
-      const waitMs = waitUntil - Date.now();
-      if (waitMs > 0) {
-        const elapsedMs = performance.now() - startTime;
-        if (elapsedMs + waitMs > RATE_LIMIT_TIMEOUT_MS) {
-          log.error(
-            { endpoint, elapsedMs, waitMs, retries },
-            "Discord rate limit exceeded max wait time",
-          );
-          throw new Error(`Discord rate limit exceeded`);
-        }
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
+    const waitMs = gateUntil(route) - Date.now();
+    if (waitMs > 0) {
+      const elapsedMs = performance.now() - startTime;
+      if (elapsedMs + waitMs > RATE_LIMIT_TIMEOUT_MS) {
+        log.error(
+          { endpoint, elapsedMs, waitMs, retries },
+          "Discord rate limit exceeded max wait time",
+        );
+        throw new Error(`Discord rate limit exceeded`);
       }
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
 
     const response = await fetch(url, {
@@ -98,7 +118,9 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    const json = response.status === 204 ? null : await response.json();
+    // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
+    const json =
+      response.status === 204 ? null : await response.json().catch(() => null);
 
     if (response.status === 429) {
       retries++;
@@ -122,10 +144,10 @@ async function call<T extends z.ZodType>(
         throw new Error(`Discord rate limit exceeded`);
       }
 
-      // Update shared rate limit gate (Math.max avoids overwriting a longer wait)
+      const gate = global ? GLOBAL_GATE : route;
       const newUntil = Date.now() + retryAfterMs;
-      const existing = rateLimitUntil.get(endpoint) ?? 0;
-      rateLimitUntil.set(endpoint, Math.max(existing, newUntil));
+      const existing = rateLimitUntil.get(gate) ?? 0;
+      rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
       log.warn(
         { endpoint, retryAfterMs, global, retries },
@@ -135,9 +157,6 @@ async function call<T extends z.ZodType>(
       await new Promise((resolve) => setTimeout(resolve, retryAfterMs));
       continue;
     }
-
-    // Clear rate limit gate on success
-    rateLimitUntil.delete(endpoint);
 
     if (!response.ok) {
       log.error(
@@ -370,52 +389,42 @@ const messageIdComparator = comparing(
 );
 
 export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
-  const response = (await getStore().messages()).slice(-limit);
+  const window = (await getStore().messages()).slice(-limit);
 
-  const messages: Promise<Message>[] = [];
-  const replies: Record<string, Promise<Message>[]> = {};
+  const byParent = Map.groupBy(
+    window,
+    (message) => message.message_reference?.message_id,
+  );
 
-  for (const discordMessage of response) {
-    const message = Promise.try(async () => {
-      const [{ username, content }, reactions] = await Promise.all([
-        resolveMessageContent(discordMessage),
-        withDiscordReactors(discordMessage.id, toReactions(discordMessage)),
-      ]);
-
-      return MessageSchema.decode({
-        id: discordMessage.id,
-        user: toUser(username),
-        content,
-        edited: discordMessage.edited_timestamp !== null,
-        timestamp: discordMessage.timestamp,
-        reactions,
-        replies: [],
-      });
-    });
-
-    const referencesMessageId = discordMessage.message_reference?.message_id;
-
-    if (referencesMessageId) {
-      (replies[referencesMessageId] ??= []).push(message);
-    } else {
-      messages.push(message);
-    }
-  }
-
-  const resolveReplies = async (
-    msgPromises: Promise<Message>[],
+  // Only what hangs off a root is converted, so a reply whose parent is gone costs nothing.
+  const toMessages = async (
+    discordMessages: DiscordMessage[],
   ): Promise<Message[]> => {
-    const result = await Promise.all(
-      msgPromises.map(async (msgPromise) => {
-        const msg = await msgPromise;
-        msg.replies = await resolveReplies(replies[msg.id] ?? []);
-        return msg;
+    const messages = await Promise.all(
+      discordMessages.map(async (discordMessage) => {
+        const [{ username, content }, reactions, children] = await Promise.all([
+          resolveMessageContent(discordMessage),
+          withDiscordReactors(discordMessage.id, toReactions(discordMessage)),
+          toMessages(byParent.get(discordMessage.id) ?? []),
+        ]);
+
+        const message = MessageSchema.decode({
+          id: discordMessage.id,
+          user: toUser(username),
+          content,
+          edited: discordMessage.edited_timestamp !== null,
+          timestamp: discordMessage.timestamp,
+          reactions,
+          replies: [],
+        });
+        message.replies = children;
+        return message;
       }),
     );
-    return result.sort(messageIdComparator);
+    return messages.sort(messageIdComparator);
   };
 
-  return resolveReplies(messages);
+  return toMessages(byParent.get(undefined) ?? []);
 }
 
 export type ChainMessage = {
