@@ -210,13 +210,18 @@ async function resolveMessageContent(
   return { username, content };
 }
 
+// Discord's "Unknown Member" and "Unknown User".
+const GONE_CODES = new Set<number | undefined>([10007, 10013]);
+
 async function getMemberName(userId: string): Promise<string | undefined> {
   try {
     const { nick, user } = await getGuildMember(userId);
     return nick ?? user.global_name ?? user.username;
   } catch (err) {
     // Someone who left the server has no member; asking again won't change that.
-    if (err instanceof DiscordApiError) return undefined;
+    if (err instanceof DiscordApiError && GONE_CODES.has(err.code)) {
+      return undefined;
+    }
     throw err;
   }
 }

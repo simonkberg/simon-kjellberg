@@ -46,6 +46,8 @@ export class ChannelStore {
   #names = new Map<string, Promise<string | undefined>>();
   #seeding: Promise<void> | null = null;
   #seeded = false;
+  // Set while what the store holds may have missed events; the next read seeds again.
+  #stale = false;
   #changed = false;
   #listeners = new Set<() => void>();
 
@@ -71,6 +73,7 @@ export class ChannelStore {
 
   async messages(): Promise<DiscordMessage[]> {
     if (!this.#seeded) await this.#seed();
+    else if (this.#stale && !this.#seeding) this.#reseed();
     return [...this.#messages.values()];
   }
 
@@ -100,7 +103,9 @@ export class ChannelStore {
         () => this.#reactorFetches.delete(key),
       );
     }
-    return fetch;
+    const ids = await fetch;
+    // An event may have settled who reacted while this fetch was out.
+    return [...(this.#reactors.get(messageId)?.get(emoji) ?? ids)];
   }
 
   memberName(userId: string): Promise<string | undefined> {
@@ -116,9 +121,7 @@ export class ChannelStore {
   apply(event: GatewayEvent): void {
     if (event.t === "READY") {
       // A new session means missed events are gone, so the window is fetched again.
-      this.#seed().catch((err: unknown) => {
-        log.error({ err }, "Failed to seed the channel store");
-      });
+      this.#reseed();
       return;
     }
 
@@ -189,6 +192,13 @@ export class ChannelStore {
     }
   }
 
+  #reseed(): void {
+    this.#stale = true;
+    this.#seed().catch((err: unknown) => {
+      log.error({ err }, "Failed to seed the channel store");
+    });
+  }
+
   #seed(): Promise<void> {
     return (this.#seeding ??= this.#load().finally(() => {
       this.#seeding = null;
@@ -212,7 +222,10 @@ export class ChannelStore {
       );
       this.#reactors.clear();
       this.#reactorFetches.clear();
+      // Names refresh once a session, which bounds how long a missed nick change lasts.
+      this.#names.clear();
       this.#seeded = true;
+      this.#stale = this.#changed;
       this.#notify();
       return;
     }

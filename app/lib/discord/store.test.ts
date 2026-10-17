@@ -138,6 +138,67 @@ describe("ChannelStore", () => {
     expect(log.warn).toHaveBeenCalledOnce();
   });
 
+  it("should seed again on the next read after a failed or changing reseed", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const { store, source } = createStore();
+    await store.messages();
+
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+    store.apply({ t: "READY" });
+    await vi.waitFor(() => {
+      expect(log.error).toHaveBeenCalledOnce();
+    });
+
+    source.fetchMessages.mockImplementation(async () => {
+      store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
+      return [message("1")];
+    });
+    await store.messages();
+    await vi.waitFor(() => {
+      expect(log.warn).toHaveBeenCalledOnce();
+    });
+
+    source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
+    await store.messages();
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toHaveLength(2);
+    });
+    const calls = source.fetchMessages.mock.calls.length;
+    await store.messages();
+    expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
+  });
+
+  it("should forget names learned in an earlier session", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+    await store.memberName("user-2");
+
+    store.apply({ t: "READY" });
+    await vi.waitFor(() => {
+      expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+    });
+    await store.memberName("user-2");
+
+    expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
+  });
+
+  it("should hand back who reacted as an event settled it mid-fetch", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    const fetch = Promise.withResolvers<string[]>();
+    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    await store.messages();
+
+    const ids = store.reactorIds("1", "😄");
+    store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+    fetch.resolve(["user-2"]);
+
+    expect(await ids).toEqual(["user-3"]);
+  });
+
   it("should retry a failed seed on the next read", async () => {
     const { store, source } = createStore();
     source.fetchMessages.mockRejectedValueOnce(new Error("down"));

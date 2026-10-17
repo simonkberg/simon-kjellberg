@@ -325,7 +325,10 @@ describe("getChannelMessages", () => {
         `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
         ({ params }) =>
           params["userId"] === "reactor-left"
-            ? HttpResponse.json({ message: "Unknown Member" }, { status: 404 })
+            ? HttpResponse.json(
+                { message: "Unknown Member", code: 10007 },
+                { status: 404 },
+              )
             : HttpResponse.json({
                 user: { username: "stays", global_name: null },
                 nick: null,
@@ -353,13 +356,45 @@ describe("getChannelMessages", () => {
         ]),
       ),
       http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
-        HttpResponse.json({ message: "Unknown Member" }, { status: 404 }),
+        HttpResponse.json(
+          { message: "Unknown Member", code: 10007 },
+          { status: 404 },
+        ),
       ),
     );
 
     const messages = await getChannelMessages();
 
     expect(messages[0]?.user.name).toBe("left");
+  });
+
+  it("should ask for a member's name again after a Discord error", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([]),
+            author: { id: "busy", username: "busy", global_name: null },
+            content: "hi",
+          },
+        ]),
+      ),
+      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
+        ++attempts === 1
+          ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
+          : HttpResponse.json({
+              user: { username: "busy", global_name: null },
+              nick: "Nick",
+            }),
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow();
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.user.name).toBe("Nick");
   });
 
   it("should fail when an author has no name at all", async () => {
@@ -369,7 +404,10 @@ describe("getChannelMessages", () => {
         HttpResponse.json([{ ...rawMessage([]), author: { id: "nameless" } }]),
       ),
       http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
-        HttpResponse.json({ message: "Unknown Member" }, { status: 404 }),
+        HttpResponse.json(
+          { message: "Unknown Member", code: 10007 },
+          { status: 404 },
+        ),
       ),
     );
 
