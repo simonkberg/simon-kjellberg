@@ -25,11 +25,14 @@ import { ChatToast } from "./ChatToast";
 
 const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
 
-/** The shortcode typed up to the caret, without its colon. */
-function typedShortcode(input: HTMLInputElement): string | null {
+/** The shortcode typed up to the caret, without its colon, and where it starts with its colon. */
+function typedShortcode(input: HTMLInputElement) {
   const caret = input.selectionStart;
   if (caret === null || caret !== input.selectionEnd) return null;
-  return SHORTCODE.exec(input.value.slice(0, caret))?.[1] ?? null;
+  const query = SHORTCODE.exec(input.value.slice(0, caret))?.[1];
+  return query === undefined
+    ? null
+    : { query, start: caret - query.length - 1, end: caret };
 }
 
 export interface ChatInputProps extends PropsWithChildren {
@@ -81,7 +84,7 @@ export const ChatInput = ({
 
   // A dismissal holds only for the shortcode it closed on.
   function trackShortcode(input: HTMLInputElement) {
-    const typed = typedShortcode(input);
+    const typed = typedShortcode(input)?.query ?? null;
     if (typed !== shortcode) setDismissed(false);
     setShortcode(typed);
   }
@@ -98,9 +101,8 @@ export const ChatInput = ({
   function pickEmoji(emoji: string) {
     const input = inputRef.current;
     const typed = input && typedShortcode(input);
-    if (!input || typed === null) return;
-    const caret = input.selectionStart ?? input.value.length;
-    input.setRangeText(emoji, caret - typed.length - 1, caret, "end");
+    if (!input || !typed) return;
+    input.setRangeText(emoji, typed.start, typed.end, "end");
     setInputValue(input.value);
     setShortcode(null);
     input.focus();

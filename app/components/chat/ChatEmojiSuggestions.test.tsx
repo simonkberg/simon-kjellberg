@@ -213,6 +213,28 @@ describe("ChatEmojiSuggestions", () => {
     expect(input).toHaveFocus();
   });
 
+  it("closes when a shortcode is selected rather than typed up to", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "hi :fire");
+    await screen.findByRole("listbox");
+    (input as HTMLInputElement).setSelectionRange(4, 8);
+    fireEvent.select(input);
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("ignores a pick once the caret has left the shortcode", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "hi :fire");
+    const option = await screen.findByRole("option", { name: "fire" });
+    (input as HTMLInputElement).setSelectionRange(0, 0);
+    fireEvent.click(option);
+
+    expect(input).toHaveValue("hi :fire");
+  });
+
   it("shows each emoji's shortcode as its tooltip", async () => {
     const { user, input } = setup();
 

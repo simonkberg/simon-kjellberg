@@ -84,7 +84,8 @@ export const ChatEmojiSuggestions = ({
 
   useEffect(() => {
     const field = input.current;
-    if (!field || !shown) return;
+    const list = picker.current;
+    if (!field || !list) return;
     if (active !== null) {
       field.setAttribute("aria-activedescendant", `${id}-${active}`);
     }
@@ -113,7 +114,7 @@ export const ChatEmojiSuggestions = ({
         setActive(0);
         return;
       }
-      const buttons = [...(picker.current?.querySelectorAll("button") ?? [])];
+      const buttons = [...list.querySelectorAll("button")];
       const next = arrowIndex(
         event,
         active,
@@ -128,7 +129,7 @@ export const ChatEmojiSuggestions = ({
     const onBlur = (event: FocusEvent) => {
       if (
         event.relatedTarget instanceof Node &&
-        !picker.current?.contains(event.relatedTarget)
+        !list.contains(event.relatedTarget)
       ) {
         onDismiss();
       }
