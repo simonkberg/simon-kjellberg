@@ -81,6 +81,8 @@ export const ChatEmojiSuggestions = ({
   useEffect(() => {
     const field = input.current;
     if (!field || !shown) return;
+    // Set here, since only this knows whether the list has loaded and has matches.
+    field.setAttribute("aria-expanded", "true");
     if (active !== null) {
       field.setAttribute("aria-activedescendant", `${id}-${active}`);
     }
@@ -135,6 +137,7 @@ export const ChatEmojiSuggestions = ({
     return () => {
       field.removeEventListener("keydown", onKeyDown);
       field.removeEventListener("blur", onBlur);
+      field.setAttribute("aria-expanded", "false");
       field.removeAttribute("aria-activedescendant");
     };
   });

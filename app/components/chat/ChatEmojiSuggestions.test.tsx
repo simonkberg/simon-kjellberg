@@ -58,6 +58,10 @@ describe("ChatEmojiSuggestions", () => {
     );
     expect(chosen()).toBeNull();
     expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(input).toHaveAttribute(
+      "aria-controls",
+      screen.getByRole("listbox").id,
+    );
   });
 
   it("filters by shortcode, and Enter inserts the first instead of sending", async () => {
@@ -230,6 +234,7 @@ describe("ChatEmojiSuggestions", () => {
       await user.type(input, text);
 
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(input).toHaveAttribute("aria-expanded", "false");
     },
   );
 });

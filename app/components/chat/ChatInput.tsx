@@ -153,7 +153,7 @@ export const ChatInput = ({
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={suggesting}
+            aria-expanded={false}
             aria-controls={suggestionsId}
           />
           {suggesting && (
