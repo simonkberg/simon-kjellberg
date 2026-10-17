@@ -543,10 +543,7 @@ describe("createMessage", () => {
     server.use(
       http.post(ANTHROPIC_BASE_URL, () => {
         callCount++;
-        return new HttpResponse("overloaded", {
-          status: 529,
-          headers: { "retry-after": "0" },
-        });
+        return new HttpResponse("overloaded", { status: 529 });
       }),
     );
 

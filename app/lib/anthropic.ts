@@ -496,7 +496,7 @@ export type AgentLoopOptions = {
   /** The most each API request may sleep between its retries; attempts themselves don't count. */
   retryBudgetMs: number;
   maxIterations?: number;
-  /** Rules out tools on the last iteration, so the loop ends in text instead of running out. */
+  /** Rules out tools on the last iteration, so the loop ends in text instead of running out; with one iteration, no tools at all. */
   endInText?: boolean;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
