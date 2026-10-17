@@ -228,6 +228,21 @@ describe("ChatReactionList", () => {
     expect(react).toHaveBeenCalledWith("1", "🎉");
   });
 
+  it("disables its reactions only while its message's toggle is pending", () => {
+    const react = vi.fn();
+    const list = (reacting: ReadonlySet<string>) => (
+      <ChatReactionsContext value={{ reacting, react }}>
+        <ChatReactionList messageId="1" reactions={reactions} />
+      </ChatReactionsContext>
+    );
+    const { rerender } = render(list(new Set(["1"])));
+    expect(screen.getAllByRole("button")[0]).toBeDisabled();
+
+    rerender(list(new Set()));
+
+    expect(screen.getAllByRole("button")[0]).toBeEnabled();
+  });
+
   it("shows who reacted while hovered", async () => {
     renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
 

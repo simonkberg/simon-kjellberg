@@ -18,7 +18,7 @@ import { arrowFocus, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
 
 export interface ChatReactionsContextValue {
-  reacting: ReadonlySet<string>;
+  reacting: Pick<ReadonlySet<string>, "has">;
   react: (messageId: string, emoji: string) => void;
 }
 

@@ -508,7 +508,8 @@ describe("Chat", () => {
           "aria-pressed",
           "false",
         );
-        expect(router.refresh).not.toHaveBeenCalled();
+        // The toggle may have been saved before it failed, so the history is reloaded.
+        expect(router.refresh).toHaveBeenCalledOnce();
       },
     );
 

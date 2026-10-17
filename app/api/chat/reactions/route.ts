@@ -16,6 +16,10 @@ const BodySchema = z.object({ messageId: MessageIdSchema, emoji: EmojiSchema });
 const REACTION_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
 // Discord's "Maximum number of reactions reached (20)".
 const MAX_REACTIONS_CODE = 30010;
+const FAILED: ReactionResult = {
+  status: "error",
+  error: "Failed to react to chat message",
+};
 
 // Next checks this for server actions; a route handler needs its own against CSRF.
 function isSameOrigin(request: NextRequest) {
@@ -41,9 +45,8 @@ export async function POST(request: NextRequest) {
     return respond({ status: "error", error: "Reload the page to react" }, 401);
   }
 
+  const { username } = session;
   try {
-    const { username } = session;
-
     const { ip } = await identifiers();
     const denied = await admit(
       "reactToChatMessage",
@@ -56,10 +59,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = BodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
-      return respond(
-        { status: "error", error: "Failed to react to chat message" },
-        400,
-      );
+      return respond(FAILED, 400);
     }
     const { messageId, emoji } = parsed.data;
 
@@ -82,9 +82,6 @@ export async function POST(request: NextRequest) {
       { err, action: "reactToChatMessage" },
       "Error reacting to chat message",
     );
-    return respond(
-      { status: "error", error: "Failed to react to chat message" },
-      500,
-    );
+    return respond(FAILED, 500);
   }
 }

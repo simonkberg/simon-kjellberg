@@ -29,6 +29,7 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
+// The end state, not a toggle, so a history that already has it isn't flipped back.
 interface OwnReaction {
   emoji: string;
   mine: boolean;
@@ -108,7 +109,6 @@ async function postReaction(
   }
 }
 
-// The end state, not a toggle, so a history that already has it isn't flipped back.
 const NOT_REACTING: ReadonlyMap<string, OwnReaction> = new Map();
 
 export interface ChatProps {
@@ -124,16 +124,15 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   // State, not an async transition: React holds every other transition until
   // one settles, and Discord's rate limit can hold a toggle 30s.
   const [pending, setPending] = useState(NOT_REACTING);
-  const reacting = new Set(pending.keys());
-  let messages = result.status === "ok" ? result.messages : [];
-  for (const [messageId, own] of pending) {
-    messages = withOwnReaction(messages, messageId, own);
-  }
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
     message: string;
     count: number;
   }>();
+  let messages = result.status === "ok" ? result.messages : [];
+  for (const [messageId, own] of pending) {
+    messages = withOwnReaction(messages, messageId, own);
+  }
 
   const react = (messageId: string, emoji: string) => {
     // One toggle per message at a time, as its buttons are disabled while one is pending.
@@ -155,7 +154,8 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
             ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
             : undefined,
         );
-        if (reaction.status === "ok") router.refresh();
+        // Even on failure: a timeout or dropped connection may follow a saved toggle.
+        router.refresh();
       });
     });
   };
@@ -170,7 +170,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     : null;
 
   return (
-    <ChatReactionsContext value={{ reacting, react }}>
+    <ChatReactionsContext value={{ reacting: pending, react }}>
       <ChatToast
         key={reactionError?.count}
         variant="error"
