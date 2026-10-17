@@ -916,11 +916,11 @@ describe("subscribe", () => {
     expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
   });
 
-  it("should reconnect after a heartbeat timeout even if the close handshake never finishes", async () => {
+  describe("dead sockets", () => {
     // A dead peer never answers the close handshake, so onclose never fires.
     class DeadSocket {
       static readonly OPEN = 1;
-      static readonly instances: DeadSocket[] = [];
+      static instances: DeadSocket[] = [];
       readyState = DeadSocket.OPEN;
       onclose: (() => void) | null = null;
       onmessage: ((event: { data: string }) => void) | null = null;
@@ -929,24 +929,49 @@ describe("subscribe", () => {
       }
       send() {}
       close() {}
+      receive(...args: Parameters<typeof createPayload>) {
+        this.onmessage?.({ data: createPayload(...args) });
+      }
     }
-    vi.stubGlobal("WebSocket", DeadSocket);
-    const { subscribe } = await import("./gateway");
 
-    const subscribed = subscribe(vi.fn());
-    const socket = DeadSocket.instances[0];
-    socket?.onmessage?.({
-      data: createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 1000 }),
+    beforeEach(() => {
+      DeadSocket.instances = [];
+      vi.stubGlobal("WebSocket", DeadSocket);
     });
-    socket?.onmessage?.({
-      data: createPayload(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY"),
+
+    it("should reconnect after a heartbeat timeout and ignore the old socket", async () => {
+      const { subscribe } = await import("./gateway");
+      const callback = vi.fn();
+
+      const subscribed = subscribe(callback);
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 1000 });
+      socket?.receive(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY");
+      await subscribed;
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(DeadSocket.instances).toHaveLength(2);
+
+      callback.mockClear();
+      socket?.receive(
+        GatewayOpcode.DISPATCH,
+        { id: "late", channel_id: "test-discord-channel-id" },
+        2,
+        "MESSAGE_DELETE",
+      );
+      expect(callback).not.toHaveBeenCalled();
     });
-    await subscribed;
 
-    await vi.advanceTimersByTimeAsync(1000);
-    await vi.advanceTimersByTimeAsync(2000);
+    it("should reconnect when HELLO never arrives", async () => {
+      const { subscribe } = await import("./gateway");
 
-    expect(DeadSocket.instances).toHaveLength(2);
+      void subscribe(vi.fn());
+      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(DeadSocket.instances).toHaveLength(2);
+    });
   });
 
   it("should not reconnect on fatal close codes", async () => {

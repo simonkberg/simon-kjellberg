@@ -23,6 +23,7 @@ const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
 const GATEWAY_INTENTS = (1 << 9) | (1 << 10) | (1 << 15); // GUILD_MESSAGES, GUILD_MESSAGE_REACTIONS, MESSAGE_CONTENT
 
 // Close codes that require fresh identify (not resume)
+const HELLO_TIMEOUT_MS = 10_000;
 const RE_IDENTIFY_CLOSE_CODES = new Set([4003, 4007, 4009]);
 // Close codes that are fatal (don't reconnect)
 const FATAL_CLOSE_CODES = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
@@ -155,22 +156,29 @@ class DiscordGateway {
       "Connecting to Discord Gateway",
     );
 
-    this.#ws = new WebSocket(url);
+    const ws = new WebSocket(url);
+    this.#ws = ws;
+    // Discord sends HELLO right away; a socket that never does is as dead as one that stops ACKing.
+    this.#heartbeatTimer = setTimeout(
+      () => this.#abandon(4000, "No HELLO"),
+      HELLO_TIMEOUT_MS,
+    );
 
-    this.#ws.onopen = () => {
+    ws.onopen = () => {
       log.debug("Gateway connection opened");
     };
 
-    this.#ws.onclose = (event) => {
-      this.#handleClose(event.code, event.reason);
+    // An abandoned socket can still deliver events; only the current one counts.
+    ws.onclose = (event) => {
+      if (this.#ws === ws) this.#handleClose(event.code, event.reason);
     };
 
-    this.#ws.onerror = (event) => {
+    ws.onerror = (event) => {
       log.error({ error: event }, "Gateway WebSocket error");
     };
 
-    this.#ws.onmessage = (event) => {
-      this.#handleMessage(String(event.data));
+    ws.onmessage = (event) => {
+      if (this.#ws === ws) this.#handleMessage(String(event.data));
     };
   }
 
@@ -215,6 +223,7 @@ class DiscordGateway {
   }
 
   #startHeartbeat(interval: number): void {
+    this.#stopHeartbeat();
     this.#heartbeatInterval = interval;
     const jitter = interval * Math.random();
 
@@ -265,7 +274,7 @@ class DiscordGateway {
 
         case GatewayOpcode.RECONNECT:
           log.info("Received RECONNECT, closing connection");
-          this.#ws?.close(4000, "Reconnect requested");
+          this.#abandon(4000, "Reconnect requested");
           break;
 
         case GatewayOpcode.INVALID_SESSION:
@@ -275,7 +284,7 @@ class DiscordGateway {
             this.#resumeGatewayUrl = null;
             this.#seq = null;
           }
-          this.#ws?.close(4000, "Invalid session");
+          this.#abandon(4000, "Invalid session");
           break;
 
         case GatewayOpcode.HELLO: {
@@ -355,12 +364,7 @@ class DiscordGateway {
 
   // A dead connection may never finish the close handshake, so this doesn't wait for onclose.
   #abandon(code: number, reason: string): void {
-    const ws = this.#ws;
-    if (ws) {
-      ws.onclose = null;
-      ws.onmessage = null;
-      ws.close(code, reason);
-    }
+    this.#ws?.close(code, reason);
     this.#handleClose(code, reason);
   }
 
