@@ -1,12 +1,10 @@
 import "server-only";
 import { comparing, stringComparator } from "comparator.ts";
-import DataLoader from "dataloader";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
 import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
-import { LruMap } from "@/lib/LruMap";
 import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
@@ -226,19 +224,13 @@ async function getMemberName(userId: string): Promise<string | undefined> {
   }
 }
 
-const discordMessageLoader = new DataLoader<string, DiscordMessage>(
-  (keys) =>
-    Promise.allSettled(
-      keys.map((messageId) =>
-        call(
-          "GET",
-          `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}`,
-          DiscordMessageSchema,
-        ),
-      ),
-    ).then(flattenSettledPromises),
-  { cacheMap: new LruMap(100) },
-);
+function getMessage(id: string): Promise<DiscordMessage> {
+  return call(
+    "GET",
+    `channels/${env.DISCORD_CHANNEL_ID}/messages/${id}`,
+    DiscordMessageSchema,
+  );
+}
 
 const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 
@@ -294,6 +286,7 @@ function getStore(): ChannelStore {
   return getGlobal("simon.dev/discord-store", () => {
     const store = new ChannelStore({
       fetchMessages: getRecentMessages,
+      fetchMessage: getMessage,
       fetchReactorIds: getReactorIds,
       fetchMemberName: getMemberName,
       botUserId: getBotUserId,
@@ -436,9 +429,7 @@ export async function getMessageChain(
     if (seen.has(currentId)) break;
     seen.add(currentId);
 
-    const response: DiscordMessage =
-      getStore().message(currentId) ??
-      (await discordMessageLoader.load(currentId));
+    const response = await getStore().find(currentId);
 
     const { username, content } = await resolveMessageContent(response);
 
@@ -561,17 +552,4 @@ export async function removeBotReaction(
   emoji: string,
 ): Promise<void> {
   await call("DELETE", botReactionEndpoint(messageId, emoji), z.null());
-}
-
-function flattenSettledPromises<T>(
-  promises: PromiseSettledResult<T>[],
-): (T | Error)[] {
-  return promises.map((res) =>
-    res.status === "fulfilled"
-      ? res.value
-      : res.reason instanceof Error
-        ? res.reason
-        : /* v8 ignore next -- @preserve */
-          new Error("Unknown error"),
-  );
 }

@@ -754,9 +754,6 @@ describe("subscribeToChannel", () => {
 });
 
 describe("getMessageChain", () => {
-  // NOTE: Each test uses unique message IDs to avoid DataLoader cache conflicts
-  // between tests. The discordMessageLoader caches by message ID.
-
   it("should return single message when no parent", async () => {
     server.use(
       http.get(

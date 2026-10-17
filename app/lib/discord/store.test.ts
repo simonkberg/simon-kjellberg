@@ -26,6 +26,7 @@ function message(id: string, overrides: Partial<DiscordMessage> = {}) {
 function createStore(messages: DiscordMessage[] = [message("1")]) {
   const source = {
     fetchMessages: vi.fn<StoreSource["fetchMessages"]>(async () => messages),
+    fetchMessage: vi.fn<StoreSource["fetchMessage"]>(async (id) => message(id)),
     fetchReactorIds: vi.fn<StoreSource["fetchReactorIds"]>(async () => []),
     fetchMemberName: vi.fn<StoreSource["fetchMemberName"]>(
       async (id) => `member ${id}`,
@@ -33,6 +34,10 @@ function createStore(messages: DiscordMessage[] = [message("1")]) {
     botUserId: () => BOT,
   };
   return { store: new ChannelStore(source), source };
+}
+
+async function stored(store: ChannelStore, id: string) {
+  return (await store.messages()).find((m) => m.id === id);
 }
 
 function react(
@@ -48,6 +53,7 @@ function react(
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -177,6 +183,7 @@ describe("ChannelStore", () => {
   it("should seed again on the next read after a failed or changing reseed", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
+    vi.useFakeTimers({ toFake: ["Date"] });
     const { store, source } = createStore();
     await store.messages();
 
@@ -196,13 +203,18 @@ describe("ChannelStore", () => {
     });
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
+    const calls = source.fetchMessages.mock.calls.length;
+    await store.messages();
+    expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
+    vi.advanceTimersByTime(10_000);
     await store.messages();
     await vi.waitFor(async () => {
       expect(await store.messages()).toHaveLength(2);
     });
-    const calls = source.fetchMessages.mock.calls.length;
+    const seeded = source.fetchMessages.mock.calls.length;
+    vi.advanceTimersByTime(10_000);
     await store.messages();
-    expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(seeded);
   });
 
   it("should forget names learned in an earlier session", async () => {
@@ -217,6 +229,82 @@ describe("ChannelStore", () => {
     await store.memberName("user-2");
 
     expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
+  });
+
+  it("should keep a newer reactor fetch when an older one fails", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 2, me: false, emoji: SMILE }] }),
+    ]);
+    const first = Promise.withResolvers<string[]>();
+    const second = Promise.withResolvers<string[]>();
+    source.fetchReactorIds
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    await store.messages();
+
+    const failed = store.reactorIds("1", "😄", false);
+    store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
+    const ids = store.reactorIds("1", "😄");
+    first.reject(new Error("down"));
+    await expect(failed).rejects.toThrow("down");
+    const again = store.reactorIds("1", "😄");
+    second.resolve(["user-3"]);
+
+    expect(await ids).toEqual(["user-3"]);
+    expect(await again).toEqual(["user-3"]);
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+  });
+
+  it("should drop reactor fetches when every reaction is cleared", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    const fetch = Promise.withResolvers<string[]>();
+    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    await store.messages();
+
+    const ids = store.reactorIds("1", "😄", false);
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_ALL",
+      d: { channel_id: CHANNEL, message_id: "1" },
+    });
+    fetch.resolve(["user-2"]);
+    await ids;
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-3"]);
+  });
+
+  it("should find older messages once and drop them when an event changes them", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+
+    expect(await store.find("1")).toMatchObject({ id: "1" });
+    expect(await store.find("old")).toMatchObject({ id: "old" });
+    await store.find("old");
+    expect(source.fetchMessage).toHaveBeenCalledOnce();
+
+    store.apply({
+      t: "MESSAGE_UPDATE",
+      d: { channel_id: CHANNEL, id: "old", content: "edited" },
+    });
+    await store.find("old");
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "old" } });
+    await store.find("old");
+    store.apply({
+      t: "MESSAGE_DELETE_BULK",
+      d: { channel_id: CHANNEL, ids: ["old"] },
+    });
+    await store.find("old");
+    expect(source.fetchMessage).toHaveBeenCalledTimes(4);
+  });
+
+  it("should fetch an older message again after a failure", async () => {
+    const { store, source } = createStore();
+    source.fetchMessage.mockRejectedValueOnce(new Error("down"));
+
+    await expect(store.find("old")).rejects.toThrow("down");
+    expect(await store.find("old")).toMatchObject({ id: "old" });
   });
 
   it("should hand back who reacted as an event settled it mid-fetch", async () => {
@@ -281,7 +369,7 @@ describe("ChannelStore", () => {
       d: { id: "old", channel_id: CHANNEL, content: "edited" },
     });
 
-    expect(store.message("old")).toBeUndefined();
+    expect(await stored(store, "old")).toBeUndefined();
   });
 
   it("should keep only the latest messages", async () => {
@@ -306,14 +394,14 @@ describe("ChannelStore", () => {
 
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
     store.apply(react("MESSAGE_REACTION_ADD", BOT));
-    expect(store.message("1")?.reactions).toEqual([
+    expect((await stored(store, "1"))?.reactions).toEqual([
       { count: 2, me: true, emoji: SMILE },
     ]);
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
 
     store.apply(react("MESSAGE_REACTION_REMOVE", BOT));
     store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
-    expect(store.message("1")?.reactions).toEqual([]);
+    expect((await stored(store, "1"))?.reactions).toEqual([]);
   });
 
   it("should share one fetch of who reacted, and skip it for a deleted message", async () => {
@@ -368,8 +456,8 @@ describe("ChannelStore", () => {
       d: { channel_id: CHANNEL, message_id: "1", emoji: SMILE },
     });
 
-    expect(store.message("1")?.reactions).toEqual([]);
-    expect(store.message("old")).toBeUndefined();
+    expect((await stored(store, "1"))?.reactions).toEqual([]);
+    expect(await stored(store, "old")).toBeUndefined();
   });
 
   it("should not learn names from the bot's posts or nameless authors", async () => {
@@ -405,7 +493,7 @@ describe("ChannelStore", () => {
       },
     });
 
-    expect(store.message("1")?.reactions).toMatchObject([{ count: 1 }]);
+    expect((await stored(store, "1"))?.reactions).toMatchObject([{ count: 1 }]);
     expect(await store.reactorIds("1", "😄")).toEqual([]);
   });
 
@@ -434,7 +522,7 @@ describe("ChannelStore", () => {
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
     store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
 
-    expect(store.message("1")?.reactions).toEqual([
+    expect((await stored(store, "1"))?.reactions).toEqual([
       { count: 1, me: false, emoji: SMILE },
     ]);
     expect(await store.reactorIds("1", "😄")).toEqual(["user-3"]);
@@ -467,7 +555,7 @@ describe("ChannelStore", () => {
     store.apply(react("MESSAGE_REACTION_ADD", "user-2", "old"));
     store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
 
-    expect(store.message("1")?.reactions).toBeUndefined();
+    expect((await stored(store, "1"))?.reactions).toBeUndefined();
   });
 
   it("should fetch who reacted to a seeded reaction once, then follow events", async () => {
@@ -483,7 +571,7 @@ describe("ChannelStore", () => {
     expect(source.fetchReactorIds).toHaveBeenCalledOnce();
   });
 
-  it("should fetch who reacted again when an event lands mid-fetch", async () => {
+  it("should fetch who reacted again when an event makes a fetch stale", async () => {
     const { store, source } = createStore([
       message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
     ]);
@@ -497,7 +585,7 @@ describe("ChannelStore", () => {
     store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
     first.resolve(["user-2"]);
 
-    expect(await stale).toEqual(["user-2"]);
+    expect(await stale).toEqual(["user-2", "user-3"]);
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
     expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
   });
@@ -514,7 +602,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_REMOVE_EMOJI",
       d: { channel_id: CHANNEL, message_id: "1", emoji: SMILE },
     });
-    expect(store.message("1")?.reactions).toMatchObject([
+    expect((await stored(store, "1"))?.reactions).toMatchObject([
       { emoji: { name: "🎉" } },
     ]);
 
@@ -522,7 +610,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_REMOVE_ALL",
       d: { channel_id: CHANNEL, message_id: "1" },
     });
-    expect(store.message("1")?.reactions).toEqual([]);
+    expect((await stored(store, "1"))?.reactions).toEqual([]);
   });
 
   it("should learn names from events instead of asking", async () => {
