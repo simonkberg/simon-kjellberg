@@ -1025,6 +1025,53 @@ describe("subscribe", () => {
 
       expect(DeadSocket.instances).toHaveLength(2);
     });
+
+    it("should reconnect when HELLO cannot be parsed", async () => {
+      const { subscribe } = await import("./gateway");
+      const { log } = await import("@/lib/log");
+
+      void subscribe(vi.fn());
+      DeadSocket.instances[0]?.receive(GatewayOpcode.HELLO, {});
+      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(log.info).toHaveBeenCalledWith(
+        { code: 4000, reason: "No HELLO" },
+        "Gateway connection closed",
+      );
+      expect(DeadSocket.instances).toHaveLength(2);
+    });
+
+    it("should stop the HELLO watchdog once HELLO arrives", async () => {
+      const { subscribe } = await import("./gateway");
+
+      const subscribed = subscribe(vi.fn());
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
+      socket?.receive(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY");
+      await subscribed;
+      await vi.advanceTimersByTimeAsync(12_000);
+
+      expect(DeadSocket.instances).toHaveLength(1);
+    });
+
+    it("should close at once on an invalid READY without waiting for the socket", async () => {
+      const { subscribe } = await import("./gateway");
+      const { log } = await import("@/lib/log");
+
+      const subscribed = subscribe(vi.fn());
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
+      socket?.receive(GatewayOpcode.DISPATCH, {}, 1, "READY");
+
+      await expect(subscribed).rejects.toThrow();
+      expect(log.info).toHaveBeenCalledWith(
+        { code: 4000, reason: "Invalid READY" },
+        "Gateway connection closed",
+      );
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(DeadSocket.instances).toHaveLength(1);
+    });
   });
 
   it("should not reconnect on fatal close codes", async () => {

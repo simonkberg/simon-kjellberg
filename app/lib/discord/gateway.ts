@@ -73,6 +73,7 @@ class DiscordGateway {
   // Heartbeat state
   #heartbeatInterval: number | null = null;
   #heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+  #helloTimer: ReturnType<typeof setTimeout> | null = null;
   #awaitingAck = false;
 
   // Reconnection state
@@ -160,7 +161,7 @@ class DiscordGateway {
     const ws = new WebSocket(url);
     this.#ws = ws;
     // Discord sends HELLO right away; a socket that never does is as dead as one that stops ACKing.
-    this.#heartbeatTimer = setTimeout(
+    this.#helloTimer = setTimeout(
       () => this.#abandon(4000, "No HELLO"),
       HELLO_TIMEOUT_MS,
     );
@@ -233,6 +234,13 @@ class DiscordGateway {
     this.#heartbeatTimer = setTimeout(() => this.#heartbeat(), jitter);
   }
 
+  #stopHelloTimer(): void {
+    if (this.#helloTimer) {
+      clearTimeout(this.#helloTimer);
+      this.#helloTimer = null;
+    }
+  }
+
   #stopHeartbeat(): void {
     if (this.#heartbeatTimer) {
       clearTimeout(this.#heartbeatTimer);
@@ -290,6 +298,7 @@ class DiscordGateway {
 
         case GatewayOpcode.HELLO: {
           const hello = HelloDataSchema.parse(payload.d);
+          this.#stopHelloTimer();
           this.#startHeartbeat(hello.heartbeat_interval);
           if (this.#sessionId) {
             this.#resume();
@@ -325,7 +334,7 @@ class DiscordGateway {
         if (!parsed.success) {
           log.error({ err: parsed.error, data }, "Invalid READY payload");
           this.#latchFatal(parsed.error);
-          this.#ws?.close(4000, "Invalid READY");
+          this.#abandon(4000, "Invalid READY");
           break;
         }
         const ready = parsed.data;
@@ -372,6 +381,7 @@ class DiscordGateway {
   #handleClose(code: number, reason: string): void {
     log.info({ code, reason }, "Gateway connection closed");
 
+    this.#stopHelloTimer();
     this.#stopHeartbeat();
     this.#awaitingAck = false;
     this.#ws = null;
