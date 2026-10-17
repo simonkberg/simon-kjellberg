@@ -237,6 +237,11 @@ their own markup so each variant styles it; chat keeps `Loader`.
 - Subpages only set `title: "PageName"`
 - `global-error.tsx` and `global-not-found.tsx` must set full titles manually (don't inherit template)
 
+### Tooltips
+
+Use `useTooltip` and `<Tooltip>` from `app/components/Tooltip.tsx`, not `title`: a manual popover
+anchored to its button that opens on hover, keyboard focus or a long press on touch.
+
 ### Server-Only Code
 
 Files that must not run on client import `"server-only"` at top (e.g., `app/lib/discord/api.ts`, `app/lib/discord/gateway.ts`, `app/lib/session.ts`).

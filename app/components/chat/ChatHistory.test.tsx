@@ -106,7 +106,7 @@ describe("ChatHistory", () => {
     });
 
     const messages = [
-      message("1", "First", [message("2", "Reply")]),
+      message("1", "First", [message("2", "A reply")]),
       message("3", "Last"),
     ];
 
@@ -135,7 +135,7 @@ describe("ChatHistory", () => {
 
       await user.tab();
       await user.keyboard("{ArrowUp}");
-      expect(article("Reply")).toHaveFocus();
+      expect(article("A reply")).toHaveFocus();
       await user.keyboard("{ArrowUp}");
       expect(article("First")).toHaveFocus();
       await user.keyboard("{ArrowUp}");
@@ -145,7 +145,7 @@ describe("ChatHistory", () => {
       await user.keyboard("{Home}");
       expect(article("First")).toHaveFocus();
       await user.keyboard("{ArrowDown}");
-      expect(article("Reply")).toHaveFocus();
+      expect(article("A reply")).toHaveFocus();
     });
 
     it("ignores arrow keys from inside a message", async () => {
@@ -191,13 +191,13 @@ describe("ChatHistory", () => {
       await waitFor(() =>
         expect(reply("Last")).toHaveAttribute("tabindex", "-1"),
       );
-      expect(reply("Reply")).not.toHaveAttribute("tabindex");
+      expect(reply("A reply")).not.toHaveAttribute("tabindex");
 
       await user.keyboard("{ArrowDown}");
       await waitFor(() =>
         expect(reply("Last")).not.toHaveAttribute("tabindex"),
       );
-      expect(reply("Reply")).toHaveAttribute("tabindex", "-1");
+      expect(reply("A reply")).toHaveAttribute("tabindex", "-1");
     });
 
     it("leaves arrow keys with modifiers to the browser", async () => {

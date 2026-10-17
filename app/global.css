@@ -712,6 +712,35 @@ button {
   cursor: pointer;
 }
 
+.tooltip {
+  /* Transparent padding bridges the gap, so the pointer can cross onto the tooltip. */
+  padding: 0.25lh 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: var(--meta-size);
+  overflow: visible;
+
+  > span {
+    display: block;
+    max-inline-size: 40ch;
+    padding: 0 1ch;
+    border: 1px solid var(--rule);
+    border-radius: var(--code-radius);
+    background: var(--surface);
+  }
+
+  @supports (position-area: top) {
+    margin: 0;
+    inset: auto;
+    position-area: block-start span-inline-end;
+    position-try-fallbacks:
+      flip-block,
+      flip-inline,
+      flip-block flip-inline;
+  }
+}
+
 /* :where() so a component's own link hover (the period menu's) wins. */
 :where(a, .link) {
   color: inherit;
@@ -1504,27 +1533,6 @@ ul {
         cursor: progress;
       }
     }
-  }
-}
-
-.chat-reaction-tip {
-  max-inline-size: 40ch;
-  padding: 0 1ch;
-  border: 1px solid var(--rule);
-  border-radius: var(--code-radius);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: var(--meta-size);
-  pointer-events: none;
-
-  @supports (position-area: top) {
-    margin: 0 0 0.25lh;
-    inset: auto;
-    position-area: block-start span-inline-end;
-    position-try-fallbacks:
-      flip-block,
-      flip-inline,
-      flip-block flip-inline;
   }
 }
 

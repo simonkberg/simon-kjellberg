@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, use, useId, useRef, useState } from "react";
+import { createContext, use, useId, useState } from "react";
 
+import { Tooltip, useTooltip } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
@@ -15,6 +16,35 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
+const ChatReactionPickerEmoji = ({
+  emoji,
+  name,
+  pickerId,
+  onPick,
+}: {
+  emoji: string;
+  name: string;
+  pickerId: string;
+  onPick: () => void;
+}) => {
+  const tooltip = useTooltip();
+
+  return (
+    <>
+      <button
+        aria-label={name}
+        popoverTarget={pickerId}
+        popoverTargetAction="hide"
+        onClick={onPick}
+        {...tooltip.trigger}
+      >
+        {emoji}
+      </button>
+      <Tooltip {...tooltip.tooltip}>:{name}:</Tooltip>
+    </>
+  );
+};
+
 export const ChatReactionPicker = ({
   messageId,
   glyph = "☺",
@@ -24,20 +54,22 @@ export const ChatReactionPicker = ({
 }) => {
   const { reacting, react } = use(ChatReactionsContext);
   const pickerId = useId();
+  const tooltip = useTooltip();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
-        aria-label="Add reaction"
-        title="Add reaction"
+        aria-labelledby={tooltip.id}
         className="react"
         popoverTarget={pickerId}
         disabled={reacting.has(messageId)}
+        {...tooltip.trigger}
       >
         {glyph}
       </button>
+      <Tooltip {...tooltip.tooltip}>Add reaction</Tooltip>
       <div
         id={pickerId}
         popover="auto"
@@ -48,16 +80,13 @@ export const ChatReactionPicker = ({
       >
         {open &&
           REACTION_EMOJI.map(({ emoji, name }) => (
-            <button
+            <ChatReactionPickerEmoji
               key={name}
-              aria-label={name}
-              title={`:${name}:`}
-              popoverTarget={pickerId}
-              popoverTargetAction="hide"
-              onClick={() => react(messageId, emoji)}
-            >
-              {emoji}
-            </button>
+              emoji={emoji}
+              name={name}
+              pickerId={pickerId}
+              onPick={() => react(messageId, emoji)}
+            />
           ))}
       </div>
     </>
@@ -74,8 +103,6 @@ function describeReactors({ count, users, mine }: Reaction): string {
   );
 }
 
-const LONG_PRESS_MS = 500;
-
 const ChatReactionPill = ({
   messageId,
   reaction,
@@ -84,77 +111,20 @@ const ChatReactionPill = ({
   reaction: Reaction;
 }) => {
   const { reacting, react } = use(ChatReactionsContext);
-  const tipId = useId();
-  const tip = useRef<HTMLSpanElement>(null);
-  const press = useRef<{ timer?: number; held?: boolean }>({});
-
-  const show = (source: HTMLElement) => tip.current?.showPopover({ source });
-  const hide = () => tip.current?.hidePopover();
-  // Hover and keyboard focus share the tooltip, and Safari blurs a clicked pill as it disables.
-  const release = (button: HTMLElement) => {
-    if (!button.matches(":hover, :focus-visible")) hide();
-  };
+  const tooltip = useTooltip();
 
   return (
     <>
       <button
         aria-pressed={reaction.mine === true}
-        aria-describedby={tipId}
+        aria-describedby={tooltip.id}
         disabled={reacting.has(messageId)}
-        onPointerEnter={(event) => {
-          if (event.pointerType !== "touch") show(event.currentTarget);
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType !== "touch") release(event.currentTarget);
-        }}
-        onFocus={(event) => {
-          if (event.currentTarget.matches(":focus-visible")) {
-            show(event.currentTarget);
-          }
-        }}
-        onBlur={(event) => release(event.currentTarget)}
-        onKeyDown={(event) => {
-          press.current.held = false;
-          if (event.key === "Escape") hide();
-        }}
-        // Touch has no hover, so a long press shows who reacted instead of toggling.
-        onPointerDown={(event) => {
-          press.current.held = false;
-          if (event.pointerType !== "touch") return;
-          const button = event.currentTarget;
-          press.current.timer = window.setTimeout(() => {
-            press.current.held = true;
-            show(button);
-            document.addEventListener("pointerdown", hide, {
-              capture: true,
-              once: true,
-            });
-          }, LONG_PRESS_MS);
-        }}
-        onPointerUp={() => clearTimeout(press.current.timer)}
-        onPointerCancel={() => clearTimeout(press.current.timer)}
-        onClick={(event) => {
-          if (press.current.held) {
-            press.current.held = false;
-            return;
-          }
-          react(messageId, reaction.emoji);
-          // Chrome moves focus off the pill this disables without a blur.
-          if (event.detail === 0) hide();
-        }}
+        onClick={() => react(messageId, reaction.emoji)}
+        {...tooltip.trigger}
       >
         {reaction.emoji} <span className="count">{reaction.count}</span>
       </button>
-      <span
-        ref={tip}
-        id={tipId}
-        // Not hint, whose light dismiss closes it on the click or tap that reveals it.
-        popover="manual"
-        role="tooltip"
-        className="chat-reaction-tip"
-      >
-        {describeReactors(reaction)}
-      </span>
+      <Tooltip {...tooltip.tooltip}>{describeReactors(reaction)}</Tooltip>
     </>
   );
 };
