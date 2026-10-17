@@ -40,7 +40,7 @@ function expand(ip: string): number[] {
 // One IPv6 client usually holds a whole /64, so it could rotate addresses past a per-IP limit.
 export function networkOf(ip: string): string {
   if (!isIPv6(ip)) return ip;
-  const groups = expand(ip);
+  const groups = expand(ip.replace(/%.*/, ""));
   if (
     groups.slice(0, 5).every((group) => group === 0) &&
     groups[5] === 0xffff

@@ -1,5 +1,5 @@
 // A Map iterates in insertion order, so re-inserting a key marks it most recently used.
-export class LruMap<K, V> {
+export class LruMap<K, V extends NonNullable<unknown>> {
   #map = new Map<K, V>();
   #maxSize: number;
 
@@ -8,8 +8,8 @@ export class LruMap<K, V> {
   }
 
   get(key: K): V | undefined {
-    if (!this.#map.has(key)) return undefined;
-    const value = this.#map.get(key) as V;
+    const value = this.#map.get(key);
+    if (value === undefined) return undefined;
     this.set(key, value);
     return value;
   }
