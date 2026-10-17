@@ -713,7 +713,7 @@ button {
 }
 
 /* A long press shows the tooltip, not a text selection or callout. */
-:has(+ .tooltip) {
+button:has(+ .tooltip) {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
