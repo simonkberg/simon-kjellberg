@@ -157,7 +157,7 @@ export class ChannelStore {
 
   // One request per key, forgotten if it fails so the next read asks again.
   #shared<T>(
-    cache: Map<string, Promise<T>>,
+    cache: Map<string, Promise<T>> | LruMap<string, Promise<T>>,
     key: string,
     load: () => Promise<T>,
   ): Promise<T> {
