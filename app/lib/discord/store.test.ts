@@ -79,6 +79,22 @@ describe("ChannelStore", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
+  it("should tell listeners about events before any seed has landed", async () => {
+    const { store, source } = createStore();
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+    const listener = vi.fn();
+    store.listen(listener);
+    await expect(store.messages()).rejects.toThrow("down");
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("2"), channel_id: CHANNEL },
+    });
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(await store.messages()).toMatchObject([{ id: "1" }]);
+  });
+
   it("should log a throwing listener and still tell the rest", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     const { store } = createStore();

@@ -126,9 +126,8 @@ export class ChannelStore {
     }
 
     this.#changed = true;
-    // The seed in flight will include it, and notifies once it lands.
-    if (!this.#seeded) return;
-    this.#applyEvent(event);
+    // Unseeded, the next seed includes it; the refresh this triggers is what reads it.
+    if (this.#seeded) this.#applyEvent(event);
     this.#notify();
   }
 
