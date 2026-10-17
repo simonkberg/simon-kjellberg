@@ -1548,6 +1548,33 @@ describe("rate limiting", () => {
     );
   });
 
+  it("should read Retry-After on a 429 whose body isn't JSON", async () => {
+    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        ++attempts === 1
+          ? HttpResponse.html("<html>Too Many Requests</html>", {
+              status: 429,
+              headers: { "Retry-After": "3" },
+            })
+          : HttpResponse.json([]),
+      ),
+    );
+
+    const promise = getChannelMessages();
+    await vi.advanceTimersByTimeAsync(2999);
+    expect(attempts).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await promise;
+
+    expect(attempts).toBe(2);
+    expect(logWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ retryAfterMs: 3000 }),
+      "Discord rate limited, retrying",
+    );
+  });
+
   it("should report the status of an error whose body isn't JSON", async () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(

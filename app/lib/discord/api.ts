@@ -42,11 +42,11 @@ export class DiscordApiError extends Error {
   }
 }
 
-// Method and route (or GLOBAL_GATE) → timestamp until which requests should wait
+// Route key (or GLOBAL_GATE) → when requests may go again.
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
-// Discord buckets by method, route and channel or guild, so one message's 429 holds back the others.
+// Discord buckets by method, route and channel or guild.
 function routeOf(method: string, endpoint: string): string {
   const route = endpoint
     .split("/")
@@ -104,11 +104,11 @@ async function call<T extends z.ZodType>(
   let retries = 0;
 
   while (true) {
-    // Re-read after each sleep: another caller's 429 may have pushed the gate further.
+    // Re-read after each sleep, since another 429 may have moved the gate.
     for (;;) {
       const waitMs = gateUntil(route) - Date.now();
       if (waitMs <= 0) break;
-      // Spreads out the callers waiting on one gate, so they don't all retry at once.
+      // Jitter, so callers waiting on one gate don't all retry at once.
       const jitterMs = Math.random() * GATE_JITTER_MS;
       const elapsedMs = performance.now() - startTime;
       if (elapsedMs + waitMs + jitterMs > RATE_LIMIT_TIMEOUT_MS) {
@@ -136,7 +136,7 @@ async function call<T extends z.ZodType>(
         ? null
         : await response.json().catch((err: unknown) => {
             if (!(err instanceof SyntaxError)) throw err;
-            // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
+            // A proxy's HTML error page falls back like an unexpected body.
             if (!response.ok) return null;
             log.error(
               { endpoint, status: response.status },
@@ -154,10 +154,10 @@ async function call<T extends z.ZodType>(
       const rateLimit = RateLimitResponseSchema.safeParse(json);
       const retryAfterMs = rateLimit.success
         ? rateLimit.data.retry_after * 1000
-        : 1000;
+        : Number(response.headers.get("retry-after")) * 1000 || 1000;
       const global = rateLimit.success && rateLimit.data.global;
 
-      // The gate is the server's state, so it outlives a caller that gives up, but no caller waits longer.
+      // Outlives a caller that gives up, capped at the longest anyone waits.
       const gate = global ? GLOBAL_GATE : route;
       const newUntil =
         Date.now() + Math.min(retryAfterMs, RATE_LIMIT_TIMEOUT_MS);
@@ -419,7 +419,7 @@ export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
 
   const byParent = Map.groupBy(window, parentId);
 
-  // Only what hangs off a root is converted, so a reply whose parent is gone costs nothing.
+  // Only replies reachable from a root are converted.
   const toMessages = async (
     discordMessages: DiscordMessage[],
   ): Promise<Message[]> => {
