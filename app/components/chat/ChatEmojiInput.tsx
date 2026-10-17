@@ -14,33 +14,9 @@ import { type EmojiShortcodes, REACTION_EMOJI, searchEmoji } from "@/lib/emoji";
 
 import { arrowIndex, gridColumns } from "./arrowFocus";
 import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
+import { loadShortcodes } from "./shortcodes";
 
 const LIMIT = 24;
-
-const REACTION_SHORTCODES: EmojiShortcodes[] = REACTION_EMOJI.map(
-  ({ emoji, name }) => [emoji, name],
-);
-
-let shortcodes: Promise<EmojiShortcodes[]> | undefined;
-let failed = false;
-
-/** Fetched once the input has focus, so the full set never ships with the page; a failure retries on the next focus. */
-function loadShortcodes(): Promise<EmojiShortcodes[]> {
-  if (failed) {
-    failed = false;
-    shortcodes = undefined;
-  }
-  shortcodes ??= fetch("/api/emoji", { signal: AbortSignal.timeout(10_000) })
-    .then((response) => {
-      if (!response.ok) throw new Error(String(response.status));
-      return response.json() as Promise<EmojiShortcodes[]>;
-    })
-    .catch(() => {
-      failed = true;
-      return REACTION_SHORTCODES;
-    });
-  return shortcodes;
-}
 
 const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
 
