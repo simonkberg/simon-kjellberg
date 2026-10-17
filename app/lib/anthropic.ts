@@ -513,11 +513,10 @@ function backoffMs(attempt: number): number {
   return RETRY_BASE_MS * 2 ** attempt;
 }
 
-function retryAfterMs(response: Response): number | undefined {
-  const header = response.headers.get("retry-after")?.trim();
-  if (!header) return undefined;
-  const seconds = Number(header);
-  return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined;
+// Missing, empty or date-valued headers read as 0, so the backoff floor applies.
+function retryAfterMs(response: Response): number {
+  const seconds = Number(response.headers.get("retry-after"));
+  return Number.isFinite(seconds) ? seconds * 1000 : 0;
 }
 
 async function send(
@@ -543,7 +542,7 @@ async function send(
         `Anthropic API error: ${response.status} ${response.statusText}: ${text}`,
       ),
       retryable: isRetryable(response.status),
-      delayMs: retryAfterMs(response) ?? backoffMs(attempt),
+      delayMs: Math.max(retryAfterMs(response), backoffMs(attempt)),
     };
   } catch (err) {
     // Network failures only: a timeout already took a whole attempt, so retrying would multiply it.

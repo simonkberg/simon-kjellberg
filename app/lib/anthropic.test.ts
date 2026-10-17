@@ -587,6 +587,7 @@ describe("createMessage", () => {
 
   it.each([
     { case: "empty", retryAfter: "" },
+    { case: "zero", retryAfter: "0" },
     { case: "not seconds", retryAfter: "Wed, 21 Oct 2026 07:28:00 GMT" },
   ])("should back off when retry-after is $case", async ({ retryAfter }) => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
