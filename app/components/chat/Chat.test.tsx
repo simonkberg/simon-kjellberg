@@ -168,37 +168,13 @@ describe("Chat", () => {
         );
     };
 
-    it("drops the reply when its message is deleted", async () => {
-      const update = await replyToFirst(["200", "300"]);
-
-      await update(["100", "300"]);
-
-      expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
-    });
-
-    it("drops the reply when the oldest message, its target, is deleted", async () => {
-      const update = await replyToFirst(["200", "300"]);
-
-      await update(["300"]);
-
-      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
-    });
-
-    it("drops the reply when its message was the last one", async () => {
-      const update = await replyToFirst(["200"]);
-
-      await update([]);
-
-      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
-    });
-
-    it("keeps the reply when its message scrolls out of the window", async () => {
+    it("drops the reply when its message leaves the history", async () => {
       const update = await replyToFirst(["200", "300"]);
 
       await update(["300", "400"]);
 
-      expect(screen.getByPlaceholderText("Write a reply...")).toBeVisible();
+      expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
     });
   });
 

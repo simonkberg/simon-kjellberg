@@ -277,12 +277,6 @@ describe("postChatMessage", () => {
     expect(postChannelMessage).toHaveBeenCalledOnce();
   });
 
-  it("doesn't count text that's too long against the limit", async () => {
-    for (let i = 0; i < 5; i++) await post("x".repeat(1990));
-
-    expect(await post()).toEqual({ status: "ok" });
-  });
-
   it("returns error when text is only whitespace", async () => {
     const formData = new FormData();
     formData.set("text", "   ");

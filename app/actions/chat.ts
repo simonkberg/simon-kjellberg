@@ -85,16 +85,6 @@ export async function postChatMessage(
   try {
     const { username } = await getSession();
 
-    // Before admitting, so a paste that's too long doesn't use up a post.
-    const maxLength = maxTextLength(username.length);
-    const raw = formData.get("text");
-    if (typeof raw === "string" && raw.trim().length > maxLength) {
-      return {
-        status: "error",
-        error: `Messages can be at most ${maxLength} characters long.`,
-      };
-    }
-
     // Admitted first, so malformed requests count against the limit too.
     const request = await identifiers();
     const denied = await admit(
@@ -107,6 +97,13 @@ export async function postChatMessage(
     if (denied) return denied;
 
     const text = z.string().trim().min(1).parse(formData.get("text"));
+    const maxLength = maxTextLength(username.length);
+    if (text.length > maxLength) {
+      return {
+        status: "error",
+        error: `Messages can be at most ${maxLength} characters long.`,
+      };
+    }
     const replyToId = z
       .string()
       .optional()
