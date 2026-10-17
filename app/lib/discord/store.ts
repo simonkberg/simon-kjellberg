@@ -120,7 +120,9 @@ export class ChannelStore {
 
   apply(event: GatewayEvent): void {
     if (event.t === "READY") {
-      // A new session means missed events are gone, so the window is fetched again.
+      // A new session means missed events are gone, so the window is fetched again,
+      // and a seed already in flight may predate the gap.
+      this.#changed = true;
       this.#reseed();
       return;
     }

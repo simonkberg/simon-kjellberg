@@ -141,6 +141,26 @@ describe("ChannelStore", () => {
     expect(source.fetchMessages).toHaveBeenCalledTimes(2);
   });
 
+  it("should seed again when a new session starts mid-seed", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+    const first = Promise.withResolvers<DiscordMessage[]>();
+    source.fetchMessages.mockReturnValueOnce(first.promise);
+    source.fetchMessages.mockResolvedValueOnce([message("1"), message("2")]);
+
+    store.apply({ t: "READY" });
+    store.apply({ t: "READY" });
+    first.resolve([message("1")]);
+
+    await vi.waitFor(() => {
+      expect(source.fetchMessages).toHaveBeenCalledTimes(3);
+    });
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toHaveLength(2);
+    });
+    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
+  });
+
   it("should give up seeding again after a few attempts", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     const { store, source } = createStore();
