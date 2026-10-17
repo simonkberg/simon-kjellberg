@@ -158,7 +158,7 @@ export const TooltipButton = ({
 };
 
 /**
- * Inline text with a tooltip, rendered on first show. Not a tab stop. A tap shows it, since
+ * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. A tap shows it, since
  * tapping text does nothing else; a long press stays a text selection.
  */
 export const TooltipText = ({
@@ -179,7 +179,10 @@ export const TooltipText = ({
           trigger.onPointerEnter(event);
         }}
         onPointerUp={(event) => {
-          if (event.pointerType !== "touch") return;
+          // Not at the end of a long press that selected text.
+          if (event.pointerType !== "touch" || !getSelection()?.isCollapsed) {
+            return;
+          }
           setShown(true);
           show(event.currentTarget);
         }}

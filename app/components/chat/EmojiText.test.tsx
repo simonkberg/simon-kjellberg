@@ -12,6 +12,7 @@ const EMOJI: EmojiShortcodes[] = [
   ["👍", "thumbsup", "+1"],
   ["❤️", "heart"],
   ["🧑‍🚒", "firefighter"],
+  ["🏌️‍♂️", "golfer_man"],
 ];
 
 const tooltips = () => screen.queryAllByRole("tooltip", { hidden: true });
@@ -61,12 +62,39 @@ describe("EmojiText", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(":heart:");
   });
 
-  it("shows an emoji the set doesn't name as itself", async () => {
+  it("names toned emoji whose base has a text style", async () => {
+    render(<EmojiText text="🏌🏽‍♂️" />);
+
+    await act(() => userEvent.hover(screen.getByText("🏌🏽‍♂️")));
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      ":golfer_man:",
+    );
+  });
+
+  it("leaves the tooltip empty for an emoji the set doesn't name", async () => {
     render(<EmojiText text="🫩" />);
 
     await act(() => userEvent.hover(screen.getByText("🫩")));
 
-    expect(await screen.findByRole("tooltip")).toHaveTextContent("🫩");
+    await vi.waitFor(() =>
+      expect(
+        screen.getByRole("tooltip").firstElementChild,
+      ).toBeEmptyDOMElement(),
+    );
+  });
+
+  it("doesn't show at the end of a long press that selected text", async () => {
+    render(<EmojiText text="❤️" />);
+    const emoji = screen.getByText("❤️");
+    getSelection()?.selectAllChildren(emoji);
+
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+
+    expect(screen.getByRole("tooltip", { hidden: true })).not.toHaveAttribute(
+      "data-popover-open",
+    );
+    getSelection()?.removeAllRanges();
   });
 
   it("hides on a mouse click, as on buttons", async () => {
