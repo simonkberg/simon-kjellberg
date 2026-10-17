@@ -149,7 +149,7 @@ describe("Chat", () => {
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
     });
 
-    it("hides reply preview when message is deleted", async () => {
+    it("drops the reply when its message is deleted", async () => {
       const user = userEvent.setup();
       const message = createMessage({
         id: "will-be-deleted",
@@ -179,6 +179,7 @@ describe("Chat", () => {
 
       // Reply preview should be hidden since the message no longer exists
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
     });
   });
 

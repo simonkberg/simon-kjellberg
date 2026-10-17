@@ -21,5 +21,5 @@ export async function setChatTipDismissed() {
 
   const cookieJar = await cookies();
 
-  cookieJar.set(COOKIE_NAME, "true");
+  cookieJar.set(COOKIE_NAME, "true", { maxAge: 60 * 60 * 24 * 365 });
 }

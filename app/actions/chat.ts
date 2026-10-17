@@ -13,6 +13,7 @@ import {
 import { identifiers } from "@/lib/identifiers";
 import { isDeniedIp } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
+import { maxTextLength } from "@/lib/messageLength";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   EmojiSchema,
@@ -96,6 +97,13 @@ export async function postChatMessage(
     if (denied) return denied;
 
     const text = z.string().trim().min(1).parse(formData.get("text"));
+    const maxLength = maxTextLength(username);
+    if (text.length > maxLength) {
+      return {
+        status: "error",
+        error: `Messages can be at most ${maxLength} characters long.`,
+      };
+    }
     const replyToId = z
       .string()
       .optional()

@@ -306,3 +306,9 @@ const randomArrayItem = (array: string[]) =>
 
 export const randomName = () =>
   `${randomArrayItem(positiveAdjectives)}-${randomArrayItem(animalNames)}`;
+
+const longest = (array: string[]) =>
+  Math.max(...array.map((word) => word.length));
+
+export const MAX_NAME_LENGTH =
+  longest(positiveAdjectives) + "-".length + longest(animalNames);

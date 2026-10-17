@@ -124,6 +124,8 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const replyToMessage = replyToId
     ? findMessageById(messages, replyToId)
     : null;
+  // A deleted target would make Discord reject the reply.
+  if (replyToId && !replyToMessage) setReplyToId(null);
 
   return (
     <ChatReactionsContext value={{ reacting, react }}>

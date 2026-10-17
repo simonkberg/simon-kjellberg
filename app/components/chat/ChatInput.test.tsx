@@ -23,6 +23,7 @@ describe("ChatInput", () => {
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute("name", "text");
     expect(input).toHaveAttribute("placeholder", "Write a message...");
+    expect(input).toHaveAttribute("maxlength", "1970");
   });
 
   it("input is not disabled initially", () => {
