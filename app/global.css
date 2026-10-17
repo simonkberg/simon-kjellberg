@@ -1569,8 +1569,12 @@ ul {
     margin: 0;
     padding: 0.25em 0.5ch 0;
     color: var(--muted);
+    /* One line, kept when nothing is chosen, so the picker never changes height. */
+    min-height: calc(1lh + 0.25em);
+    overflow: hidden;
     font-size: var(--tip-size);
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Opens above what opened it; without anchor positioning it stays centred. */

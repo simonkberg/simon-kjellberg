@@ -241,7 +241,7 @@ describe("ChatEmojiSuggestions", () => {
 
     await user.type(input, ":f");
     await screen.findByRole("listbox");
-    expect(name()).toBeNull();
+    expect(name()).toBeEmptyDOMElement();
 
     await user.type(input, "i");
     expect(name()).toHaveTextContent(":firefighter:");

@@ -175,11 +175,9 @@ export const ChatEmojiSuggestions = ({
           onClick={() => onPick(emoji)}
         />
       ))}
-      {chosen && (
-        <p className="name" aria-hidden="true">
-          :{chosen.name}:
-        </p>
-      )}
+      <p className="name" aria-hidden="true">
+        {chosen && `:${chosen.name}:`}
+      </p>
     </div>
   );
 };
