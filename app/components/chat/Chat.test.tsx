@@ -256,7 +256,10 @@ describe("Chat", () => {
         Object.assign(new Event("beforetoggle"), { newState: "open" }),
       );
       await userEvent.click(
-        within(picker).getByRole("button", { name: "tada", hidden: true }),
+        within(picker).getByRole("button", {
+          name: "Party popper",
+          hidden: true,
+        }),
       );
 
       expect(reactToChatMessage).toHaveBeenCalledWith("reply-1", "🎉");

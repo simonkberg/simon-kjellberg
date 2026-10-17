@@ -27,12 +27,13 @@ const ChatReactionPickerEmoji = ({
   pickerId: string;
   onPick: () => void;
 }) => {
-  const tooltip = useTooltip();
+  // Above the whole picker, so the name never covers the emoji around it.
+  const tooltip = useTooltip(() => document.getElementById(pickerId));
 
   return (
     <>
       <button
-        aria-label={name}
+        aria-labelledby={tooltip.id}
         popoverTarget={pickerId}
         popoverTargetAction="hide"
         onClick={onPick}
@@ -40,7 +41,7 @@ const ChatReactionPickerEmoji = ({
       >
         {emoji}
       </button>
-      <Tooltip {...tooltip.tooltip}>:{name}:</Tooltip>
+      <Tooltip {...tooltip.tooltip}>{name}</Tooltip>
     </>
   );
 };

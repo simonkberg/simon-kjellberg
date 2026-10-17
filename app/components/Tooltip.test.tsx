@@ -22,6 +22,19 @@ const Button = ({ onClick = () => {} }: { onClick?: () => void }) => {
   );
 };
 
+const Anchored = ({ label }: { label: string }) => {
+  const tooltip = useTooltip(() => document.getElementById("anchor"));
+
+  return (
+    <>
+      <button aria-labelledby={tooltip.id} {...tooltip.trigger}>
+        ·
+      </button>
+      <Tooltip {...tooltip.tooltip}>{label}</Tooltip>
+    </>
+  );
+};
+
 const isOpen = () =>
   screen
     .getByRole("tooltip", { hidden: true })
@@ -54,10 +67,10 @@ describe("Tooltip", () => {
     const tooltip = screen.getByRole("tooltip", { hidden: true });
 
     await userEvent.hover(button);
-    fireEvent.pointerLeave(button, { relatedTarget: tooltip });
+    fireEvent.pointerOut(button, { relatedTarget: tooltip });
     expect(isOpen()).toBe(true);
 
-    fireEvent.pointerLeave(tooltip, { relatedTarget: document.body });
+    fireEvent.pointerOut(tooltip, { relatedTarget: null });
     expect(isOpen()).toBe(false);
   });
 
@@ -144,7 +157,7 @@ describe("Tooltip", () => {
     vi.advanceTimersByTime(500);
     fireEvent.pointerUp(button, { pointerType: "touch" });
     fireEvent.click(button);
-    fireEvent.pointerLeave(button, { pointerType: "touch" });
+    fireEvent.pointerOut(button, { pointerType: "touch" });
 
     expect(isOpen()).toBe(true);
     expect(onClick).not.toHaveBeenCalled();
@@ -205,5 +218,50 @@ describe("Tooltip", () => {
     fireEvent.click(button);
 
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it("shows one tooltip at a time", async () => {
+    render(
+      <>
+        <Button />
+        <Button />
+      </>,
+    );
+    const [first, second] = screen.getAllByRole("button", { name: "Reply" });
+    const [firstTip, secondTip] = screen.getAllByRole("tooltip", {
+      hidden: true,
+    });
+
+    await userEvent.tab();
+    fireEvent.pointerEnter(second!);
+
+    expect(first).toHaveFocus();
+    expect(firstTip).not.toHaveAttribute("data-popover-open");
+    expect(secondTip).toHaveAttribute("data-popover-open");
+  });
+
+  it("stays open anywhere in its anchor", () => {
+    render(
+      <div id="anchor">
+        <Anchored label="Smile" />
+        <Anchored label="Frown" />
+      </div>,
+    );
+    const anchor = document.getElementById("anchor")!;
+    const smile = screen.getByRole("button", { name: "Smile" });
+    const tips = () =>
+      screen
+        .getAllByRole("tooltip", { hidden: true })
+        .map((tip) => tip.hasAttribute("data-popover-open"));
+
+    fireEvent.pointerEnter(smile);
+    fireEvent.pointerOut(smile, { relatedTarget: anchor });
+    expect(tips()).toEqual([true, false]);
+
+    fireEvent.pointerEnter(screen.getByRole("button", { name: "Frown" }));
+    expect(tips()).toEqual([false, true]);
+
+    fireEvent.pointerOut(anchor, { relatedTarget: document.body });
+    expect(tips()).toEqual([false, false]);
   });
 });

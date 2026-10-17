@@ -42,16 +42,14 @@ describe("ChatReactionPicker", () => {
     ).toEqual([]);
   });
 
-  it("offers every picker emoji with its shortcode", () => {
+  it("offers every picker emoji by name", () => {
     renderWithContext(<ChatReactionPicker messageId="1" />);
     openPicker();
 
     const items = within(getPicker()).getAllByRole("button", { hidden: true });
     expect(items).toHaveLength(REACTION_EMOJI.length);
     expect(items[0]).toHaveTextContent("👍");
-    expect(
-      within(getPicker()).getAllByRole("tooltip", { hidden: true })[0],
-    ).toHaveTextContent(":thumbsup:");
+    expect(items[0]).toHaveAccessibleName("Thumbs up");
   });
 
   it("reacts with the picked emoji", async () => {
@@ -59,7 +57,10 @@ describe("ChatReactionPicker", () => {
     openPicker();
 
     await userEvent.click(
-      within(getPicker()).getByRole("button", { name: "tada", hidden: true }),
+      within(getPicker()).getByRole("button", {
+        name: "Party popper",
+        hidden: true,
+      }),
     );
 
     expect(react).toHaveBeenCalledWith("1", "🎉");

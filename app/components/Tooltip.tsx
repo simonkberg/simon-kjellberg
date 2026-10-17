@@ -11,8 +11,11 @@ import {
 
 const LONG_PRESS_MS = 500;
 
-/** Opens on hover, keyboard focus or a long press, and closes on Escape or a press anywhere. */
-export function useTooltip() {
+/**
+ * Opens on hover, keyboard focus or a long press, and closes on Escape or a press anywhere.
+ * An `anchor` places it there instead, and hovering anywhere in it keeps it open.
+ */
+export function useTooltip(anchor?: () => HTMLElement | null) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const tip = useRef<HTMLSpanElement>(null);
@@ -24,11 +27,14 @@ export function useTooltip() {
     tip.current?.hidePopover();
   };
 
-  const show = (source: HTMLElement) => {
-    tip.current?.showPopover({ source });
+  const show = (button: HTMLElement) => {
+    // One at a time: tell any other open tooltip to close.
+    document.dispatchEvent(new Event("tooltipshow"));
+    tip.current?.showPopover({ source: anchor?.() ?? button });
     dismiss.current?.abort();
     dismiss.current = new AbortController();
     const { signal } = dismiss.current;
+    document.addEventListener("tooltipshow", hide, { signal });
     document.addEventListener(
       "keydown",
       (event) => {
@@ -37,16 +43,21 @@ export function useTooltip() {
       { signal },
     );
     document.addEventListener("pointerdown", hide, { capture: true, signal });
+    document.addEventListener(
+      "pointerout",
+      (event) => {
+        if (event.pointerType !== "touch") release(event.relatedTarget);
+      },
+      { signal },
+    );
   };
 
   // Hover and keyboard focus share the tooltip, and the pointer may cross onto it.
   const release = (to: EventTarget | null) => {
     const button = trigger.current;
     if (!button || button.matches(":hover, :focus-visible")) return;
-    if (
-      to instanceof Node &&
-      (button.contains(to) || tip.current?.contains(to))
-    ) {
+    const zone = [button, tip.current, anchor?.()];
+    if (to instanceof Node && zone.some((element) => element?.contains(to))) {
       return;
     }
     hide();
@@ -58,9 +69,6 @@ export function useTooltip() {
       ref: trigger,
       onPointerEnter: (event: PointerEvent<HTMLElement>) => {
         if (event.pointerType !== "touch") show(event.currentTarget);
-      },
-      onPointerLeave: (event: PointerEvent) => {
-        if (event.pointerType !== "touch") release(event.relatedTarget);
       },
       onFocus: (event: FocusEvent<HTMLElement>) => {
         if (event.currentTarget.matches(":focus-visible")) {
@@ -96,11 +104,7 @@ export function useTooltip() {
         event.stopPropagation();
       },
     },
-    tooltip: {
-      ref: tip,
-      id,
-      onPointerLeave: (event: PointerEvent) => release(event.relatedTarget),
-    },
+    tooltip: { ref: tip, id },
   };
 }
 
