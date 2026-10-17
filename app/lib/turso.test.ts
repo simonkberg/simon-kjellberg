@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { server } from "@/mocks/node";
 
@@ -200,6 +201,7 @@ describe("query", () => {
 
 describe("keepWarm", () => {
   afterEach(() => {
+    resetGlobal("simon.dev/turso-keep-warm");
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -215,6 +217,8 @@ describe("keepWarm", () => {
     );
 
     keepWarm();
+    keepWarm();
+    expect(vi.getTimerCount()).toBe(1);
     vi.advanceTimersByTime(59_999);
     expect(statements).toHaveLength(0);
 

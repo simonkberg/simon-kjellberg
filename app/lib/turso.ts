@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
+import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 
 const TIMEOUT_MS = 5000;
@@ -136,9 +137,11 @@ export async function query(
 
 /** Queries Turso every minute, so a visitor after a quiet spell doesn't meet a stalled database. */
 export function keepWarm(): void {
-  setInterval(() => {
-    query("SELECT 1").catch((err: unknown) => {
-      log.warn({ err }, "Turso keep-warm query failed");
-    });
-  }, KEEP_WARM_MS).unref();
+  getGlobal("simon.dev/turso-keep-warm", () =>
+    setInterval(() => {
+      query("SELECT 1").catch((err: unknown) => {
+        log.warn({ err }, "Turso keep-warm query failed");
+      });
+    }, KEEP_WARM_MS).unref(),
+  );
 }
