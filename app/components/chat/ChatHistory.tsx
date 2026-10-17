@@ -11,6 +11,7 @@ import {
 
 import type { Message } from "@/lib/discord/api";
 
+import { arrowFocus } from "./arrowFocus";
 import { ChatMessage } from "./ChatMessage";
 
 const messageIds = (messages: Message[]): string[] =>
@@ -31,25 +32,6 @@ function setTabStop(root: Element, id: string | undefined) {
       if (active) control.removeAttribute("tabindex");
       else control.tabIndex = -1;
     }
-  }
-}
-
-function focusTarget(
-  elements: HTMLElement[],
-  current: number,
-  key: string,
-): HTMLElement | undefined {
-  switch (key) {
-    case "ArrowUp":
-      return elements[current - 1];
-    case "ArrowDown":
-      return elements[current + 1];
-    case "Home":
-      return elements[0];
-    case "End":
-      return elements.at(-1);
-    default:
-      return undefined;
   }
 }
 
@@ -135,18 +117,8 @@ export const ChatHistory = ({
     );
   };
 
-  const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
-    // Leaves shortcuts like Cmd+ArrowDown to the browser.
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
-      return;
-    const elements = messageElements(event.currentTarget);
-    const current = elements.findIndex((element) => element === event.target);
-    if (current === -1) return;
-    const target = focusTarget(elements, current, event.key);
-    if (!target) return;
-    event.preventDefault();
-    target.focus();
-  };
+  const navigate = (event: KeyboardEvent<HTMLDivElement>) =>
+    arrowFocus(event, messageElements(event.currentTarget));
 
   return (
     <div className="chat-history">

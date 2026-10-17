@@ -14,6 +14,8 @@ import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
+import { arrowFocus } from "./arrowFocus";
+
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
   react: (messageId: string, emoji: string) => void;
@@ -28,29 +30,6 @@ function columns(buttons: HTMLElement[]): number {
   const top = buttons[0]?.offsetTop;
   const wrap = buttons.findIndex((button) => button.offsetTop !== top);
   return wrap === -1 ? buttons.length : wrap;
-}
-
-function pickerIndex(
-  buttons: HTMLElement[],
-  current: number,
-  key: string,
-): number | undefined {
-  switch (key) {
-    case "ArrowLeft":
-      return current - 1;
-    case "ArrowRight":
-      return current + 1;
-    case "ArrowUp":
-      return current - columns(buttons);
-    case "ArrowDown":
-      return current + columns(buttons);
-    case "Home":
-      return 0;
-    case "End":
-      return buttons.length - 1;
-    default:
-      return undefined;
-  }
 }
 
 export const ChatReactionPicker = ({
@@ -97,15 +76,8 @@ export const ChatReactionPicker = ({
       if (event.shiftKey) event.preventDefault();
       return;
     }
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
-      return;
     const buttons = [...picker.querySelectorAll("button")];
-    const current = buttons.findIndex((button) => button === event.target);
-    const index = pickerIndex(buttons, current, event.key);
-    if (index === undefined) return;
-    // Even at an edge, so the arrow doesn't scroll the chat behind the picker.
-    event.preventDefault();
-    buttons[index]?.focus();
+    arrowFocus(event, buttons, columns(buttons));
   };
 
   return (
