@@ -1,7 +1,6 @@
 import "server-only";
 import { type JWTPayload, jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { forbidden } from "next/navigation";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
@@ -33,7 +32,7 @@ export async function decrypt(session: string | undefined) {
     });
     return SessionSchema.parse(payload);
   } catch (err) {
-    log.error({ err }, "Failed to verify session");
+    log.warn({ err }, "Failed to verify session");
     return;
   }
 }
@@ -46,9 +45,8 @@ async function readSession() {
 export async function getSession() {
   const session = await readSession();
 
-  if (!session) {
-    return forbidden();
-  }
+  // proxy.ts forwards a session on every request it matches.
+  if (!session) throw new Error("No session on the request");
 
   return session;
 }
