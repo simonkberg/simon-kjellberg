@@ -72,6 +72,7 @@ export const ChatEmojiSuggestions = ({
 
   const matches = query ? searchEmoji(emoji, query, LIMIT) : REACTION_EMOJI;
   const shown = matches.length > 0;
+  const chosen = active === null ? undefined : matches[active];
 
   // aria-expanded is set here, since only this knows whether the list has loaded and has matches.
   useEffect(() => {
@@ -97,13 +98,12 @@ export const ChatEmojiSuggestions = ({
         onDismiss();
         return;
       }
-      const match = active === null ? undefined : matches[active];
       if (
-        match &&
+        chosen &&
         (event.key === "Enter" || (event.key === "Tab" && !event.shiftKey))
       ) {
         event.preventDefault();
-        onPick(match.emoji);
+        onPick(chosen.emoji);
         return;
       }
       // Home and End stay with the caret; until one is chosen, left and right do too.
@@ -175,6 +175,11 @@ export const ChatEmojiSuggestions = ({
           onClick={() => onPick(emoji)}
         />
       ))}
+      {chosen && (
+        <p className="name" aria-hidden="true">
+          :{chosen.name}:
+        </p>
+      )}
     </div>
   );
 };

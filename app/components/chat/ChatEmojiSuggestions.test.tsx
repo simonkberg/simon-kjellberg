@@ -235,6 +235,20 @@ describe("ChatEmojiSuggestions", () => {
     expect(input).toHaveValue("hi :fire");
   });
 
+  it("names the chosen emoji under the list", async () => {
+    const { user, input } = setup();
+    const name = () => document.querySelector(".emoji-picker > .name");
+
+    await user.type(input, ":f");
+    await screen.findByRole("listbox");
+    expect(name()).toBeNull();
+
+    await user.type(input, "i");
+    expect(name()).toHaveTextContent(":firefighter:");
+    await user.keyboard("{ArrowRight}");
+    expect(name()).toHaveTextContent(":fire:");
+  });
+
   it("shows each emoji's shortcode as its tooltip", async () => {
     const { user, input } = setup();
 

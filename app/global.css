@@ -1564,6 +1564,15 @@ ul {
     }
   }
 
+  > .name {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0.25em 0.5ch 0;
+    color: var(--muted);
+    font-size: var(--tip-size);
+    overflow-wrap: anywhere;
+  }
+
   /* Opens above what opened it; without anchor positioning it stays centred. */
   @supports (position-area: top) {
     margin: 0.25lh 0;
