@@ -82,7 +82,10 @@ export function useTooltip() {
         }, LONG_PRESS_MS);
       },
       onPointerUp: () => clearTimeout(press.current.timer),
-      onPointerCancel: () => clearTimeout(press.current.timer),
+      onPointerCancel: () => {
+        clearTimeout(press.current.timer);
+        press.current.held = false;
+      },
       onClickCapture: (event: MouseEvent) => {
         if (!press.current.held) {
           hide();

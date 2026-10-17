@@ -178,6 +178,20 @@ describe("Tooltip", () => {
     expect(isOpen()).toBe(false);
   });
 
+  it("activates on a click after a long press that turned into a scroll", () => {
+    vi.useFakeTimers();
+    const onClick = vi.fn();
+    render(<Button onClick={onClick} />);
+    const button = screen.getByRole("button", { name: "Reply" });
+
+    fireEvent.pointerDown(button, { pointerType: "touch" });
+    vi.advanceTimersByTime(500);
+    fireEvent.pointerCancel(button, { pointerType: "touch" });
+    fireEvent.click(button);
+
+    expect(onClick).toHaveBeenCalled();
+  });
+
   it("activates from the keyboard after a long press that ended off the button", () => {
     vi.useFakeTimers();
     const onClick = vi.fn();
