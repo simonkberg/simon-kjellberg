@@ -135,7 +135,8 @@ export class ChannelStore {
     switch (event.t) {
       case "MESSAGE_CREATE": {
         const { member, ...message } = event.d;
-        if (!message.author.bot) {
+        // Without `member` there's no nick, and a name looked up with one would be lost.
+        if (member && !message.author.bot) {
           this.#rememberName(
             message.author.id,
             displayName(message.author, member),
@@ -167,12 +168,13 @@ export class ChannelStore {
         if (member && !member.user.bot) {
           this.#rememberName(user_id, displayName(member.user, member));
         }
-        this.#react(message_id, emoji, user_id, 1);
+        // Bots aren't named, matching who REST lists as reacting.
+        this.#react(message_id, emoji, user_id, 1, member?.user.bot === true);
         return;
       }
       case "MESSAGE_REACTION_REMOVE": {
         const { message_id, user_id, emoji } = event.d;
-        this.#react(message_id, emoji, user_id, -1);
+        this.#react(message_id, emoji, user_id, -1, false);
         return;
       }
       case "MESSAGE_REACTION_REMOVE_ALL":
@@ -263,7 +265,13 @@ export class ChannelStore {
     }
   }
 
-  #react(messageId: string, emoji: Emoji, userId: string, delta: 1 | -1) {
+  #react(
+    messageId: string,
+    emoji: Emoji,
+    userId: string,
+    delta: 1 | -1,
+    fromBot: boolean,
+  ) {
     // Custom guild emoji never show on the site.
     if (emoji.id !== null || emoji.name === null) return;
     const message = this.#messages.get(messageId);
@@ -303,7 +311,7 @@ export class ChannelStore {
     if (!reactors) {
       // A fetch already in flight would miss this event.
       this.#reactorFetches.delete(`${messageId}/${name}`);
-    } else if (!isBot) {
+    } else if (!isBot && !fromBot) {
       if (delta > 0) reactors.add(userId);
       else reactors.delete(userId);
     }

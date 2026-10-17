@@ -373,6 +373,39 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
   });
 
+  it("should leave other bots out of who reacted, as REST does", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_REACTION_ADD",
+      d: {
+        ...react("MESSAGE_REACTION_ADD", "other-bot").d,
+        member: { user: { id: "other-bot", bot: true, username: "b" } },
+      },
+    });
+
+    expect(store.message("1")?.reactions).toMatchObject([{ count: 1 }]);
+    expect(await store.reactorIds("1", "😄")).toEqual([]);
+  });
+
+  it("should keep a looked-up name over an event without member data", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+    await store.memberName("user-2");
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: {
+        ...message("2", { author: { id: "user-2", username: "two" } }),
+        channel_id: CHANNEL,
+      },
+    });
+
+    expect(await store.memberName("user-2")).toBe("member user-2");
+    expect(source.fetchMemberName).toHaveBeenCalledOnce();
+  });
+
   it("should drop someone who takes their reaction back", async () => {
     const { store } = createStore();
     await store.messages();
