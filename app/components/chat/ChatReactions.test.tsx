@@ -104,6 +104,17 @@ describe("ChatReactionPicker", () => {
     expect(items[0]).toHaveFocus();
   });
 
+  it("leaves other keys and modified arrows to the browser", async () => {
+    const user = userEvent.setup();
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
+    getEmoji("thumbsup").focus();
+
+    await user.keyboard("a{Alt>}{ArrowRight}{/Alt}");
+
+    expect(getEmoji("thumbsup")).toHaveFocus();
+  });
+
   it.each(["{Tab}", "{Shift>}{Tab}{/Shift}"])("closes on %s", async (keys) => {
     const user = userEvent.setup();
     renderWithContext(<ChatReactionPicker messageId="1" />);
