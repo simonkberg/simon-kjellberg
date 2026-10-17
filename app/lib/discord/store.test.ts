@@ -32,7 +32,7 @@ function createStore(messages: DiscordMessage[] = [message("1")]) {
     fetchMemberName: vi.fn<StoreSource["fetchMemberName"]>(
       async (id) => `member ${id}`,
     ),
-    botUserId: () => BOT,
+    botUserId: vi.fn<StoreSource["botUserId"]>(() => BOT),
   };
   return { store: new ChannelStore(source), source };
 }
@@ -371,6 +371,26 @@ describe("ChannelStore", () => {
 
     await store.reactorIds("1", "😄");
     expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("should keep the seed's mirror flag while the bot's id is unknown", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 2, me: true, emoji: SMILE }] }),
+    ]);
+    source.botUserId.mockReturnValue(null);
+    source.fetchReactors.mockResolvedValue([
+      { id: BOT, bot: true },
+      { id: "user-2" },
+    ]);
+    await store.messages();
+    const listener = vi.fn();
+    store.listen(listener);
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
+    expect((await stored(store, "1"))?.reactions).toMatchObject([
+      { count: 2, me: true },
+    ]);
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it("should keep a newer reactor fetch when an older one fails", async () => {

@@ -129,11 +129,12 @@ export class ChannelStore {
     const reaction = this.#messages
       .get(messageId)
       ?.reactions?.find((r) => r.emoji.id === null && r.emoji.name === name);
-    const me = reactors.some((r) => r.id === this.#source.botUserId());
-    if (
-      !reaction ||
-      (reaction.count === reactors.length && reaction.me === me)
-    ) {
+    if (!reaction) return;
+    const botId = this.#source.botUserId();
+    // Until the bot knows its id, the seed's flag is the best there is.
+    const me =
+      botId === null ? reaction.me : reactors.some((r) => r.id === botId);
+    if (reaction.count === reactors.length && reaction.me === me) {
       return;
     }
     this.#updateReactions(messageId, (rs) =>
