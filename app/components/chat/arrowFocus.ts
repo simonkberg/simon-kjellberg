@@ -24,10 +24,7 @@ function targetIndex(
   }
 }
 
-/**
- * Moves focus between `elements` with the arrow keys, Home and End: up and down a list, or across a grid of `columns`.
- * Returns whether the key navigates, even where it is past the ends and left to the browser.
- */
+/** Returns whether the key navigates, even past the ends, where it is left to the browser. */
 export function arrowFocus(
   event: KeyboardEvent,
   elements: HTMLElement[],
