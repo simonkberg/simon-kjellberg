@@ -67,11 +67,17 @@ export const ChatReactionPicker = ({
     setOpen(event.newState === "open");
     // The emoji unmount as it closes, which would otherwise leave focus on the page.
     if (
-      event.newState === "closed" &&
-      event.currentTarget.contains(document.activeElement)
+      event.newState !== "closed" ||
+      !event.currentTarget.contains(document.activeElement)
     ) {
-      trigger.current?.focus();
+      return;
     }
+    const button = trigger.current;
+    // A pick disables the button before the picker closes.
+    (button?.disabled
+      ? button.closest<HTMLElement>(".chat-message")
+      : button
+    )?.focus();
   };
 
   const focusFirst = (event: ToggleEvent<HTMLDivElement>) => {

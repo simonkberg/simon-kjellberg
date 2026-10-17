@@ -126,6 +126,21 @@ describe("ChatReactionPicker", () => {
     expect(screen.getByRole("button", { name: "Add reaction" })).toHaveFocus();
   });
 
+  it("returns focus to its message when a pick has disabled its button", () => {
+    renderWithContext(
+      <article className="chat-message" tabIndex={-1}>
+        <ChatReactionPicker messageId="1" />
+      </article>,
+      { reacting: new Set(["1"]) },
+    );
+    openPicker();
+    getEmoji("heart").focus();
+
+    sendToggle("beforetoggle", "closed");
+
+    expect(screen.getByRole("article")).toHaveFocus();
+  });
+
   it("disables the button only while its own message's reaction is pending", () => {
     renderWithContext(
       <>
