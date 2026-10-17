@@ -133,6 +133,7 @@ describe("ChatReactionPicker", () => {
     getEmoji("heart").focus();
 
     sendToggle("beforetoggle", "closed");
+    sendToggle("toggle", "closed");
 
     expect(screen.getByRole("button", { name: "Add reaction" })).toHaveFocus();
   });
