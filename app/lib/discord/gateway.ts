@@ -37,6 +37,7 @@ const GatewayPayloadSchema = z.object({
 const HelloDataSchema = z.object({ heartbeat_interval: z.number() });
 
 const ReadyDataSchema = z.object({
+  user: z.object({ id: z.string() }),
   session_id: z.string(),
   resume_gateway_url: z.string(),
 });
@@ -47,7 +48,10 @@ const CHANNEL_EVENTS: ReadonlySet<string> = new Set(
   ChannelEventSchema.options.map((option) => option.shape.t.value),
 );
 
-export type EventSubscriber = (event: ChannelEvent) => void;
+/** A `READY` starts a new session: events missed since the last one are lost, not replayed. */
+export type GatewayEvent = ChannelEvent | { t: "READY" };
+
+export type EventSubscriber = (event: GatewayEvent) => void;
 export type StatusSubscriber = (ready: boolean) => void;
 
 class DiscordGateway {
@@ -57,6 +61,7 @@ class DiscordGateway {
 
   // Session state (for resume)
   #sessionId: string | null = null;
+  #userId: string | null = null;
   #resumeGatewayUrl: string | null = null;
   #seq: number | null = null;
 
@@ -84,7 +89,7 @@ class DiscordGateway {
     this.#subscribers.delete(callback);
   }
 
-  #notifySubscribers(event: ChannelEvent): void {
+  #notifySubscribers(event: GatewayEvent): void {
     for (const callback of this.#subscribers) {
       try {
         callback(event);
@@ -92,6 +97,10 @@ class DiscordGateway {
         log.error({ err }, "Subscriber callback error");
       }
     }
+  }
+
+  get userId(): string | null {
+    return this.#userId;
   }
 
   addStatusSubscriber(callback: StatusSubscriber): void {
@@ -315,6 +324,8 @@ class DiscordGateway {
         this.#resumeGatewayUrl = ready.resume_gateway_url;
         this.#reconnectAttempts = 0;
         log.info({ sessionId: this.#sessionId }, "Gateway READY");
+        this.#userId = ready.user.id;
+        this.#notifySubscribers({ t: "READY" });
         this.#onReady();
         break;
       }
@@ -385,7 +396,7 @@ function getGateway(): DiscordGateway {
   return getGlobal("simon.dev/discord-gateway", () => new DiscordGateway());
 }
 
-/** Calls back with every message and reaction event in the site's channel. */
+/** Calls back with every new session and every message and reaction event in the site's channel. */
 export async function subscribe(
   callback: EventSubscriber,
 ): Promise<() => void> {
@@ -393,6 +404,15 @@ export async function subscribe(
   gw.addSubscriber(callback);
   await gw.connect();
   return () => gw.removeSubscriber(callback);
+}
+
+export function connect(): Promise<void> {
+  return getGateway().connect();
+}
+
+/** The bot's own user id, once the gateway has identified. */
+export function getBotUserId(): string | null {
+  return getGateway().userId;
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */

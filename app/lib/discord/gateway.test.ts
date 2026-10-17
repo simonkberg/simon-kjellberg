@@ -53,6 +53,7 @@ const PayloadSchema = z.preprocess(
 type Payload = z.infer<typeof PayloadSchema>;
 
 const DEFAULT_SESSION = {
+  user: { id: "bot-user-id" },
   session_id: "test-session-id",
   resume_gateway_url: "wss://gateway.discord.gg",
 } as const;
@@ -83,7 +84,11 @@ describe("subscribe", () => {
     onClose,
   }: {
     heartbeatInterval?: number;
-    session?: { session_id: string; resume_gateway_url: string };
+    session?: {
+      user: { id: string };
+      session_id: string;
+      resume_gateway_url: string;
+    };
     sequence?: number;
     onMessage?: (payload: Payload, client: NonNullable<Client>) => void;
     onClose?: (event: CloseEvent) => void;
@@ -240,6 +245,7 @@ describe("subscribe", () => {
               createPayload(
                 GatewayOpcode.DISPATCH,
                 {
+                  user: { id: "bot-user-id" },
                   session_id: "test-session-id",
                   resume_gateway_url: "wss://gateway.discord.gg",
                 },
@@ -271,6 +277,7 @@ describe("subscribe", () => {
 
     const callback = vi.fn();
     await subscribe(callback);
+    callback.mockClear();
 
     expect(callback).not.toHaveBeenCalled();
 
@@ -309,6 +316,7 @@ describe("subscribe", () => {
 
     const callback = vi.fn();
     await subscribe(callback);
+    callback.mockClear();
     getLastClient(gateway.clients)?.send(
       createPayload(
         GatewayOpcode.DISPATCH,
@@ -333,6 +341,7 @@ describe("subscribe", () => {
 
     const callback = vi.fn();
     await subscribe(callback);
+    callback.mockClear();
 
     // Send MESSAGE_CREATE for a DIFFERENT channel
     getLastClient(gateway.clients)?.send(
@@ -355,6 +364,8 @@ describe("subscribe", () => {
 
     const callback = vi.fn();
     const unsubscribe = await subscribe(callback);
+    callback.mockClear();
+    callback.mockClear();
     const client = getLastClient(gateway.clients);
 
     // First message should trigger callback
@@ -399,6 +410,28 @@ describe("subscribe", () => {
     );
     await vi.advanceTimersByTimeAsync(0);
     expect(callback).toHaveBeenCalledTimes(1); // Still 1, not 2
+  });
+
+  it("should notify subscribers of a new session", async () => {
+    const { getBotUserId, subscribe } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    expect(getBotUserId()).toBeNull();
+
+    const callback = vi.fn();
+    await subscribe(callback);
+
+    expect(callback).toHaveBeenCalledExactlyOnceWith({ t: "READY" });
+    expect(getBotUserId()).toBe("bot-user-id");
+  });
+
+  it("should connect without a subscriber", async () => {
+    const { connect } = await import("./gateway");
+    server.use(createHandshakeHandler());
+
+    await connect();
+
+    expect(gateway.clients.size).toBe(1);
   });
 
   it("should share one connection between concurrent subscribers", async () => {
@@ -522,7 +555,11 @@ describe("subscribe", () => {
 
     server.use(
       createHandshakeHandler({
-        session: { session_id: "test-session-id", resume_gateway_url: "nope" },
+        session: {
+          user: { id: "bot-user-id" },
+          session_id: "test-session-id",
+          resume_gateway_url: "nope",
+        },
       }),
     );
 
@@ -547,7 +584,11 @@ describe("subscribe", () => {
 
     server.use(
       createHandshakeHandler({
-        session: { session_id: "test-session-id", resume_gateway_url: "nope" },
+        session: {
+          user: { id: "bot-user-id" },
+          session_id: "test-session-id",
+          resume_gateway_url: "nope",
+        },
       }),
     );
 
@@ -736,6 +777,7 @@ describe("subscribe", () => {
     server.use(
       createHandshakeHandler({
         session: {
+          user: { id: "bot-user-id" },
           session_id: "test-session-id",
           resume_gateway_url: "wss://resume.discord.gg",
         },
@@ -808,6 +850,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
+                    user: { id: "bot-user-id" },
                     session_id: "test-session-id",
                     resume_gateway_url: "wss://resume.discord.gg",
                   },
@@ -824,6 +867,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
+                    user: { id: "bot-user-id" },
                     session_id: "new-session-id",
                     resume_gateway_url: "wss://gateway.discord.gg",
                   },
@@ -873,6 +917,7 @@ describe("subscribe", () => {
               createPayload(
                 GatewayOpcode.DISPATCH,
                 {
+                  user: { id: "bot-user-id" },
                   session_id: "test-session-id",
                   resume_gateway_url: "wss://gateway.discord.gg",
                 },
@@ -920,6 +965,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
+                    user: { id: "bot-user-id" },
                     session_id: "test-session-id",
                     resume_gateway_url: "wss://resume.discord.gg",
                   },
@@ -936,6 +982,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
+                    user: { id: "bot-user-id" },
                     session_id: "new-session-id",
                     resume_gateway_url: "wss://gateway.discord.gg",
                   },
@@ -980,6 +1027,7 @@ describe("subscribe", () => {
 
       const callback = vi.fn();
       await subscribe(callback);
+      callback.mockClear();
       await dispatch("MESSAGE_CREATE", {
         type: 0,
         id: "msg-123",
@@ -1011,6 +1059,7 @@ describe("subscribe", () => {
 
       const callback = vi.fn();
       await subscribe(callback);
+      callback.mockClear();
       await dispatch("MESSAGE_UPDATE", {
         id: "msg-123",
         channel_id: "test-discord-channel-id",
@@ -1049,6 +1098,7 @@ describe("subscribe", () => {
 
       const callback = vi.fn();
       await subscribe(callback);
+      callback.mockClear();
       await dispatch(event, data);
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({ t: event, d: data });
@@ -1061,6 +1111,7 @@ describe("subscribe", () => {
 
       const callback = vi.fn();
       await subscribe(callback);
+      callback.mockClear();
       await dispatch("MESSAGE_DELETE", {
         channel_id: "test-discord-channel-id",
       });
@@ -1078,6 +1129,7 @@ describe("subscribe", () => {
 
       const callback = vi.fn();
       await subscribe(callback);
+      callback.mockClear();
       await dispatch("TYPING_START", { channel_id: "test-discord-channel-id" });
 
       expect(callback).not.toHaveBeenCalled();

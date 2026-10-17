@@ -1,0 +1,324 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { log } from "@/lib/log";
+
+import type { DiscordMessage } from "./schemas";
+import { ChannelStore, type StoreSource, WINDOW } from "./store";
+
+vi.mock(import("server-only"), () => ({}));
+
+const CHANNEL = "test-discord-channel-id";
+const BOT = "bot-user-id";
+const SMILE = { id: null, name: "😄" };
+
+function message(id: string, overrides: Partial<DiscordMessage> = {}) {
+  return {
+    type: 0,
+    id,
+    author: { id: "user-1", username: "user1" },
+    content: `message ${id}`,
+    timestamp: "2025-01-01T00:00:00.000000+00:00",
+    edited_timestamp: null,
+    ...overrides,
+  } satisfies DiscordMessage;
+}
+
+function createStore(messages: DiscordMessage[] = [message("1")]) {
+  const source = {
+    fetchMessages: vi.fn<StoreSource["fetchMessages"]>(async () => messages),
+    fetchReactorIds: vi.fn<StoreSource["fetchReactorIds"]>(async () => []),
+    fetchMemberName: vi.fn<StoreSource["fetchMemberName"]>(
+      async (id) => `member ${id}`,
+    ),
+    botUserId: () => BOT,
+  };
+  return { store: new ChannelStore(source), source };
+}
+
+function react(
+  t: "MESSAGE_REACTION_ADD" | "MESSAGE_REACTION_REMOVE",
+  userId: string,
+  messageId = "1",
+  emoji: { id: string | null; name: string | null } = SMILE,
+) {
+  return {
+    t,
+    d: { channel_id: CHANNEL, message_id: messageId, user_id: userId, emoji },
+  } as const;
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("ChannelStore", () => {
+  it("should seed once and answer from memory after", async () => {
+    const { store, source } = createStore();
+
+    await store.messages();
+    await store.messages();
+
+    expect(source.fetchMessages).toHaveBeenCalledOnce();
+  });
+
+  it("should tell listeners when a seed lands and after each event, not before", async () => {
+    const { store, source } = createStore();
+    const first = Promise.withResolvers<DiscordMessage[]>();
+    source.fetchMessages.mockReturnValueOnce(first.promise);
+    const listener = vi.fn();
+    store.listen(listener);
+
+    const messages = store.messages();
+    store.apply({ t: "READY" });
+    expect(listener).not.toHaveBeenCalled();
+    first.resolve([message("1")]);
+    await messages;
+    expect(listener).toHaveBeenCalledOnce();
+
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "1" } });
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it("should log a throwing listener and still tell the rest", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    const { store } = createStore();
+    const listener = vi.fn();
+    store.listen(() => {
+      throw new Error("boom");
+    });
+    store.listen(listener);
+
+    await store.messages();
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(log.error).toHaveBeenCalledOnce();
+  });
+
+  it("should leave out messages the site doesn't show", async () => {
+    const { store } = createStore([message("1"), message("2", { type: 7 })]);
+
+    expect(await store.messages()).toMatchObject([{ id: "1" }]);
+  });
+
+  it("should seed again on a new session and keep serving meanwhile", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+    source.fetchMessages.mockResolvedValueOnce([message("1"), message("2")]);
+
+    store.apply({ t: "READY" });
+    expect(await store.messages()).toHaveLength(1);
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toHaveLength(2);
+    });
+  });
+
+  it("should seed again when an event lands mid-seed", async () => {
+    const { store, source } = createStore();
+    const first = Promise.withResolvers<DiscordMessage[]>();
+    source.fetchMessages.mockReturnValueOnce(first.promise);
+
+    const messages = store.messages();
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "1" } });
+    first.resolve([message("1")]);
+
+    await messages;
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+  });
+
+  it("should give up seeding again after a few attempts", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const { store, source } = createStore();
+    source.fetchMessages.mockImplementation(async () => {
+      store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
+      return [message("1")];
+    });
+
+    expect(await store.messages()).toHaveLength(1);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
+    expect(log.warn).toHaveBeenCalledOnce();
+  });
+
+  it("should retry a failed seed on the next read", async () => {
+    const { store, source } = createStore();
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+
+    await expect(store.messages()).rejects.toThrow("down");
+    expect(await store.messages()).toHaveLength(1);
+  });
+
+  it("should add, edit and delete messages", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("2"), channel_id: CHANNEL },
+    });
+    store.apply({
+      t: "MESSAGE_UPDATE",
+      d: { id: "1", channel_id: CHANNEL, content: "edited" },
+    });
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("3", { type: 7 }), channel_id: CHANNEL },
+    });
+
+    expect(await store.messages()).toMatchObject([
+      { id: "1", content: "edited", author: { id: "user-1" } },
+      { id: "2" },
+    ]);
+
+    store.apply({
+      t: "MESSAGE_DELETE_BULK",
+      d: { channel_id: CHANNEL, ids: ["1", "2"] },
+    });
+    expect(await store.messages()).toEqual([]);
+  });
+
+  it("should ignore an update for a message outside the window", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_UPDATE",
+      d: { id: "old", channel_id: CHANNEL, content: "edited" },
+    });
+
+    expect(store.message("old")).toBeUndefined();
+  });
+
+  it("should keep only the latest messages", async () => {
+    const seed = Array.from({ length: WINDOW }, (_, i) => message(`${i}`));
+    const { store } = createStore(seed);
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("new"), channel_id: CHANNEL },
+    });
+
+    const messages = await store.messages();
+    expect(messages).toHaveLength(WINDOW);
+    expect(messages[0]?.id).toBe("1");
+    expect(messages.at(-1)?.id).toBe("new");
+  });
+
+  it("should count reactions and track the bot's mirror", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+    store.apply(react("MESSAGE_REACTION_ADD", BOT));
+    expect(store.message("1")?.reactions).toEqual([
+      { count: 2, me: true, emoji: SMILE },
+    ]);
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
+
+    store.apply(react("MESSAGE_REACTION_REMOVE", BOT));
+    store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
+    expect(store.message("1")?.reactions).toEqual([]);
+  });
+
+  it("should ignore custom emoji and reactions outside the window", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply(
+      react("MESSAGE_REACTION_ADD", "user-2", "1", { id: "9", name: "x" }),
+    );
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2", "old"));
+    store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
+
+    expect(store.message("1")?.reactions).toBeUndefined();
+  });
+
+  it("should fetch who reacted to a seeded reaction once, then follow events", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    await store.messages();
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
+    expect(source.fetchReactorIds).toHaveBeenCalledOnce();
+  });
+
+  it("should fetch who reacted again when an event lands mid-fetch", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    const first = Promise.withResolvers<string[]>();
+    source.fetchReactorIds
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValue(["user-2", "user-3"]);
+    await store.messages();
+
+    const stale = store.reactorIds("1", "😄");
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+    first.resolve(["user-2"]);
+
+    expect(await stale).toEqual(["user-2"]);
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+  });
+
+  it("should clear reactions by message and by emoji", async () => {
+    const { store } = createStore();
+    await store.messages();
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+    store.apply(
+      react("MESSAGE_REACTION_ADD", "user-2", "1", { id: null, name: "🎉" }),
+    );
+
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_EMOJI",
+      d: { channel_id: CHANNEL, message_id: "1", emoji: SMILE },
+    });
+    expect(store.message("1")?.reactions).toMatchObject([
+      { emoji: { name: "🎉" } },
+    ]);
+
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_ALL",
+      d: { channel_id: CHANNEL, message_id: "1" },
+    });
+    expect(store.message("1")?.reactions).toEqual([]);
+  });
+
+  it("should learn names from events instead of asking", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: {
+        ...message("2", { author: { id: "user-2", global_name: "Two" } }),
+        channel_id: CHANNEL,
+        member: { nick: "Nick" },
+      },
+    });
+    store.apply({
+      t: "MESSAGE_REACTION_ADD",
+      d: {
+        ...react("MESSAGE_REACTION_ADD", "user-3").d,
+        member: { nick: null, user: { id: "user-3", username: "three" } },
+      },
+    });
+
+    expect(await store.memberName("user-2")).toBe("Nick");
+    expect(await store.memberName("user-3")).toBe("three");
+    expect(source.fetchMemberName).not.toHaveBeenCalled();
+  });
+
+  it("should ask for a name once, and again only after a failure", async () => {
+    const { store, source } = createStore();
+    source.fetchMemberName.mockRejectedValueOnce(new Error("down"));
+
+    await expect(store.memberName("user-2")).rejects.toThrow("down");
+    expect(await store.memberName("user-2")).toBe("member user-2");
+    expect(await store.memberName("user-2")).toBe("member user-2");
+    expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
+  });
+});

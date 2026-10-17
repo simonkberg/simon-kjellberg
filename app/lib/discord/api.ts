@@ -4,12 +4,15 @@ import DataLoader from "dataloader";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
+import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { LruMap } from "@/lib/LruMap";
 import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
+import { connect, getBotUserId, subscribe } from "./gateway";
 import { type DiscordMessage, DiscordMessageSchema } from "./schemas";
+import { ChannelStore, WINDOW } from "./store";
 
 const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
@@ -187,29 +190,36 @@ function parseUsernamePrefix(content: string): [string, string] | undefined {
   return match ? [match[1]!, match[2] ?? ""] : undefined;
 }
 
+async function authorName(msg: DiscordMessage): Promise<string> {
+  const name =
+    (await getStore().memberName(msg.author.id)) ??
+    msg.author.global_name ??
+    msg.author.username;
+  if (name === undefined) {
+    throw new Error(`No name for Discord user ${msg.author.id}`);
+  }
+  return name;
+}
+
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
   const parsed = msg.author.bot ? parseUsernamePrefix(msg.content) : undefined;
-  const username = parsed
-    ? parsed[0]
-    : (await userLoader.load(msg.author.id)).name;
+  const username = parsed ? parsed[0] : await authorName(msg);
   const content = (parsed?.[1] ?? msg.content).trim();
   return { username, content };
 }
 
-const userLoader = new DataLoader<string, User>(
-  (keys) =>
-    Promise.allSettled(
-      keys.map(async (userId: string) => {
-        const response = await getGuildMember(userId);
-        return toUser(
-          response.nick ?? response.user.global_name ?? response.user.username,
-        );
-      }),
-    ).then(flattenSettledPromises),
-  { cacheMap: new LruMap(100) },
-);
+async function getMemberName(userId: string): Promise<string | undefined> {
+  try {
+    const { nick, user } = await getGuildMember(userId);
+    return nick ?? user.global_name ?? user.username;
+  } catch (err) {
+    // Someone who left the server has no member; asking again won't change that.
+    if (err instanceof DiscordApiError) return undefined;
+    throw err;
+  }
+}
 
 const discordMessageLoader = new DataLoader<string, DiscordMessage>(
   (keys) =>
@@ -254,46 +264,76 @@ const ReactorsResponseSchema = z.array(
   z.object({ id: z.string(), bot: z.boolean().optional() }),
 );
 
-type ReactorsKey = { messageId: string; emoji: string; count: number };
-
-// Names who reacted on Discord, skipping bots so the mirror doesn't name itself.
-async function getReactors({ messageId, emoji }: ReactorsKey) {
+// Skips bots so the mirror doesn't name itself.
+async function getReactorIds(messageId: string, emoji: string) {
   const reactors = await call(
     "GET",
     reactionEndpoint(messageId, emoji),
     ReactorsResponseSchema,
     { limit: 100 },
   );
-  const people = reactors.filter(({ bot }) => !bot);
-  const users = await userLoader.loadMany(people.map(({ id }) => id));
-  // A reactor who left the server has no member to name, so they stay in the count.
-  return users.flatMap((user) => (user instanceof Error ? [] : [user.name]));
+  return reactors.flatMap(({ id, bot }) => (bot ? [] : [id]));
 }
 
-// Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
-const reactorsLoader = new DataLoader<ReactorsKey, string[], string>(
-  (keys) =>
-    Promise.allSettled(keys.map(getReactors)).then(flattenSettledPromises),
-  {
-    cacheKeyFn: ({ messageId, emoji, count }) =>
-      `${messageId}/${emoji}/${count}`,
-    cacheMap: new LruMap(100),
-  },
-);
+async function getRecentMessages(): Promise<DiscordMessage[]> {
+  const messages = await call(
+    "GET",
+    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
+    GetMessagesResponseSchema,
+    { limit: WINDOW },
+  );
+  return messages.toReversed();
+}
+
+function getStore(): ChannelStore {
+  return getGlobal("simon.dev/discord-store", () => {
+    const store = new ChannelStore({
+      fetchMessages: getRecentMessages,
+      fetchReactorIds: getReactorIds,
+      fetchMemberName: getMemberName,
+      botUserId: getBotUserId,
+    });
+    subscribe((event) => store.apply(event)).catch((err: unknown) => {
+      log.error({ err }, "Channel store failed to subscribe to the gateway");
+    });
+    return store;
+  });
+}
+
+/** Calls back once the history may have changed; rejects if the gateway can't connect. */
+export async function subscribeToChannel(
+  callback: () => void,
+): Promise<() => void> {
+  const unlisten = getStore().listen(callback);
+  try {
+    await connect();
+  } catch (err) {
+    unlisten();
+    throw err;
+  }
+  return unlisten;
+}
 
 async function withDiscordReactors(
   messageId: string,
   reactions: Reaction[],
 ): Promise<Reaction[]> {
+  const store = getStore();
   return Promise.all(
     reactions.map(async (reaction) => {
-      const key = { messageId, emoji: reaction.emoji, count: reaction.count };
       try {
-        const users = await reactorsLoader.load(key);
-        return { ...reaction, users };
+        const ids = await store.reactorIds(messageId, reaction.emoji);
+        const names = await Promise.all(ids.map((id) => store.memberName(id)));
+        // A reactor who left the server has no member to name, so they stay in the count.
+        return {
+          ...reaction,
+          users: names.filter((name) => name !== undefined),
+        };
       } catch (err) {
-        reactorsLoader.clear(key);
-        log.warn({ err, ...key }, "Failed to load reactors");
+        log.warn(
+          { err, messageId, emoji: reaction.emoji },
+          "Failed to load reactors",
+        );
         return reaction;
       }
     }),
@@ -320,25 +360,13 @@ const messageIdComparator = comparing(
   stringComparator,
 );
 
-export async function getChannelMessages(limit = 100): Promise<Message[]> {
-  const response = await call(
-    "GET",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
-    GetMessagesResponseSchema,
-    { limit },
-  );
+export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
+  const response = (await getStore().messages()).slice(-limit);
 
   const messages: Promise<Message>[] = [];
   const replies: Record<string, Promise<Message>[]> = {};
 
   for (const discordMessage of response) {
-    // Only process default messages and replies
-    if (discordMessage.type !== 0 && discordMessage.type !== 19) {
-      continue;
-    }
-
-    discordMessageLoader.prime(discordMessage.id, discordMessage);
-
     const message = Promise.try(async () => {
       const [{ username, content }, reactions] = await Promise.all([
         resolveMessageContent(discordMessage),
@@ -403,7 +431,9 @@ export async function getMessageChain(
     if (seen.has(currentId)) break;
     seen.add(currentId);
 
-    const response: DiscordMessage = await discordMessageLoader.load(currentId);
+    const response: DiscordMessage =
+      getStore().message(currentId) ??
+      (await discordMessageLoader.load(currentId));
 
     const { username, content } = await resolveMessageContent(response);
 
