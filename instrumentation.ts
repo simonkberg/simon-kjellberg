@@ -5,6 +5,7 @@ export async function register() {
     const { bridgeConsole, log } = await import("@/lib/log");
     const { runMigrationsUntilApplied } = await import("@/lib/migrations");
     const { markReady } = await import("@/lib/readiness");
+    const { keepWarm } = await import("@/lib/turso");
 
     bridgeConsole();
     void refreshIpDenyList();
@@ -13,6 +14,7 @@ export async function register() {
     runMigrationsUntilApplied()
       .then(() => {
         markReady("migrations");
+        keepWarm();
         // After migrations, so new bot code never meets an old schema.
         return startBotSubscription();
       })
