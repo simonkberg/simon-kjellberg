@@ -100,7 +100,8 @@ export const ChatEmojiInput = ({
   const chosen = active === null ? undefined : matches[active];
 
   useEffect(() => {
-    if (open) list.current?.showPopover({ source: ref.current ?? undefined });
+    const input = ref.current;
+    if (open && input) list.current?.showPopover({ source: input });
   }, [open, ref]);
 
   // A dismissal holds only for the shortcode it closed on.
@@ -132,7 +133,8 @@ export const ChatEmojiInput = ({
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!open || event.nativeEvent.isComposing) return;
+    const listbox = list.current;
+    if (!open || !listbox || event.nativeEvent.isComposing) return;
     if (event.key === "Escape") {
       event.preventDefault();
       dismiss();
@@ -154,7 +156,7 @@ export const ChatEmojiInput = ({
       setActive(0);
       return;
     }
-    const buttons = [...(list.current?.querySelectorAll("button") ?? [])];
+    const buttons = [...listbox.querySelectorAll("button")];
     const next = arrowIndex(
       event,
       active,
