@@ -199,13 +199,11 @@ describe("ChannelStore", () => {
     expect(await store.messages()).toHaveLength(2);
   });
 
-  it("should keep the live window when a reseed gives up", async () => {
+  it("should keep the live window when a refill gives up, but not after a gap", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.useFakeTimers();
-    const { store, source } = createStore();
+    const { store, source } = createStore([message("0"), message("1")]);
     await store.messages();
-    const listener = vi.fn();
-    store.listen(listener);
     source.fetchMessages.mockImplementation(async () => {
       store.apply({
         t: "MESSAGE_CREATE",
@@ -214,19 +212,19 @@ describe("ChannelStore", () => {
       return [message("1")];
     });
 
-    store.apply({ t: "READY" });
-    await vi.advanceTimersByTimeAsync(0);
-
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "0" } });
+    await vi.advanceTimersByTimeAsync(10_000);
     expect(source.fetchMessages).toHaveBeenCalledTimes(4);
     expect(await store.messages()).toMatchObject([{ id: "1" }, { id: "2" }]);
-    expect(listener).toHaveBeenCalledTimes(3);
 
-    source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
     source.fetchReactors.mockResolvedValue(users(["user-2", "user-3"]));
     expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
-    await vi.advanceTimersByTimeAsync(10_000);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(5);
+
+    store.apply({ t: "READY" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(7);
+    expect(await store.messages()).toMatchObject([{ id: "1" }]);
   });
 
   it("should seed again after a failed or changing reseed until one lands", async () => {

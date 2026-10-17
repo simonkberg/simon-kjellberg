@@ -49,6 +49,8 @@ export class ChannelStore {
   #seeded = false;
   // Set while what the store holds may have missed events, until a seed succeeds.
   #stale = false;
+  // Set until a seed lands after a gap, when any fetch beats the window it has.
+  #gap = true;
   #reseedTimer: ReturnType<typeof setTimeout> | undefined;
   #reseedDelay = RESEED_DELAY_MS;
   #changed = false;
@@ -172,6 +174,7 @@ export class ChannelStore {
     if (event.t === "READY" || event.t === "MISSED") {
       // Names refresh once a session, which bounds how long a missed nick change lasts.
       if (event.t === "READY") this.#names.clear();
+      this.#gap = true;
       this.#reactors.clear();
       this.#older.clear();
       this.#reseed();
@@ -301,7 +304,7 @@ export class ChannelStore {
       if (this.#changed) {
         log.warn({ attempt }, "Seeded the channel store while it was changing");
         // Events already applied to the window are newer than this fetch.
-        if (this.#seeded) {
+        if (!this.#gap) {
           this.#stale = true;
           return;
         }
@@ -329,6 +332,7 @@ export class ChannelStore {
       }
       this.#reactorFetches.clear();
       this.#seeded = true;
+      this.#gap = false;
       this.#stale = this.#changed;
       this.#notify();
       return;
