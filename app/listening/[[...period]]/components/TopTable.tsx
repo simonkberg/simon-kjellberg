@@ -10,8 +10,8 @@ interface Ranked {
 }
 
 type TextKey<Row> = {
-  [K in keyof Row]: Row[K] extends string ? K : never;
-}[keyof Row];
+  [K in keyof Row & string]: Row[K] extends string ? K : never;
+}[keyof Row & string];
 
 interface Labelled {
   label: string;
@@ -21,9 +21,10 @@ export interface TopTableColumn<Row> extends Labelled {
   key: TextKey<Row>;
 }
 
-export interface TopTableProps<Row extends Ranked> {
+export interface TopTableProps<Result, Row extends Ranked> {
+  result: Promise<Result>;
   // Undefined when the list failed to load.
-  rows: Promise<readonly Row[] | undefined>;
+  rows: (result: Result) => readonly Row[] | undefined;
   noun: string;
   columns: readonly TopTableColumn<Row>[];
 }
@@ -62,14 +63,15 @@ const Head = ({ columns }: { columns: readonly Labelled[] }) => (
   </>
 );
 
-export const TopTable = <Row extends Ranked>({
+export const TopTable = <Result, Row extends Ranked>({
+  result,
   rows,
   noun,
   columns,
-}: TopTableProps<Row>) => {
-  const result = use(rows);
+}: TopTableProps<Result, Row>) => {
+  const items = rows(use(result));
 
-  if (result === undefined) {
+  if (items === undefined) {
     return <p>Top {noun} are temporarily unavailable :(</p>;
   }
 
@@ -77,11 +79,11 @@ export const TopTable = <Row extends Ranked>({
     <table>
       <Head columns={columns} />
       <tbody>
-        {result.map((row) => (
+        {items.map((row) => (
           <tr key={`${row.rank}-${row.name}`}>
             <td className="numeric">{row.rank}</td>
             {columns.map((column) => (
-              <td key={column.label}>{String(row[column.key])}</td>
+              <td key={column.key}>{String(row[column.key])}</td>
             ))}
             <td className="numeric">
               <AnimatedNumber value={row.playcount} />

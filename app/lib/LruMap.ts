@@ -14,13 +14,12 @@ export class LruMap<K, V> {
     return value;
   }
 
-  set(key: K, value: V): this {
+  set(key: K, value: V): void {
     this.#map.delete(key);
     this.#map.set(key, value);
     if (this.#map.size > this.#maxSize) {
       this.#map.delete(this.#map.keys().next().value as K);
     }
-    return this;
   }
 
   delete(key: K): boolean {

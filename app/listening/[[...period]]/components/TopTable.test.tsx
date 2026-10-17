@@ -9,6 +9,7 @@ vi.mock(import("@/components/AnimatedNumber"), () => ({
   AnimatedNumber: ({ value }: { value: number }) => <span>{value}</span>,
 }));
 
+const identity = (rows: TopTrack[] | undefined) => rows;
 const columns: TopTableColumn<TopTrack>[] = [
   { label: "Track", key: "name" },
   { label: "Artist", key: "artist" },
@@ -24,7 +25,8 @@ describe("TopTable", () => {
     await act(async () =>
       render(
         <TopTable
-          rows={Promise.resolve(rows)}
+          result={Promise.resolve(rows)}
+          rows={identity}
           noun="tracks"
           columns={columns}
         />,
@@ -47,7 +49,8 @@ describe("TopTable", () => {
     await act(async () =>
       render(
         <TopTable
-          rows={Promise.resolve(undefined)}
+          result={Promise.resolve(undefined)}
+          rows={identity}
           noun="tracks"
           columns={columns}
         />,
