@@ -78,9 +78,10 @@ describe("Tooltip", () => {
     render(<Button />);
 
     await userEvent.hover(screen.getByRole("button", { name: "Reply" }));
-    fireEvent.keyDown(document.body, { key: "Escape" });
+    const notCancelled = fireEvent.keyDown(document.body, { key: "Escape" });
 
     expect(isOpen()).toBe(false);
+    expect(notCancelled).toBe(false);
   });
 
   it("closes on a press anywhere", async () => {

@@ -38,7 +38,10 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
     document.addEventListener(
       "keydown",
       (event) => {
-        if (event.key === "Escape") hide();
+        if (event.key !== "Escape") return;
+        // Close only the tooltip, not the popover it sits over.
+        event.preventDefault();
+        hide();
       },
       { signal },
     );
