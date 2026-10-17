@@ -24,7 +24,7 @@ const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
         (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
       ),
     );
-    return names.size ? [[qualified(unicode), ...names]] : [];
+    return [[qualified(unicode), ...names]];
   },
 );
 

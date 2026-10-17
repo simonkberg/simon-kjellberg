@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -123,7 +123,7 @@ describe("ChatEmojiSuggestions", () => {
     expect(input).toHaveValue("💀");
   });
 
-  it("closes on Escape without clearing the reply, until the next keystroke", async () => {
+  it("closes on Escape without clearing the reply, until the shortcode changes", async () => {
     const { user, input, setReplyToId } = setup("message-id");
 
     await user.type(input, ":sk");
@@ -133,8 +133,47 @@ describe("ChatEmojiSuggestions", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(setReplyToId).not.toHaveBeenCalled();
 
-    await user.keyboard("u");
+    await user.click(input);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    await user.keyboard("{ArrowLeft}");
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("keeps the choice within the list at its ends", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, ":fire");
+    await screen.findByRole("listbox");
+    await user.keyboard("{ArrowUp}{ArrowLeft}");
+    expect(chosen()).toHaveAccessibleName("fire");
+    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowDown}");
+
+    expect(chosen()).toHaveAccessibleName("firefighter");
+  });
+
+  it("leaves keys to an input method mid-composition", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, ":fire");
+    await screen.findByRole("listbox");
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+
+    expect(input).toHaveValue(":fire");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("closes when the browser dismisses it, as on a click outside", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, ":fire");
+    const picker = await screen.findByRole("listbox");
+    fireEvent(
+      picker,
+      Object.assign(new Event("toggle"), { newState: "closed" }),
+    );
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("closes when focus moves on", async () => {
@@ -146,6 +185,16 @@ describe("ChatEmojiSuggestions", () => {
 
     expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("stays open when a tap takes focus without a new target", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, ":fire");
+    await screen.findByRole("listbox");
+    fireEvent.blur(input, { relatedTarget: null });
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
   });
 
   it("inserts a clicked emoji and keeps focus in the input", async () => {
@@ -171,7 +220,7 @@ describe("ChatEmojiSuggestions", () => {
     );
   });
 
-  it.each(["12:30", "https://simon.dev", ":)"])(
+  it.each(["12:30", "https://simon.dev", ":)", ":zzz"])(
     "stays closed for %s",
     async (text) => {
       const { user, input } = setup();

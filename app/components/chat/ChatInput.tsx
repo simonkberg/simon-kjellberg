@@ -17,7 +17,10 @@ import { requestFormReset } from "react-dom";
 import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
 
 import { CaretBuddy } from "./CaretBuddy";
-import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
+import {
+  ChatEmojiSuggestions,
+  prefetchShortcodes,
+} from "./ChatEmojiSuggestions";
 import { ChatToast } from "./ChatToast";
 
 const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
@@ -76,14 +79,20 @@ export const ChatInput = ({
     });
   }
 
+  // A dismissal holds only for the shortcode it closed on.
+  function trackShortcode(input: HTMLInputElement) {
+    const typed = typedShortcode(input);
+    if (typed !== shortcode) setDismissed(false);
+    setShortcode(typed);
+  }
+
   function onChange(event: ChangeEvent<HTMLInputElement>) {
     setInputValue(event.target.value);
-    setShortcode(typedShortcode(event.target));
-    setDismissed(false);
+    trackShortcode(event.target);
   }
 
   function onSelect(event: SyntheticEvent<HTMLInputElement>) {
-    setShortcode(typedShortcode(event.currentTarget));
+    trackShortcode(event.currentTarget);
   }
 
   function pickEmoji(emoji: string) {
@@ -139,6 +148,7 @@ export const ChatInput = ({
             value={inputValue}
             onChange={onChange}
             onSelect={onSelect}
+            onFocus={prefetchShortcodes}
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"

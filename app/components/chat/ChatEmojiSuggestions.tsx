@@ -21,13 +21,25 @@ const REACTION_SHORTCODES: EmojiShortcodes[] = REACTION_EMOJI.map(
 );
 
 let shortcodes: Promise<EmojiShortcodes[]> | undefined;
+let failed = false;
 
-// Fetched on the first shortcode, so the full set never ships with the page.
 function loadShortcodes(): Promise<EmojiShortcodes[]> {
   shortcodes ??= fetch("/api/emoji")
     .then((response) => response.json() as Promise<EmojiShortcodes[]>)
-    .catch(() => REACTION_SHORTCODES);
+    .catch(() => {
+      failed = true;
+      return REACTION_SHORTCODES;
+    });
   return shortcodes;
+}
+
+/** Fetched once the input has focus, so the full set never ships with the page; a failure retries on the next focus. */
+export function prefetchShortcodes() {
+  if (failed) {
+    failed = false;
+    shortcodes = undefined;
+  }
+  void loadShortcodes();
 }
 
 // A short query may be an emoticon like ":D", so Enter only picks once one is chosen.
