@@ -712,6 +712,13 @@ button {
   cursor: pointer;
 }
 
+/* A long press shows the tooltip, not a text selection or callout. */
+:has(+ .tooltip) {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .tooltip {
   /* Transparent padding bridges the gap, so the pointer can cross onto the tooltip. */
   padding: 0.25lh 0;
@@ -1515,10 +1522,6 @@ ul {
       background: color-mix(in oklch, var(--ink) 7%, transparent);
       color: var(--muted);
       font-size: var(--meta-size);
-      /* A long press shows the tooltip, not a text selection or callout. */
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
 
       &:hover:not(:disabled) {
         background: color-mix(in oklch, var(--ink) 12%, transparent);
