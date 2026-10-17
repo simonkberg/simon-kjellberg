@@ -114,6 +114,8 @@ function useTooltip(anchorId?: string) {
   };
 }
 
+type Trigger = ReturnType<typeof useTooltip>["trigger"];
+
 /**
  * A button whose tooltip names it, or describes it with `describes`; an `aria-label` keeps
  * its own name. With `anchor`, the tooltip sits on that element and hovering it keeps it open.
@@ -123,7 +125,7 @@ export const TooltipButton = ({
   describes,
   anchor,
   ...props
-}: ComponentProps<"button"> & {
+}: Omit<ComponentProps<"button">, keyof Trigger> & {
   tooltip: ReactNode;
   describes?: boolean;
   anchor?: string;
