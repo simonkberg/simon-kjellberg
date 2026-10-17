@@ -97,9 +97,10 @@ export const ChatInput = ({
 
   function pickEmoji(emoji: string) {
     const input = inputRef.current;
-    if (!input || shortcode === null) return;
+    const typed = input && typedShortcode(input);
+    if (!input || typed === null) return;
     const caret = input.selectionStart ?? input.value.length;
-    input.setRangeText(emoji, caret - shortcode.length - 1, caret, "end");
+    input.setRangeText(emoji, caret - typed.length - 1, caret, "end");
     setInputValue(input.value);
     setShortcode(null);
     input.focus();
