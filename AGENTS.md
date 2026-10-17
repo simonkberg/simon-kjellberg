@@ -154,7 +154,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
   route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's. It is
-  fetched when the input takes focus, so the full set never ships with the page.
+  fetched when the input takes focus or a message emoji is first hovered, which shows its
+  shortcode, so the full set never ships with the page.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
