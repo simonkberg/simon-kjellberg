@@ -40,19 +40,20 @@ export class DiscordApiError extends Error {
   }
 }
 
-// Route (or GLOBAL_GATE) → timestamp until which requests should wait
+// Method and route (or GLOBAL_GATE) → timestamp until which requests should wait
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
-// Discord limits by route, so a 429 for one message holds back requests for the others.
-function routeOf(endpoint: string): string {
-  return endpoint
+// Discord limits by method and route, so a 429 for one message holds back the others.
+function routeOf(method: string, endpoint: string): string {
+  const route = endpoint
     .split("/")
     .map((segment, i, segments) => {
       if (segments[i - 1] === "reactions") return ":emoji";
       return /^\d+$/.test(segment) ? ":id" : segment;
     })
     .join("/");
+  return `${method} ${route}`;
 }
 
 function gateUntil(route: string): number {
@@ -72,8 +73,12 @@ export function _resetRateLimitState(): void {
 }
 
 /** @internal Exported for testing the gate timeout path */
-export function _setRateLimitGate(endpoint: string, until: number): void {
-  rateLimitUntil.set(routeOf(endpoint), until);
+export function _setRateLimitGate(
+  method: string,
+  endpoint: string,
+  until: number,
+): void {
+  rateLimitUntil.set(routeOf(method, endpoint), until);
 }
 
 async function call<T extends z.ZodType>(
@@ -90,7 +95,7 @@ async function call<T extends z.ZodType>(
     }
   }
 
-  const route = routeOf(endpoint);
+  const route = routeOf(method, endpoint);
   const startTime = performance.now();
   let retries = 0;
 
@@ -120,7 +125,12 @@ async function call<T extends z.ZodType>(
 
     // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
     const json =
-      response.status === 204 ? null : await response.json().catch(() => null);
+      response.status === 204
+        ? null
+        : await response.json().catch((err: unknown) => {
+            if (err instanceof SyntaxError) return null;
+            throw err;
+          });
 
     if (response.status === 429) {
       retries++;
@@ -130,6 +140,12 @@ async function call<T extends z.ZodType>(
         ? rateLimit.data.retry_after * 1000
         : 1000;
       const global = rateLimit.success && rateLimit.data.global;
+
+      // The gate is the server's state, so it holds even when this caller gives up.
+      const gate = global ? GLOBAL_GATE : route;
+      const newUntil = Date.now() + retryAfterMs;
+      const existing = rateLimitUntil.get(gate) ?? 0;
+      rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
       const elapsedMs = performance.now() - startTime;
 
@@ -143,11 +159,6 @@ async function call<T extends z.ZodType>(
         );
         throw new Error(`Discord rate limit exceeded`);
       }
-
-      const gate = global ? GLOBAL_GATE : route;
-      const newUntil = Date.now() + retryAfterMs;
-      const existing = rateLimitUntil.get(gate) ?? 0;
-      rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
       log.warn(
         { endpoint, retryAfterMs, global, retries },

@@ -1417,7 +1417,7 @@ describe("rate limiting", () => {
 
     // Directly set a gate 31 seconds in the future — exceeds RATE_LIMIT_TIMEOUT_MS (30s)
     const endpoint = "channels/test-discord-channel-id/messages";
-    _setRateLimitGate(endpoint, Date.now() + 31_000);
+    _setRateLimitGate("GET", endpoint, Date.now() + 31_000);
 
     // A fresh request checks the gate: waitMs=31000, elapsedMs≈0, 0+31000 > 30000 → throws
     await expect(getChannelMessages()).rejects.toThrow(
@@ -1528,6 +1528,74 @@ describe("rate limiting", () => {
       expect.objectContaining({ status: 502, body: null }),
       "Discord API call failed",
     );
+  });
+
+  it("should keep the gate when a caller gives up on a 429", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    const requests = vi.fn();
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
+        requests();
+        return HttpResponse.json(
+          { message: "Rate limited", retry_after: 35, global: false },
+          { status: 429 },
+        );
+      }),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord rate limit exceeded",
+    );
+    resetGlobal("simon.dev/discord-store");
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord rate limit exceeded",
+    );
+
+    expect(requests).toHaveBeenCalledOnce();
+  });
+
+  it("should gate each method on a route separately", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const removals = vi.fn();
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () =>
+        HttpResponse.json(
+          { message: "Rate limited", retry_after: 2, global: false },
+          { status: 429 },
+        ),
+      ),
+      http.delete(`${REACTIONS_URL}/@me`, () => {
+        removals();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    const adding = addBotReaction("1", "👍").catch(() => {});
+    await vi.advanceTimersByTimeAsync(0);
+    await removeBotReaction("2", "🎉");
+
+    expect(removals).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(30_000);
+    await adding;
+  });
+
+  it("should not mistake a failed body read for a body that isn't JSON", async () => {
+    const timeout = new DOMException(
+      "The operation timed out.",
+      "TimeoutError",
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(timeout);
+          },
+        }),
+        { status: 429 },
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toBe(timeout);
   });
 
   it("should include retry count in log messages", async () => {
