@@ -154,8 +154,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
   route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's. It is
-  fetched when the input takes focus or a shortcode is typed, so the full set never ships with the
-  page; `app/components/chat/shortcodes.ts` holds the one cached request.
+  fetched when the input takes focus, a shortcode is typed or a message emoji is first hovered,
+  which shows its shortcode, so the full set never ships with the page;
+  `app/components/chat/shortcodes.ts` holds the one cached request.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
@@ -244,7 +245,8 @@ their own markup so each variant styles it; chat keeps `Loader`.
 ### Tooltips
 
 Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
-its button that opens on hover, keyboard focus or a long press on touch.
+its button that opens on hover, keyboard focus or a long press on touch. `TooltipText` is the
+inline-text kind, used for emoji in messages: hover or tap, never a tab stop.
 
 ### Server-Only Code
 
@@ -322,7 +324,7 @@ and lose its static shell. Check chat changes in all three variants.
 
 ### Markdown Rendering
 
-Discord message content is raw markdown, rendered by `app/components/Markdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.
+Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.
 
 Two rules the tests pin: `sanitizeUrl()` guards every `link` target (a rejected one renders as plain text), and `image` renders as alt text — never an `<img>`, since message authors choose the URL.
 

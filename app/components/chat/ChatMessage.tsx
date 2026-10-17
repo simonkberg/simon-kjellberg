@@ -5,11 +5,11 @@ import {
   Suspense,
 } from "react";
 
-import { Markdown } from "@/components/Markdown";
 import { RelativeTime } from "@/components/RelativeTime";
 import { TooltipButton } from "@/components/Tooltip";
 import type { Message } from "@/lib/discord/api";
 
+import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
 
 export interface ChatMessageProps extends Message {
@@ -37,7 +37,7 @@ export const ChatMessage = ({
   >
     <span className="user">{user.name}: </span>
     <div className="text">
-      <Markdown source={content} />
+      <ChatMarkdown source={content} />
     </div>
     {edited && <small className="edited"> (edited) </small>}{" "}
     <small className="timestamp">
