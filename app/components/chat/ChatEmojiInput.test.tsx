@@ -117,6 +117,16 @@ describe("ChatEmojiInput", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
+  it("offers a sent shortcode again when it is pasted back", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "hi :S{Enter}");
+    await waitFor(() => expect(input).toHaveValue(""));
+    await user.paste(":S");
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
   it("chooses the first with an up or down arrow when none is", async () => {
     const { user, input } = setup();
 

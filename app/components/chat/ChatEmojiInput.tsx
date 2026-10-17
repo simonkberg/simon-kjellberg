@@ -107,15 +107,16 @@ export const ChatEmojiInput = ({
   // A dismissal holds only for the shortcode it closed on.
   function track(input: HTMLInputElement) {
     const next = typedShortcode(input)?.query;
-    setTyped((previous) =>
-      next === undefined
-        ? null
-        : {
-            query: next,
-            value: input.value,
-            dismissed: previous?.query === next && previous.dismissed,
-          },
-    );
+    setTyped((previous) => {
+      if (next === undefined) return null;
+      if (previous?.query !== next) {
+        return { query: next, value: input.value, dismissed: false };
+      }
+      // Unchanged on a caret move, so React can skip the render.
+      return previous.value === input.value
+        ? previous
+        : { ...previous, value: input.value };
+    });
   }
 
   function dismiss() {
