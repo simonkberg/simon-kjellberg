@@ -149,29 +149,19 @@ describe("Chat", () => {
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
     });
 
-    const replyToFirst = async (ids: string[]) => {
+    it("drops the reply when its message leaves the history", async () => {
       const user = userEvent.setup();
-      const messages = ids.map((id) => createMessage({ id, content: id }));
-      const view = await act(async () =>
-        render(chatElement({ status: "ok", messages })),
+      const history = (...ids: string[]): ChatHistoryResult => ({
+        status: "ok",
+        messages: ids.map((id) => createMessage({ id, content: id })),
+      });
+      const { rerender } = await act(async () =>
+        render(chatElement(history("200", "300"))),
       );
       await user.click(screen.getAllByRole("button", { name: "Reply" })[0]!);
       expect(screen.getByText("Replying to")).toBeInTheDocument();
-      return (ids: string[]) =>
-        act(async () =>
-          view.rerender(
-            chatElement({
-              status: "ok",
-              messages: ids.map((id) => createMessage({ id, content: id })),
-            }),
-          ),
-        );
-    };
 
-    it("drops the reply when its message leaves the history", async () => {
-      const update = await replyToFirst(["200", "300"]);
-
-      await update(["300", "400"]);
+      await act(async () => rerender(chatElement(history("300", "400"))));
 
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
       expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
