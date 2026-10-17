@@ -38,7 +38,7 @@ const options = () =>
 
 const chosen = () => screen.queryByRole("option", { selected: true });
 
-describe("ChatEmojiSuggestions", () => {
+describe("ChatEmojiInput", () => {
   beforeEach(() => {
     server.use(http.get("*/api/emoji", () => HttpResponse.json(EMOJI)));
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
