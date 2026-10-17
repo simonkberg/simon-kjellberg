@@ -583,7 +583,10 @@ describe("createMessage", () => {
     expect(vi.mocked(sleep).mock.calls).toEqual([[2000]]);
   });
 
-  it("should back off when retry-after is empty", async () => {
+  it.each([
+    { case: "empty", retryAfter: "" },
+    { case: "not seconds", retryAfter: "Wed, 21 Oct 2026 07:28:00 GMT" },
+  ])("should back off when retry-after is $case", async ({ retryAfter }) => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     let callCount = 0;
     server.use(
@@ -592,7 +595,7 @@ describe("createMessage", () => {
         if (callCount === 1) {
           return new HttpResponse(null, {
             status: 503,
-            headers: { "retry-after": "" },
+            headers: { "retry-after": retryAfter },
           });
         }
         return HttpResponse.json({ content: [], stop_reason: "end_turn" });
