@@ -377,6 +377,39 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should keep the reactors it could name when one lookup fails", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage(
+            [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
+            "reactor-fails",
+          ),
+        ]),
+      ),
+      http.get(REACTIONS_URL, () =>
+        HttpResponse.json([{ id: "reactor-ok" }, { id: "reactor-busy" }]),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
+        ({ params }) =>
+          params["userId"] === "reactor-busy"
+            ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
+            : HttpResponse.json({
+                user: { username: "ok", global_name: null },
+                nick: null,
+              }),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions).toEqual([
+      { emoji: "😂", count: 2, users: ["ok"] },
+    ]);
+  });
+
   it("should name an author who left the server by their Discord name", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
@@ -431,7 +464,7 @@ describe("getChannelMessages", () => {
     expect(messages[0]?.user.name).toBe("Nick");
   });
 
-  it("should fail when an author has no name at all", async () => {
+  it("should name an author with no name at all by their id", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
@@ -445,9 +478,9 @@ describe("getChannelMessages", () => {
       ),
     );
 
-    await expect(getChannelMessages()).rejects.toThrow(
-      "No name for Discord user nameless",
-    );
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.user.name).toBe("nameless");
   });
 
   it("should ask for a member's name again after a network error", async () => {

@@ -216,12 +216,45 @@ describe("ChannelStore", () => {
     const calls = source.fetchMessages.mock.calls.length;
     await store.messages();
     expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
+    // Each retry waits twice as long as the last.
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
     await vi.advanceTimersByTimeAsync(10_000);
     expect(await store.messages()).toHaveLength(2);
     expect(listener).toHaveBeenCalledOnce();
 
     await vi.advanceTimersByTimeAsync(60_000);
     expect(source.fetchMessages).toHaveBeenCalledTimes(calls + 1);
+
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+    store.apply({ t: "MISSED" });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(calls + 3);
+  });
+
+  it("should not count a reaction twice when the seed already holds it", async () => {
+    const { store } = createStore([
+      message("1", { reactions: [{ count: 2, me: true, emoji: SMILE }] }),
+    ]);
+    await store.messages();
+    await store.reactorIds("1", "😄");
+
+    store.apply(react("MESSAGE_REACTION_ADD", BOT));
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+
+    expect((await stored(store, "1"))?.reactions).toMatchObject([
+      { count: 3, me: true },
+    ]);
+    store.apply(react("MESSAGE_REACTION_REMOVE", BOT));
+    store.apply(react("MESSAGE_REACTION_REMOVE", BOT));
+    store.apply(
+      react("MESSAGE_REACTION_ADD", BOT, "1", { id: null, name: "👍" }),
+    );
+    expect((await stored(store, "1"))?.reactions).toMatchObject([
+      { count: 2, me: false },
+      { count: 1, me: true },
+    ]);
   });
 
   it("should keep a name an event learned when an earlier lookup fails", async () => {

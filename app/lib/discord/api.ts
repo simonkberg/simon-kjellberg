@@ -189,12 +189,11 @@ function parseUsernamePrefix(content: string): [string, string] | undefined {
 }
 
 async function authorName(msg: DiscordMessage): Promise<string> {
-  const name =
-    (await getStore().memberName(msg.author.id)) ?? displayName(msg.author);
-  if (name === undefined) {
-    throw new Error(`No name for Discord user ${msg.author.id}`);
-  }
-  return name;
+  return (
+    (await getStore().memberName(msg.author.id)) ??
+    displayName(msg.author) ??
+    msg.author.id
+  );
 }
 
 async function resolveMessageContent(
@@ -327,11 +326,17 @@ async function withDiscordReactors(
     reactions.map(async (reaction) => {
       try {
         const ids = await store.reactorIds(messageId, reaction.emoji);
-        const names = await Promise.all(ids.map((id) => store.memberName(id)));
-        // A reactor who left the server has no member to name, so they stay in the count.
+        const names = await Promise.allSettled(
+          ids.map((id) => store.memberName(id)),
+        );
+        // A reactor who left the server, or whose name failed to load, stays in the count unnamed.
         return {
           ...reaction,
-          users: names.filter((name) => name !== undefined),
+          users: names.flatMap((name) =>
+            name.status === "fulfilled" && name.value !== undefined
+              ? [name.value]
+              : [],
+          ),
         };
       } catch (err) {
         log.warn(

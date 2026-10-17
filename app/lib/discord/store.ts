@@ -31,6 +31,7 @@ export const WINDOW = 100;
 const MAX_SEED_ATTEMPTS = 3;
 // A stale store seeds again after this, so a busy channel can't keep it fetching.
 const RESEED_DELAY_MS = 10_000;
+const MAX_RESEED_DELAY_MS = 5 * 60_000;
 
 /** The channel's latest messages, seeded over REST and kept current by gateway events. */
 export class ChannelStore {
@@ -47,6 +48,7 @@ export class ChannelStore {
   // Set while what the store holds may have missed events, until a seed succeeds.
   #stale = false;
   #reseedTimer: ReturnType<typeof setTimeout> | undefined;
+  #reseedDelay = RESEED_DELAY_MS;
   #changed = false;
   #listeners = new Set<() => void>();
 
@@ -233,8 +235,14 @@ export class ChannelStore {
       if (this.#stale) {
         this.#reseedTimer = setTimeout(
           () => this.#reseed(),
-          RESEED_DELAY_MS,
+          this.#reseedDelay,
         ).unref();
+        this.#reseedDelay = Math.min(
+          this.#reseedDelay * 2,
+          MAX_RESEED_DELAY_MS,
+        );
+      } else {
+        this.#reseedDelay = RESEED_DELAY_MS;
       }
     }));
   }
@@ -347,6 +355,11 @@ export class ChannelStore {
     const reactions = message.reactions ?? [];
     const reaction = reactions.find((r) => sameEmoji(r.emoji, emoji));
     if (!reaction && delta < 0) return;
+    const isBot = userId === this.#source.botUserId();
+    // A seed can already hold an event's reaction. Removes can't be checked, since sets leave out bots.
+    if (isBot && (reaction?.me ?? false) === delta > 0) return;
+    const known = this.#reactors.get(messageId)?.get(name);
+    if (delta > 0 && !fromBot && known?.has(userId)) return;
 
     const count = (reaction?.count ?? 0) + delta;
     if (count <= 0) {
@@ -357,7 +370,6 @@ export class ChannelStore {
       return;
     }
 
-    const isBot = userId === this.#source.botUserId();
     const next = {
       count,
       me: isBot ? delta > 0 : (reaction?.me ?? false),
