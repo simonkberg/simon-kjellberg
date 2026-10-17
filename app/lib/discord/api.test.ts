@@ -17,7 +17,7 @@ import {
   searchChannelMessages,
   subscribeToChannel,
 } from "./api";
-import { connect } from "./gateway";
+import { connect, subscribe } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
 vi.mock(import("server-only"), () => ({}));
@@ -360,6 +360,62 @@ describe("getChannelMessages", () => {
     const messages = await getChannelMessages();
 
     expect(messages[0]?.user.name).toBe("left");
+  });
+
+  it("should fail when an author has no name at all", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([{ ...rawMessage([]), author: { id: "nameless" } }]),
+      ),
+      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
+        HttpResponse.json({ message: "Unknown Member" }, { status: 404 }),
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow(
+      "No name for Discord user nameless",
+    );
+  });
+
+  it("should ask for a member's name again after a network error", async () => {
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          { ...rawMessage([]), author: { id: "flaky" }, content: "hi" },
+        ]),
+      ),
+      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
+        ++attempts === 1
+          ? HttpResponse.error()
+          : HttpResponse.json({
+              user: { username: "flaky", global_name: null },
+              nick: null,
+            }),
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow();
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.user.name).toBe("flaky");
+  });
+
+  it("should still serve history when the gateway can't be subscribed to", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(subscribe).mockRejectedValueOnce(new Error("fatal"));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([rawMessage([])]),
+      ),
+    );
+
+    expect(await getChannelMessages()).toHaveLength(1);
+    expect(log.error).toHaveBeenCalledWith(
+      { err: new Error("fatal") },
+      "Channel store failed to subscribe to the gateway",
+    );
   });
 
   it("should look up Discord reactors once, leaving changes to the gateway", async () => {

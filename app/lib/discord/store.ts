@@ -97,11 +97,7 @@ export class ChannelStore {
             this.#reactorsOf(messageId).set(emoji, new Set(ids));
           }
         },
-        () => {
-          if (this.#reactorFetches.get(key) === fetch) {
-            this.#reactorFetches.delete(key);
-          }
-        },
+        () => this.#reactorFetches.delete(key),
       );
     }
     return fetch;
@@ -112,9 +108,7 @@ export class ChannelStore {
     if (!name) {
       name = this.#source.fetchMemberName(userId);
       this.#names.set(userId, name);
-      name.catch(() => {
-        if (this.#names.get(userId) === name) this.#names.delete(userId);
-      });
+      name.catch(() => this.#names.delete(userId));
     }
     return name;
   }

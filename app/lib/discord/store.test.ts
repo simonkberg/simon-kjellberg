@@ -219,6 +219,114 @@ describe("ChannelStore", () => {
     expect(store.message("1")?.reactions).toEqual([]);
   });
 
+  it("should share one fetch of who reacted, and skip it for a deleted message", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    const fetch = Promise.withResolvers<string[]>();
+    source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
+    await store.messages();
+
+    const first = store.reactorIds("1", "😄");
+    const second = store.reactorIds("1", "😄");
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "1" } });
+    fetch.resolve(["user-2"]);
+
+    expect(await first).toEqual(["user-2"]);
+    expect(await second).toEqual(["user-2"]);
+    expect(source.fetchReactorIds).toHaveBeenCalledOnce();
+  });
+
+  it("should fetch who reacted again after a failure", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    source.fetchReactorIds
+      .mockRejectedValueOnce(new Error("down"))
+      .mockResolvedValue(["user-2"]);
+    await store.messages();
+
+    await expect(store.reactorIds("1", "😄")).rejects.toThrow("down");
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2"]);
+  });
+
+  it("should ignore events for messages it doesn't hold or emoji it can't show", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_ALL",
+      d: { channel_id: CHANNEL, message_id: "old" },
+    });
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_EMOJI",
+      d: {
+        channel_id: CHANNEL,
+        message_id: "1",
+        emoji: { id: "9", name: null },
+      },
+    });
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_EMOJI",
+      d: { channel_id: CHANNEL, message_id: "1", emoji: SMILE },
+    });
+
+    expect(store.message("1")?.reactions).toEqual([]);
+    expect(store.message("old")).toBeUndefined();
+  });
+
+  it("should not learn names from the bot's posts or nameless authors", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: {
+        ...message("2", { author: { id: BOT, bot: true, username: "bot" } }),
+        channel_id: CHANNEL,
+      },
+    });
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: { ...message("3", { author: { id: "user-4" } }), channel_id: CHANNEL },
+    });
+
+    await store.memberName(BOT);
+    await store.memberName("user-4");
+    expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
+  });
+
+  it("should drop someone who takes their reaction back", async () => {
+    const { store } = createStore();
+    await store.messages();
+
+    store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+    store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
+
+    expect(store.message("1")?.reactions).toEqual([
+      { count: 1, me: false, emoji: SMILE },
+    ]);
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-3"]);
+  });
+
+  it("should log a reseed that fails and keep what it has", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    const { store, source } = createStore();
+    await store.messages();
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+
+    store.apply({ t: "READY" });
+
+    await vi.waitFor(() => {
+      expect(log.error).toHaveBeenCalledWith(
+        { err: new Error("down") },
+        "Failed to seed the channel store",
+      );
+    });
+    expect(await store.messages()).toHaveLength(1);
+  });
+
   it("should ignore custom emoji and reactions outside the window", async () => {
     const { store } = createStore();
     await store.messages();
