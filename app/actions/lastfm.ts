@@ -1,6 +1,6 @@
 "use server";
 
-import { cacheLife, refresh } from "next/cache";
+import { cacheLife, cacheTag, refresh, updateTag } from "next/cache";
 
 import { config } from "@/config";
 import {
@@ -24,6 +24,7 @@ export type GetRecentTracksResult =
 
 export async function getRecentTracks(): Promise<GetRecentTracksResult> {
   "use cache";
+  cacheTag("getRecentTracks");
 
   try {
     const tracks = await userGetRecentTracks(config.lastfmUsername, {
@@ -42,6 +43,7 @@ export async function getRecentTracks(): Promise<GetRecentTracksResult> {
 }
 
 export async function refreshRecentTracks(): Promise<void> {
+  updateTag("getRecentTracks");
   refresh();
 }
 

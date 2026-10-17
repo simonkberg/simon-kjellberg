@@ -1,3 +1,5 @@
+import { arrayIncludes } from "ts-extras";
+
 export interface Preference<T extends string = string> {
   name: "variant" | "theme";
   label: string;
@@ -23,11 +25,17 @@ export const themePreference = {
 
 export const preferences = [variantPreference, themePreference] as const;
 
-// The fallback variant's --ground, for the page before the head script runs.
-export const fallbackThemeColor = [
-  { media: "(prefers-color-scheme: light)", color: "oklch(0.965 0.004 255)" },
-  { media: "(prefers-color-scheme: dark)", color: "oklch(0.19 0.012 255)" },
-];
+export const colorSchemes = ["light", "dark"] as const;
+
+// Each variant's --ground; preferences.test.ts keeps them in step with global.css.
+export const grounds = {
+  panes: { light: "oklch(0.965 0.004 255)", dark: "oklch(0.19 0.012 255)" },
+  ledger: { light: "oklch(0.975 0.004 265)", dark: "oklch(0.16 0.012 265)" },
+  manual: { light: "oklch(0.985 0.002 100)", dark: "oklch(0.17 0.004 100)" },
+} as const satisfies Record<
+  (typeof variantPreference.options)[number],
+  Record<(typeof colorSchemes)[number], string>
+>;
 
 export function preferenceCookie<T extends string>(
   preference: Preference<T>,
@@ -48,32 +56,37 @@ export function applySavedPreferences(saved: readonly Preference[]) {
   }
 }
 
-// Stringified too. The rendered tags keep their fallbacks, since React may swap a hoisted <meta>
-// for a fresh one, and a copy just before each wins, as the first matching tag does.
+const themeColorTags = 'meta[name="theme-color"]';
+
+// Every tag, as React may have added fresh ones beside those the head script set.
 export function syncThemeColor() {
   const root = document.documentElement;
-  const theme = root.getAttribute("data-theme") ?? "system";
-  for (const stale of document.querySelectorAll("meta[data-ground]")) {
-    stale.remove();
-  }
-  for (const rendered of document.querySelectorAll(
-    'meta[name="theme-color"]',
-  )) {
-    const media = rendered.getAttribute("media") ?? "";
-    // Through data-theme: an inline color-scheme left light-dark() unresolved in Chrome.
-    const scheme = /light|dark/.exec(media)?.[0];
-    root.setAttribute(
-      "data-theme",
-      theme === "system" && scheme ? scheme : theme,
+  const variant = root.getAttribute("data-variant");
+  const theme = root.getAttribute("data-theme");
+  const ground =
+    grounds[
+      arrayIncludes(variantPreference.options, variant)
+        ? variant
+        : variantPreference.fallback
+    ];
+  for (const meta of document.querySelectorAll(themeColorTags)) {
+    const scheme = meta.matches('[media*="dark"]') ? "dark" : "light";
+    meta.setAttribute(
+      "content",
+      ground[arrayIncludes(colorSchemes, theme) ? theme : scheme],
     );
-    const meta = document.createElement("meta");
-    meta.setAttribute("name", "theme-color");
-    meta.setAttribute("media", media);
-    meta.setAttribute("content", getComputedStyle(root).backgroundColor);
-    meta.setAttribute("data-ground", "");
-    rendered.before(meta);
   }
-  root.setAttribute("data-theme", theme);
 }
 
-export const preferencesScript = `(${applySavedPreferences.toString()})(${JSON.stringify(preferences)});(${syncThemeColor.toString()})()`;
+// Before paint. A tag it changes no longer matches React's, so React adds its own after it.
+const themeColorScript = `{
+  const root = document.documentElement;
+  const ground = ${JSON.stringify(grounds)}[root.getAttribute("data-variant")];
+  const theme = root.getAttribute("data-theme");
+  for (const meta of document.querySelectorAll(${JSON.stringify(themeColorTags)})) {
+    const scheme = meta.matches('[media*="dark"]') ? "dark" : "light";
+    meta.setAttribute("content", ground[theme === "system" ? scheme : theme]);
+  }
+}`;
+
+export const preferencesScript = `(${applySavedPreferences.toString()})(${JSON.stringify(preferences)});${themeColorScript}`;

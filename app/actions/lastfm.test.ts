@@ -1,4 +1,4 @@
-import { cacheLife, refresh } from "next/cache";
+import { cacheLife, cacheTag, refresh, updateTag } from "next/cache";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -28,7 +28,12 @@ vi.mock(import("@/lib/lastfm"), () => ({
   userGetTopAlbums: vi.fn(),
 }));
 
-vi.mock(import("next/cache"), () => ({ cacheLife: vi.fn(), refresh: vi.fn() }));
+vi.mock(import("next/cache"), () => ({
+  cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
+  refresh: vi.fn(),
+  updateTag: vi.fn(),
+}));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -59,6 +64,7 @@ describe("getRecentTracks", () => {
 
     const result = await getRecentTracks();
 
+    expect(cacheTag).toHaveBeenCalledWith("getRecentTracks");
     expect(cacheLife).toHaveBeenCalledWith("minutes");
     expect(userGetRecentTracks).toHaveBeenCalledWith("magijo", { limit: 5 });
     expect(result).toEqual({ status: "ok", tracks: mockTracks });
@@ -85,10 +91,14 @@ describe("getRecentTracks", () => {
 });
 
 describe("refreshRecentTracks", () => {
-  it("should re-render the page so the list updates", async () => {
+  it("should expire the tracks and re-render the page with fresh ones", async () => {
     await refreshRecentTracks();
 
+    expect(updateTag).toHaveBeenCalledWith("getRecentTracks");
     expect(refresh).toHaveBeenCalledOnce();
+    expect(vi.mocked(updateTag).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(refresh).mock.invocationCallOrder[0] ?? 0,
+    );
   });
 });
 

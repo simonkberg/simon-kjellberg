@@ -5,7 +5,8 @@ import type { PropsWithChildren } from "react";
 import { iosevka } from "@/assets/fonts";
 import { config } from "@/config";
 import {
-  fallbackThemeColor,
+  colorSchemes,
+  grounds,
   preferencesScript,
   themePreference,
   variantPreference,
@@ -22,9 +23,14 @@ export const Layout = ({ children }: PropsWithChildren) => {
       suppressHydrationWarning
     >
       <head>
-        {/* Not viewport.themeColor: navigating swaps those, dropping the script's copies. */}
-        {fallbackThemeColor.map(({ media, color }) => (
-          <meta key={media} name="theme-color" media={media} content={color} />
+        {/* Not viewport.themeColor: Next re-renders those on navigation, undoing the script. */}
+        {colorSchemes.map((scheme) => (
+          <meta
+            key={scheme}
+            name="theme-color"
+            media={`(prefers-color-scheme: ${scheme})`}
+            content={grounds[variantPreference.fallback][scheme]}
+          />
         ))}
         <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
       </head>

@@ -51,10 +51,7 @@ export const PreferenceSwitch = <T extends string>({
 
   // The head script applies the cookie before paint, but the dev-mode
   // remount resets <html> attributes, so apply it again.
-  useLayoutEffect(() => {
-    applySavedPreferences([preference]);
-    syncThemeColor();
-  }, [preference]);
+  useLayoutEffect(() => applySavedPreferences([preference]), [preference]);
 
   return (
     <div className="switch" role="group" aria-labelledby={labelId}>
