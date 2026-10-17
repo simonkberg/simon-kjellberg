@@ -589,6 +589,26 @@ describe("subscribe", () => {
     await expect(subscribe(vi.fn())).rejects.toThrow("Invalid URL");
   });
 
+  it("should drop the callback of a subscribe that failed to connect", async () => {
+    const { subscribe } = await import("./gateway");
+    server.use(createHandshakeHandler());
+    const failed = vi.fn();
+    vi.stubGlobal(
+      "WebSocket",
+      class {
+        constructor() {
+          throw new Error("No socket");
+        }
+      },
+    );
+
+    await expect(subscribe(failed)).rejects.toThrow("No socket");
+    vi.unstubAllGlobals();
+    await subscribe(vi.fn());
+
+    expect(failed).not.toHaveBeenCalled();
+  });
+
   it("should reject every connect after a fatal close without opening a socket", async () => {
     const { subscribe } = await import("./gateway");
     let connectionCount = 0;

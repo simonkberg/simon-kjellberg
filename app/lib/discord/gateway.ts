@@ -417,7 +417,12 @@ export async function subscribe(
 ): Promise<() => void> {
   const gw = getGateway();
   gw.addSubscriber(callback);
-  await gw.connect();
+  try {
+    await gw.connect();
+  } catch (err) {
+    gw.removeSubscriber(callback);
+    throw err;
+  }
   return () => gw.removeSubscriber(callback);
 }
 
