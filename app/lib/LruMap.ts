@@ -18,8 +18,7 @@ export class LruMap<K, V> {
     this.#map.delete(key);
     this.#map.set(key, value);
     if (this.#map.size > this.#maxSize) {
-      const oldest = this.#map.keys().next();
-      if (!oldest.done) this.#map.delete(oldest.value);
+      this.#map.delete(this.#map.keys().next().value as K);
     }
     return this;
   }
