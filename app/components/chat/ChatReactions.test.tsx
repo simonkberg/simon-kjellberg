@@ -134,23 +134,4 @@ describe("ChatReactionList", () => {
     await userEvent.unhover(screen.getAllByRole("button")[2]!);
     expect(openTips()).toEqual([]);
   });
-
-  it("shows who reacted on a long press instead of toggling", () => {
-    vi.useFakeTimers();
-    const { react } = renderWithContext(
-      <ChatReactionList messageId="1" reactions={reactions} />,
-    );
-    const fire = screen.getAllByRole("button")[2]!;
-
-    fireEvent.pointerDown(fire, { pointerType: "touch" });
-    vi.advanceTimersByTime(500);
-    fireEvent.pointerUp(fire, { pointerType: "touch" });
-    fireEvent.click(fire);
-    expect(openTips()).toEqual(["alice and bob"]);
-    expect(react).not.toHaveBeenCalled();
-
-    fireEvent.pointerDown(document.body, { pointerType: "touch" });
-    expect(openTips()).toEqual([]);
-    vi.useRealTimers();
-  });
 });

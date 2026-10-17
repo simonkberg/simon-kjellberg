@@ -5,22 +5,18 @@ import {
   type FocusEvent,
   type MouseEvent,
   type PointerEvent,
+  type ReactNode,
   useId,
   useRef,
 } from "react";
 
 const LONG_PRESS_MS = 500;
 
-/**
- * Opens on hover, keyboard focus or a long press, and closes on Escape or a press anywhere.
- * An `anchor` places it there instead, and hovering anywhere in it keeps it open.
- */
-export function useTooltip(anchor?: () => HTMLElement | null) {
-  const id = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
+function useTooltip(anchorId?: string) {
   const tip = useRef<HTMLSpanElement>(null);
   const press = useRef<{ timer?: number; held?: boolean }>({});
   const dismiss = useRef<AbortController>(null);
+  const anchor = () => (anchorId ? document.getElementById(anchorId) : null);
 
   const hide = () => {
     dismiss.current?.abort();
@@ -29,9 +25,8 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
 
   const show = (button: HTMLElement) => {
     dismiss.current?.abort();
-    // One at a time: tell any other open tooltip to close.
     document.dispatchEvent(new Event("tooltipshow"));
-    tip.current?.showPopover({ source: anchor?.() ?? button });
+    tip.current?.showPopover({ source: anchor() ?? button });
     dismiss.current = new AbortController();
     const { signal } = dismiss.current;
     document.addEventListener("tooltipshow", hide, { signal });
@@ -49,17 +44,16 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
     document.addEventListener(
       "pointerout",
       (event) => {
-        if (event.pointerType !== "touch") release(event.relatedTarget);
+        if (event.pointerType !== "touch") release(button, event.relatedTarget);
       },
       { signal },
     );
   };
 
   // Hover and keyboard focus share the tooltip, and the pointer may cross onto it.
-  const release = (to: EventTarget | null) => {
-    const button = trigger.current;
-    if (!button || button.matches(":hover, :focus-visible")) return;
-    const zone = [button, tip.current, anchor?.()];
+  const release = (button: Element, to: EventTarget | null) => {
+    if (button.matches(":hover, :focus-visible")) return;
+    const zone = [button, tip.current, anchor()];
     if (to instanceof Node && zone.some((element) => element?.contains(to))) {
       return;
     }
@@ -67,9 +61,8 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
   };
 
   return {
-    id,
+    tip,
     trigger: {
-      ref: trigger,
       onPointerEnter: (event: PointerEvent<HTMLElement>) => {
         if (event.pointerType !== "touch") show(event.currentTarget);
       },
@@ -78,7 +71,8 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
           show(event.currentTarget);
         }
       },
-      onBlur: (event: FocusEvent) => release(event.relatedTarget),
+      onBlur: (event: FocusEvent) =>
+        release(event.currentTarget, event.relatedTarget),
       onKeyDown: () => {
         press.current.held = false;
       },
@@ -108,13 +102,44 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
         event.stopPropagation();
       },
     },
-    tooltip: { ref: tip, id },
   };
 }
 
-export const Tooltip = ({ children, ...props }: ComponentProps<"span">) => (
-  // Not hint, whose light dismiss closes it on the click or tap that reveals it.
-  <span {...props} popover="manual" role="tooltip" className="tooltip">
-    <span>{children}</span>
-  </span>
-);
+/**
+ * A button whose tooltip names it, or describes it with `describes`; an `aria-label` keeps
+ * its own name. With `anchor`, the tooltip sits on that element and hovering it keeps it open.
+ */
+export const TooltipButton = ({
+  tooltip,
+  describes,
+  anchor,
+  ...props
+}: ComponentProps<"button"> & {
+  tooltip: ReactNode;
+  describes?: boolean;
+  anchor?: string;
+}) => {
+  const id = useId();
+  const { tip, trigger } = useTooltip(anchor);
+  const link = describes
+    ? { "aria-describedby": id }
+    : props["aria-label"]
+      ? {}
+      : { "aria-labelledby": id };
+
+  return (
+    <>
+      <button {...link} {...props} {...trigger} data-tooltip-trigger="" />
+      {/* Not hint, whose light dismiss closes it on the click or tap that reveals it. */}
+      <span
+        ref={tip}
+        id={id}
+        popover="manual"
+        role="tooltip"
+        className="tooltip"
+      >
+        <span>{tooltip}</span>
+      </span>
+    </>
+  );
+};

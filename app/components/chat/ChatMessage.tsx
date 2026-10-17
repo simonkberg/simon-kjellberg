@@ -7,7 +7,7 @@ import {
 
 import { Markdown } from "@/components/Markdown";
 import { RelativeTime } from "@/components/RelativeTime";
-import { Tooltip, useTooltip } from "@/components/Tooltip";
+import { TooltipButton } from "@/components/Tooltip";
 import type { Message } from "@/lib/discord/api";
 
 import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
@@ -18,31 +18,6 @@ export interface ChatMessageProps extends Message {
   /** Shown above the input while replying: just the text, without controls or reactions. */
   preview?: boolean;
 }
-
-const ChatReplyButton = ({
-  onClick,
-  disabled,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-}) => {
-  const tooltip = useTooltip();
-
-  return (
-    <>
-      <button
-        aria-labelledby={tooltip.id}
-        className="reply"
-        onClick={onClick}
-        disabled={disabled}
-        {...tooltip.trigger}
-      >
-        ↩
-      </button>
-      <Tooltip {...tooltip.tooltip}>Reply</Tooltip>
-    </>
-  );
-};
 
 export const ChatMessage = ({
   id,
@@ -73,10 +48,14 @@ export const ChatMessage = ({
     {!preview && (
       <>
         <span className="actions">
-          <ChatReplyButton
+          <TooltipButton
+            tooltip="Reply"
+            className="reply"
             onClick={() => setReplyToId(id)}
             disabled={replyToId === id}
-          />
+          >
+            ↩
+          </TooltipButton>
           {reactions.length === 0 && <ChatReactionPicker messageId={id} />}
         </span>
         {reactions.length > 0 && (

@@ -239,8 +239,8 @@ their own markup so each variant styles it; chat keeps `Loader`.
 
 ### Tooltips
 
-Use `useTooltip` and `<Tooltip>` from `app/components/Tooltip.tsx`, not `title`: a manual popover
-anchored to its button that opens on hover, keyboard focus or a long press on touch.
+Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
+its button that opens on hover, keyboard focus or a long press on touch.
 
 ### Server-Only Code
 
