@@ -1,6 +1,7 @@
+import { Globals } from "@react-spring/web";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import type { Message } from "@/lib/discord/api";
 
@@ -72,8 +73,10 @@ describe("ChatHistory", () => {
 
     render(<ChatHistory messages={mockMessages} {...defaultReplyProps} />);
 
-    // 1 content list + 3 nested lists (replies → nested reply → deeply nested)
-    expect(screen.getAllByRole("list")).toHaveLength(4);
+    // 1 content list + 3 nested lists (replies → nested reply → deeply nested); the rest are empty
+    expect(
+      screen.getAllByRole("list").filter((list) => list.childElementCount > 0),
+    ).toHaveLength(4);
 
     expect(screen.getByText("Message without replies")).toBeInTheDocument();
     expect(screen.getByText("Message with replies")).toBeInTheDocument();
@@ -88,6 +91,58 @@ describe("ChatHistory", () => {
 
     expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  describe("animations", () => {
+    const message = (id: string, replies: Message[] = []): Message => ({
+      id,
+      content: `Message ${id}`,
+      user: { name: "User", color: "hsl(0 100% 50%)" },
+      edited: false,
+      timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
+      reactions: [],
+      replies,
+    });
+
+    const animate = () => {
+      Globals.assign({ skipAnimation: false });
+      onTestFinished(() => Globals.assign({ skipAnimation: true }));
+    };
+
+    it("slides in the first reply to a message", () => {
+      animate();
+      const { rerender } = render(
+        <ChatHistory messages={[message("1")]} {...defaultReplyProps} />,
+      );
+
+      rerender(
+        <ChatHistory
+          messages={[message("1", [message("2")])]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      expect(screen.getByText("Message 2").closest("li")).toHaveStyle({
+        opacity: "0",
+        transform: "translateX(-100%)",
+      });
+    });
+
+    it("keeps the last reply to a message while it slides out", () => {
+      animate();
+      const { rerender } = render(
+        <ChatHistory
+          messages={[message("1", [message("2")])]}
+          {...defaultReplyProps}
+        />,
+      );
+
+      rerender(
+        <ChatHistory messages={[message("1")]} {...defaultReplyProps} />,
+      );
+
+      expect(screen.getByText("Message 2")).toBeInTheDocument();
+    });
   });
 
   describe("keyboard navigation", () => {
