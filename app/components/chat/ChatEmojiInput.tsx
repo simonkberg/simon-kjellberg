@@ -14,7 +14,7 @@ import { type EmojiShortcodes, REACTION_EMOJI, searchEmoji } from "@/lib/emoji";
 
 import { arrowIndex, gridColumns } from "./arrowFocus";
 import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
-import { loadShortcodes } from "./shortcodes";
+import { reloadShortcodes } from "./shortcodes";
 
 const LIMIT = 24;
 
@@ -156,7 +156,7 @@ export const ChatEmojiInput = ({
           track(event.target);
         }}
         onSelect={(event) => track(event.currentTarget)}
-        onFocus={() => void loadShortcodes().then(setEmoji)}
+        onFocus={() => void reloadShortcodes().then(setEmoji)}
         onKeyDown={onKeyDown}
         onBlur={(event) => {
           // Null when a tap on an emoji takes focus; its click picks it.
