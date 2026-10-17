@@ -35,6 +35,7 @@ export const ChatStream = () => {
         // Changes made while disconnected sent no event.
         if (opened) void refreshChatHistory();
         opened = true;
+        gatewayDown = false;
       };
       eventSource.onmessage = () => void refreshChatHistory();
       eventSource.addEventListener("status", (event) => {

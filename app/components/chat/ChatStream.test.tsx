@@ -187,6 +187,23 @@ describe("ChatStream", () => {
       expect(refreshChatHistory).toHaveBeenCalledOnce();
     });
 
+    it("refreshes once when it reconnects after the gateway went down", () => {
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+      act(() => getInstance().onopen());
+      act(() => getInstance().sendStatus("connecting"));
+
+      act(() => {
+        window.dispatchEvent(new Event("offline"));
+        window.dispatchEvent(new Event("online"));
+      });
+      act(() => getInstance().onopen());
+      act(() => getInstance().sendStatus("live"));
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
     it("closes EventSource on unmount", () => {
       const { getInstance } = mockEventSource;
 
