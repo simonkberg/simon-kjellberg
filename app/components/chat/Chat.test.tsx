@@ -247,7 +247,7 @@ describe("Chat", () => {
         ),
       );
 
-      const picker = screen.getAllByRole("group", {
+      const picker = screen.getAllByRole("toolbar", {
         name: "Pick a reaction",
         hidden: true,
       })[1]!;

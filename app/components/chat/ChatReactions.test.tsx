@@ -22,15 +22,20 @@ function renderWithContext(
 }
 
 function getPicker() {
-  return screen.getByRole("group", { name: "Pick a reaction", hidden: true });
+  return screen.getByRole("toolbar", { name: "Pick a reaction", hidden: true });
 }
 
-// happy-dom has no popover API, so the browser's beforetoggle is sent by hand.
+// happy-dom has no popover API, so the browser's toggle events are sent by hand.
+function sendToggle(type: "beforetoggle" | "toggle", newState: string) {
+  fireEvent(getPicker(), Object.assign(new Event(type), { newState }));
+}
+
 function openPicker() {
-  fireEvent(
-    getPicker(),
-    Object.assign(new Event("beforetoggle"), { newState: "open" }),
-  );
+  sendToggle("beforetoggle", "open");
+}
+
+function getEmoji(name: string) {
+  return within(getPicker()).getByRole("button", { name, hidden: true });
 }
 
 describe("ChatReactionPicker", () => {
@@ -63,6 +68,62 @@ describe("ChatReactionPicker", () => {
     );
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
+  });
+
+  it("focuses the first emoji once open", () => {
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
+    sendToggle("toggle", "open");
+
+    expect(getEmoji("thumbsup")).toHaveFocus();
+  });
+
+  it("moves between emoji with the arrow keys, by row up and down", async () => {
+    const user = userEvent.setup();
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
+    const items = within(getPicker()).getAllByRole("button", { hidden: true });
+    for (const [index, item] of items.entries()) {
+      Object.defineProperty(item, "offsetTop", {
+        value: Math.floor(index / 8) * 40,
+      });
+    }
+    items[0]?.focus();
+
+    await user.keyboard("{ArrowRight}");
+    expect(items[1]).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(items[9]).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(items[8]).toHaveFocus();
+    await user.keyboard("{ArrowUp}");
+    expect(items[0]).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(items.at(-1)).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(items[0]).toHaveFocus();
+  });
+
+  it.each(["{Tab}", "{Shift>}{Tab}{/Shift}"])("closes on %s", async (keys) => {
+    const user = userEvent.setup();
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    getPicker().showPopover();
+    openPicker();
+    getEmoji("heart").focus();
+
+    await user.keyboard(keys);
+
+    expect(getPicker()).not.toHaveAttribute("data-popover-open");
+  });
+
+  it("returns focus to its button when it closes around it", () => {
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
+    getEmoji("heart").focus();
+
+    sendToggle("beforetoggle", "closed");
+
+    expect(screen.getByRole("button", { name: "Add reaction" })).toHaveFocus();
   });
 
   it("disables the button only while its own message's reaction is pending", () => {
