@@ -9,12 +9,12 @@ export async function register() {
 
     bridgeConsole();
     void refreshIpDenyList();
-    keepWarm();
 
     // Not awaited, so /health can answer 503 while Turso is out.
     runMigrationsUntilApplied()
       .then(() => {
         markReady("migrations");
+        keepWarm();
         // After migrations, so new bot code never meets an old schema.
         return startBotSubscription();
       })
