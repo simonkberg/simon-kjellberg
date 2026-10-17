@@ -196,7 +196,13 @@ export class ChannelStore {
           this.#rememberName(user_id, displayName(member.user, member));
         }
         // Bots aren't named, matching who REST lists as reacting.
-        this.#react(message_id, emoji, user_id, 1, member?.user.bot === true);
+        this.#react(
+          message_id,
+          emoji,
+          user_id,
+          1,
+          member && member.user.bot === true,
+        );
         return;
       }
       case "MESSAGE_REACTION_REMOVE": {
@@ -231,12 +237,10 @@ export class ChannelStore {
     return (this.#seeding ??= this.#load().finally(() => {
       this.#seeding = null;
       clearTimeout(this.#reseedTimer);
+      this.#reseedTimer = undefined;
       // Retried on a timer, since a quiet channel has no event or read to retry it.
       if (this.#stale) {
-        this.#reseedTimer = setTimeout(
-          () => this.#reseed(),
-          this.#reseedDelay,
-        ).unref();
+        this.#scheduleReseed(this.#reseedDelay);
         this.#reseedDelay = Math.min(
           this.#reseedDelay * 2,
           MAX_RESEED_DELAY_MS,
@@ -247,6 +251,13 @@ export class ChannelStore {
     }));
   }
 
+  #scheduleReseed(delay: number): void {
+    this.#reseedTimer ??= setTimeout(() => {
+      this.#reseedTimer = undefined;
+      this.#reseed();
+    }, delay).unref();
+  }
+
   async #load(): Promise<void> {
     for (let attempt = 1; ; attempt++) {
       this.#changed = false;
@@ -254,6 +265,11 @@ export class ChannelStore {
       if (this.#changed && attempt < MAX_SEED_ATTEMPTS) continue;
       if (this.#changed) {
         log.warn({ attempt }, "Seeded the channel store while it was changing");
+        // Events already applied to the window are newer than this fetch.
+        if (this.#seeded) {
+          this.#stale = true;
+          return;
+        }
       }
 
       const previous = this.#messages;
@@ -299,8 +315,8 @@ export class ChannelStore {
   #remove(ids: string[]): void {
     const removed = ids.filter((id) => this.#messages.has(id));
     for (const id of removed) this.#delete(id);
-    // Older messages move into the window, and only a fetch knows them.
-    if (removed.length > 0) this.#reseed();
+    // Older messages move into the window, and only a fetch knows them; batched, since deletes come in bursts.
+    if (removed.length > 0) this.#scheduleReseed(RESEED_DELAY_MS);
   }
 
   #delete(id: string): void {
@@ -344,7 +360,8 @@ export class ChannelStore {
     emoji: Emoji,
     userId: string,
     delta: 1 | -1,
-    fromBot: boolean,
+    // Unknown when a reaction arrives without `member`.
+    fromBot: boolean | undefined,
   ) {
     // Custom guild emoji never show on the site.
     if (emoji.id !== null || emoji.name === null) return;
@@ -384,9 +401,9 @@ export class ChannelStore {
       this.#reactorsOf(messageId).set(name, new Set());
     }
     const reactors = this.#reactors.get(messageId)?.get(name);
-    if (!reactors) {
-      // A fetch already in flight would miss this event.
-      this.#reactorFetches.delete(`${messageId}/${name}`);
+    if (!reactors || (fromBot === undefined && !isBot)) {
+      // A fetch already in flight would miss this event, and REST knows who's a bot.
+      this.#forgetReactors(messageId, name);
     } else if (!isBot && !fromBot) {
       if (delta > 0) reactors.add(userId);
       else reactors.delete(userId);
