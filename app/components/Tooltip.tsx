@@ -6,6 +6,7 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  useEffect,
   useId,
   useRef,
 } from "react";
@@ -17,6 +18,14 @@ function useTooltip(anchorId?: string) {
   const press = useRef<{ timer?: number; held?: boolean }>({});
   const dismiss = useRef<AbortController>(null);
   const anchor = () => (anchorId ? document.getElementById(anchorId) : null);
+
+  useEffect(
+    () => () => {
+      dismiss.current?.abort();
+      clearTimeout(press.current.timer);
+    },
+    [],
+  );
 
   const hide = () => {
     dismiss.current?.abort();

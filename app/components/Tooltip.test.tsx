@@ -81,6 +81,17 @@ describe("TooltipButton", () => {
     expect(notCancelled).toBe(false);
   });
 
+  it("leaves Escape alone once it unmounts", async () => {
+    const { unmount } = render(
+      <TooltipButton tooltip="Reply">↩</TooltipButton>,
+    );
+
+    await userEvent.hover(screen.getByRole("button", { name: "Reply" }));
+    unmount();
+
+    expect(fireEvent.keyDown(document.body, { key: "Escape" })).toBe(true);
+  });
+
   it("closes on a press anywhere", async () => {
     const { button } = renderButton();
 
