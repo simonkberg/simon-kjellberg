@@ -11,7 +11,7 @@ import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 
-/** One emoji as Discord stores a reaction's name; kept off the client, where older browsers can't parse the `v` flag. */
+/** One emoji as Discord stores a reaction's name. */
 export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
 // Discord snowflakes, at most 20 digits.
 export const MessageIdSchema = z.string().max(20).regex(/^\d+$/);

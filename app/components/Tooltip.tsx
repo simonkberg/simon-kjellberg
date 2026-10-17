@@ -6,9 +6,11 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  type RefObject,
   useEffect,
   useId,
   useRef,
+  useState,
 } from "react";
 
 const LONG_PRESS_MS = 500;
@@ -17,6 +19,7 @@ function useTooltip(anchorId?: string) {
   const tip = useRef<HTMLSpanElement>(null);
   const press = useRef<{ timer?: number; held?: boolean }>({});
   const dismiss = useRef<AbortController>(null);
+  const dismissedBy = useRef<EventTarget>(null);
   const anchor = () => (anchorId ? document.getElementById(anchorId) : null);
 
   useEffect(
@@ -26,6 +29,13 @@ function useTooltip(anchorId?: string) {
     },
     [],
   );
+
+  // True once for the press that closed the tooltip from inside `node`.
+  const closedBy = (node: Node) => {
+    const target = dismissedBy.current;
+    dismissedBy.current = null;
+    return target instanceof Node && node.contains(target);
+  };
 
   const hide = () => {
     dismiss.current?.abort();
@@ -49,7 +59,14 @@ function useTooltip(anchorId?: string) {
       },
       { signal },
     );
-    document.addEventListener("pointerdown", hide, { capture: true, signal });
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        dismissedBy.current = event.target;
+        hide();
+      },
+      { capture: true, signal },
+    );
     document.addEventListener(
       "pointerout",
       (event) => {
@@ -71,6 +88,8 @@ function useTooltip(anchorId?: string) {
 
   return {
     tip,
+    show,
+    closedBy,
     trigger: {
       onPointerEnter: (event: PointerEvent<HTMLElement>) => {
         if (event.pointerType !== "touch") show(event.currentTarget);
@@ -116,6 +135,21 @@ function useTooltip(anchorId?: string) {
 
 type Trigger = ReturnType<typeof useTooltip>["trigger"];
 
+// Not hint, whose light dismiss closes it on the click or tap that reveals it.
+const Popover = ({
+  tip,
+  id,
+  children,
+}: {
+  tip: RefObject<HTMLSpanElement | null>;
+  id?: string;
+  children: ReactNode;
+}) => (
+  <span ref={tip} id={id} popover="manual" role="tooltip" className="tooltip">
+    <span>{children}</span>
+  </span>
+);
+
 /**
  * A button whose tooltip names it, or describes it with `describes`; an `aria-label` keeps
  * its own name. With `anchor`, the tooltip sits on that element and hovering it keeps it open.
@@ -141,16 +175,65 @@ export const TooltipButton = ({
   return (
     <>
       <button {...link} {...props} {...trigger} data-tooltip-trigger="" />
-      {/* Not hint, whose light dismiss closes it on the click or tap that reveals it. */}
+      <Popover tip={tip} id={id}>
+        {tooltip}
+      </Popover>
+    </>
+  );
+};
+
+// A long press that selected the text ends in a pointerup too.
+const selects = (node: Node) => {
+  const selection = getSelection();
+  return (
+    selection?.isCollapsed === false &&
+    selection.getRangeAt(0).intersectsNode(node)
+  );
+};
+
+/**
+ * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. A tap shows it, since
+ * tapping text does nothing else; a long press stays a text selection.
+ */
+export const TooltipText = ({
+  tooltip,
+  children,
+}: {
+  tooltip: ReactNode;
+  children: ReactNode;
+}) => {
+  const { tip, show, closedBy } = useTooltip();
+  const [shown, setShown] = useState(false);
+  const closing = useRef(false);
+  const reveal = (text: HTMLElement) => {
+    setShown(true);
+    show(text);
+  };
+
+  return (
+    <>
       <span
-        ref={tip}
-        id={id}
-        popover="manual"
-        role="tooltip"
-        className="tooltip"
+        onPointerEnter={(event) => {
+          if (event.pointerType !== "touch") reveal(event.currentTarget);
+        }}
+        // A tap on the open tooltip's text closes it, like a tap anywhere else.
+        onPointerDown={(event) => {
+          closing.current = closedBy(event.currentTarget);
+        }}
+        onPointerUp={(event) => {
+          const text = event.currentTarget;
+          if (
+            event.pointerType === "touch" &&
+            !closing.current &&
+            !selects(text)
+          ) {
+            reveal(text);
+          }
+        }}
       >
-        <span>{tooltip}</span>
+        {children}
       </span>
+      <Popover tip={tip}>{shown && tooltip}</Popover>
     </>
   );
 };

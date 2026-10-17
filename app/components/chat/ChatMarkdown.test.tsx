@@ -1,14 +1,14 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { Markdown } from "./Markdown";
+import { ChatMarkdown } from "./ChatMarkdown";
 
 const html = (source: string): string => {
-  const { container } = render(<Markdown source={source} />);
+  const { container } = render(<ChatMarkdown source={source} />);
   return container.innerHTML;
 };
 
-describe("Markdown", () => {
+describe("ChatMarkdown", () => {
   it("renders plain text", () => {
     expect(html("Hello, world!")).toBe("Hello, world!");
   });
@@ -100,5 +100,11 @@ describe("Markdown", () => {
       expect(html("[x](data:text/html;base64,PHN2Zz4=)")).toBe("x");
       expect(document.querySelector("a")).toBeNull();
     });
+  });
+
+  it("gives emoji in text a tooltip, but not in code", () => {
+    const { getAllByRole } = render(<ChatMarkdown source="🔥 **🔥** `🔥`" />);
+
+    expect(getAllByRole("tooltip", { hidden: true })).toHaveLength(2);
   });
 });

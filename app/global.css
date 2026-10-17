@@ -737,6 +737,10 @@ button {
     background: var(--surface);
   }
 
+  &:has(> span:empty) {
+    display: none;
+  }
+
   @supports (position-area: top) {
     margin: 0;
     inset: auto;
