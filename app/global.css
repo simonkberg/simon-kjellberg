@@ -662,7 +662,8 @@
   font-family: "Colour Emoji";
   src:
     local("Apple Color Emoji"), local("Segoe UI Emoji"), local("SegoeUIEmoji"),
-    local("Noto Color Emoji"), local("NotoColorEmoji");
+    local("SamsungColorEmoji"), local("Noto Color Emoji"),
+    local("NotoColorEmoji");
   unicode-range:
     U+231A-231B, U+23E9-23EC, U+23F0, U+23F3, U+25FD-25FE, U+2614-2615,
     U+2648-2653, U+267F, U+2693, U+26A1, U+26AA-26AB, U+26BD-26BE, U+26C4-26C5,
@@ -677,8 +678,9 @@
   font-family: "Colour Emoji";
   src:
     local("Apple Color Emoji"), local("Segoe UI Emoji"), local("SegoeUIEmoji"),
-    local("Noto Color Emoji Flags"), local("NotoColorEmojiFlags"),
-    local("Noto Color Emoji"), local("NotoColorEmoji");
+    local("SamsungColorEmoji"), local("Noto Color Emoji Flags"),
+    local("NotoColorEmojiFlags"), local("Noto Color Emoji"),
+    local("NotoColorEmoji");
   unicode-range: U+1F1E6-1F1FF;
 }
 
