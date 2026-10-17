@@ -48,7 +48,7 @@ export class ChannelStore {
   #seeding: Promise<void> | null = null;
   #seeded = false;
   // Set while what the store holds may have missed events, until a seed succeeds.
-  #stale = false;
+  #stale = true;
   // Set until a seed lands after a gap, when any fetch beats the window it has.
   #gap = true;
   #reseedTimer: ReturnType<typeof setTimeout> | undefined;
@@ -186,7 +186,10 @@ export class ChannelStore {
 
     this.#forgetOlder(event);
     // Unseeded, the next seed includes it and notifies.
-    if (!this.#seeded) return;
+    if (!this.#seeded) {
+      if (!this.#seeding) this.#scheduleReseed(0);
+      return;
+    }
     const revision = this.#revision;
     this.#applyEvent(event);
     if (this.#revision !== revision) this.#notify();
