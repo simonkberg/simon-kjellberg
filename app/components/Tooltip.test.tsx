@@ -191,6 +191,19 @@ describe("Tooltip", () => {
     expect(isOpen()).toBe(false);
   });
 
+  it("shows nothing after a tap with two fingers", () => {
+    vi.useFakeTimers();
+    render(<Button />);
+    const button = screen.getByRole("button", { name: "Reply" });
+
+    fireEvent.pointerDown(button, { pointerType: "touch" });
+    fireEvent.pointerDown(button, { pointerType: "touch" });
+    fireEvent.pointerUp(button, { pointerType: "touch" });
+    vi.advanceTimersByTime(500);
+
+    expect(isOpen()).toBe(false);
+  });
+
   it("activates on a click after a long press that turned into a scroll", () => {
     vi.useFakeTimers();
     const onClick = vi.fn();

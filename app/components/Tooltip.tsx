@@ -81,6 +81,7 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
       },
       // Touch has no hover, so a long press shows the tooltip instead of activating.
       onPointerDown: (event: PointerEvent<HTMLElement>) => {
+        clearTimeout(press.current.timer);
         press.current.held = false;
         if (event.pointerType !== "touch") return;
         const button = event.currentTarget;
