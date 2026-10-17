@@ -554,9 +554,22 @@ describe("startBotSubscription", () => {
   it("should ignore other channel events", async () => {
     const callback = await startAndGetSubscriber();
 
-    callback({ t: "MESSAGE_DELETE", d: { id: "msg-1", channel_id: "c" } });
-    await Promise.resolve();
+    // Would reach the chain lookup if the bot handled updates as new messages.
+    callback({
+      t: "MESSAGE_UPDATE",
+      d: { ...createMessage({ content: "hey simon-bot" }), channel_id: "c" },
+    });
+    callback({
+      t: "MESSAGE_CREATE",
+      d: {
+        ...createMessage({ id: "msg-2", content: "hey simon-bot" }),
+        channel_id: "c",
+      },
+    });
 
-    expect(query).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(getMessageChain).toHaveBeenCalled();
+    });
+    expect(getMessageChain).toHaveBeenCalledExactlyOnceWith("msg-2");
   });
 });
