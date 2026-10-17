@@ -672,6 +672,16 @@
     U+1F000-1FAFF, U+E0020-E007F;
 }
 
+/* Android keeps flags in a font of their own, so "Noto Color Emoji" there draws them in Iosevka. */
+@font-face {
+  font-family: "Colour Emoji";
+  src:
+    local("Apple Color Emoji"), local("Segoe UI Emoji"), local("SegoeUIEmoji"),
+    local("Noto Color Emoji Flags"), local("NotoColorEmojiFlags"),
+    local("Noto Color Emoji"), local("NotoColorEmoji");
+  unicode-range: U+1F1E6-1F1FF;
+}
+
 html {
   font-family: "Colour Emoji", var(--font-iosevka), monospace;
   font-size: 100%;
