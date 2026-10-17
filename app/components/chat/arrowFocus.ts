@@ -35,8 +35,8 @@ export function arrowFocus(
   const current = elements.findIndex((element) => element === event.target);
   if (current === -1) return;
   const index = targetIndex(event.key, current, elements.length - 1, columns);
-  if (index === undefined) return;
-  // Even at an edge, so the arrow doesn't scroll the page instead.
+  const target = index === undefined ? undefined : elements[index];
+  if (!target) return;
   event.preventDefault();
-  elements[index]?.focus();
+  target.focus();
 }

@@ -78,6 +78,8 @@ export const ChatReactionPicker = ({
     }
     const buttons = [...picker.querySelectorAll("button")];
     arrowFocus(event, buttons, columns(buttons));
+    // Also at its edges, where the arrow would scroll the chat behind the picker.
+    if (event.key.startsWith("Arrow")) event.preventDefault();
   };
 
   return (

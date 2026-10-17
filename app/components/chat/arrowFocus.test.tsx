@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -50,6 +50,14 @@ describe("arrowFocus", () => {
     await user.keyboard("{ArrowLeft}");
     expect(button("c")).toHaveFocus();
     await user.keyboard("{ArrowUp}");
+    expect(button("a")).toHaveFocus();
+  });
+
+  it("leaves an arrow past the ends to the browser", () => {
+    render(<Buttons />);
+    button("a").focus();
+
+    expect(fireEvent.keyDown(button("a"), { key: "ArrowUp" })).toBe(true);
     expect(button("a")).toHaveFocus();
   });
 });
