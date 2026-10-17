@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
@@ -200,6 +200,10 @@ describe("query", () => {
 });
 
 describe("keepWarm", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setInterval"] });
+  });
+
   afterEach(() => {
     resetGlobal("simon.dev/turso-keep-warm");
     vi.useRealTimers();
@@ -207,7 +211,6 @@ describe("keepWarm", () => {
   });
 
   it("should query Turso every minute", async () => {
-    vi.useFakeTimers({ toFake: ["setInterval"] });
     const statements: unknown[] = [];
     server.use(
       http.post(PIPELINE_URL, async ({ request }) => {
@@ -236,7 +239,6 @@ describe("keepWarm", () => {
   });
 
   it("should log a failed query and keep going", async () => {
-    vi.useFakeTimers({ toFake: ["setInterval"] });
     const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(
       http.post(PIPELINE_URL, () => new HttpResponse(null, { status: 503 })),

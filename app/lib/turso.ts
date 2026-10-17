@@ -135,7 +135,6 @@ export async function query(
   };
 }
 
-/** Queries Turso every minute, so a visitor after a quiet spell doesn't meet a stalled database. */
 export function keepWarm(): void {
   getGlobal("simon.dev/turso-keep-warm", () =>
     setInterval(() => {
