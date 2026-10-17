@@ -1539,7 +1539,7 @@ ul {
   }
 }
 
-.chat-reaction-picker {
+.emoji-picker {
   grid-template-columns: repeat(8, 2.25em);
   padding: 0.5ch;
   border: 1px solid var(--rule);
@@ -1558,12 +1558,26 @@ ul {
     text-align: center;
 
     &:hover,
-    &:focus-visible {
+    &:focus-visible,
+    &[aria-selected="true"] {
       background: var(--wash);
     }
   }
 
-  /* Opens above its button; without anchor positioning it stays centred. */
+  > .name {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0.25em 0.5ch 0;
+    color: var(--muted);
+    /* One line, kept when nothing is chosen, so the picker never changes height. */
+    min-height: calc(1lh + 0.25em);
+    overflow: hidden;
+    font-size: var(--tip-size);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Opens above what opened it; without anchor positioning it stays centred. */
   @supports (position-area: top) {
     margin: 0.25lh 0;
     inset: auto;

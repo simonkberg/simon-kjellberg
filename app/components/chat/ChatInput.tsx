@@ -4,7 +4,10 @@ import {
   ChangeEvent,
   FormEvent,
   type PropsWithChildren,
+  type SyntheticEvent,
+  Suspense,
   useEffect,
+  useId,
   useRef,
   useState,
   useTransition,
@@ -14,7 +17,23 @@ import { requestFormReset } from "react-dom";
 import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
 
 import { CaretBuddy } from "./CaretBuddy";
+import {
+  ChatEmojiSuggestions,
+  prefetchShortcodes,
+} from "./ChatEmojiSuggestions";
 import { ChatToast } from "./ChatToast";
+
+const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
+
+/** The shortcode typed up to the caret, without its colon, and where it starts with its colon. */
+function typedShortcode(input: HTMLInputElement) {
+  const caret = input.selectionStart;
+  if (caret === null || caret !== input.selectionEnd) return null;
+  const query = SHORTCODE.exec(input.value.slice(0, caret))?.[1];
+  return query === undefined
+    ? null
+    : { query, start: caret - query.length - 1, end: caret };
+}
 
 export interface ChatInputProps extends PropsWithChildren {
   replyToId: string | null;
@@ -32,6 +51,10 @@ export const ChatInput = ({
   });
   const [pending, startTransition] = useTransition();
   const [inputValue, setInputValue] = useState("");
+  const [shortcode, setShortcode] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+  const suggestionsId = useId();
+  const suggesting = shortcode !== null && !dismissed;
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +74,7 @@ export const ChatInput = ({
           requestFormReset(form);
           setReplyToId(null);
           setInputValue("");
+          setShortcode(null);
         });
       }
 
@@ -58,8 +82,30 @@ export const ChatInput = ({
     });
   }
 
+  // A dismissal holds only for the shortcode it closed on.
+  function trackShortcode(input: HTMLInputElement) {
+    const typed = typedShortcode(input)?.query ?? null;
+    if (typed !== shortcode) setDismissed(false);
+    setShortcode(typed);
+  }
+
   function onChange(event: ChangeEvent<HTMLInputElement>) {
     setInputValue(event.target.value);
+    trackShortcode(event.target);
+  }
+
+  function onSelect(event: SyntheticEvent<HTMLInputElement>) {
+    trackShortcode(event.currentTarget);
+  }
+
+  function pickEmoji(emoji: string) {
+    const input = inputRef.current;
+    const typed = input && typedShortcode(input);
+    if (!input || !typed) return;
+    input.setRangeText(emoji, typed.start, typed.end, "end");
+    setInputValue(input.value);
+    setShortcode(null);
+    input.focus();
   }
 
   useEffect(() => {
@@ -104,8 +150,25 @@ export const ChatInput = ({
             ref={inputRef}
             value={inputValue}
             onChange={onChange}
+            onSelect={onSelect}
+            onFocus={prefetchShortcodes}
             autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={false}
+            aria-controls={suggestionsId}
           />
+          {suggesting && (
+            <Suspense>
+              <ChatEmojiSuggestions
+                id={suggestionsId}
+                input={inputRef}
+                query={shortcode}
+                onPick={pickEmoji}
+                onDismiss={() => setDismissed(true)}
+              />
+            </Suspense>
+          )}
           <CaretBuddy
             inputValue={inputValue}
             isPending={pending}

@@ -41,3 +41,40 @@ export const REACTION_EMOJI = [
   { emoji: "🍿", name: "popcorn" },
   { emoji: "🤖", name: "robot" },
 ] as const;
+
+/** An emoji and its shortcodes, the first being the one it is known by. */
+export type EmojiShortcodes = [emoji: string, ...shortcodes: string[]];
+
+export interface EmojiMatch {
+  emoji: string;
+  name: string;
+}
+
+function rank(shortcode: string, query: string): number {
+  if (shortcode === query) return 0;
+  if (shortcode.startsWith(query)) return 1;
+  if (shortcode.includes(`_${query}`)) return 2;
+  return shortcode.includes(query) ? 3 : Infinity;
+}
+
+/** Matches best first, each named by the shortcode that matched. */
+export function searchEmoji(
+  emoji: EmojiShortcodes[],
+  query: string,
+  limit: number,
+): EmojiMatch[] {
+  const needle = query.toLowerCase();
+  return emoji
+    .flatMap(([emoji, ...shortcodes]) => {
+      let best: (EmojiMatch & { rank: number }) | undefined;
+      for (const name of shortcodes) {
+        const score = rank(name, needle);
+        if (score < (best?.rank ?? Infinity))
+          best = { emoji, name, rank: score };
+      }
+      return best ? [best] : [];
+    })
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, limit)
+    .map(({ emoji, name }) => ({ emoji, name }));
+}

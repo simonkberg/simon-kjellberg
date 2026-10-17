@@ -1,6 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
@@ -152,6 +152,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
+- **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
+  route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's. It is
+  fetched when the input takes focus, so the full set never ships with the page.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
