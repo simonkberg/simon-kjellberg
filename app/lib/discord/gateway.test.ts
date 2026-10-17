@@ -244,11 +244,7 @@ describe("subscribe", () => {
             client.send(
               createPayload(
                 GatewayOpcode.DISPATCH,
-                {
-                  user: { id: "bot-user-id" },
-                  session_id: "test-session-id",
-                  resume_gateway_url: "wss://gateway.discord.gg",
-                },
+                DEFAULT_SESSION,
                 5, // Use sequence 5 to verify it's included in response
                 "READY",
               ),
@@ -364,7 +360,6 @@ describe("subscribe", () => {
 
     const callback = vi.fn();
     const unsubscribe = await subscribe(callback);
-    callback.mockClear();
     callback.mockClear();
     const client = getLastClient(gateway.clients);
 
@@ -555,11 +550,7 @@ describe("subscribe", () => {
 
     server.use(
       createHandshakeHandler({
-        session: {
-          user: { id: "bot-user-id" },
-          session_id: "test-session-id",
-          resume_gateway_url: "nope",
-        },
+        session: { ...DEFAULT_SESSION, resume_gateway_url: "nope" },
       }),
     );
 
@@ -584,11 +575,7 @@ describe("subscribe", () => {
 
     server.use(
       createHandshakeHandler({
-        session: {
-          user: { id: "bot-user-id" },
-          session_id: "test-session-id",
-          resume_gateway_url: "nope",
-        },
+        session: { ...DEFAULT_SESSION, resume_gateway_url: "nope" },
       }),
     );
 
@@ -777,8 +764,7 @@ describe("subscribe", () => {
     server.use(
       createHandshakeHandler({
         session: {
-          user: { id: "bot-user-id" },
-          session_id: "test-session-id",
+          ...DEFAULT_SESSION,
           resume_gateway_url: "wss://resume.discord.gg",
         },
       }),
@@ -850,8 +836,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
-                    user: { id: "bot-user-id" },
-                    session_id: "test-session-id",
+                    ...DEFAULT_SESSION,
                     resume_gateway_url: "wss://resume.discord.gg",
                   },
                   1,
@@ -866,11 +851,7 @@ describe("subscribe", () => {
               client.send(
                 createPayload(
                   GatewayOpcode.DISPATCH,
-                  {
-                    user: { id: "bot-user-id" },
-                    session_id: "new-session-id",
-                    resume_gateway_url: "wss://gateway.discord.gg",
-                  },
+                  { ...DEFAULT_SESSION, session_id: "new-session-id" },
                   1,
                   "READY",
                 ),
@@ -916,11 +897,7 @@ describe("subscribe", () => {
             client.send(
               createPayload(
                 GatewayOpcode.DISPATCH,
-                {
-                  user: { id: "bot-user-id" },
-                  session_id: "test-session-id",
-                  resume_gateway_url: "wss://gateway.discord.gg",
-                },
+                DEFAULT_SESSION,
                 1,
                 "READY",
               ),
@@ -965,8 +942,7 @@ describe("subscribe", () => {
                 createPayload(
                   GatewayOpcode.DISPATCH,
                   {
-                    user: { id: "bot-user-id" },
-                    session_id: "test-session-id",
+                    ...DEFAULT_SESSION,
                     resume_gateway_url: "wss://resume.discord.gg",
                   },
                   1,
@@ -981,11 +957,7 @@ describe("subscribe", () => {
               client.send(
                 createPayload(
                   GatewayOpcode.DISPATCH,
-                  {
-                    user: { id: "bot-user-id" },
-                    session_id: "new-session-id",
-                    resume_gateway_url: "wss://gateway.discord.gg",
-                  },
+                  { ...DEFAULT_SESSION, session_id: "new-session-id" },
                   1,
                   "READY",
                 ),
