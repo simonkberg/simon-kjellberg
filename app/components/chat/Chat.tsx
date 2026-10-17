@@ -1,8 +1,10 @@
 "use client";
 
-import { use, useOptimistic, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, use, useState } from "react";
 
-import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
+import type { ChatHistoryResult } from "@/actions/chat";
+import type { ReactionResult } from "@/api/chat/reactions/route";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
 import { TooltipButton } from "@/components/Tooltip";
@@ -63,8 +65,23 @@ function withReactionToggled(
   });
 }
 
-// Shared, so the passthrough keeps its identity while nothing is pending.
-const NOT_REACTING: ReadonlySet<string> = new Set();
+async function postReaction(
+  messageId: string,
+  emoji: string,
+): Promise<ReactionResult> {
+  try {
+    const response = await fetch("/api/chat/reactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId, emoji }),
+    });
+    return (await response.json()) as ReactionResult;
+  } catch {
+    return { status: "error", error: "Failed to react to chat message" };
+  }
+}
+
+const NOT_REACTING: ReadonlyMap<string, string> = new Map();
 
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
@@ -75,19 +92,15 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const result = use(history);
   const dismissed = use(tipDismissed);
   const [replyToId, setReplyToId] = useState<string | null>(null);
-  const [, startReacting] = useTransition();
-  // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
-  const [reacting, markReacting] = useOptimistic(
-    NOT_REACTING,
-    (ids, messageId: string): ReadonlySet<string> =>
-      new Set(ids).add(messageId),
-  );
-  // Shown at once; the server's history replaces it when the action settles.
-  const [messages, toggleOptimistically] = useOptimistic(
-    result.status === "ok" ? result.messages : [],
-    (current, { messageId, emoji }: { messageId: string; emoji: string }) =>
-      withReactionToggled(current, messageId, emoji),
-  );
+  const router = useRouter();
+  // State, not an async transition: React holds every other transition until
+  // one settles, and Discord's rate limit can hold a toggle 30s.
+  const [pending, setPending] = useState(NOT_REACTING);
+  const reacting = new Set(pending.keys());
+  let messages = result.status === "ok" ? result.messages : [];
+  for (const [messageId, emoji] of pending) {
+    messages = withReactionToggled(messages, messageId, emoji);
+  }
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
     message: string;
@@ -95,23 +108,21 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   }>();
 
   const react = (messageId: string, emoji: string) => {
-    startReacting(async () => {
-      markReacting(messageId);
-      toggleOptimistically({ messageId, emoji });
-      const reaction = await reactToChatMessage(messageId, emoji).catch(
-        () =>
-          ({
-            status: "error",
-            error: "Failed to react to chat message",
-          }) as const,
-      );
-      // After an await, updates leave the transition unless wrapped again.
-      startReacting(() => {
+    setPending((current) => new Map(current).set(messageId, emoji));
+    void postReaction(messageId, emoji).then((reaction) => {
+      // One transition, so the toggle shows until the refreshed history replaces it.
+      startTransition(() => {
+        setPending((current) => {
+          const next = new Map(current);
+          next.delete(messageId);
+          return next;
+        });
         setReactionError((previous) =>
           reaction.status === "error"
             ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
             : undefined,
         );
+        if (reaction.status === "ok") router.refresh();
       });
     });
   };

@@ -155,6 +155,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   changes, so a toggle that leaves the mirror unchanged reaches them on the next change. Mirror
   failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
+  A toggle POSTs to `app/api/chat/reactions/`, not a server action: the mirror can wait 30s
+  on Discord's rate limit, and a pending action or async transition holds every other one.
+  The route checks Origin against Host itself, as Next does for actions.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
@@ -214,7 +217,8 @@ deviation someone would otherwise "fix". One short line.
 ### Server Actions
 
 All in `app/actions/`, marked `"use server"`, returning a discriminated union on `status`
-(`"ok"` with `data`, `"error"` with `error`).
+(`"ok"` with `data`, `"error"` with `error`). A mutation that can be slow is a route
+handler instead (see Reactions); `admit` in `app/lib/admit.ts` rate limits both.
 
 ### Caching with `"use cache"`
 

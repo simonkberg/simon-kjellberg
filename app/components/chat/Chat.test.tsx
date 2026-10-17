@@ -7,15 +7,29 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
+import type { ChatHistoryResult } from "@/actions/chat";
+import type { ReactionResult } from "@/api/chat/reactions/route";
 import type { Message, Reaction } from "@/lib/discord/api";
+import { server } from "@/mocks/node";
 
 import { Chat } from "./Chat";
 
+const router = vi.hoisted(() => ({
+  back: vi.fn(),
+  forward: vi.fn(),
+  refresh: vi.fn(),
+  push: vi.fn(),
+  replace: vi.fn(),
+  prefetch: vi.fn(),
+  bfcacheId: "",
+}));
+
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
+vi.mock(import("next/navigation"), () => ({ useRouter: () => router }));
+vi.mock(import("@/actions/chat"), () => ({}));
 
 describe("Chat", () => {
   beforeEach(() => {
@@ -195,12 +209,37 @@ describe("Chat", () => {
         ),
       );
 
-    // React holds every transition until all pending actions settle, so each test settles its own.
+    let requests: { messageId: string; emoji: string }[];
+
+    beforeEach(() => {
+      requests = [];
+      router.refresh.mockClear();
+    });
+
+    function answer(
+      respond: (messageId: string) => Response | Promise<Response>,
+    ) {
+      server.use(
+        http.post("*/api/chat/reactions", async ({ request }) => {
+          const body = (await request.json()) as {
+            messageId: string;
+            emoji: string;
+          };
+          requests.push(body);
+          return respond(body.messageId);
+        }),
+      );
+    }
+
+    const ok = () => HttpResponse.json<ReactionResult>({ status: "ok" });
+
     function holdReaction() {
-      const { promise, resolve } =
-        Promise.withResolvers<Awaited<ReturnType<typeof reactToChatMessage>>>();
-      vi.mocked(reactToChatMessage).mockReturnValue(promise);
-      return () => act(async () => resolve({ status: "ok" }));
+      const { promise, resolve } = Promise.withResolvers<void>();
+      answer(async () => {
+        await promise;
+        return ok();
+      });
+      return () => act(async () => resolve());
     }
 
     it("shows a reaction at once while the server catches up", async () => {
@@ -259,7 +298,9 @@ describe("Chat", () => {
         within(picker).getByRole("button", { name: "tada", hidden: true }),
       );
 
-      expect(reactToChatMessage).toHaveBeenCalledWith("reply-1", "🎉");
+      await waitFor(() =>
+        expect(requests).toEqual([{ messageId: "reply-1", emoji: "🎉" }]),
+      );
       expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
         "aria-pressed",
         "true",
@@ -292,28 +333,78 @@ describe("Chat", () => {
       await settle();
     });
 
+    it("settles a reaction while another message's is still pending", async () => {
+      const { promise, resolve } = Promise.withResolvers<void>();
+      answer(async (messageId) => {
+        if (messageId === "msg-1") await promise;
+        return ok();
+      });
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            messages: [
+              createMessage({ reactions: thumbs }),
+              createMessage({
+                id: "msg-2",
+                content: "Other",
+                reactions: thumbs,
+              }),
+            ],
+          }),
+        ),
+      );
+
+      const [slow, quick] = screen.getAllByRole("button", { name: "👍 1" });
+      await userEvent.click(slow!);
+      await userEvent.click(quick!);
+
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      const [busy, free] = screen.getAllByRole("button", {
+        name: "Add reaction",
+      });
+      expect(busy).toBeDisabled();
+      expect(free).toBeEnabled();
+      await act(async () => resolve());
+    });
+
+    it("sends the toggle and refreshes the history once it is taken", async () => {
+      answer(ok);
+      await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      expect(requests).toEqual([{ messageId: "msg-1", emoji: "👍" }]);
+      expect(
+        screen.getByRole("button", { name: "Add reaction" }),
+      ).toBeEnabled();
+    });
+
     it.each([
       {
         failure: "the server turns it away",
-        mock: () =>
-          vi
-            .mocked(reactToChatMessage)
-            .mockResolvedValue({
-              status: "error",
-              error: "Rate limit exceeded.",
-            }),
+        respond: () =>
+          HttpResponse.json<ReactionResult>(
+            { status: "error", error: "Rate limit exceeded." },
+            { status: 429 },
+          ),
         error: "Rate limit exceeded.",
       },
       {
-        failure: "the action itself fails",
-        mock: () =>
-          vi.mocked(reactToChatMessage).mockRejectedValue(new Error("offline")),
+        failure: "the response isn't a result",
+        respond: () => new HttpResponse(null, { status: 403 }),
+        error: "Failed to react to chat message",
+      },
+      {
+        failure: "the request itself fails",
+        respond: () => HttpResponse.error(),
         error: "Failed to react to chat message",
       },
     ])(
       "puts the reaction back and says why when $failure",
-      async ({ mock, error }) => {
-        mock();
+      async ({ respond, error }) => {
+        answer(respond);
         await renderReactions(thumbs);
 
         await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
@@ -323,14 +414,17 @@ describe("Chat", () => {
           "aria-pressed",
           "false",
         );
+        expect(router.refresh).not.toHaveBeenCalled();
       },
     );
 
     it("shows the same error again on a repeated failure", async () => {
-      vi.mocked(reactToChatMessage).mockResolvedValue({
-        status: "error",
-        error: "Rate limit exceeded.",
-      });
+      answer(() =>
+        HttpResponse.json<ReactionResult>(
+          { status: "error", error: "Rate limit exceeded." },
+          { status: 429 },
+        ),
+      );
       await renderReactions(thumbs);
 
       const pill = screen.getByRole("button", { name: "👍 1" });
