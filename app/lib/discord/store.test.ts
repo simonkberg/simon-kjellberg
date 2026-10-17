@@ -167,8 +167,9 @@ describe("ChannelStore", () => {
     expect(source.fetchMessages).toHaveBeenCalledTimes(3);
   });
 
-  it("should give up seeding again after a few attempts", async () => {
+  it("should give up seeding again after a few attempts and retry later", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
+    vi.useFakeTimers();
     const { store, source } = createStore();
     source.fetchMessages.mockImplementation(async () => {
       store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
@@ -178,43 +179,44 @@ describe("ChannelStore", () => {
     expect(await store.messages()).toHaveLength(1);
     expect(source.fetchMessages).toHaveBeenCalledTimes(3);
     expect(log.warn).toHaveBeenCalledOnce();
+
+    source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await store.messages()).toHaveLength(2);
   });
 
-  it("should seed again on the next read after a failed or changing reseed", async () => {
+  it("should seed again after a failed or changing reseed until one lands", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers();
     const { store, source } = createStore();
     await store.messages();
+    const listener = vi.fn();
+    store.listen(listener);
 
     source.fetchMessages.mockRejectedValueOnce(new Error("down"));
     store.apply({ t: "READY" });
-    await vi.waitFor(() => {
-      expect(log.error).toHaveBeenCalledOnce();
-    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(log.error).toHaveBeenCalledOnce();
 
     source.fetchMessages.mockImplementation(async () => {
       store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
       return [message("1")];
     });
-    await store.messages();
-    await vi.waitFor(() => {
-      expect(log.warn).toHaveBeenCalledOnce();
-    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(log.warn).toHaveBeenCalledOnce();
+    listener.mockClear();
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
     const calls = source.fetchMessages.mock.calls.length;
     await store.messages();
     expect(source.fetchMessages).toHaveBeenCalledTimes(calls);
-    vi.advanceTimersByTime(10_000);
-    await store.messages();
-    await vi.waitFor(async () => {
-      expect(await store.messages()).toHaveLength(2);
-    });
-    const seeded = source.fetchMessages.mock.calls.length;
-    vi.advanceTimersByTime(10_000);
-    await store.messages();
-    expect(source.fetchMessages).toHaveBeenCalledTimes(seeded);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await store.messages()).toHaveLength(2);
+    expect(listener).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(calls + 1);
   });
 
   it("should forget names learned in an earlier session", async () => {

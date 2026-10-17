@@ -24,8 +24,8 @@ type Emoji = Reaction["emoji"];
 export const WINDOW = 100;
 // A seed is retried when an event lands during it; past this it keeps what it got.
 const MAX_SEED_ATTEMPTS = 3;
-// A stale store seeds again on a read at most this often, so a busy channel can't keep it fetching.
-const RESEED_COOLDOWN_MS = 10_000;
+// A stale store seeds again after this, so a busy channel can't keep it fetching.
+const RESEED_DELAY_MS = 10_000;
 
 function isShown(message: DiscordMessage): boolean {
   return message.type === 0 || message.type === 19;
@@ -53,9 +53,9 @@ export class ChannelStore {
   #older = new LruMap<string, Promise<DiscordMessage>>(WINDOW);
   #seeding: Promise<void> | null = null;
   #seeded = false;
-  // Set while what the store holds may have missed events; the next read seeds again.
+  // Set while what the store holds may have missed events, until a seed succeeds.
   #stale = false;
-  #reseedAfter = 0;
+  #reseedTimer: ReturnType<typeof setTimeout> | undefined;
   #changed = false;
   #listeners = new Set<() => void>();
 
@@ -81,10 +81,6 @@ export class ChannelStore {
 
   async messages(): Promise<DiscordMessage[]> {
     if (!this.#seeded) await this.#seed();
-    else if (this.#stale && !this.#seeding && Date.now() >= this.#reseedAfter) {
-      this.#reseedAfter = Date.now() + RESEED_COOLDOWN_MS;
-      this.#reseed();
-    }
     return [...this.#messages.values()];
   }
 
@@ -242,6 +238,14 @@ export class ChannelStore {
   #seed(): Promise<void> {
     return (this.#seeding ??= this.#load().finally(() => {
       this.#seeding = null;
+      clearTimeout(this.#reseedTimer);
+      // Retried on a timer, since a quiet channel has no event or read to retry it.
+      if (this.#stale) {
+        this.#reseedTimer = setTimeout(
+          () => this.#reseed(),
+          RESEED_DELAY_MS,
+        ).unref();
+      }
     }));
   }
 
