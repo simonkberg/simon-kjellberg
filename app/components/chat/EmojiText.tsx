@@ -6,11 +6,7 @@ import { TooltipText } from "@/components/Tooltip";
 
 import { loadShortcodes } from "./ChatEmojiSuggestions";
 
-// Built at runtime: a `v` literal fails to parse before Safari 17, taking the chat with it.
-const EMOJI =
-  "unicodeSets" in RegExp.prototype
-    ? new RegExp("(\\p{RGI_Emoji})", "v")
-    : undefined;
+const EMOJI = /(\p{RGI_Emoji})/v;
 
 // The set names each emoji without skin tones, and without U+FE0F where it defaults to emoji anyway.
 const baseEmoji = (emoji: string) =>
@@ -28,21 +24,19 @@ const Shortcode = ({ emoji }: { emoji: string }) => {
 
 /** Text with each emoji naming its shortcode in a tooltip. */
 export const EmojiText = ({ text }: { text: string }) =>
-  EMOJI === undefined
-    ? text
-    : text.split(EMOJI).map((part, index) =>
-        index % 2 === 0 ? (
-          part
-        ) : (
-          <TooltipText
-            key={index}
-            tooltip={
-              <Suspense fallback="…">
-                <Shortcode emoji={part} />
-              </Suspense>
-            }
-          >
-            {part}
-          </TooltipText>
-        ),
-      );
+  text.split(EMOJI).map((part, index) =>
+    index % 2 === 0 ? (
+      part
+    ) : (
+      <TooltipText
+        key={index}
+        tooltip={
+          <Suspense fallback="…">
+            <Shortcode emoji={part} />
+          </Suspense>
+        }
+      >
+        {part}
+      </TooltipText>
+    ),
+  );
