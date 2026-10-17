@@ -312,7 +312,12 @@ describe("subscribe", () => {
     getLastClient(gateway.clients)?.send(
       createPayload(
         GatewayOpcode.DISPATCH,
-        { channel_id: "test-discord-channel-id", message_id: "msg-test" },
+        {
+          channel_id: "test-discord-channel-id",
+          message_id: "msg-test",
+          user_id: "user-123",
+          emoji: { id: null, name: "👍" },
+        },
         2,
         event,
       ),
@@ -397,10 +402,10 @@ describe("subscribe", () => {
   });
 
   it("should share one connection between concurrent subscribers", async () => {
-    const { subscribe, subscribeToMessages } = await import("./gateway");
+    const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
 
-    await Promise.all([subscribe(vi.fn()), subscribeToMessages(vi.fn())]);
+    await Promise.all([subscribe(vi.fn()), subscribe(vi.fn())]);
 
     expect(gateway.clients.size).toBe(1);
   });
@@ -961,133 +966,121 @@ describe("subscribe", () => {
     expect(connectionCount).toBe(2);
   });
 
-  describe("subscribeToMessages", () => {
-    it("should notify message subscribers with full message on MESSAGE_CREATE", async () => {
-      const { subscribeToMessages } = await import("./gateway");
+  describe("events", () => {
+    async function dispatch(event: string, data: unknown) {
+      getLastClient(gateway.clients)?.send(
+        createPayload(GatewayOpcode.DISPATCH, data, 2, event),
+      );
+      await vi.advanceTimersByTimeAsync(0);
+    }
+
+    it("should pass the parsed message on MESSAGE_CREATE", async () => {
+      const { subscribe } = await import("./gateway");
       server.use(createHandshakeHandler());
 
       const callback = vi.fn();
-      await subscribeToMessages(callback);
+      await subscribe(callback);
+      await dispatch("MESSAGE_CREATE", {
+        type: 0,
+        id: "msg-123",
+        channel_id: "test-discord-channel-id",
+        author: { id: "user-123" },
+        content: "hello world",
+        timestamp: "2025-01-01T00:00:00.000000+00:00",
+        edited_timestamp: null,
+        nonce: "ignored",
+      });
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith({
+        t: "MESSAGE_CREATE",
+        d: {
+          type: 0,
+          id: "msg-123",
+          channel_id: "test-discord-channel-id",
+          author: { id: "user-123" },
+          content: "hello world",
+          timestamp: "2025-01-01T00:00:00.000000+00:00",
+          edited_timestamp: null,
+        },
+      });
+    });
+
+    it("should pass a MESSAGE_UPDATE that carries only some fields", async () => {
+      const { subscribe } = await import("./gateway");
+      server.use(createHandshakeHandler());
+
+      const callback = vi.fn();
+      await subscribe(callback);
+      await dispatch("MESSAGE_UPDATE", {
+        id: "msg-123",
+        channel_id: "test-discord-channel-id",
+      });
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith({
+        t: "MESSAGE_UPDATE",
+        d: { id: "msg-123", channel_id: "test-discord-channel-id" },
+      });
+    });
+
+    it.each([
+      [
+        "MESSAGE_DELETE",
+        { id: "msg-1", channel_id: "test-discord-channel-id" },
+      ],
+      [
+        "MESSAGE_DELETE_BULK",
+        { ids: ["msg-1", "msg-2"], channel_id: "test-discord-channel-id" },
+      ],
+      [
+        "MESSAGE_REACTION_REMOVE_ALL",
+        { message_id: "msg-1", channel_id: "test-discord-channel-id" },
+      ],
+      [
+        "MESSAGE_REACTION_REMOVE_EMOJI",
+        {
+          message_id: "msg-1",
+          channel_id: "test-discord-channel-id",
+          emoji: { id: null, name: "👍" },
+        },
+      ],
+    ])("should pass %s", async (event, data) => {
+      const { subscribe } = await import("./gateway");
+      server.use(createHandshakeHandler());
+
+      const callback = vi.fn();
+      await subscribe(callback);
+      await dispatch(event, data);
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith({ t: event, d: data });
+    });
+
+    it("should log and skip an event for our channel that doesn't parse", async () => {
+      const { subscribe } = await import("./gateway");
+      const { log } = await import("@/lib/log");
+      server.use(createHandshakeHandler());
+
+      const callback = vi.fn();
+      await subscribe(callback);
+      await dispatch("MESSAGE_DELETE", {
+        channel_id: "test-discord-channel-id",
+      });
 
       expect(callback).not.toHaveBeenCalled();
-
-      // Send MESSAGE_CREATE for matching channel
-      getLastClient(gateway.clients)?.send(
-        createPayload(
-          GatewayOpcode.DISPATCH,
-          {
-            type: 0,
-            id: "msg-123",
-            channel_id: "test-discord-channel-id",
-            author: { id: "user-123" },
-            content: "hello world",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          2,
-          "MESSAGE_CREATE",
-        ),
-      );
-
-      await vi.advanceTimersByTimeAsync(0);
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: "msg-123",
-          type: 0,
-          content: "hello world",
-        }),
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ eventName: "MESSAGE_DELETE" }),
+        "Invalid channel event",
       );
     });
 
-    it("should notify both refresh and message subscribers", async () => {
-      const { subscribe, subscribeToMessages } = await import("./gateway");
-      server.use(createHandshakeHandler());
-
-      const refreshCallback = vi.fn();
-      const messageCallback = vi.fn();
-
-      await subscribe(refreshCallback);
-      await subscribeToMessages(messageCallback);
-
-      getLastClient(gateway.clients)?.send(
-        createPayload(
-          GatewayOpcode.DISPATCH,
-          {
-            type: 0,
-            id: "msg-789",
-            channel_id: "test-discord-channel-id",
-            author: { id: "user-123" },
-            content: "hello",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          2,
-          "MESSAGE_CREATE",
-        ),
-      );
-
-      await vi.advanceTimersByTimeAsync(0);
-
-      // Refresh callback called with no args
-      expect(refreshCallback).toHaveBeenCalledTimes(1);
-      expect(refreshCallback).toHaveBeenCalledWith();
-
-      // Message callback called with full message
-      expect(messageCallback).toHaveBeenCalledTimes(1);
-      expect(messageCallback).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "msg-789" }),
-      );
-    });
-
-    it("should stop notifying after unsubscribe", async () => {
-      const { subscribeToMessages } = await import("./gateway");
+    it("should ignore events the site doesn't use", async () => {
+      const { subscribe } = await import("./gateway");
       server.use(createHandshakeHandler());
 
       const callback = vi.fn();
-      const unsubscribe = await subscribeToMessages(callback);
-      const client = getLastClient(gateway.clients);
+      await subscribe(callback);
+      await dispatch("TYPING_START", { channel_id: "test-discord-channel-id" });
 
-      client?.send(
-        createPayload(
-          GatewayOpcode.DISPATCH,
-          {
-            type: 0,
-            id: "msg-1",
-            channel_id: "test-discord-channel-id",
-            author: { id: "user-123" },
-            content: "first",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          2,
-          "MESSAGE_CREATE",
-        ),
-      );
-      await vi.advanceTimersByTimeAsync(0);
-      expect(callback).toHaveBeenCalledTimes(1);
-
-      unsubscribe();
-
-      client?.send(
-        createPayload(
-          GatewayOpcode.DISPATCH,
-          {
-            type: 0,
-            id: "msg-2",
-            channel_id: "test-discord-channel-id",
-            author: { id: "user-123" },
-            content: "second",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          3,
-          "MESSAGE_CREATE",
-        ),
-      );
-      await vi.advanceTimersByTimeAsync(0);
-      expect(callback).toHaveBeenCalledTimes(1); // Still 1
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 });

@@ -96,7 +96,7 @@ describe("GET /api/chat/sse", () => {
     await reader.read();
 
     // Trigger gateway notification
-    onMessage();
+    onMessage({ t: "MESSAGE_DELETE", d: { id: "1", channel_id: "c" } });
 
     const { value } = await reader.read();
     const text = new TextDecoder().decode(value);
@@ -184,7 +184,7 @@ describe("GET /api/chat/sse", () => {
     controller.abort();
 
     // These should be no-ops after abort
-    onMessage();
+    onMessage({ t: "MESSAGE_DELETE", d: { id: "1", channel_id: "c" } });
     onStatus(false);
     await vi.advanceTimersByTimeAsync(30_000);
 

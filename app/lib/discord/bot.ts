@@ -6,7 +6,7 @@ import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
-import { subscribeToMessages } from "./gateway";
+import { subscribe } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
 const BOT_PREFIX = `${BOT_USERNAME}: `;
@@ -126,6 +126,8 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
 
 export async function startBotSubscription(): Promise<void> {
   log.info("Starting bot subscription");
-  await subscribeToMessages(handleMessage);
+  await subscribe((event) => {
+    if (event.t === "MESSAGE_CREATE") void handleMessage(event.d);
+  });
   log.info("Bot subscription started");
 }
