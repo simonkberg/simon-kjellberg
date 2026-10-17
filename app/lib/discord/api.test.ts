@@ -1198,6 +1198,7 @@ describe("bot reactions", () => {
 describe("rate limiting", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
   });
 
   afterEach(() => {
@@ -1596,6 +1597,32 @@ describe("rate limiting", () => {
     );
 
     await expect(getChannelMessages()).rejects.toBe(timeout);
+  });
+
+  it("should spread out callers waiting on the same gate", async () => {
+    const requests = vi.fn();
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () => {
+        requests();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    _setRateLimitGate(
+      "PUT",
+      "channels/test-discord-channel-id/messages/1/reactions/x/@me",
+      Date.now() + 1000,
+    );
+
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.8);
+    const first = addBotReaction("1", "👍");
+    const second = addBotReaction("2", "🎉");
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(requests).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(200);
+    await Promise.all([first, second]);
+    expect(requests).toHaveBeenCalledTimes(2);
   });
 
   it("should include retry count in log messages", async () => {

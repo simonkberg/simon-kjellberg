@@ -19,6 +19,7 @@ import { ChannelStore, type Reactor, WINDOW } from "./store";
 
 const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
+const GATE_JITTER_MS = 250;
 const MAX_RETRIES = 5;
 
 const RateLimitResponseSchema = z.object({
@@ -110,7 +111,9 @@ async function call<T extends z.ZodType>(
         );
         throw new Error(`Discord rate limit exceeded`);
       }
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      // Spreads out the callers waiting on one gate, so they don't all retry at once.
+      const jitterMs = Math.random() * GATE_JITTER_MS;
+      await new Promise((resolve) => setTimeout(resolve, waitMs + jitterMs));
     }
 
     const response = await fetch(url, {
@@ -164,8 +167,6 @@ async function call<T extends z.ZodType>(
         { endpoint, retryAfterMs, global, retries },
         "Discord rate limited, retrying",
       );
-
-      await new Promise((resolve) => setTimeout(resolve, retryAfterMs));
       continue;
     }
 
