@@ -645,6 +645,39 @@ describe("ChannelStore", () => {
     expect(source.fetchReactorIds).toHaveBeenCalledOnce();
   });
 
+  it("should keep the first fetch's reactors when fetching again fails", async () => {
+    const { store, source } = createStore([
+      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+    ]);
+    const first = Promise.withResolvers<string[]>();
+    source.fetchReactorIds
+      .mockReturnValueOnce(first.promise)
+      .mockRejectedValueOnce(new Error("down"));
+    await store.messages();
+
+    const ids = store.reactorIds("1", "😄");
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+    first.resolve(["user-2"]);
+
+    expect(await ids).toEqual(["user-2"]);
+  });
+
+  it("should fetch who reacted to a new reaction while the window may have missed events", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    vi.useFakeTimers();
+    const { store, source } = createStore();
+    source.fetchMessages.mockImplementation(async () => {
+      store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
+      return [message("1")];
+    });
+    source.fetchReactorIds.mockResolvedValue(["user-2", "user-3"]);
+    await store.messages();
+
+    store.apply(react("MESSAGE_REACTION_ADD", "user-3"));
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-2", "user-3"]);
+  });
+
   it("should fetch who reacted again when an event makes a fetch stale", async () => {
     const { store, source } = createStore([
       message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),

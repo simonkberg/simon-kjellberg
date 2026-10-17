@@ -135,7 +135,7 @@ export class ChannelStore {
     if (settled) return [...settled];
     // Or made it stale without settling it.
     if (retry && this.#messages.has(messageId)) {
-      return this.reactorIds(messageId, emoji, false);
+      return this.reactorIds(messageId, emoji, false).catch(() => ids);
     }
     return ids;
   }
@@ -364,8 +364,10 @@ export class ChannelStore {
         : [...reactions, next],
     });
 
-    // The gateway saw a new reaction start, so it knows everyone on it.
-    if (!reaction) this.#reactorsOf(messageId).set(name, new Set());
+    // The gateway saw a new reaction start, so it knows everyone on it, unless the window missed events.
+    if (!reaction && !this.#stale) {
+      this.#reactorsOf(messageId).set(name, new Set());
+    }
     const reactors = this.#reactors.get(messageId)?.get(name);
     if (!reactors) {
       // A fetch already in flight would miss this event.
