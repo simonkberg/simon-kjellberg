@@ -19,6 +19,7 @@ function useTooltip(anchorId?: string) {
   const tip = useRef<HTMLSpanElement>(null);
   const press = useRef<{ timer?: number; held?: boolean }>({});
   const dismiss = useRef<AbortController>(null);
+  const dismissedBy = useRef<EventTarget>(null);
   const anchor = () => (anchorId ? document.getElementById(anchorId) : null);
 
   useEffect(
@@ -28,6 +29,13 @@ function useTooltip(anchorId?: string) {
     },
     [],
   );
+
+  // True once for the press that closed the tooltip from inside `node`.
+  const closedBy = (node: Node) => {
+    const target = dismissedBy.current;
+    dismissedBy.current = null;
+    return target instanceof Node && node.contains(target);
+  };
 
   const hide = () => {
     dismiss.current?.abort();
@@ -51,7 +59,14 @@ function useTooltip(anchorId?: string) {
       },
       { signal },
     );
-    document.addEventListener("pointerdown", hide, { capture: true, signal });
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        dismissedBy.current = event.target;
+        hide();
+      },
+      { capture: true, signal },
+    );
     document.addEventListener(
       "pointerout",
       (event) => {
@@ -74,6 +89,7 @@ function useTooltip(anchorId?: string) {
   return {
     tip,
     show,
+    closedBy,
     trigger: {
       onPointerEnter: (event: PointerEvent<HTMLElement>) => {
         if (event.pointerType !== "touch") show(event.currentTarget);
@@ -186,7 +202,7 @@ export const TooltipText = ({
   tooltip: ReactNode;
   children: ReactNode;
 }) => {
-  const { tip, show } = useTooltip();
+  const { tip, show, closedBy } = useTooltip();
   const [shown, setShown] = useState(false);
   const reveal = (text: HTMLElement) => {
     setShown(true);
@@ -200,8 +216,11 @@ export const TooltipText = ({
           if (event.pointerType !== "touch") reveal(event.currentTarget);
         }}
         onPointerUp={(event) => {
-          if (event.pointerType === "touch" && !selects(event.currentTarget)) {
-            reveal(event.currentTarget);
+          const text = event.currentTarget;
+          // A tap on the open tooltip's text closes it, like a tap anywhere else.
+          const closed = closedBy(text);
+          if (event.pointerType === "touch" && !closed && !selects(text)) {
+            reveal(text);
           }
         }}
       >

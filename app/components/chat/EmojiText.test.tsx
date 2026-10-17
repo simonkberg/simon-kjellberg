@@ -62,6 +62,19 @@ describe("EmojiText", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(":heart:");
   });
 
+  it("hides on a second tap", async () => {
+    render(<EmojiText text="❤️" />);
+    const emoji = screen.getByText("❤️");
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+    expect(tooltip).toHaveAttribute("data-popover-open");
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+    expect(tooltip).not.toHaveAttribute("data-popover-open");
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+    expect(tooltip).toHaveAttribute("data-popover-open");
+  });
+
   it("names toned emoji whose base has a text style", async () => {
     render(<EmojiText text="🏌🏽‍♂️" />);
 
