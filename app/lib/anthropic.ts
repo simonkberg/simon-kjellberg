@@ -492,7 +492,7 @@ export type AgentLoopOptions = {
   /** Covers adaptive thinking as well as the visible reply. */
   maxTokens: number;
   timeoutMs: number;
-  /** The most a request may spend waiting between retries. */
+  /** The most a request may spend sleeping between retries; attempts themselves don't count. */
   retryBudgetMs: number;
   maxIterations?: number;
   loop: "reply" | "reflection";
@@ -500,15 +500,53 @@ export type AgentLoopOptions = {
   replyingTo?: string;
 };
 
+type Failure = { error: Error; retryable: boolean; delayMs: number };
+
 function isRetryable(status: number): boolean {
   return status === 408 || status === 429 || status >= 500;
 }
 
-function retryDelayMs(response: Response, attempt: number): number {
-  const retryAfter = Number(response.headers.get("retry-after") ?? NaN);
-  return Number.isFinite(retryAfter) && retryAfter >= 0
-    ? retryAfter * 1000
-    : RETRY_BASE_MS * 2 ** attempt;
+function backoffMs(attempt: number): number {
+  return RETRY_BASE_MS * 2 ** attempt;
+}
+
+function retryAfterMs(response: Response): number | undefined {
+  const header = response.headers.get("retry-after")?.trim();
+  if (!header) return undefined;
+  const seconds = Number(header);
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined;
+}
+
+async function send(
+  body: string,
+  timeoutMs: number,
+  attempt: number,
+): Promise<{ json: unknown } | Failure> {
+  let response: Response;
+  try {
+    response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    // Network failures only: a timeout already took a whole attempt, so retrying would multiply it.
+    if (!(err instanceof TypeError)) throw err;
+    return { error: err, retryable: true, delayMs: backoffMs(attempt) };
+  }
+  if (response.ok) return { json: await response.json() };
+  return {
+    error: new Error(
+      `Anthropic API error: ${response.status} ${response.statusText}: ${await response.text()}`,
+    ),
+    retryable: isRetryable(response.status),
+    delayMs: retryAfterMs(response) ?? backoffMs(attempt),
+  };
 }
 
 async function postMessages(
@@ -521,28 +559,21 @@ async function postMessages(
 ): Promise<unknown> {
   let waitedMs = 0;
   for (let attempt = 0; ; attempt++) {
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body,
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    if (response.ok) return response.json();
+    const result = await send(body, timeoutMs, attempt);
+    if ("json" in result) return result.json;
 
-    const error = `Anthropic API error: ${response.status} ${response.statusText}: ${await response.text()}`;
-    const delayMs = retryDelayMs(response, attempt);
+    const { error, retryable, delayMs } = result;
     if (
       attempt >= MAX_RETRIES ||
-      !isRetryable(response.status) ||
+      !retryable ||
       waitedMs + delayMs > retryBudgetMs
     ) {
-      throw new Error(error);
+      throw error;
     }
-    log.warn({ loop, error, delayMs }, "simon-bot retrying request");
+    log.warn(
+      { loop, error: error.message, delayMs },
+      "simon-bot retrying request",
+    );
     await sleep(delayMs);
     waitedMs += delayMs;
   }

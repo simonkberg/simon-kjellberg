@@ -583,6 +583,82 @@ describe("createMessage", () => {
     expect(vi.mocked(sleep).mock.calls).toEqual([[2000]]);
   });
 
+  it("should back off when retry-after is empty", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        if (callCount === 1) {
+          return new HttpResponse(null, {
+            status: 503,
+            headers: { "retry-after": "" },
+          });
+        }
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should retry a network error", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    // Node's fetch rejects with this; happy-dom's would throw its own NetworkError.
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+      new TypeError("fetch failed"),
+    );
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        return HttpResponse.json({
+          content: [{ type: "text", text: "back again" }],
+          stop_reason: "end_turn",
+        });
+      }),
+    );
+
+    const responses = await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(responses).toEqual(["back again"]);
+    expect(callCount).toBe(1);
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should not retry a timeout", async () => {
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      AbortSignal.abort(new DOMException("timed out", "TimeoutError")),
+    );
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await expect(
+      collectResponses(
+        createMessage([
+          { role: "user", username: TEST_USERNAME, content: "Test" },
+        ]),
+      ),
+    ).rejects.toMatchObject({ name: "TimeoutError" });
+    expect(callCount).toBe(0);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
   it("should not wait past the reply's retry budget", async () => {
     let callCount = 0;
     server.use(
