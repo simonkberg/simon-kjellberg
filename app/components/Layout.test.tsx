@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Layout } from "@/components/Layout";
 import { config } from "@/config";
-import { preferencesScript } from "@/lib/preferences";
+import { fallbackThemeColor, preferencesScript } from "@/lib/preferences";
 
 vi.mock(import("@/assets/fonts"), () => ({
   iosevka: {
@@ -37,6 +37,20 @@ describe("Layout", () => {
 
     expect(document.documentElement).toHaveAttribute("data-variant", "panes");
     expect(document.documentElement).toHaveAttribute("data-theme", "system");
+  });
+
+  it("should colour the browser with the fallback variant's ground", () => {
+    render(<Layout />, { container: document });
+
+    const tags = document.head.querySelectorAll<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    expect(
+      [...tags].map((meta) => ({
+        media: meta.getAttribute("media"),
+        color: meta.content,
+      })),
+    ).toEqual(fallbackThemeColor);
   });
 
   it("should apply the saved preferences from the head", () => {

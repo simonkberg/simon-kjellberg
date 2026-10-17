@@ -1,19 +1,27 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   preferenceCookie,
   themePreference,
   variantPreference,
 } from "@/lib/preferences";
-import { resetPreferences } from "@/mocks/preferences";
+import {
+  groundPerScheme,
+  renderThemeColorTags,
+  resetPreferences,
+  themeColors,
+} from "@/mocks/preferences";
 
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 const root = document.documentElement;
 
-afterEach(resetPreferences);
+afterEach(() => {
+  resetPreferences();
+  vi.restoreAllMocks();
+});
 
 describe("PreferenceSwitch", () => {
   it("labels the group and presses the fallback without a choice", () => {
@@ -40,6 +48,29 @@ describe("PreferenceSwitch", () => {
       "aria-pressed",
       "true",
     );
+  });
+
+  it("colours the browser with the chosen option's ground", async () => {
+    root.setAttribute("data-variant", "panes");
+    root.setAttribute("data-theme", "system");
+    renderThemeColorTags();
+    groundPerScheme();
+    render(<PreferenceSwitch preference={variantPreference} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "ledger" }));
+
+    expect(themeColors()).toEqual(["ledger light", "ledger dark"]);
+  });
+
+  it("re-colours the browser after re-applying on mount", () => {
+    root.setAttribute("data-variant", "manual");
+    document.cookie = preferenceCookie(themePreference, "dark");
+    renderThemeColorTags();
+    groundPerScheme();
+
+    render(<PreferenceSwitch preference={themePreference} />);
+
+    expect(themeColors()).toEqual(["manual dark", "manual dark"]);
   });
 
   it("re-applies the saved option on mount", () => {

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { config } from "@/config";
 
-import RootLayout, { metadata } from "./layout";
+import RootLayout, { metadata, viewport } from "./layout";
 
 vi.mock(import("@/components/Layout"), () => ({
   Layout: ({ children }: PropsWithChildren) => (
@@ -26,6 +26,12 @@ describe("metadata", () => {
 
   it("should have correct alternates", () => {
     expect(metadata.alternates).toEqual({ canonical: new URL(config.url) });
+  });
+});
+
+describe("viewport", () => {
+  it("covers the safe areas", () => {
+    expect(viewport).toEqual({ viewportFit: "cover" });
   });
 });
 

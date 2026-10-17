@@ -23,6 +23,12 @@ export const themePreference = {
 
 export const preferences = [variantPreference, themePreference] as const;
 
+// The fallback variant's --ground, for the page before the head script runs.
+export const fallbackThemeColor = [
+  { media: "(prefers-color-scheme: light)", color: "oklch(0.965 0.004 255)" },
+  { media: "(prefers-color-scheme: dark)", color: "oklch(0.19 0.012 255)" },
+];
+
 export function preferenceCookie<T extends string>(
   preference: Preference<T>,
   value: T,
@@ -42,4 +48,32 @@ export function applySavedPreferences(saved: readonly Preference[]) {
   }
 }
 
-export const preferencesScript = `(${applySavedPreferences.toString()})(${JSON.stringify(preferences)})`;
+// Stringified too. The rendered tags keep their fallbacks, since React may swap a hoisted <meta>
+// for a fresh one, and a copy just before each wins, as the first matching tag does.
+export function syncThemeColor() {
+  const root = document.documentElement;
+  const theme = root.getAttribute("data-theme") ?? "system";
+  for (const stale of document.querySelectorAll("meta[data-ground]")) {
+    stale.remove();
+  }
+  for (const rendered of document.querySelectorAll(
+    'meta[name="theme-color"]',
+  )) {
+    const media = rendered.getAttribute("media") ?? "";
+    // Through data-theme: an inline color-scheme left light-dark() unresolved in Chrome.
+    const scheme = /light|dark/.exec(media)?.[0];
+    root.setAttribute(
+      "data-theme",
+      theme === "system" && scheme ? scheme : theme,
+    );
+    const meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("media", media);
+    meta.setAttribute("content", getComputedStyle(root).backgroundColor);
+    meta.setAttribute("data-ground", "");
+    rendered.before(meta);
+  }
+  root.setAttribute("data-theme", theme);
+}
+
+export const preferencesScript = `(${applySavedPreferences.toString()})(${JSON.stringify(preferences)});(${syncThemeColor.toString()})()`;

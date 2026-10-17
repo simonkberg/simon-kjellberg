@@ -1,4 +1,3 @@
-import type { Viewport } from "next";
 import { io } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -21,13 +20,6 @@ import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
 import { markOwnReactions } from "@/lib/reactions";
 import { getSession } from "@/lib/session";
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: "black",
-};
 
 export default function RootPage() {
   // Keeps cached data out of the static shell so it never goes stale, see AGENTS.md

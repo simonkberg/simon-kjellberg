@@ -12,7 +12,7 @@ import { config } from "@/config";
 import { getChatTipDismissed } from "@/lib/chatTip";
 import type { Username } from "@/lib/session";
 
-import RootPage, { viewport } from "./page";
+import RootPage from "./page";
 
 vi.mock("server-only", () => ({}));
 
@@ -76,17 +76,6 @@ vi.mock(import("@/components/StatsList"), async (importOriginal) => ({
     return <div data-testid="stats-list" />;
   },
 }));
-
-describe("viewport", () => {
-  it("should have correct viewport configuration", () => {
-    expect(viewport).toEqual({
-      width: "device-width",
-      initialScale: 1,
-      viewportFit: "cover",
-      themeColor: "black",
-    });
-  });
-});
 
 describe("RootPage", () => {
   describe("About section", () => {
