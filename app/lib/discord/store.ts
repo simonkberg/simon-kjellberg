@@ -177,6 +177,7 @@ export class ChannelStore {
       if (event.t === "READY") this.#names.clear();
       this.#gap = true;
       this.#reactors.clear();
+      this.#reactorFetches.clear();
       this.#older.clear();
       this.#reseed();
       return;

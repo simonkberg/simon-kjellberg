@@ -199,6 +199,23 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledTimes(2);
   });
 
+  it("should not keep who reacted from a fetch that started before a gap", async () => {
+    const { store, source } = await seeded([reacted("1")]);
+    const fetch = defer(source.fetchReactors);
+    source.fetchReactors.mockResolvedValue(users(["user-3"]));
+
+    const reseed = defer(source.fetchMessages);
+
+    const ids = store.reactorIds("1", "😄");
+    store.apply({ t: "MISSED" });
+    fetch.resolve(users(["user-2"]));
+    await ids;
+    reseed.resolve([reacted("1")]);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(await store.reactorIds("1", "😄")).toEqual(["user-3"]);
+  });
+
   it("should seed again when a new session starts mid-seed", async () => {
     const { store, source } = await seeded();
     const first = defer(source.fetchMessages);
