@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -24,6 +26,10 @@ import {
 } from "./anthropic";
 
 vi.mock(import("server-only"), () => ({}));
+vi.mock(import("node:timers/promises"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, setTimeout: vi.fn() };
+});
 vi.mock(import("@/lib/discord/api"), () => ({
   getChannelMessages: vi.fn(),
   searchChannelMessages: vi.fn(),
@@ -83,6 +89,7 @@ async function collectResponses(
 
 describe("createMessage", () => {
   beforeEach(() => {
+    vi.mocked(sleep).mockClear();
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   });
@@ -94,11 +101,14 @@ describe("createMessage", () => {
   it("should create message and yield text content", async () => {
     server.use(
       http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        expect(await request.json()).toMatchObject({
+        const body = await request.json();
+        expect(body).not.toHaveProperty("tool_choice");
+        expect(body).toMatchObject({
           model: "claude-haiku-5-5",
           thinking: { type: "adaptive", display: "summarized" },
           output_config: { effort: "medium" },
           max_tokens: 2048,
+          cache_control: { type: "ephemeral" },
           system: [
             {
               type: "text",
@@ -472,14 +482,70 @@ describe("createMessage", () => {
   it.each([
     { status: 400, statusText: "Bad Request" },
     { status: 401, statusText: "Unauthorized" },
-    { status: 429, statusText: "Too Many Requests" },
-    { status: 500, statusText: "Internal Server Error" },
-  ])("should handle HTTP $status error", async ({ status, statusText }) => {
+  ])(
+    "should throw HTTP $status with its body and no retry",
+    async ({ status, statusText }) => {
+      let callCount = 0;
+      server.use(
+        http.post(ANTHROPIC_BASE_URL, () => {
+          callCount++;
+          return new HttpResponse('{"error":"nope"}', { status, statusText });
+        }),
+      );
+
+      await expect(
+        collectResponses(
+          createMessage([
+            { role: "user", username: TEST_USERNAME, content: "Test" },
+          ]),
+        ),
+      ).rejects.toThrow(
+        `Anthropic API error: ${status} ${statusText}: {"error":"nope"}`,
+      );
+      expect(callCount).toBe(1);
+      expect(sleep).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([408, 429, 500, 529])(
+    "should retry HTTP %i with backoff and then succeed",
+    async (status) => {
+      vi.spyOn(log, "warn").mockImplementation(() => {});
+      let callCount = 0;
+      server.use(
+        http.post(ANTHROPIC_BASE_URL, () => {
+          callCount++;
+          if (callCount < 3) return new HttpResponse("busy", { status });
+          return HttpResponse.json({
+            content: [{ type: "text", text: "made it" }],
+            stop_reason: "end_turn",
+          });
+        }),
+      );
+
+      const responses = await collectResponses(
+        createMessage([
+          { role: "user", username: TEST_USERNAME, content: "Test" },
+        ]),
+      );
+
+      expect(responses).toEqual(["made it"]);
+      expect(callCount).toBe(3);
+      expect(vi.mocked(sleep).mock.calls).toEqual([[500], [1000]]);
+    },
+  );
+
+  it("should give up after two retries", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    let callCount = 0;
     server.use(
-      http.post(
-        ANTHROPIC_BASE_URL,
-        () => new HttpResponse(null, { status, statusText }),
-      ),
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        return new HttpResponse("overloaded", {
+          status: 529,
+          headers: { "retry-after": "0" },
+        });
+      }),
     );
 
     await expect(
@@ -488,7 +554,56 @@ describe("createMessage", () => {
           { role: "user", username: TEST_USERNAME, content: "Test" },
         ]),
       ),
-    ).rejects.toThrow(`Anthropic API error: ${status} ${statusText}`);
+    ).rejects.toThrow("Anthropic API error: 529 unknown: overloaded");
+    expect(callCount).toBe(3);
+  });
+
+  it("should wait as long as retry-after says", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        if (callCount === 1) {
+          return new HttpResponse(null, {
+            status: 429,
+            headers: { "retry-after": "2" },
+          });
+        }
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(vi.mocked(sleep).mock.calls).toEqual([[2000]]);
+  });
+
+  it("should not wait past the reply's retry budget", async () => {
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        return new HttpResponse("slow down", {
+          status: 429,
+          headers: { "retry-after": "3" },
+        });
+      }),
+    );
+
+    await expect(
+      collectResponses(
+        createMessage([
+          { role: "user", username: TEST_USERNAME, content: "Test" },
+        ]),
+      ),
+    ).rejects.toThrow("Anthropic API error: 429 Too Many Requests: slow down");
+    expect(callCount).toBe(1);
+    expect(sleep).not.toHaveBeenCalled();
   });
 
   it("should handle invalid response schema", async () => {
@@ -812,6 +927,49 @@ describe("createMessage", () => {
       "simon has been coding mostly in typescript!",
     ]);
     expect(callCount).toBe(2);
+  });
+
+  it("should rule out tools on the last iteration", async () => {
+    const toolChoices: unknown[] = [];
+
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
+        const body = (await request.json()) as { tool_choice?: unknown };
+        toolChoices.push(body.tool_choice);
+        if (toolChoices.length < 5) {
+          return HttpResponse.json({
+            content: [
+              {
+                type: "tool_use",
+                id: `tool_${toolChoices.length}`,
+                name: "get_wakatime_stats",
+                input: {},
+              },
+            ],
+            stop_reason: "tool_use",
+          });
+        }
+        return HttpResponse.json({
+          content: [{ type: "text", text: "here's what I found" }],
+          stop_reason: "end_turn",
+        });
+      }),
+    );
+
+    const responses = await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(responses).toEqual(["here's what I found"]);
+    expect(toolChoices).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { type: "none" },
+    ]);
   });
 
   it("should stop after max tool iterations and log warning", async () => {

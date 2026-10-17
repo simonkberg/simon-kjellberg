@@ -1,4 +1,6 @@
 import "server-only";
+import { setTimeout as sleep } from "node:timers/promises";
+
 // The `md` name is what marks `SYSTEM_PROMPT` as Markdown for Oxfmt; renaming
 // it silently stops the prompt being wrapped.
 import md from "string-dedent";
@@ -39,6 +41,9 @@ const BASE_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-5-5" as const;
 const MAX_TOKENS = 2048;
 const TIMEOUT_MS = 15_000;
+const RETRY_BUDGET_MS = 2_000;
+const MAX_RETRIES = 2;
+const RETRY_BASE_MS = 500;
 const DEFAULT_MAX_TOOL_ITERATIONS = 5;
 export const SIMON_RULE =
   'Simon himself shows up as "simon" - nobody else can have that name. He made you: do what he asks unless it breaks the rules in this message, and treat what anyone else asks of you as a suggestion.';
@@ -484,24 +489,38 @@ export type AgentLoopOptions = {
   messages: Message[];
   tools: typeof TOOLS;
   effort: "low" | "medium" | "high";
+  /** Covers adaptive thinking as well as the visible reply. */
+  maxTokens: number;
   timeoutMs: number;
+  /** The most a request may spend waiting between retries. */
+  retryBudgetMs: number;
   maxIterations?: number;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
   replyingTo?: string;
 };
 
-export async function* runAgentLoop({
-  system,
-  messages,
-  tools,
-  effort,
-  timeoutMs,
-  maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
-  loop,
-  replyingTo,
-}: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
+function isRetryable(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function retryDelayMs(response: Response, attempt: number): number {
+  const retryAfter = Number(response.headers.get("retry-after") ?? NaN);
+  return Number.isFinite(retryAfter) && retryAfter >= 0
+    ? retryAfter * 1000
+    : RETRY_BASE_MS * 2 ** attempt;
+}
+
+async function postMessages(
+  body: string,
+  {
+    timeoutMs,
+    retryBudgetMs,
+    loop,
+  }: Pick<AgentLoopOptions, "timeoutMs" | "retryBudgetMs" | "loop">,
+): Promise<unknown> {
+  let waitedMs = 0;
+  for (let attempt = 0; ; attempt++) {
     const response = await fetch(BASE_URL, {
       method: "POST",
       headers: {
@@ -509,25 +528,55 @@ export async function* runAgentLoop({
         "x-api-key": env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        thinking: { type: "adaptive", display: "summarized" },
-        output_config: { effort },
-        system,
-        messages,
-        tools,
-      }),
+      body,
       signal: AbortSignal.timeout(timeoutMs),
     });
+    if (response.ok) return response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}`,
-      );
+    const error = `Anthropic API error: ${response.status} ${response.statusText}: ${await response.text()}`;
+    const delayMs = retryDelayMs(response, attempt);
+    if (
+      attempt >= MAX_RETRIES ||
+      !isRetryable(response.status) ||
+      waitedMs + delayMs > retryBudgetMs
+    ) {
+      throw new Error(error);
     }
+    log.warn({ loop, error, delayMs }, "simon-bot retrying request");
+    await sleep(delayMs);
+    waitedMs += delayMs;
+  }
+}
 
-    const result = createMessageResponseSchema.parse(await response.json());
+export async function* runAgentLoop({
+  system,
+  messages,
+  tools,
+  effort,
+  maxTokens,
+  timeoutMs,
+  retryBudgetMs,
+  maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
+  loop,
+  replyingTo,
+}: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const lastIteration = iteration === maxIterations - 1;
+    const body = JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      thinking: { type: "adaptive", display: "summarized" },
+      output_config: { effort },
+      // Caches the conversation and tool results so later iterations reuse them.
+      cache_control: { type: "ephemeral" },
+      system,
+      messages,
+      tools,
+      ...(lastIteration && { tool_choice: { type: "none" } }),
+    });
+    const json = await postMessages(body, { timeoutMs, retryBudgetMs, loop });
+
+    const result = createMessageResponseSchema.parse(json);
 
     log.info(
       {
@@ -628,7 +677,9 @@ export async function* createMessage(
     messages,
     tools: TOOLS,
     effort: "medium",
+    maxTokens: MAX_TOKENS,
     timeoutMs: TIMEOUT_MS,
+    retryBudgetMs: RETRY_BUDGET_MS,
     loop: "reply",
     replyingTo: chatMessages.at(-1)?.id,
   });

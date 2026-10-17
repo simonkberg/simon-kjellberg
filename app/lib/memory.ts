@@ -30,7 +30,13 @@ export const categorySchema = z
     "Use lowercase letters, digits, hyphens and underscores, with at most one slash",
   );
 
-export const contentSchema = z.string().trim().min(1).max(MAX_CONTENT_LENGTH);
+// One line, so a note can't start a section of its own in the <memory> block.
+export const contentSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_CONTENT_LENGTH)
+  .regex(/^[^\r\n\u2028\u2029]*$/, "Keep a note to one line");
 
 const memoryRowSchema = z.object({
   id: z.number(),

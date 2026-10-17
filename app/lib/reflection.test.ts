@@ -56,7 +56,9 @@ describe("reflect", () => {
       ],
       tools: MEMORY_TOOLS,
       effort: "high",
+      maxTokens: 8192,
       timeoutMs: 60_000,
+      retryBudgetMs: 30_000,
       maxIterations: 10,
       loop: "reflection",
     });

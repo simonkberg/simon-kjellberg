@@ -12,7 +12,10 @@ import {
   SIMON_RULE,
 } from "@/lib/anthropic";
 
+// Adaptive thinking at high effort shares this, so it needs room to still write notes.
+const MAX_TOKENS = 8192;
 const TIMEOUT_MS = 60_000;
+const RETRY_BUDGET_MS = 30_000;
 const MAX_ITERATIONS = 10;
 const REFLECTION_PROMPT = md`
   You are simon-bot, a chatbot on simon.dev that Simon built, taking a quiet
@@ -48,7 +51,9 @@ export async function reflect(transcript: ChatMessage[]): Promise<void> {
       messages: [{ role: "user", content: formatConversation(transcript) }],
       tools: MEMORY_TOOLS,
       effort: "high",
+      maxTokens: MAX_TOKENS,
       timeoutMs: TIMEOUT_MS,
+      retryBudgetMs: RETRY_BUDGET_MS,
       maxIterations: MAX_ITERATIONS,
       loop: "reflection",
     }),
