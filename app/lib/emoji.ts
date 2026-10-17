@@ -65,13 +65,14 @@ export function searchEmoji(
 ): EmojiMatch[] {
   const needle = query.toLowerCase();
   return emoji
-    .map(([emoji, ...shortcodes]) => {
-      const ranks = shortcodes.map((shortcode) => rank(shortcode, needle));
-      const best = Math.min(...ranks);
-      return { emoji, name: shortcodes[ranks.indexOf(best)] ?? "", best };
-    })
-    .filter(({ best }) => best !== Infinity)
-    .sort((a, b) => a.best - b.best)
+    .flatMap(([emoji, ...shortcodes]) =>
+      shortcodes
+        .map((name) => ({ emoji, name, rank: rank(name, needle) }))
+        .filter(({ rank }) => rank !== Infinity)
+        .sort((a, b) => a.rank - b.rank)
+        .slice(0, 1),
+    )
+    .sort((a, b) => a.rank - b.rank)
     .slice(0, limit)
     .map(({ emoji, name }) => ({ emoji, name }));
 }
