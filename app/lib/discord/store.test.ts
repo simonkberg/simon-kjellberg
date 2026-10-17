@@ -125,7 +125,7 @@ function react(
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "info").mockImplementation(() => {});
   vi.spyOn(log, "error").mockImplementation(() => {});
 });
 
@@ -135,7 +135,7 @@ afterEach(() => {
 });
 
 describe("ChannelStore", () => {
-  it("should tell listeners when a seed lands and after each event, not before", async () => {
+  it("should tell listeners when a seed lands and after each change, not before", async () => {
     const { store, source, listener } = createStore();
     const first = defer(source.fetchMessages);
 
@@ -150,15 +150,16 @@ describe("ChannelStore", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it("should tell listeners about events before any seed has landed, and seed on the next read", async () => {
+  it("should leave events before any seed has landed to the next one", async () => {
     const { store, source, listener } = createStore();
     source.fetchMessages.mockRejectedValueOnce(new Error("down"));
     await expect(store.messages()).rejects.toThrow("down");
 
     store.apply(create(message("2")));
+    expect(listener).not.toHaveBeenCalled();
 
-    expect(listener).toHaveBeenCalledOnce();
     expect(await store.messages()).toMatchObject([{ id: "1" }]);
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it("should log a throwing listener and still tell the rest", async () => {
@@ -225,18 +226,20 @@ describe("ChannelStore", () => {
     store.apply({ t: "READY" });
     first.resolve([message("1")]);
     await vi.advanceTimersByTimeAsync(0);
+    expect(await store.messages()).toHaveLength(1);
 
+    await vi.advanceTimersByTimeAsync(10_000);
     expect(await store.messages()).toHaveLength(2);
     expect(source.fetchMessages).toHaveBeenCalledTimes(3);
   });
 
-  it("should give up seeding again after a few attempts and retry later", async () => {
+  it("should keep a first seed an event lands during and seed again later", async () => {
     const { store, source } = createStore();
     source.fetchMessages.mockImplementation(churn(store));
 
     expect(await store.messages()).toHaveLength(1);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
-    expect(log.warn).toHaveBeenCalledOnce();
+    expect(source.fetchMessages).toHaveBeenCalledOnce();
+    expect(log.info).toHaveBeenCalledOnce();
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
     await vi.advanceTimersByTimeAsync(10_000);
@@ -252,7 +255,7 @@ describe("ChannelStore", () => {
 
     store.apply(del("0"));
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(4);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
     expect(await store.messages()).toMatchObject([{ id: "1" }, { id: "2" }]);
 
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
@@ -261,7 +264,7 @@ describe("ChannelStore", () => {
 
     store.apply({ t: "READY" });
     await vi.advanceTimersByTimeAsync(0);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(7);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
     expect(await store.messages()).toMatchObject([{ id: "1" }]);
   });
 
@@ -279,7 +282,7 @@ describe("ChannelStore", () => {
 
     source.fetchMessages.mockImplementation(churn(store));
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(log.warn).toHaveBeenCalledOnce();
+    expect(log.info).toHaveBeenCalledOnce();
     listener.mockClear();
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
@@ -717,8 +720,8 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledOnce();
   });
 
-  it("should ignore custom emoji and events outside the window", async () => {
-    const { store } = await seeded();
+  it("should ignore, without telling listeners, custom emoji, unchanged messages and events outside the window", async () => {
+    const { store, listener } = await seeded();
 
     store.apply(
       react("MESSAGE_REACTION_ADD", "user-2", {
@@ -733,8 +736,15 @@ describe("ChannelStore", () => {
       t: "MESSAGE_UPDATE",
       d: { id: "old", channel_id: CHANNEL, content: "edited" },
     });
+    store.apply({ t: "MESSAGE_UPDATE", d: { id: "1", channel_id: CHANNEL } });
+    store.apply(create(message("1")));
+    store.apply(create(message("2", { type: 7 })));
+    store.apply(del("old"));
+    store.apply(clear("1"));
+    store.apply(clear("1", SMILE));
 
     expect(await store.messages()).toEqual([message("1")]);
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it("should fetch who reacted to a seeded reaction once, then follow events", async () => {

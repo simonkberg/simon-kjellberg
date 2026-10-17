@@ -151,8 +151,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Reactions:** one Turso row per visitor in `reactions`; the bot mirrors them on Discord
   with its own reaction while any remain, so Discord shows site reactions as one. History
   adds those rows to Discord's counts minus the bot's; the page marks the visitor's own as
-  `mine`, since the cached history is shared. Other tabs refresh only on a channel
-  event, so a toggle that leaves the mirror unchanged reaches them on the next one. Mirror
+  `mine`, since the cached history is shared. Other tabs refresh only when the channel
+  changes, so a toggle that leaves the mirror unchanged reaches them on the next change. Mirror
   failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
