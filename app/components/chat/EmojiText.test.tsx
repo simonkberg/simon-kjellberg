@@ -61,6 +61,27 @@ describe("EmojiText", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(":heart:");
   });
 
+  it("shows an emoji the set doesn't name as itself", async () => {
+    render(<EmojiText text="🫩" />);
+
+    await act(() => userEvent.hover(screen.getByText("🫩")));
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("🫩");
+  });
+
+  it("hides on a mouse click, as on buttons", async () => {
+    render(<EmojiText text="👍" />);
+    const emoji = screen.getByText("👍");
+
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+
+    await act(() => userEvent.hover(emoji));
+    expect(tooltip).toHaveAttribute("data-popover-open");
+    await act(() => userEvent.click(emoji));
+
+    expect(tooltip).not.toHaveAttribute("data-popover-open");
+  });
+
   it("is not a tab stop", async () => {
     render(<EmojiText text="👍 ❤️" />);
 
