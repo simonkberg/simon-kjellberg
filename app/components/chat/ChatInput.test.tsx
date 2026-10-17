@@ -241,6 +241,26 @@ describe("ChatInput", () => {
       expect(setReplyToId).toHaveBeenCalledWith(null);
     });
 
+    it("leaves the reply when a tooltip takes the Escape", () => {
+      const setReplyToId = vi.fn();
+
+      render(
+        <ChatInput
+          {...defaultReplyProps}
+          replyToId="message-id"
+          setReplyToId={setReplyToId}
+        />,
+      );
+      const event = new KeyboardEvent("keydown", {
+        key: "Escape",
+        cancelable: true,
+      });
+      event.preventDefault();
+      window.dispatchEvent(event);
+
+      expect(setReplyToId).not.toHaveBeenCalled();
+    });
+
     it("does not call setReplyToId on Escape when not replying", async () => {
       const user = userEvent.setup({ delay: null });
       const setReplyToId = vi.fn();

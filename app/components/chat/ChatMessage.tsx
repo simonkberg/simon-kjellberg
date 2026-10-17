@@ -7,6 +7,7 @@ import {
 
 import { Markdown } from "@/components/Markdown";
 import { RelativeTime } from "@/components/RelativeTime";
+import { TooltipButton } from "@/components/Tooltip";
 import type { Message } from "@/lib/discord/api";
 
 import { ChatReactionList, ChatReactionPicker } from "./ChatReactions";
@@ -47,15 +48,14 @@ export const ChatMessage = ({
     {!preview && (
       <>
         <span className="actions">
-          <button
-            aria-label="Reply"
-            title="Reply"
+          <TooltipButton
+            tooltip="Reply"
             className="reply"
             onClick={() => setReplyToId(id)}
             disabled={replyToId === id}
           >
             ↩
-          </button>
+          </TooltipButton>
           {reactions.length === 0 && <ChatReactionPicker messageId={id} />}
         </span>
         {reactions.length > 0 && (

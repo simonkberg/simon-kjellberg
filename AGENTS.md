@@ -237,6 +237,11 @@ their own markup so each variant styles it; chat keeps `Loader`.
 - Subpages only set `title: "PageName"`
 - `global-error.tsx` and `global-not-found.tsx` must set full titles manually (don't inherit template)
 
+### Tooltips
+
+Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
+its button that opens on hover, keyboard focus or a long press on touch.
+
 ### Server-Only Code
 
 Files that must not run on client import `"server-only"` at top (e.g., `app/lib/discord/api.ts`, `app/lib/discord/gateway.ts`, `app/lib/session.ts`).
@@ -245,7 +250,7 @@ Files that must not run on client import `"server-only"` at top (e.g., `app/lib/
 
 - **Environment:** happy-dom
 - **Location:** Co-located with source files (`*.test.ts`, `*.test.tsx`)
-- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema)
+- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema); happy-dom has no popover API, so `vitest.setup.ts` stubs `showPopover`/`hidePopover` to toggle `data-popover-open`
 - **React Compiler:** enabled in `vitest.config.ts` via `react({ compiler: true })`, so tests exercise auto-memoized components like production does
 
 > The Vitest setup uses the **native** (Rust) React Compiler from `oxc-transform-react`, an experimental optional peer of `@vitejs/plugin-react`. Next.js runs the same native compiler inside Turbopack (`reactCompiler` + `experimental.turbopackRustReactCompiler` in `next.config.ts`), so `babel-plugin-react-compiler` is not needed. The two are still configured independently.

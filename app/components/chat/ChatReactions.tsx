@@ -2,6 +2,7 @@
 
 import { createContext, use, useId, useState } from "react";
 
+import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
@@ -29,15 +30,14 @@ export const ChatReactionPicker = ({
 
   return (
     <>
-      <button
-        aria-label="Add reaction"
-        title="Add reaction"
+      <TooltipButton
+        tooltip="Add reaction"
         className="react"
         popoverTarget={pickerId}
         disabled={reacting.has(messageId)}
       >
         {glyph}
-      </button>
+      </TooltipButton>
       <div
         id={pickerId}
         popover="auto"
@@ -48,16 +48,18 @@ export const ChatReactionPicker = ({
       >
         {open &&
           REACTION_EMOJI.map(({ emoji, name }) => (
-            <button
+            <TooltipButton
               key={name}
+              tooltip={`:${name}:`}
+              // Above the whole picker, so the name never covers the emoji around it.
+              anchor={pickerId}
               aria-label={name}
-              title={`:${name}:`}
               popoverTarget={pickerId}
               popoverTargetAction="hide"
               onClick={() => react(messageId, emoji)}
             >
               {emoji}
-            </button>
+            </TooltipButton>
           ))}
       </div>
     </>
@@ -86,15 +88,16 @@ export const ChatReactionList = ({
   return (
     <div className="reactions" role="group" aria-label="Reactions">
       {reactions.map((reaction) => (
-        <button
+        <TooltipButton
           key={reaction.emoji}
+          tooltip={describeReactors(reaction)}
+          describes
           aria-pressed={reaction.mine === true}
-          title={describeReactors(reaction)}
           disabled={reacting.has(messageId)}
           onClick={() => react(messageId, reaction.emoji)}
         >
           {reaction.emoji} <span className="count">{reaction.count}</span>
-        </button>
+        </TooltipButton>
       ))}
       <ChatReactionPicker messageId={messageId} glyph="+" />
     </div>

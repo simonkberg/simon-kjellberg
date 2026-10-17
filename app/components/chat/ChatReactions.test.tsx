@@ -48,8 +48,10 @@ describe("ChatReactionPicker", () => {
 
     const items = within(getPicker()).getAllByRole("button", { hidden: true });
     expect(items).toHaveLength(REACTION_EMOJI.length);
-    expect(items[0]).toHaveAttribute("title", ":thumbsup:");
     expect(items[0]).toHaveTextContent("👍");
+    expect(
+      within(getPicker()).getAllByRole("tooltip", { hidden: true })[0],
+    ).toHaveTextContent(":thumbsup:");
   });
 
   it("reacts with the picked emoji", async () => {
@@ -81,6 +83,12 @@ describe("ChatReactionPicker", () => {
 });
 
 describe("ChatReactionList", () => {
+  const openTips = () =>
+    screen
+      .queryAllByRole("tooltip", { hidden: true })
+      .filter((tip) => tip.hasAttribute("data-popover-open"))
+      .map((tip) => tip.textContent);
+
   const reactions: Reaction[] = [
     { emoji: "👍", count: 3, users: ["alice"], mine: true },
     { emoji: "🎉", count: 1, users: [] },
@@ -92,10 +100,10 @@ describe("ChatReactionList", () => {
 
     const [thumbs, tada, fire, add] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
-    expect(thumbs).toHaveAttribute("title", "You, alice, and 1 on Discord");
+    expect(thumbs).toHaveAccessibleDescription("You, alice, and 1 on Discord");
     expect(tada).toHaveTextContent("🎉 1");
-    expect(tada).toHaveAttribute("title", "1 on Discord");
-    expect(fire).toHaveAttribute("title", "alice and bob");
+    expect(tada).toHaveAccessibleDescription("1 on Discord");
+    expect(fire).toHaveAccessibleDescription("alice and bob");
     expect(add).toHaveAccessibleName("Add reaction");
   });
 
@@ -115,5 +123,15 @@ describe("ChatReactionList", () => {
     await userEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
+  });
+
+  it("shows who reacted while hovered", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+
+    await userEvent.hover(screen.getAllByRole("button")[2]!);
+    expect(openTips()).toEqual(["alice and bob"]);
+
+    await userEvent.unhover(screen.getAllByRole("button")[2]!);
+    expect(openTips()).toEqual([]);
   });
 });

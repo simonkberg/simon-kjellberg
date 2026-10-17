@@ -72,7 +72,8 @@ export const ChatInput = ({
     if (replyToId) {
       inputRef.current?.focus();
       const keyDownHandler = (event: KeyboardEvent) => {
-        if (event.key === "Escape") {
+        // A tooltip's Escape closes only the tooltip.
+        if (event.key === "Escape" && !event.defaultPrevented) {
           setReplyToId(null);
         }
       };

@@ -5,6 +5,7 @@ import { use, useOptimistic, useState, useTransition } from "react";
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
+import { TooltipButton } from "@/components/Tooltip";
 import type { Message, Reaction } from "@/lib/discord/api";
 
 import { ChatHistory } from "./ChatHistory";
@@ -145,14 +146,13 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
             {...replyToMessage}
             preview
           />
-          <button
-            aria-label="Clear reply"
-            title="Clear reply"
+          <TooltipButton
+            tooltip="Clear reply"
             className="clear"
             onClick={() => setReplyToId(null)}
           >
             &times;
-          </button>
+          </TooltipButton>
         </div>
       )}
       <ChatInput replyToId={replyToId} setReplyToId={setReplyToId}>
