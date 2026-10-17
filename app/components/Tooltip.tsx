@@ -9,6 +9,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
 } from "react";
 
 const LONG_PRESS_MS = 500;
@@ -71,6 +72,7 @@ function useTooltip(anchorId?: string) {
 
   return {
     tip,
+    show,
     trigger: {
       onPointerEnter: (event: PointerEvent<HTMLElement>) => {
         if (event.pointerType !== "touch") show(event.currentTarget);
@@ -150,6 +152,42 @@ export const TooltipButton = ({
         className="tooltip"
       >
         <span>{tooltip}</span>
+      </span>
+    </>
+  );
+};
+
+/**
+ * Inline text with a tooltip, rendered on first show. Not a tab stop. A tap shows it, since
+ * tapping text does nothing else; a long press stays a text selection.
+ */
+export const TooltipText = ({
+  tooltip,
+  children,
+}: {
+  tooltip: ReactNode;
+  children: ReactNode;
+}) => {
+  const { tip, show, trigger } = useTooltip();
+  const [shown, setShown] = useState(false);
+
+  return (
+    <>
+      <span
+        onPointerEnter={(event) => {
+          if (event.pointerType !== "touch") setShown(true);
+          trigger.onPointerEnter(event);
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType !== "touch") return;
+          setShown(true);
+          show(event.currentTarget);
+        }}
+      >
+        {children}
+      </span>
+      <span ref={tip} popover="manual" role="tooltip" className="tooltip">
+        <span>{shown && tooltip}</span>
       </span>
     </>
   );

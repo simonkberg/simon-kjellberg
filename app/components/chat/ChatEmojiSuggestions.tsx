@@ -23,7 +23,7 @@ const REACTION_SHORTCODES: EmojiShortcodes[] = REACTION_EMOJI.map(
 let shortcodes: Promise<EmojiShortcodes[]> | undefined;
 let failed = false;
 
-function loadShortcodes(): Promise<EmojiShortcodes[]> {
+export function loadShortcodes(): Promise<EmojiShortcodes[]> {
   shortcodes ??= fetch("/api/emoji", { signal: AbortSignal.timeout(10_000) })
     .then((response) => {
       if (!response.ok) throw new Error(String(response.status));

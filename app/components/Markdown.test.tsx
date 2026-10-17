@@ -101,4 +101,10 @@ describe("Markdown", () => {
       expect(document.querySelector("a")).toBeNull();
     });
   });
+
+  it("gives emoji in text a tooltip, but not in code", () => {
+    const { getAllByRole } = render(<Markdown source="🔥 **🔥** `🔥`" />);
+
+    expect(getAllByRole("tooltip", { hidden: true })).toHaveLength(2);
+  });
 });

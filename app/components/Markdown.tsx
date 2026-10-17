@@ -1,6 +1,8 @@
 import SimpleMarkdown from "@khanacademy/simple-markdown";
 import { Fragment, type ReactNode } from "react";
 
+import { EmojiText } from "@/components/chat/EmojiText";
+
 /**
  * Renders inline markdown. We use simple-markdown's parser but not its React
  * output, which builds React 18 elements that React 19 rejects.
@@ -32,7 +34,7 @@ const renderNode = (
 ): Exclude<ReactNode, undefined> => {
   switch (node.type) {
     case "text":
-      return node.content;
+      return <EmojiText key={key} text={node.content} />;
     case "br":
       return <br key={key} />;
     case "em":
