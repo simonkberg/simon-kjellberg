@@ -21,21 +21,18 @@ const FAILED: ReactionResult = {
   error: "Failed to react to chat message",
 };
 
-// Next checks this for server actions; a route handler needs its own against CSRF.
-function isSameOrigin(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const host =
-    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
-    request.headers.get("host");
-  return origin !== null && host !== null && URL.parse(origin)?.host === host;
-}
-
 function respond(result: ReactionResult, status = 200) {
   return NextResponse.json(result, { status });
 }
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
+  // Next checks this for server actions; a route handler needs its own against CSRF.
+  const origin = request.headers.get("origin");
+  const host =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    request.headers.get("host");
+  if (origin === null || URL.parse(origin)?.host !== host) {
+    log.warn({ origin, host, action: "reactToChatMessage" }, "Refused origin");
     return new NextResponse(null, { status: 403 });
   }
 
@@ -59,6 +56,10 @@ export async function POST(request: NextRequest) {
 
     const parsed = BodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
+      log.warn(
+        { err: parsed.error, action: "reactToChatMessage" },
+        "Malformed reaction",
+      );
       return respond(FAILED, 400);
     }
     const { messageId, emoji } = parsed.data;

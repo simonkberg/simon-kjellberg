@@ -4,6 +4,7 @@ import { http, HttpResponse } from "msw";
 import { revalidateTag } from "next/cache";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { addBotReaction, DiscordApiError } from "@/lib/discord/api";
 import { resetGlobal } from "@/lib/global";
@@ -56,6 +57,7 @@ describe("POST /api/chat/reactions", () => {
     vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.spyOn(log, "warn").mockImplementation(() => {});
     resetGlobal("simon.dev/rate-limit-blocked");
     resetGlobal("simon.dev/ip-deny-list");
     server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
@@ -111,8 +113,18 @@ describe("POST /api/chat/reactions", () => {
     [
       "from another site",
       { origin: "https://evil.example", host: "simon.dev" },
+      { origin: "https://evil.example", host: "simon.dev" },
     ],
-    ["without an origin", { host: "simon.dev" }],
+    [
+      "without an origin",
+      { host: "simon.dev" },
+      { origin: null, host: "simon.dev" },
+    ],
+    [
+      "whose origin isn't a URL",
+      { origin: "null", host: "simon.dev" },
+      { origin: "null", host: "simon.dev" },
+    ],
     [
       "whose forwarded host differs",
       {
@@ -120,12 +132,17 @@ describe("POST /api/chat/reactions", () => {
         host: "simon.dev",
         "x-forwarded-host": "evil.example",
       },
+      { origin: "https://simon.dev", host: "evil.example" },
     ],
-  ])("refuses a request %s", async (_, headers) => {
+  ])("refuses a request %s", async (_, headers, logged) => {
     const response = await react({ messageId: "123", emoji: "👍" }, headers);
 
     expect(response.status).toBe(403);
     expect(addBotReaction).not.toHaveBeenCalled();
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining(logged),
+      "Refused origin",
+    );
   });
 
   it.each([
@@ -141,6 +158,10 @@ describe("POST /api/chat/reactions", () => {
       body: { status: "error", error: "Failed to react to chat message" },
     });
     expect(addBotReaction).not.toHaveBeenCalled();
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(z.ZodError) }),
+      "Malformed reaction",
+    );
   });
 
   it("turns away an IP on the deny list", async () => {
