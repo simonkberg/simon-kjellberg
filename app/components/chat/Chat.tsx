@@ -27,12 +27,26 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
-// Snowflakes grow with time, so an id at or past the oldest loaded one was in the window.
-const isInWindow = (messages: Message[], id: string): boolean =>
-  messages.some(
-    (message) =>
-      BigInt(message.id) <= BigInt(id) || isInWindow(message.replies, id),
+const snowflakes = (messages: Message[]): bigint[] =>
+  messages.flatMap((message) => [
+    BigInt(message.id),
+    ...snowflakes(message.replies),
+  ]);
+
+const newest = (ids: bigint[]) =>
+  ids.reduce((max, id) => (id > max ? id : max), 0n);
+
+// Snowflakes grow with time, and only newer messages push one out of the window.
+function hasScrolledOut(
+  messages: Message[],
+  id: string,
+  newestWithIt: bigint,
+): boolean {
+  const ids = snowflakes(messages);
+  return (
+    ids.every((loaded) => loaded > BigInt(id)) && newest(ids) > newestWithIt
   );
+}
 
 function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
@@ -82,6 +96,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const result = use(history);
   const dismissed = use(tipDismissed);
   const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [newestWithReply, setNewestWithReply] = useState(0n);
   const [, startReacting] = useTransition();
   // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
   const [reacting, markReacting] = useOptimistic(
@@ -131,8 +146,14 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const replyToMessage = replyToId
     ? findMessageById(messages, replyToId)
     : null;
-  // A deleted target would make Discord reject the reply; one that scrolled out still exists.
-  if (replyToId && !replyToMessage && isInWindow(messages, replyToId)) {
+  if (replyToMessage) {
+    const latest = newest(snowflakes(messages));
+    if (latest !== newestWithReply) setNewestWithReply(latest);
+  } else if (
+    replyToId &&
+    !hasScrolledOut(messages, replyToId, newestWithReply)
+  ) {
+    // A deleted target would make Discord reject the reply; one that scrolled out still exists.
     setReplyToId(null);
   }
 

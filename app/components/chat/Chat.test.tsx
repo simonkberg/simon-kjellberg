@@ -93,7 +93,7 @@ describe("Chat", () => {
   describe("reply flow", () => {
     it("shows reply preview when reply button is clicked", async () => {
       const user = userEvent.setup();
-      const message = createMessage({ id: "target-msg", content: "Original" });
+      const message = createMessage({ id: "100", content: "Original" });
       const successResult: ChatHistoryResult = {
         status: "ok",
         messages: [message],
@@ -111,11 +111,11 @@ describe("Chat", () => {
     it("shows reply preview for nested message", async () => {
       const user = userEvent.setup();
       const nestedMessage = createMessage({
-        id: "nested-msg",
+        id: "200",
         content: "Nested reply",
       });
       const parentMessage = createMessage({
-        id: "parent-msg",
+        id: "100",
         content: "Parent message",
         replies: [nestedMessage],
       });
@@ -134,7 +134,7 @@ describe("Chat", () => {
 
     it("clears reply when clear button is clicked", async () => {
       const user = userEvent.setup();
-      const message = createMessage({ id: "target-msg" });
+      const message = createMessage({ id: "100" });
       const successResult: ChatHistoryResult = {
         status: "ok",
         messages: [message],
@@ -174,6 +174,22 @@ describe("Chat", () => {
       await update(["100", "300"]);
 
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
+    });
+
+    it("drops the reply when the oldest message, its target, is deleted", async () => {
+      const update = await replyToFirst(["200", "300"]);
+
+      await update(["300"]);
+
+      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
+    });
+
+    it("drops the reply when its message was the last one", async () => {
+      const update = await replyToFirst(["200"]);
+
+      await update([]);
+
       expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
     });
 
