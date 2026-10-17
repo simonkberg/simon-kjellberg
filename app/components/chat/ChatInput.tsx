@@ -4,7 +4,10 @@ import {
   ChangeEvent,
   FormEvent,
   type PropsWithChildren,
+  type SyntheticEvent,
+  Suspense,
   useEffect,
+  useId,
   useRef,
   useState,
   useTransition,
@@ -14,7 +17,17 @@ import { requestFormReset } from "react-dom";
 import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
 
 import { CaretBuddy } from "./CaretBuddy";
+import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
 import { ChatToast } from "./ChatToast";
+
+const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
+
+/** The shortcode typed up to the caret, without its colon. */
+function typedShortcode(input: HTMLInputElement): string | null {
+  const caret = input.selectionStart;
+  if (caret === null || caret !== input.selectionEnd) return null;
+  return SHORTCODE.exec(input.value.slice(0, caret))?.[1] ?? null;
+}
 
 export interface ChatInputProps extends PropsWithChildren {
   replyToId: string | null;
@@ -32,6 +45,10 @@ export const ChatInput = ({
   });
   const [pending, startTransition] = useTransition();
   const [inputValue, setInputValue] = useState("");
+  const [shortcode, setShortcode] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+  const suggestionsId = useId();
+  const suggesting = shortcode !== null && !dismissed;
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +68,7 @@ export const ChatInput = ({
           requestFormReset(form);
           setReplyToId(null);
           setInputValue("");
+          setShortcode(null);
         });
       }
 
@@ -60,6 +78,22 @@ export const ChatInput = ({
 
   function onChange(event: ChangeEvent<HTMLInputElement>) {
     setInputValue(event.target.value);
+    setShortcode(typedShortcode(event.target));
+    setDismissed(false);
+  }
+
+  function onSelect(event: SyntheticEvent<HTMLInputElement>) {
+    setShortcode(typedShortcode(event.currentTarget));
+  }
+
+  function pickEmoji(emoji: string) {
+    const input = inputRef.current;
+    if (!input || shortcode === null) return;
+    const caret = input.selectionStart ?? input.value.length;
+    input.setRangeText(emoji, caret - shortcode.length - 1, caret, "end");
+    setInputValue(input.value);
+    setShortcode(null);
+    input.focus();
   }
 
   useEffect(() => {
@@ -104,8 +138,24 @@ export const ChatInput = ({
             ref={inputRef}
             value={inputValue}
             onChange={onChange}
+            onSelect={onSelect}
             autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={suggesting}
+            aria-controls={suggestionsId}
           />
+          {suggesting && (
+            <Suspense>
+              <ChatEmojiSuggestions
+                id={suggestionsId}
+                input={inputRef}
+                query={shortcode}
+                onPick={pickEmoji}
+                onDismiss={() => setDismissed(true)}
+              />
+            </Suspense>
+          )}
           <CaretBuddy
             inputValue={inputValue}
             isPending={pending}

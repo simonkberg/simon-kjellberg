@@ -18,7 +18,7 @@ describe("ChatInput", () => {
 
   it("renders input field with correct attributes", () => {
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute("name", "text");
@@ -27,7 +27,7 @@ describe("ChatInput", () => {
 
   it("input is not disabled initially", () => {
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     expect(input).not.toBeDisabled();
   });
@@ -39,7 +39,7 @@ describe("ChatInput", () => {
     vi.mocked(postChatMessage).mockReturnValue(promise);
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");
@@ -59,7 +59,7 @@ describe("ChatInput", () => {
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "Test message");
     await user.keyboard("{Enter}");
@@ -81,7 +81,7 @@ describe("ChatInput", () => {
     const user = userEvent.setup({ delay: null });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "   ");
     await user.keyboard("{Enter}");
@@ -95,7 +95,7 @@ describe("ChatInput", () => {
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox") as HTMLInputElement;
+    const input = screen.getByRole("combobox") as HTMLInputElement;
 
     await user.type(input, "Test message");
     expect(input.value).toBe("Test message");
@@ -117,7 +117,7 @@ describe("ChatInput", () => {
     });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox") as HTMLInputElement;
+    const input = screen.getByRole("combobox") as HTMLInputElement;
 
     await user.type(input, "Test message");
     expect(input.value).toBe("Test message");
@@ -142,7 +142,7 @@ describe("ChatInput", () => {
       vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
 
       render(<ChatInput {...defaultReplyProps} />);
-      await user.type(screen.getByRole("textbox"), "Test");
+      await user.type(screen.getByRole("combobox"), "Test");
       await user.keyboard("{Enter}");
 
       await waitFor(() => expect(postChatMessage).toHaveBeenCalled());
@@ -157,7 +157,7 @@ describe("ChatInput", () => {
       });
 
       render(<ChatInput {...defaultReplyProps} />);
-      await user.type(screen.getByRole("textbox"), "Test");
+      await user.type(screen.getByRole("combobox"), "Test");
       await user.keyboard("{Enter}");
 
       const toast = await screen.findByRole("status");
@@ -172,7 +172,7 @@ describe("ChatInput", () => {
         .mockResolvedValueOnce({ status: "ok" });
 
       render(<ChatInput {...defaultReplyProps} />);
-      const input = screen.getByRole("textbox");
+      const input = screen.getByRole("combobox");
 
       await user.type(input, "First");
       await user.keyboard("{Enter}");
@@ -196,7 +196,7 @@ describe("ChatInput", () => {
           setReplyToId={vi.fn()}
         />,
       );
-      const input = screen.getByRole("textbox");
+      const input = screen.getByRole("combobox");
 
       expect(input).toHaveAttribute("placeholder", "Write a reply...");
     });
@@ -210,7 +210,7 @@ describe("ChatInput", () => {
         />,
       );
 
-      const input = screen.getByRole("textbox");
+      const input = screen.getByRole("combobox");
       expect(input).not.toHaveFocus();
 
       rerender(
@@ -290,7 +290,7 @@ describe("ChatInput", () => {
         />,
       );
 
-      await user.type(screen.getByRole("textbox"), "Reply text");
+      await user.type(screen.getByRole("combobox"), "Reply text");
       await user.keyboard("{Enter}");
 
       await waitFor(() => {
@@ -315,7 +315,7 @@ describe("ChatInput", () => {
         />,
       );
 
-      await user.type(screen.getByRole("textbox"), "Normal message");
+      await user.type(screen.getByRole("combobox"), "Normal message");
       await user.keyboard("{Enter}");
 
       const formData = vi.mocked(postChatMessage).mock
@@ -336,7 +336,7 @@ describe("ChatInput", () => {
         />,
       );
 
-      await user.type(screen.getByRole("textbox"), "Reply");
+      await user.type(screen.getByRole("combobox"), "Reply");
       await user.keyboard("{Enter}");
 
       await waitFor(() => {
@@ -360,7 +360,7 @@ describe("ChatInput", () => {
         />,
       );
 
-      await user.type(screen.getByRole("textbox"), "Reply");
+      await user.type(screen.getByRole("combobox"), "Reply");
       await user.keyboard("{Enter}");
 
       await screen.findByText("Failed");
@@ -424,7 +424,7 @@ describe("CaretBuddy integration", () => {
     });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "H");
 
@@ -441,7 +441,7 @@ describe("CaretBuddy integration", () => {
     vi.mocked(postChatMessage).mockReturnValue(promise);
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");
@@ -461,7 +461,7 @@ describe("CaretBuddy integration", () => {
     });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");
@@ -480,7 +480,7 @@ describe("CaretBuddy integration", () => {
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
 
     render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("combobox");
 
     await user.type(input, "Hello");
     await user.keyboard("{Enter}");

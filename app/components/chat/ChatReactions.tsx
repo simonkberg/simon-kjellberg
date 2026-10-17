@@ -14,7 +14,8 @@ import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
 
-import { arrowFocus } from "./arrowFocus";
+import { arrowFocus, gridColumns } from "./arrowFocus";
+import { EmojiButton } from "./EmojiButton";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -25,12 +26,6 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   reacting: new Set(),
   react: () => {},
 });
-
-function columns(buttons: HTMLElement[]): number {
-  const top = buttons[0]?.offsetTop;
-  const wrap = buttons.findIndex((button) => button.offsetTop !== top);
-  return wrap === -1 ? buttons.length : wrap;
-}
 
 export const ChatReactionPicker = ({
   messageId,
@@ -78,7 +73,8 @@ export const ChatReactionPicker = ({
     }
     const buttons = [...picker.querySelectorAll("button")];
     // Also at its edges, where the key would scroll the chat behind the picker.
-    if (arrowFocus(event, buttons, columns(buttons))) event.preventDefault();
+    if (arrowFocus(event, buttons, gridColumns(buttons)))
+      event.preventDefault();
   };
 
   return (
@@ -98,25 +94,22 @@ export const ChatReactionPicker = ({
         role="toolbar"
         aria-label="Pick a reaction"
         tabIndex={-1}
-        className="chat-reaction-picker"
+        className="chat-reaction-picker emoji-picker"
         onBeforeToggle={toggle}
         onToggle={focusFirst}
         onKeyDown={navigate}
       >
         {open &&
           REACTION_EMOJI.map(({ emoji, name }) => (
-            <TooltipButton
+            <EmojiButton
               key={name}
-              tooltip={`:${name}:`}
-              // Above the whole picker, so the name never covers the emoji around it.
-              anchor={pickerId}
-              aria-label={name}
+              emoji={emoji}
+              name={name}
+              picker={pickerId}
               popoverTarget={pickerId}
               popoverTargetAction="hide"
               onClick={() => react(messageId, emoji)}
-            >
-              {emoji}
-            </TooltipButton>
+            />
           ))}
       </div>
     </>

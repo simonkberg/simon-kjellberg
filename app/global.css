@@ -1539,7 +1539,7 @@ ul {
   }
 }
 
-.chat-reaction-picker {
+.emoji-picker {
   grid-template-columns: repeat(8, 2.25em);
   padding: 0.5ch;
   border: 1px solid var(--rule);
@@ -1558,12 +1558,13 @@ ul {
     text-align: center;
 
     &:hover,
-    &:focus-visible {
+    &:focus-visible,
+    &[aria-selected="true"] {
       background: var(--wash);
     }
   }
 
-  /* Opens above its button; without anchor positioning it stays centred. */
+  /* Opens above what opened it; without anchor positioning it stays centred. */
   @supports (position-area: top) {
     margin: 0.25lh 0;
     inset: auto;
