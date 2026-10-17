@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense, use } from "react";
 
-import { getTopAlbums, getTopArtists, getTopTracks } from "@/actions/lastfm";
+import {
+  getTopAlbums,
+  getTopArtists,
+  getTopTracks,
+  type TopAlbum,
+  type TopArtist,
+  type TopTrack,
+} from "@/actions/lastfm";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
 import { Page } from "@/components/Page";
@@ -16,21 +23,26 @@ import {
 
 import { PeriodSelector } from "./components/PeriodSelector";
 import {
-  TopAlbumsTable,
-  TopAlbumsTableSkeleton,
-} from "./components/TopAlbumsTable";
-import {
-  TopArtistsTable,
-  TopArtistsTableSkeleton,
-} from "./components/TopArtistsTable";
-import {
-  TopTracksTable,
-  TopTracksTableSkeleton,
-} from "./components/TopTracksTable";
+  TopTable,
+  type TopTableColumn,
+  TopTableSkeleton,
+} from "./components/TopTable";
 
 export const prefetch = "partial";
 // Reading params behind Suspense would turn invalid periods into soft 404s.
 export const instant = false;
+
+const trackColumns: TopTableColumn<TopTrack>[] = [
+  { label: "Track", key: "name" },
+  { label: "Artist", key: "artist" },
+];
+const artistColumns: TopTableColumn<TopArtist>[] = [
+  { label: "Artist", key: "name" },
+];
+const albumColumns: TopTableColumn<TopAlbum>[] = [
+  { label: "Album", key: "name" },
+  { label: "Artist", key: "artist" },
+];
 
 type ListeningPageProps = PageProps<"/listening/[[...period]]">;
 
@@ -67,9 +79,15 @@ export function generateStaticParams(): Awaited<
 
 export default function ListeningPage({ params }: ListeningPageProps) {
   const period = toPeriod(use(params).period);
-  const topTracks = getTopTracks(period);
-  const topArtists = getTopArtists(period);
-  const topAlbums = getTopAlbums(period);
+  const topTracks = getTopTracks(period).then((result) =>
+    result.status === "ok" ? result.tracks : undefined,
+  );
+  const topArtists = getTopArtists(period).then((result) =>
+    result.status === "ok" ? result.artists : undefined,
+  );
+  const topAlbums = getTopAlbums(period).then((result) =>
+    result.status === "ok" ? result.albums : undefined,
+  );
 
   return (
     <Page section="Listening">
@@ -89,8 +107,8 @@ export default function ListeningPage({ params }: ListeningPageProps) {
         <Heading level={2}>
           Top Tracks <Subtitle>(Top 10)</Subtitle>
         </Heading>
-        <Suspense fallback={<TopTracksTableSkeleton />}>
-          <TopTracksTable topTracks={topTracks} />
+        <Suspense fallback={<TopTableSkeleton columns={trackColumns} />}>
+          <TopTable rows={topTracks} noun="tracks" columns={trackColumns} />
         </Suspense>
       </section>
 
@@ -98,8 +116,8 @@ export default function ListeningPage({ params }: ListeningPageProps) {
         <Heading level={2}>
           Top Artists <Subtitle>(Top 10)</Subtitle>
         </Heading>
-        <Suspense fallback={<TopArtistsTableSkeleton />}>
-          <TopArtistsTable topArtists={topArtists} />
+        <Suspense fallback={<TopTableSkeleton columns={artistColumns} />}>
+          <TopTable rows={topArtists} noun="artists" columns={artistColumns} />
         </Suspense>
       </section>
 
@@ -107,8 +125,8 @@ export default function ListeningPage({ params }: ListeningPageProps) {
         <Heading level={2}>
           Top Albums <Subtitle>(Top 10)</Subtitle>
         </Heading>
-        <Suspense fallback={<TopAlbumsTableSkeleton />}>
-          <TopAlbumsTable topAlbums={topAlbums} />
+        <Suspense fallback={<TopTableSkeleton columns={albumColumns} />}>
+          <TopTable rows={topAlbums} noun="albums" columns={albumColumns} />
         </Suspense>
       </section>
     </Page>
