@@ -307,6 +307,78 @@ describe("ChannelStore", () => {
     expect(await store.find("old")).toMatchObject({ id: "old" });
   });
 
+  it("should keep a newer fetch of an older message when an earlier one fails", async () => {
+    const { store, source } = createStore();
+    const first = Promise.withResolvers<DiscordMessage>();
+    source.fetchMessage.mockReturnValueOnce(first.promise);
+
+    const failed = store.find("old");
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "old" } });
+    await store.find("old");
+    first.reject(new Error("down"));
+    await expect(failed).rejects.toThrow("down");
+    await store.find("old");
+
+    expect(source.fetchMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it("should not keep who reacted to a message outside the window", async () => {
+    const { store, source } = createStore();
+    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    await store.messages();
+
+    expect(await store.reactorIds("old", "😄")).toEqual(["user-2"]);
+    await store.reactorIds("old", "😄");
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+  });
+
+  it("should only drop the cleared message's reactor fetches", async () => {
+    const reactions = [{ count: 1, me: false, emoji: SMILE }];
+    const { store, source } = createStore([
+      message("1", { reactions }),
+      message("2", { reactions }),
+    ]);
+    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    await store.messages();
+
+    const ids = [store.reactorIds("1", "😄"), store.reactorIds("2", "😄")];
+    store.apply({
+      t: "MESSAGE_REACTION_REMOVE_ALL",
+      d: { channel_id: CHANNEL, message_id: "1" },
+    });
+    await Promise.all(ids);
+    await store.reactorIds("2", "😄");
+
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(3);
+  });
+
+  it("should count a reaction beside others and skip a nameless reactor", async () => {
+    const { store, source } = createStore([
+      message("1", {
+        reactions: [
+          { count: 1, me: false, emoji: { id: null, name: "👍" } },
+          { count: 1, me: false, emoji: SMILE },
+        ],
+      }),
+    ]);
+    await store.messages();
+
+    store.apply({
+      t: "MESSAGE_REACTION_ADD",
+      d: {
+        ...react("MESSAGE_REACTION_ADD", "nameless").d,
+        member: { user: { id: "nameless" } },
+      },
+    });
+    await store.memberName("nameless");
+
+    expect((await stored(store, "1"))?.reactions).toMatchObject([
+      { count: 1 },
+      { count: 2 },
+    ]);
+    expect(source.fetchMemberName).toHaveBeenCalledOnce();
+  });
+
   it("should hand back who reacted as an event settled it mid-fetch", async () => {
     const { store, source } = createStore([
       message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
