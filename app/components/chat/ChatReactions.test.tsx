@@ -104,6 +104,17 @@ describe("ChatReactionPicker", () => {
     expect(items[0]).toHaveFocus();
   });
 
+  it("keeps arrows at its edges from scrolling the page", () => {
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    openPicker();
+    getEmoji("thumbsup").focus();
+
+    expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "ArrowLeft" })).toBe(
+      false,
+    );
+    expect(getEmoji("thumbsup")).toHaveFocus();
+  });
+
   it("leaves other keys and modified arrows to the browser", async () => {
     const user = userEvent.setup();
     renderWithContext(<ChatReactionPicker messageId="1" />);

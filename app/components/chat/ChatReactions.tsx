@@ -24,27 +24,27 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
-function pickerTarget(
+function pickerIndex(
   buttons: HTMLElement[],
   current: number,
   key: string,
-): HTMLElement | undefined {
+): number | undefined {
   const top = buttons[0]?.offsetTop;
   const wrap = buttons.findIndex((button) => button.offsetTop !== top);
   const columns = wrap === -1 ? buttons.length : wrap;
   switch (key) {
     case "ArrowLeft":
-      return buttons[current - 1];
+      return current - 1;
     case "ArrowRight":
-      return buttons[current + 1];
+      return current + 1;
     case "ArrowUp":
-      return buttons[current - columns];
+      return current - columns;
     case "ArrowDown":
-      return buttons[current + columns];
+      return current + columns;
     case "Home":
-      return buttons[0];
+      return 0;
     case "End":
-      return buttons.at(-1);
+      return buttons.length - 1;
     default:
       return undefined;
   }
@@ -98,10 +98,11 @@ export const ChatReactionPicker = ({
       return;
     const buttons = [...picker.querySelectorAll("button")];
     const current = buttons.findIndex((button) => button === event.target);
-    const target = pickerTarget(buttons, current, event.key);
-    if (!target) return;
+    const index = pickerIndex(buttons, current, event.key);
+    if (index === undefined) return;
+    // Even at an edge, so the arrow doesn't scroll the chat behind the picker.
     event.preventDefault();
-    target.focus();
+    buttons[index]?.focus();
   };
 
   return (
