@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { describe, expect, it, vi } from "vitest";
 
-import { identifiers } from "./identifiers";
+import { identifiers, networkOf } from "./identifiers";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/headers"), () => ({ headers: vi.fn() }));
@@ -93,5 +93,25 @@ describe("identifiers", () => {
 
     expect(result.ip).toBeUndefined();
     expect(result.userAgent).toBeUndefined();
+  });
+});
+
+describe("networkOf", () => {
+  it.each([
+    ["203.0.113.1", "203.0.113.1"],
+    ["::ffff:203.0.113.1", "203.0.113.1"],
+    ["2001:db8:1:2:3:4:5:6", "2001:db8:1:2::/64"],
+    ["2001:DB8:0001:0002::1", "2001:db8:1:2::/64"],
+    ["2001:db8::1", "2001:db8:0:0::/64"],
+    ["::1", "0:0:0:0::/64"],
+    ["1::2:3:4:5:1.2.3.4", "1:0:2:3::/64"],
+  ])("keys %s as %s", (ip, network) => {
+    expect(networkOf(ip)).toBe(network);
+  });
+
+  it("keys addresses in one /64 together", () => {
+    expect(networkOf("2001:db8:1:2::a")).toBe(
+      networkOf("2001:db8:1:2:ffff:ffff:ffff:ffff"),
+    );
   });
 });

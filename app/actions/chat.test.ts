@@ -34,7 +34,8 @@ vi.mock(import("next/cache"), () => ({
   refresh: vi.fn(),
   updateTag: vi.fn(),
 }));
-vi.mock(import("@/lib/identifiers"), () => ({
+vi.mock(import("@/lib/identifiers"), async (importOriginal) => ({
+  ...(await importOriginal()),
   identifiers: vi.fn(() =>
     Promise.resolve({ ip: "0.0.0.0", userAgent: "vitest" }),
   ),
@@ -210,6 +211,27 @@ describe("postChatMessage", () => {
     await postUpToTheLimit();
     vi.mocked(identifiers).mockResolvedValueOnce({
       ip: "1.1.1.1",
+      userAgent: "vitest",
+    });
+
+    expect(await post()).toEqual({ status: "ok" });
+  });
+
+  it("limits an IPv6 /64 as one IP", async () => {
+    vi.mocked(identifiers).mockResolvedValue({
+      ip: "2001:db8:1:2::1",
+      userAgent: "vitest",
+    });
+    await postUpToTheLimit();
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "2001:db8:1:2:ffff::1",
+      userAgent: "vitest",
+    });
+
+    expect(await post()).toMatchObject({ status: "error" });
+
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "2001:db8:1:3::1",
       userAgent: "vitest",
     });
 

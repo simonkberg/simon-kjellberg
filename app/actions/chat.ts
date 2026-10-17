@@ -10,7 +10,7 @@ import {
   type Message,
   postChannelMessage,
 } from "@/lib/discord/api";
-import { identifiers } from "@/lib/identifiers";
+import { identifiers, networkOf } from "@/lib/identifiers";
 import { isDeniedIp } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rateLimit";
@@ -54,7 +54,8 @@ async function admit(
     return { status: "error", error: `${verb} from your network is blocked.` };
   }
 
-  const result = await rateLimit(`${action}:${ip ?? username}`, limits);
+  const subject = ip === undefined ? username : networkOf(ip);
+  const result = await rateLimit(`${action}:${subject}`, limits);
   if (!result.success) {
     return {
       status: "error",
