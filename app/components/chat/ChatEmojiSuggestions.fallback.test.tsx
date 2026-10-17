@@ -11,7 +11,11 @@ vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
 // A file of its own, since the fetched set is kept for the page's lifetime.
 it("falls back to the reactions when the emoji can't load, and retries on the next focus", async () => {
-  server.use(http.get("*/api/emoji", () => HttpResponse.error()));
+  server.use(
+    http.get("*/api/emoji", () =>
+      HttpResponse.json({ error: "Bad gateway" }, { status: 502 }),
+    ),
+  );
   const user = userEvent.setup({ delay: null });
   render(
     <ChatInput replyToId={null} setReplyToId={vi.fn()}>

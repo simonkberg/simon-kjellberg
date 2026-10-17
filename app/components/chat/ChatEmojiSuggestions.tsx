@@ -25,7 +25,10 @@ let failed = false;
 
 function loadShortcodes(): Promise<EmojiShortcodes[]> {
   shortcodes ??= fetch("/api/emoji")
-    .then((response) => response.json() as Promise<EmojiShortcodes[]>)
+    .then((response) => {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.json() as Promise<EmojiShortcodes[]>;
+    })
     .catch(() => {
       failed = true;
       return REACTION_SHORTCODES;
