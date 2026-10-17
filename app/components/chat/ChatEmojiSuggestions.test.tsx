@@ -168,6 +168,8 @@ describe("ChatEmojiSuggestions", () => {
 
     await user.type(input, ":fire");
     const picker = await screen.findByRole("listbox");
+    fireEvent(picker, Object.assign(new Event("toggle"), { newState: "open" }));
+    expect(picker).toBeInTheDocument();
     fireEvent(
       picker,
       Object.assign(new Event("toggle"), { newState: "closed" }),
