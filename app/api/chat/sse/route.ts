@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
   // The client may have left while the gateway was reconnecting, and abort doesn't fire twice.
   if (request.signal.aborted) {
     unsubscribe();
-    void writer.close().catch(ignoreWriteErrors);
     return new NextResponse(null, { status: 499 });
   }
 
