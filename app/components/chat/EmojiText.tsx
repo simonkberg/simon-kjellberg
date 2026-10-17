@@ -3,18 +3,15 @@
 import { Suspense, use } from "react";
 
 import { TooltipText } from "@/components/Tooltip";
+import { qualified } from "@/lib/emoji";
 
 import { loadShortcodes } from "./ChatEmojiSuggestions";
 
 const EMOJI = /(\p{RGI_Emoji})/v;
 
-// The set names each emoji without skin tones, and without U+FE0F where it defaults to emoji anyway.
+// The set names each emoji without skin tones; a tone stands where a text-style base takes U+FE0F.
 const baseEmoji = (emoji: string) =>
-  emoji
-    .replace(/(\p{Emoji_Presentation})?[\u{1F3FB}-\u{1F3FF}]/gu, (_, base) =>
-      base === undefined ? "\uFE0F" : base,
-    )
-    .replace(/(\p{Emoji_Presentation})\uFE0F/gu, "$1");
+  qualified(emoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "\uFE0F"));
 
 const Shortcode = ({ emoji }: { emoji: string }) => {
   const base = baseEmoji(emoji);

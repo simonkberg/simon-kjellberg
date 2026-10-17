@@ -6,6 +6,7 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  type RefObject,
   useEffect,
   useId,
   useRef,
@@ -118,6 +119,21 @@ function useTooltip(anchorId?: string) {
 
 type Trigger = ReturnType<typeof useTooltip>["trigger"];
 
+// Not hint, whose light dismiss closes it on the click or tap that reveals it.
+const Popover = ({
+  tip,
+  id,
+  children,
+}: {
+  tip: RefObject<HTMLSpanElement | null>;
+  id?: string;
+  children: ReactNode;
+}) => (
+  <span ref={tip} id={id} popover="manual" role="tooltip" className="tooltip">
+    <span>{children}</span>
+  </span>
+);
+
 /**
  * A button whose tooltip names it, or describes it with `describes`; an `aria-label` keeps
  * its own name. With `anchor`, the tooltip sits on that element and hovering it keeps it open.
@@ -143,16 +159,9 @@ export const TooltipButton = ({
   return (
     <>
       <button {...link} {...props} {...trigger} data-tooltip-trigger="" />
-      {/* Not hint, whose light dismiss closes it on the click or tap that reveals it. */}
-      <span
-        ref={tip}
-        id={id}
-        popover="manual"
-        role="tooltip"
-        className="tooltip"
-      >
-        <span>{tooltip}</span>
-      </span>
+      <Popover tip={tip} id={id}>
+        {tooltip}
+      </Popover>
     </>
   );
 };
@@ -168,30 +177,29 @@ export const TooltipText = ({
   tooltip: ReactNode;
   children: ReactNode;
 }) => {
-  const { tip, show, trigger } = useTooltip();
+  const { tip, show } = useTooltip();
   const [shown, setShown] = useState(false);
+  const reveal = (text: HTMLElement) => {
+    setShown(true);
+    show(text);
+  };
 
   return (
     <>
       <span
         onPointerEnter={(event) => {
-          if (event.pointerType !== "touch") setShown(true);
-          trigger.onPointerEnter(event);
+          if (event.pointerType !== "touch") reveal(event.currentTarget);
         }}
         onPointerUp={(event) => {
           // Not at the end of a long press that selected text.
-          if (event.pointerType !== "touch" || !getSelection()?.isCollapsed) {
-            return;
+          if (event.pointerType === "touch" && getSelection()?.isCollapsed) {
+            reveal(event.currentTarget);
           }
-          setShown(true);
-          show(event.currentTarget);
         }}
       >
         {children}
       </span>
-      <span ref={tip} popover="manual" role="tooltip" className="tooltip">
-        <span>{shown && tooltip}</span>
-      </span>
+      <Popover tip={tip}>{shown && tooltip}</Popover>
     </>
   );
 };

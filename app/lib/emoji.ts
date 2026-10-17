@@ -42,6 +42,10 @@ export const REACTION_EMOJI = [
   { emoji: "🤖", name: "robot" },
 ] as const;
 
+// Emojibase adds U+FE0F to emoji like 👍 that have a text style but already default to emoji.
+export const qualified = (emoji: string) =>
+  emoji.replace(/(\p{Emoji_Presentation})\uFE0F/gu, "$1");
+
 /** An emoji and its shortcodes, the first being the one it is known by. */
 export type EmojiShortcodes = [emoji: string, ...shortcodes: string[]];
 
