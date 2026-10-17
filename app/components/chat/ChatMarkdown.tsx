@@ -1,7 +1,7 @@
 import SimpleMarkdown from "@khanacademy/simple-markdown";
 import { Fragment, type ReactNode } from "react";
 
-import { EmojiText } from "@/components/chat/EmojiText";
+import { EmojiText } from "./EmojiText";
 
 /**
  * Renders inline markdown. We use simple-markdown's parser but not its React
@@ -65,10 +65,10 @@ const renderNode = (
   }
 };
 
-export interface MarkdownProps {
+export interface ChatMarkdownProps {
   source: string;
 }
 
-export const Markdown = ({ source }: MarkdownProps) => (
+export const ChatMarkdown = ({ source }: ChatMarkdownProps) => (
   <>{renderNodes(SimpleMarkdown.defaultInlineParse(source) as InlineNode[])}</>
 );

@@ -322,7 +322,7 @@ and lose its static shell. Check chat changes in all three variants.
 
 ### Markdown Rendering
 
-Discord message content is raw markdown, rendered by `app/components/Markdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.
+Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.
 
 Two rules the tests pin: `sanitizeUrl()` guards every `link` target (a rejected one renders as plain text), and `image` renders as alt text — never an `<img>`, since message authors choose the URL.
 
