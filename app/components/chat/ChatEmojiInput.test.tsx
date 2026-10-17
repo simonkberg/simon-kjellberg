@@ -38,7 +38,7 @@ const options = () =>
 
 const chosen = () => screen.queryByRole("option", { selected: true });
 
-describe("ChatEmojiSuggestions", () => {
+describe("ChatEmojiInput", () => {
   beforeEach(() => {
     server.use(http.get("*/api/emoji", () => HttpResponse.json(EMOJI)));
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
@@ -115,6 +115,41 @@ describe("ChatEmojiSuggestions", () => {
     expect(postChatMessage).toHaveBeenCalled();
     await waitFor(() => expect(input).toHaveValue(""));
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("offers a sent shortcode again when it is pasted back", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "hi :S{Enter}");
+    await waitFor(() => expect(input).toHaveValue(""));
+    await user.paste(":S");
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("forgets a dismissal once the message is sent", async () => {
+    const { promise, resolve } = Promise.withResolvers<{ status: "ok" }>();
+    vi.mocked(postChatMessage).mockReturnValue(promise);
+    const { user, input } = setup();
+
+    await user.type(input, "hi :S");
+    await screen.findByRole("listbox");
+    await user.keyboard("{Escape}{Enter}");
+    resolve({ status: "ok" });
+    await waitFor(() => expect(input).toHaveValue(""));
+    await user.paste("hi :S");
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("loads the emoji when a shortcode is typed into an input focused before hydration", async () => {
+    setup();
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: ":fire" },
+    });
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
   });
 
   it("chooses the first with an up or down arrow when none is", async () => {

@@ -5,7 +5,7 @@ import { Suspense, use } from "react";
 import { TooltipText } from "@/components/Tooltip";
 import { qualified } from "@/lib/emoji";
 
-import { loadShortcodes } from "./ChatEmojiSuggestions";
+import { loadShortcodes } from "./shortcodes";
 
 const EMOJI = /(\p{RGI_Emoji})/v;
 
