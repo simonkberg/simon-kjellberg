@@ -135,7 +135,7 @@ afterEach(() => {
 });
 
 describe("ChannelStore", () => {
-  it("should tell listeners when a seed lands and after each event, not before", async () => {
+  it("should tell listeners when a seed lands and after each change, not before", async () => {
     const { store, source, listener } = createStore();
     const first = defer(source.fetchMessages);
 
@@ -150,15 +150,37 @@ describe("ChannelStore", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it("should tell listeners about events before any seed has landed, and seed on the next read", async () => {
+  it("should retry a failed first seed later, sooner after an event", async () => {
     const { store, source, listener } = createStore();
     source.fetchMessages.mockRejectedValueOnce(new Error("down"));
     await expect(store.messages()).rejects.toThrow("down");
 
-    store.apply(create(message("2")));
+    source.fetchMessages.mockRejectedValueOnce(new Error("down"));
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
 
+    // Events bring the 20s retry forward to 10s, and no further.
+    for (let i = 0; i < 5; i++) {
+      store.apply(create(message("2")));
+      await vi.advanceTimersByTimeAsync(1_000);
+    }
+    expect(listener).not.toHaveBeenCalled();
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
     expect(listener).toHaveBeenCalledOnce();
     expect(await store.messages()).toMatchObject([{ id: "1" }]);
+  });
+
+  it("should seed on an event when nothing has asked yet", async () => {
+    const { store, source, listener } = createStore();
+
+    store.apply(create(message("2")));
+    store.apply(create(message("3")));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(source.fetchMessages).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it("should log a throwing listener and still tell the rest", async () => {
@@ -717,8 +739,8 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledOnce();
   });
 
-  it("should ignore custom emoji and events outside the window", async () => {
-    const { store } = await seeded();
+  it("should ignore, without telling listeners, custom emoji, unchanged messages and events outside the window", async () => {
+    const { store, listener } = await seeded();
 
     store.apply(
       react("MESSAGE_REACTION_ADD", "user-2", {
@@ -733,8 +755,15 @@ describe("ChannelStore", () => {
       t: "MESSAGE_UPDATE",
       d: { id: "old", channel_id: CHANNEL, content: "edited" },
     });
+    store.apply({ t: "MESSAGE_UPDATE", d: { id: "1", channel_id: CHANNEL } });
+    store.apply(create(message("1")));
+    store.apply(create(message("2", { type: 7 })));
+    store.apply(del("old"));
+    store.apply(clear("1"));
+    store.apply(clear("1", SMILE));
 
     expect(await store.messages()).toEqual([message("1")]);
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it("should fetch who reacted to a seeded reaction once, then follow events", async () => {

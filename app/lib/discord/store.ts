@@ -48,19 +48,21 @@ export class ChannelStore {
   #seeding: Promise<void> | null = null;
   #seeded = false;
   // Set while what the store holds may have missed events, until a seed succeeds.
-  #stale = false;
+  #stale = true;
   // Set until a seed lands after a gap, when any fetch beats the window it has.
   #gap = true;
   #reseedTimer: ReturnType<typeof setTimeout> | undefined;
+  #reseedAt = 0;
   #reseedDelay = RESEED_DELAY_MS;
   #changed = false;
+  #revision = 0;
   #listeners = new Set<() => void>();
 
   constructor(source: StoreSource) {
     this.#source = source;
   }
 
-  /** Calls back whenever what the store holds may have changed, a fresh seed included. */
+  /** Calls back whenever the window changes, a fresh seed included. */
   listen(callback: () => void): () => void {
     this.#listeners.add(callback);
     return () => this.#listeners.delete(callback);
@@ -184,9 +186,16 @@ export class ChannelStore {
     }
 
     this.#forgetOlder(event);
-    // Unseeded, the next seed includes it; the refresh this triggers is what reads it.
-    if (this.#seeded) this.#applyEvent(event);
-    this.#notify();
+    // Unseeded, the next seed includes it and notifies. An event brings it forward, but only as far as the first backoff after a failure.
+    if (!this.#seeded) {
+      if (!this.#seeding) {
+        this.#scheduleReseed(this.#reseedTimer ? RESEED_DELAY_MS : 0);
+      }
+      return;
+    }
+    const revision = this.#revision;
+    this.#applyEvent(event);
+    if (this.#revision !== revision) this.#notify();
   }
 
   #applyEvent(event: ChannelEvent): void {
@@ -202,7 +211,7 @@ export class ChannelStore {
         }
         // A seed can already hold it, with reactions this copy lacks.
         if (!isShown(message) || this.#messages.has(message.id)) return;
-        this.#messages.set(message.id, message);
+        this.#set(message);
         for (const id of this.#messages.keys()) {
           if (this.#messages.size <= WINDOW) break;
           this.#delete(id);
@@ -217,11 +226,14 @@ export class ChannelStore {
           content = existing.content,
           edited_timestamp = existing.edited_timestamp,
         } = event.d;
-        this.#messages.set(existing.id, {
-          ...existing,
-          content,
-          edited_timestamp,
-        });
+        // An embed unfurling changes nothing the site shows.
+        if (
+          content === existing.content &&
+          edited_timestamp === existing.edited_timestamp
+        ) {
+          return;
+        }
+        this.#set({ ...existing, content, edited_timestamp });
         return;
       }
       case "MESSAGE_DELETE":
@@ -291,8 +303,13 @@ export class ChannelStore {
     }));
   }
 
+  // The earliest request wins, so a burst shares one reseed.
   #scheduleReseed(delay: number): void {
-    this.#reseedTimer ??= setTimeout(() => {
+    const at = Date.now() + delay;
+    if (this.#reseedTimer && this.#reseedAt <= at) return;
+    clearTimeout(this.#reseedTimer);
+    this.#reseedAt = at;
+    this.#reseedTimer = setTimeout(() => {
       this.#reseedTimer = undefined;
       this.#reseed();
     }, delay).unref();
@@ -360,8 +377,14 @@ export class ChannelStore {
     if (removed.length > 0) this.#scheduleReseed(RESEED_DELAY_MS);
   }
 
+  #set(message: DiscordMessage): void {
+    this.#messages.set(message.id, message);
+    this.#revision++;
+  }
+
   #delete(id: string): void {
     this.#messages.delete(id);
+    this.#revision++;
     this.#forgetAllReactors(id);
   }
 
@@ -388,12 +411,16 @@ export class ChannelStore {
     update: (reactions: Reaction[]) => Reaction[],
   ): void {
     const message = this.#messages.get(messageId);
-    if (message) {
-      this.#messages.set(messageId, {
-        ...message,
-        reactions: update(message.reactions ?? []),
-      });
+    if (!message) return;
+    const reactions = message.reactions ?? [];
+    const next = update(reactions);
+    if (
+      next.length === reactions.length &&
+      next.every((r, i) => r === reactions[i])
+    ) {
+      return;
     }
+    this.#set({ ...message, reactions: next });
   }
 
   #react(
