@@ -7,8 +7,8 @@ export const iosevka = localFont({
     { path: "./IosevkaSS08-Bold.woff2", weight: "700", style: "normal" },
     { path: "./IosevkaSS08-BoldItalic.woff2", weight: "700", style: "italic" },
   ],
-  // Everything but emoji, joiners and tags, which Iosevka draws as text (🙂 ❤ ⭐ flags), so they
-  // fall back to the platform's colour emoji font.
+  // Everything but colour-by-default emoji, joiners and tags, which Iosevka would draw as text
+  // (🙂 ⭐ flags), so they fall back to the platform's emoji font.
   declarations: [
     {
       prop: "unicode-range",
