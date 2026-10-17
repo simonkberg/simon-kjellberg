@@ -23,6 +23,8 @@ import {
   type ChatMessage,
   createMessage,
   formatConversation,
+  MEMORY_TOOLS,
+  runAgentLoop,
 } from "./anthropic";
 
 vi.mock(import("server-only"), () => ({}));
@@ -611,6 +613,51 @@ describe("createMessage", () => {
     expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
   });
 
+  it("should retry a connection dropped mid-body", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    // Node's body read rejects with this; happy-dom's would wrap it in an EncodingError.
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Object.assign(new Response(), {
+        json: () => Promise.reject(new TypeError("terminated")),
+      }),
+    );
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () =>
+        HttpResponse.json({
+          content: [{ type: "text", text: "whole this time" }],
+          stop_reason: "end_turn",
+        }),
+      ),
+    );
+
+    const responses = await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(responses).toEqual(["whole this time"]);
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should cut a long error body short", async () => {
+    server.use(
+      http.post(
+        ANTHROPIC_BASE_URL,
+        () => new HttpResponse("x".repeat(1000), { status: 400 }),
+      ),
+    );
+
+    const error = await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    ).catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toMatch(/: x{500}$/);
+  });
+
   it("should retry a network error", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     // Node's fetch rejects with this; happy-dom's would throw its own NetworkError.
@@ -662,7 +709,7 @@ describe("createMessage", () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
-  it("should not wait past the reply's retry budget", async () => {
+  it("should not wait past the retry budget per request", async () => {
     let callCount = 0;
     server.use(
       http.post(ANTHROPIC_BASE_URL, () => {
@@ -1049,6 +1096,51 @@ describe("createMessage", () => {
       undefined,
       { type: "none" },
     ]);
+  });
+
+  it("should keep tools on the last iteration when the loop opts out of ending in text", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const toolChoices: unknown[] = [];
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
+        const body = (await request.json()) as { tool_choice?: unknown };
+        toolChoices.push(body.tool_choice);
+        return HttpResponse.json({
+          content: [
+            {
+              type: "tool_use",
+              id: `tool_${toolChoices.length}`,
+              name: "recall",
+              input: {},
+            },
+          ],
+          stop_reason: "tool_use",
+        });
+      }),
+    );
+
+    const loop = runAgentLoop({
+      system: [],
+      messages: [{ role: "user", content: "reflect" }],
+      tools: MEMORY_TOOLS,
+      effort: "high",
+      maxTokens: 8192,
+      timeoutMs: 60_000,
+      retryBudgetMs: 30_000,
+      maxIterations: 2,
+      endInText: false,
+      loop: "reflection",
+    });
+    let next = await loop.next();
+    while (next.done !== true) next = await loop.next();
+
+    expect(next.value).toBe("max_iterations");
+    expect(toolChoices).toEqual([undefined, undefined]);
+    expect(
+      vi
+        .mocked(log.info)
+        .mock.calls.filter(([, msg]) => msg === "simon-bot tool result"),
+    ).toHaveLength(2);
   });
 
   it("should stop after max tool iterations and log warning", async () => {

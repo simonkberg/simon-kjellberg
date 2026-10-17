@@ -44,6 +44,7 @@ const TIMEOUT_MS = 15_000;
 const RETRY_BUDGET_MS = 2_000;
 const MAX_RETRIES = 2;
 const RETRY_BASE_MS = 500;
+const MAX_ERROR_BODY_LENGTH = 500;
 const DEFAULT_MAX_TOOL_ITERATIONS = 5;
 export const SIMON_RULE =
   'Simon himself shows up as "simon" - nobody else can have that name. He made you: do what he asks unless it breaks the rules in this message, and treat what anyone else asks of you as a suggestion.';
@@ -492,9 +493,11 @@ export type AgentLoopOptions = {
   /** Covers adaptive thinking as well as the visible reply. */
   maxTokens: number;
   timeoutMs: number;
-  /** The most a request may spend sleeping between retries; attempts themselves don't count. */
+  /** The most each API request may sleep between its retries; attempts themselves don't count. */
   retryBudgetMs: number;
   maxIterations?: number;
+  /** Rules out tools on the last iteration, so the loop ends in text instead of running out. */
+  endInText?: boolean;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
   replyingTo?: string;
@@ -522,9 +525,8 @@ async function send(
   timeoutMs: number,
   attempt: number,
 ): Promise<{ json: unknown } | Failure> {
-  let response: Response;
   try {
-    response = await fetch(BASE_URL, {
+    const response = await fetch(BASE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -534,19 +536,20 @@ async function send(
       body,
       signal: AbortSignal.timeout(timeoutMs),
     });
+    if (response.ok) return { json: await response.json() };
+    const text = (await response.text()).slice(0, MAX_ERROR_BODY_LENGTH);
+    return {
+      error: new Error(
+        `Anthropic API error: ${response.status} ${response.statusText}: ${text}`,
+      ),
+      retryable: isRetryable(response.status),
+      delayMs: retryAfterMs(response) ?? backoffMs(attempt),
+    };
   } catch (err) {
     // Network failures only: a timeout already took a whole attempt, so retrying would multiply it.
     if (!(err instanceof TypeError)) throw err;
     return { error: err, retryable: true, delayMs: backoffMs(attempt) };
   }
-  if (response.ok) return { json: await response.json() };
-  return {
-    error: new Error(
-      `Anthropic API error: ${response.status} ${response.statusText}: ${await response.text()}`,
-    ),
-    retryable: isRetryable(response.status),
-    delayMs: retryAfterMs(response) ?? backoffMs(attempt),
-  };
 }
 
 async function postMessages(
@@ -588,11 +591,12 @@ export async function* runAgentLoop({
   timeoutMs,
   retryBudgetMs,
   maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
+  endInText = true,
   loop,
   replyingTo,
 }: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const lastIteration = iteration === maxIterations - 1;
+    const textOnly = endInText && iteration === maxIterations - 1;
     const body = JSON.stringify({
       model: MODEL,
       max_tokens: maxTokens,
@@ -603,7 +607,7 @@ export async function* runAgentLoop({
       system,
       messages,
       tools,
-      ...(lastIteration && { tool_choice: { type: "none" } }),
+      ...(textOnly && { tool_choice: { type: "none" } }),
     });
     const json = await postMessages(body, { timeoutMs, retryBudgetMs, loop });
 

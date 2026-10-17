@@ -60,6 +60,7 @@ describe("reflect", () => {
       timeoutMs: 60_000,
       retryBudgetMs: 30_000,
       maxIterations: 10,
+      endInText: false,
       loop: "reflection",
     });
   });

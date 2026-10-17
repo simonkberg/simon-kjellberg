@@ -36,7 +36,7 @@ export const contentSchema = z
   .trim()
   .min(1)
   .max(MAX_CONTENT_LENGTH)
-  .regex(/^[^\r\n\u2028\u2029]*$/, "Keep a note to one line");
+  .regex(/^[^\r\n\v\f\u0085\u2028\u2029]*$/, "Keep a note to one line");
 
 const memoryRowSchema = z.object({
   id: z.number(),

@@ -55,6 +55,8 @@ export async function reflect(transcript: ChatMessage[]): Promise<void> {
       timeoutMs: TIMEOUT_MS,
       retryBudgetMs: RETRY_BUDGET_MS,
       maxIterations: MAX_ITERATIONS,
+      // Nobody reads reflection's text, so its last round may still write notes.
+      endInText: false,
       loop: "reflection",
     }),
   );
