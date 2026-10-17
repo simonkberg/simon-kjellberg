@@ -33,7 +33,7 @@ const ChatReactionPickerEmoji = ({
   return (
     <>
       <button
-        aria-labelledby={tooltip.id}
+        aria-label={name}
         popoverTarget={pickerId}
         popoverTargetAction="hide"
         onClick={onPick}
@@ -41,7 +41,7 @@ const ChatReactionPickerEmoji = ({
       >
         {emoji}
       </button>
-      <Tooltip {...tooltip.tooltip}>{name}</Tooltip>
+      <Tooltip {...tooltip.tooltip}>:{name}:</Tooltip>
     </>
   );
 };
