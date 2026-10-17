@@ -24,7 +24,7 @@ let shortcodes: Promise<EmojiShortcodes[]> | undefined;
 let failed = false;
 
 function loadShortcodes(): Promise<EmojiShortcodes[]> {
-  shortcodes ??= fetch("/api/emoji")
+  shortcodes ??= fetch("/api/emoji", { signal: AbortSignal.timeout(10_000) })
     .then((response) => {
       if (!response.ok) throw new Error(String(response.status));
       return response.json() as Promise<EmojiShortcodes[]>;
