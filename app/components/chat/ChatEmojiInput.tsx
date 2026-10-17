@@ -83,15 +83,15 @@ export const ChatEmojiInput = ({
   // A dismissal holds only for the shortcode it closed on.
   function track(input: HTMLInputElement) {
     const next = typedShortcode(input)?.query;
+    const current = input.value;
     // Focus can come before hydration, leaving onFocus unheard.
     if (next !== undefined && !emoji) void loadShortcodes().then(setEmoji);
     setTyped((previous) => {
       if (next === undefined) return null;
       // Unchanged on a caret move, so React can skip the render.
-      if (previous?.query === next && previous.value === input.value) {
+      if (previous?.query === next && previous.value === current)
         return previous;
-      }
-      return { query: next, value: input.value, dismissed: false };
+      return { query: next, value: current, dismissed: false };
     });
   }
 
