@@ -14,7 +14,7 @@ import { type EmojiShortcodes, REACTION_EMOJI, searchEmoji } from "@/lib/emoji";
 
 import { arrowIndex, gridColumns } from "./arrowFocus";
 import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
-import { reloadShortcodes } from "./shortcodes";
+import { loadShortcodes, reloadShortcodes } from "./shortcodes";
 
 const LIMIT = 24;
 
@@ -83,6 +83,8 @@ export const ChatEmojiInput = ({
   // A dismissal holds only for the shortcode it closed on.
   function track(input: HTMLInputElement) {
     const next = typedShortcode(input)?.query;
+    // Focus can come before hydration, leaving onFocus unheard.
+    if (next !== undefined && !emoji) void loadShortcodes().then(setEmoji);
     setTyped((previous) => {
       if (next === undefined) return null;
       // Unchanged on a caret move, so React can skip the render.

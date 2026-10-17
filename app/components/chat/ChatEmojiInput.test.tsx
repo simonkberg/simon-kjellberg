@@ -139,6 +139,16 @@ describe("ChatEmojiInput", () => {
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
   });
 
+  it("loads the emoji when a shortcode is typed into an input focused before hydration", async () => {
+    setup();
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: ":fire" },
+    });
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
   it("chooses the first with an up or down arrow when none is", async () => {
     const { user, input } = setup();
 
