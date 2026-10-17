@@ -29,7 +29,6 @@
     "@next/third-parties": "16.4.1",
     "@react-spring/web": "10.1.2",
     "comparator.ts": "2.0.0",
-    "dataloader": "2.2.3",
     "emojibase-data": "17.0.0",
     "jose": "6.2.12",
     "next": "16.4.1",

@@ -137,8 +137,13 @@ Railway so server action references stay valid across redeploys.
 Integrations live in `app/lib/` — Discord (REST + Gateway WebSocket, streamed to clients
 from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious parts:
 
-- **Discord:** a DataLoader with a 100-entry LRU batches user lookups, and a rate-limit
-  "gate" prevents retry storms when Discord returns 429s. Messages from the site carry a
+- **Discord:** reads come from `ChannelStore` (`app/lib/discord/store.ts`), one per process:
+  the latest 100 messages, fetched over REST on a new gateway session and kept current by
+  its events. Renders call Discord only for what a session hasn't seen yet: a name not on
+  an event's `member` (looked up once per session) and who reacted to a seeded reaction
+  (once). Otherwise only a reply chain reaching past the window, search and writes use
+  REST, where a rate-limit "gate" prevents retry
+  storms on 429s. Messages from the site carry a
   `username: content` prefix for attribution.
 - **Chat stream:** `ChatStream` (in the chat's title bar) owns the SSE connection and shows
   its state: `live`, `connecting` or `offline`. The route sends a named `status` event when

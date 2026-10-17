@@ -1,6 +1,7 @@
 import { connection, type NextRequest, NextResponse } from "next/server";
 
-import { subscribe, subscribeToStatus } from "@/lib/discord/gateway";
+import { subscribeToChannel } from "@/lib/discord/api";
+import { subscribeToStatus } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 
 // Send periodic pings to keep the connection alive and detect client disconnects.
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   let unsubscribe: () => void;
   try {
-    unsubscribe = await subscribe(() => {
+    unsubscribe = await subscribeToChannel(() => {
       if (aborted) return;
       void writer
         .write(encoder.encode(`data: refresh\n\n`))

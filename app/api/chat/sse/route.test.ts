@@ -9,7 +9,8 @@ import {
   vi,
 } from "vitest";
 
-import { subscribe, subscribeToStatus } from "@/lib/discord/gateway";
+import { subscribeToChannel } from "@/lib/discord/api";
+import { subscribeToStatus } from "@/lib/discord/gateway";
 import { log } from "@/lib/log";
 
 import { GET } from "./route";
@@ -19,8 +20,9 @@ vi.mock(import("next/server"), async (importOriginal) => {
   return { ...actual, connection: vi.fn() };
 });
 
+vi.mock(import("@/lib/discord/api"), () => ({ subscribeToChannel: vi.fn() }));
+
 vi.mock(import("@/lib/discord/gateway"), () => ({
-  subscribe: vi.fn(),
   subscribeToStatus: vi.fn(),
 }));
 
@@ -36,7 +38,7 @@ describe("GET /api/chat/sse", () => {
     vi.useFakeTimers();
     mockUnsubscribe = vi.fn();
     mockUnsubscribeStatus = vi.fn();
-    vi.mocked(subscribe).mockResolvedValue(mockUnsubscribe);
+    vi.mocked(subscribeToChannel).mockResolvedValue(mockUnsubscribe);
     vi.mocked(subscribeToStatus).mockReturnValue(mockUnsubscribeStatus);
   });
 
@@ -73,12 +75,12 @@ describe("GET /api/chat/sse", () => {
     reader.releaseLock();
   });
 
-  it("should subscribe to gateway events", async () => {
+  it("should subscribe to channel changes", async () => {
     const controller = new AbortController();
     await GET(createRequest(controller.signal));
 
-    expect(subscribe).toHaveBeenCalledOnce();
-    expect(subscribe).toHaveBeenCalledWith(expect.any(Function));
+    expect(subscribeToChannel).toHaveBeenCalledOnce();
+    expect(subscribeToChannel).toHaveBeenCalledWith(expect.any(Function));
 
     controller.abort();
   });
@@ -88,7 +90,7 @@ describe("GET /api/chat/sse", () => {
     const response = await GET(createRequest(controller.signal));
 
     // Get the callback passed to subscribe
-    const onMessage = vi.mocked(subscribe).mock.calls[0]![0];
+    const onMessage = vi.mocked(subscribeToChannel).mock.calls[0]![0];
 
     const reader = response.body!.getReader();
 
@@ -96,7 +98,7 @@ describe("GET /api/chat/sse", () => {
     await reader.read();
 
     // Trigger gateway notification
-    onMessage({ t: "MESSAGE_DELETE", d: { id: "1", channel_id: "c" } });
+    onMessage();
 
     const { value } = await reader.read();
     const text = new TextDecoder().decode(value);
@@ -152,7 +154,9 @@ describe("GET /api/chat/sse", () => {
 
   it("should return 503 without a ping interval when subscribing fails", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(subscribe).mockRejectedValue(new Error("Gateway closed"));
+    vi.mocked(subscribeToChannel).mockRejectedValue(
+      new Error("Gateway closed"),
+    );
     const controller = new AbortController();
 
     const response = await GET(createRequest(controller.signal));
@@ -178,13 +182,13 @@ describe("GET /api/chat/sse", () => {
     const controller = new AbortController();
     const response = await GET(createRequest(controller.signal));
 
-    const onMessage = vi.mocked(subscribe).mock.calls[0]![0];
+    const onMessage = vi.mocked(subscribeToChannel).mock.calls[0]![0];
     const onStatus = vi.mocked(subscribeToStatus).mock.calls[0]![0];
 
     controller.abort();
 
     // These should be no-ops after abort
-    onMessage({ t: "MESSAGE_DELETE", d: { id: "1", channel_id: "c" } });
+    onMessage();
     onStatus(false);
     await vi.advanceTimersByTimeAsync(30_000);
 

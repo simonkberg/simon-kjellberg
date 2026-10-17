@@ -1,15 +1,21 @@
 import "server-only";
 import { comparing, stringComparator } from "comparator.ts";
-import DataLoader from "dataloader";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
+import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
-import { LruMap } from "@/lib/LruMap";
 import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
-import { type DiscordMessage, DiscordMessageSchema } from "./schemas";
+import { connect, getBotUserId, subscribe } from "./gateway";
+import {
+  type DiscordMessage,
+  DiscordMessageSchema,
+  displayName,
+  GuildMemberSchema,
+} from "./schemas";
+import { ChannelStore, type Reactor, WINDOW } from "./store";
 
 const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
@@ -148,16 +154,11 @@ async function call<T extends z.ZodType>(
   }
 }
 
-const GetGuildMemberResponseSchema = z.object({
-  user: z.object({ username: z.string(), global_name: z.string().nullable() }),
-  nick: z.string().nullable(),
-});
-
 async function getGuildMember(userId: string) {
   return call(
     "GET",
     `guilds/${env.DISCORD_GUILD_ID}/members/${userId}`,
-    GetGuildMemberResponseSchema,
+    GuildMemberSchema,
   );
 }
 
@@ -187,43 +188,46 @@ function parseUsernamePrefix(content: string): [string, string] | undefined {
   return match ? [match[1]!, match[2] ?? ""] : undefined;
 }
 
+async function authorName(msg: DiscordMessage): Promise<string> {
+  return (
+    (await getStore().memberName(msg.author.id)) ??
+    displayName(msg.author) ??
+    msg.author.id
+  );
+}
+
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
   const parsed = msg.author.bot ? parseUsernamePrefix(msg.content) : undefined;
-  const username = parsed
-    ? parsed[0]
-    : (await userLoader.load(msg.author.id)).name;
+  const username = parsed ? parsed[0] : await authorName(msg);
   const content = (parsed?.[1] ?? msg.content).trim();
   return { username, content };
 }
 
-const userLoader = new DataLoader<string, User>(
-  (keys) =>
-    Promise.allSettled(
-      keys.map(async (userId: string) => {
-        const response = await getGuildMember(userId);
-        return toUser(
-          response.nick ?? response.user.global_name ?? response.user.username,
-        );
-      }),
-    ).then(flattenSettledPromises),
-  { cacheMap: new LruMap(100) },
-);
+// Discord's "Unknown Member" and "Unknown User".
+const GONE_CODES = new Set<number | undefined>([10007, 10013]);
 
-const discordMessageLoader = new DataLoader<string, DiscordMessage>(
-  (keys) =>
-    Promise.allSettled(
-      keys.map((messageId) =>
-        call(
-          "GET",
-          `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}`,
-          DiscordMessageSchema,
-        ),
-      ),
-    ).then(flattenSettledPromises),
-  { cacheMap: new LruMap(100) },
-);
+async function getMemberName(userId: string): Promise<string | undefined> {
+  try {
+    const member = await getGuildMember(userId);
+    return displayName(member.user, member);
+  } catch (err) {
+    // Someone who left the server has no member; asking again won't change that.
+    if (err instanceof DiscordApiError && GONE_CODES.has(err.code)) {
+      return undefined;
+    }
+    throw err;
+  }
+}
+
+function getMessage(id: string): Promise<DiscordMessage> {
+  return call(
+    "GET",
+    `channels/${env.DISCORD_CHANNEL_ID}/messages/${id}`,
+    DiscordMessageSchema,
+  );
+}
 
 const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 
@@ -254,46 +258,91 @@ const ReactorsResponseSchema = z.array(
   z.object({ id: z.string(), bot: z.boolean().optional() }),
 );
 
-type ReactorsKey = { messageId: string; emoji: string; count: number };
+const REACTORS_PAGE = 100;
 
-// Names who reacted on Discord, skipping bots so the mirror doesn't name itself.
-async function getReactors({ messageId, emoji }: ReactorsKey) {
-  const reactors = await call(
-    "GET",
-    reactionEndpoint(messageId, emoji),
-    ReactorsResponseSchema,
-    { limit: 100 },
-  );
-  const people = reactors.filter(({ bot }) => !bot);
-  const users = await userLoader.loadMany(people.map(({ id }) => id));
-  // A reactor who left the server has no member to name, so they stay in the count.
-  return users.flatMap((user) => (user instanceof Error ? [] : [user.name]));
+// Pages through everyone, since the store keeps the set as exact.
+async function getReactors(messageId: string, emoji: string) {
+  const reactors: Reactor[] = [];
+  let after: string | undefined;
+  for (;;) {
+    const page = await call(
+      "GET",
+      reactionEndpoint(messageId, emoji),
+      ReactorsResponseSchema,
+      after ? { limit: REACTORS_PAGE, after } : { limit: REACTORS_PAGE },
+    );
+    reactors.push(...page);
+    after = page.at(-1)?.id;
+    if (page.length < REACTORS_PAGE || !after) return reactors;
+  }
 }
 
-// Keyed by count too, so history refetches reactors only when that changes; a swap at the same count stays stale.
-const reactorsLoader = new DataLoader<ReactorsKey, string[], string>(
-  (keys) =>
-    Promise.allSettled(keys.map(getReactors)).then(flattenSettledPromises),
-  {
-    cacheKeyFn: ({ messageId, emoji, count }) =>
-      `${messageId}/${emoji}/${count}`,
-    cacheMap: new LruMap(100),
-  },
-);
+async function getRecentMessages(): Promise<DiscordMessage[]> {
+  const messages = await call(
+    "GET",
+    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
+    GetMessagesResponseSchema,
+    { limit: WINDOW },
+  );
+  return messages.toReversed();
+}
+
+function getStore(): ChannelStore {
+  return getGlobal("simon.dev/discord-store", () => {
+    const store = new ChannelStore({
+      fetchMessages: getRecentMessages,
+      fetchMessage: getMessage,
+      fetchReactors: getReactors,
+      fetchMemberName: getMemberName,
+      botUserId: getBotUserId,
+    });
+    subscribe((event) => store.apply(event)).catch((err: unknown) => {
+      log.error({ err }, "Channel store failed to subscribe to the gateway");
+    });
+    return store;
+  });
+}
+
+/** Calls back once the history may have changed; rejects if the gateway can't connect. */
+export async function subscribeToChannel(
+  callback: () => void,
+): Promise<() => void> {
+  const unlisten = getStore().listen(callback);
+  try {
+    await connect();
+  } catch (err) {
+    unlisten();
+    throw err;
+  }
+  return unlisten;
+}
 
 async function withDiscordReactors(
   messageId: string,
   reactions: Reaction[],
 ): Promise<Reaction[]> {
+  const store = getStore();
   return Promise.all(
     reactions.map(async (reaction) => {
-      const key = { messageId, emoji: reaction.emoji, count: reaction.count };
       try {
-        const users = await reactorsLoader.load(key);
-        return { ...reaction, users };
+        const ids = await store.reactorIds(messageId, reaction.emoji);
+        const names = await Promise.allSettled(
+          ids.map((id) => store.memberName(id)),
+        );
+        // A reactor who left the server, or whose name failed to load, stays in the count unnamed.
+        return {
+          ...reaction,
+          users: names.flatMap((name) =>
+            name.status === "fulfilled" && name.value !== undefined
+              ? [name.value]
+              : [],
+          ),
+        };
       } catch (err) {
-        reactorsLoader.clear(key);
-        log.warn({ err, ...key }, "Failed to load reactors");
+        log.warn(
+          { err, messageId, emoji: reaction.emoji },
+          "Failed to load reactors",
+        );
         return reaction;
       }
     }),
@@ -320,25 +369,13 @@ const messageIdComparator = comparing(
   stringComparator,
 );
 
-export async function getChannelMessages(limit = 100): Promise<Message[]> {
-  const response = await call(
-    "GET",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
-    GetMessagesResponseSchema,
-    { limit },
-  );
+export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
+  const response = (await getStore().messages()).slice(-limit);
 
   const messages: Promise<Message>[] = [];
   const replies: Record<string, Promise<Message>[]> = {};
 
   for (const discordMessage of response) {
-    // Only process default messages and replies
-    if (discordMessage.type !== 0 && discordMessage.type !== 19) {
-      continue;
-    }
-
-    discordMessageLoader.prime(discordMessage.id, discordMessage);
-
     const message = Promise.try(async () => {
       const [{ username, content }, reactions] = await Promise.all([
         resolveMessageContent(discordMessage),
@@ -403,7 +440,7 @@ export async function getMessageChain(
     if (seen.has(currentId)) break;
     seen.add(currentId);
 
-    const response: DiscordMessage = await discordMessageLoader.load(currentId);
+    const response = await getStore().find(currentId);
 
     const { username, content } = await resolveMessageContent(response);
 
@@ -526,17 +563,4 @@ export async function removeBotReaction(
   emoji: string,
 ): Promise<void> {
   await call("DELETE", botReactionEndpoint(messageId, emoji), z.null());
-}
-
-function flattenSettledPromises<T>(
-  promises: PromiseSettledResult<T>[],
-): (T | Error)[] {
-  return promises.map((res) =>
-    res.status === "fulfilled"
-      ? res.value
-      : res.reason instanceof Error
-        ? res.reason
-        : /* v8 ignore next -- @preserve */
-          new Error("Unknown error"),
-  );
 }

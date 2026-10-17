@@ -7,7 +7,7 @@ import { query } from "@/lib/turso";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { subscribe } from "./gateway";
-import type { DiscordMessage } from "./schemas";
+import { type DiscordMessage, isShown } from "./schemas";
 
 const BOT_PREFIX = `${BOT_USERNAME}: `;
 const BOT_MENTION_PATTERN = /\bsimon[- ]?bot\b/i;
@@ -59,8 +59,7 @@ async function markSeen(messageId: string): Promise<boolean> {
 export async function handleMessage(message: DiscordMessage): Promise<void> {
   const messageId = message.id;
   try {
-    // Only respond to default messages (0) and replies (19)
-    if (message.type !== 0 && message.type !== 19) return;
+    if (!isShown(message)) return;
 
     if (isBotMessage(message.content)) return;
 

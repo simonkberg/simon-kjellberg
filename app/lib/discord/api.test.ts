@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { server } from "@/mocks/node";
@@ -14,13 +15,36 @@ import {
   postChannelMessage,
   removeBotReaction,
   searchChannelMessages,
+  subscribeToChannel,
 } from "./api";
+import { connect, subscribe } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
 vi.mock(import("server-only"), () => ({}));
+vi.mock(import("./gateway"), () => ({
+  connect: vi.fn(async () => {}),
+  subscribe: vi.fn(async () => () => {}),
+  getBotUserId: () => "bot-user-id",
+}));
+
+beforeEach(() => {
+  resetGlobal("simon.dev/discord-store");
+});
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
 const REACTIONS_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`;
+const MEMBER_URL = `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`;
+
+function member(username: string, nick: string | null = null) {
+  return HttpResponse.json({ user: { username, global_name: null }, nick });
+}
+
+function goneMember() {
+  return HttpResponse.json(
+    { message: "Unknown Member", code: 10007 },
+    { status: 404 },
+  );
+}
 
 function rawMessage(
   reactions: DiscordMessage["reactions"],
@@ -296,6 +320,33 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should page through every Discord reactor", async () => {
+    const page = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}` }));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage(
+            [{ count: 101, me: false, emoji: { id: null, name: "😂" } }],
+            "many-reactors",
+          ),
+        ]),
+      ),
+      http.get(REACTIONS_URL, ({ request }) =>
+        HttpResponse.json(
+          new URL(request.url).searchParams.get("after") === "r99"
+            ? [{ id: "r100" }]
+            : page,
+        ),
+      ),
+      http.get(MEMBER_URL, ({ params }) => member(String(params["userId"]))),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions?.[0]?.users).toHaveLength(101);
+    expect(messages[0]?.reactions?.[0]?.users.at(-1)).toBe("r100");
+  });
+
   it("should skip Discord reactors who left the server", async () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
@@ -309,15 +360,8 @@ describe("getChannelMessages", () => {
       http.get(REACTIONS_URL, () =>
         HttpResponse.json([{ id: "reactor-stays" }, { id: "reactor-left" }]),
       ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) =>
-          params["userId"] === "reactor-left"
-            ? HttpResponse.json({ message: "Unknown Member" }, { status: 404 })
-            : HttpResponse.json({
-                user: { username: "stays", global_name: null },
-                nick: null,
-              }),
+      http.get(MEMBER_URL, ({ params }) =>
+        params["userId"] === "reactor-left" ? goneMember() : member("stays"),
       ),
     );
 
@@ -328,14 +372,102 @@ describe("getChannelMessages", () => {
     ]);
   });
 
-  it("should look up Discord reactors again only when their count changes", async () => {
-    let count = 1;
+  it("should keep the reactors it could name when one lookup fails", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage(
+            [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
+            "reactor-fails",
+          ),
+        ]),
+      ),
+      http.get(REACTIONS_URL, () =>
+        HttpResponse.json([{ id: "reactor-ok" }, { id: "reactor-busy" }]),
+      ),
+      http.get(MEMBER_URL, ({ params }) =>
+        params["userId"] === "reactor-busy"
+          ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
+          : member("ok"),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions).toEqual([
+      { emoji: "😂", count: 2, users: ["ok"] },
+    ]);
+  });
+
+  it("should name an author who left the server by their Discord name, or else their id", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([], "1"),
+            author: { id: "author-left", username: "left", global_name: null },
+          },
+          { ...rawMessage([], "2"), author: { id: "nameless" } },
+        ]),
+      ),
+      http.get(MEMBER_URL, goneMember),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages.map((m) => m.user.name)).toEqual(["left", "nameless"]);
+  });
+
+  it("should ask for a member's name again after a Discord error", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([]),
+            author: { id: "busy", username: "busy", global_name: null },
+            content: "hi",
+          },
+        ]),
+      ),
+      http.get(MEMBER_URL, () =>
+        ++attempts === 1
+          ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
+          : member("busy", "Nick"),
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow();
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.user.name).toBe("Nick");
+  });
+
+  it("should still serve history when the gateway can't be subscribed to", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(subscribe).mockRejectedValueOnce(new Error("fatal"));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([rawMessage([])]),
+      ),
+    );
+
+    expect(await getChannelMessages()).toHaveLength(1);
+    expect(log.error).toHaveBeenCalledWith(
+      { err: new Error("fatal") },
+      "Channel store failed to subscribe to the gateway",
+    );
+  });
+
+  it("should look up Discord reactors once, leaving changes to the gateway", async () => {
     const lookups = vi.fn(() => HttpResponse.json([]));
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
         HttpResponse.json([
           rawMessage(
-            [{ count, me: false, emoji: { id: null, name: "😂" } }],
+            [{ count: 1, me: false, emoji: { id: null, name: "😂" } }],
             "reactors-cached",
           ),
         ]),
@@ -346,10 +478,6 @@ describe("getChannelMessages", () => {
     await getChannelMessages();
     await getChannelMessages();
     expect(lookups).toHaveBeenCalledOnce();
-
-    count = 2;
-    await getChannelMessages();
-    expect(lookups).toHaveBeenCalledTimes(2);
   });
 
   it("should still count Discord reactions when their names fail to load", async () => {
@@ -597,10 +725,37 @@ describe("getChannelMessages", () => {
   });
 });
 
-describe("getMessageChain", () => {
-  // NOTE: Each test uses unique message IDs to avoid DataLoader cache conflicts
-  // between tests. The discordMessageLoader caches by message ID.
+describe("subscribeToChannel", () => {
+  it("should call back once the store has seeded", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([]),
+      ),
+    );
+    const callback = vi.fn();
 
+    await subscribeToChannel(callback);
+    await getChannelMessages();
+    expect(callback).toHaveBeenCalledOnce();
+  });
+
+  it("should stop listening when the gateway can't connect", async () => {
+    vi.mocked(connect).mockRejectedValueOnce(new Error("fatal"));
+    const callback = vi.fn();
+
+    await expect(subscribeToChannel(callback)).rejects.toThrow("fatal");
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([]),
+      ),
+    );
+    await getChannelMessages();
+
+    expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe("getMessageChain", () => {
   it("should return single message when no parent", async () => {
     server.use(
       http.get(
@@ -621,6 +776,30 @@ describe("getMessageChain", () => {
 
     expect(chain).toHaveLength(1);
     expect(chain[0]).toMatchObject({ id: "single-1", content: "Hello" });
+  });
+
+  it("should read messages in the window from the store", async () => {
+    const single = vi.fn(() => HttpResponse.json({}, { status: 500 }));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([], "stored-2"),
+            type: 19,
+            content: "User2: Second",
+            message_reference: { message_id: "stored-1" },
+          },
+          rawMessage([], "stored-1"),
+        ]),
+      ),
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages/:id`, single),
+    );
+    await getChannelMessages();
+
+    const chain = await getMessageChain("stored-2");
+
+    expect(chain.map(({ id }) => id)).toEqual(["stored-1", "stored-2"]);
+    expect(single).not.toHaveBeenCalled();
   });
 
   it("should walk up the chain to root (ordered root-first)", async () => {
@@ -1186,7 +1365,8 @@ describe("rate limiting", () => {
     const promise1 = getChannelMessages();
     await vi.advanceTimersByTimeAsync(0);
 
-    // Second request arrives while rate limit gate is active
+    // Second request, from a fresh store, arrives while rate limit gate is active
+    resetGlobal("simon.dev/discord-store");
     const promise2 = getChannelMessages();
 
     // Advance past the 2-second rate limit window
