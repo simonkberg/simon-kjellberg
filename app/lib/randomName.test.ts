@@ -1,9 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MAX_NAME_LENGTH } from "./messageLength";
-import { longestNameLength, randomName } from "./randomName";
+import { randomName } from "./randomName";
+
+/** The name at these fractions of the adjective and animal lists. */
+function nameAt(adjective: number, animal: number) {
+  vi.spyOn(Math, "random")
+    .mockReturnValueOnce(adjective)
+    .mockReturnValueOnce(animal);
+  return randomName();
+}
 
 describe("randomName", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns at least two words separated by dash", () => {
     const name = randomName();
 
@@ -27,7 +39,17 @@ describe("randomName", () => {
   });
 
   it("generates no name longer than the chat input leaves room for", () => {
-    expect(longestNameLength()).toBeLessThanOrEqual(MAX_NAME_LENGTH);
+    // Fine enough to land on every word of either list.
+    const fractions = Array.from({ length: 1000 }, (_, i) => i / 1000);
+    const longest = (pick: (fraction: number) => string) =>
+      Math.max(...fractions.map((fraction) => pick(fraction).length));
+    // Lengths add up, so the longest adjective and animal make the longest name.
+    const length =
+      longest((fraction) => nameAt(fraction, 0)) +
+      longest((fraction) => nameAt(0, fraction)) -
+      nameAt(0, 0).length;
+
+    expect(length).toBeLessThanOrEqual(MAX_NAME_LENGTH);
   });
 
   it("returns lowercase string", () => {
