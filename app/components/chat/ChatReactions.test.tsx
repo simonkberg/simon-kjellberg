@@ -109,7 +109,7 @@ describe("ChatReactionPicker", () => {
     openPicker();
     getEmoji("thumbsup").focus();
 
-    expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "ArrowLeft" })).toBe(
+    expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "ArrowUp" })).toBe(
       false,
     );
     expect(getEmoji("thumbsup")).toHaveFocus();

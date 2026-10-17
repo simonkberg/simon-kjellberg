@@ -24,23 +24,26 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
+function columns(buttons: HTMLElement[]): number {
+  const top = buttons[0]?.offsetTop;
+  const wrap = buttons.findIndex((button) => button.offsetTop !== top);
+  return wrap === -1 ? buttons.length : wrap;
+}
+
 function pickerIndex(
   buttons: HTMLElement[],
   current: number,
   key: string,
 ): number | undefined {
-  const top = buttons[0]?.offsetTop;
-  const wrap = buttons.findIndex((button) => button.offsetTop !== top);
-  const columns = wrap === -1 ? buttons.length : wrap;
   switch (key) {
     case "ArrowLeft":
       return current - 1;
     case "ArrowRight":
       return current + 1;
     case "ArrowUp":
-      return current - columns;
+      return current - columns(buttons);
     case "ArrowDown":
-      return current + columns;
+      return current + columns(buttons);
     case "Home":
       return 0;
     case "End":
