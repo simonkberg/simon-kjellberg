@@ -5,6 +5,7 @@ import { use, useOptimistic, useState, useTransition } from "react";
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
+import { Tooltip, useTooltip } from "@/components/Tooltip";
 import type { Message, Reaction } from "@/lib/discord/api";
 
 import { ChatHistory } from "./ChatHistory";
@@ -24,6 +25,24 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
     }
   }
   return null;
+};
+
+const ChatClearReply = ({ onClick }: { onClick: () => void }) => {
+  const tooltip = useTooltip();
+
+  return (
+    <>
+      <button
+        aria-labelledby={tooltip.id}
+        className="clear"
+        onClick={onClick}
+        {...tooltip.trigger}
+      >
+        &times;
+      </button>
+      <Tooltip {...tooltip.tooltip}>Clear reply</Tooltip>
+    </>
+  );
 };
 
 function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
@@ -145,14 +164,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
             {...replyToMessage}
             preview
           />
-          <button
-            aria-label="Clear reply"
-            title="Clear reply"
-            className="clear"
-            onClick={() => setReplyToId(null)}
-          >
-            &times;
-          </button>
+          <ChatClearReply onClick={() => setReplyToId(null)} />
         </div>
       )}
       <ChatInput replyToId={replyToId} setReplyToId={setReplyToId}>
