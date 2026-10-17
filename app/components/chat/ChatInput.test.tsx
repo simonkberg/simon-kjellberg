@@ -1,12 +1,18 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { postChatMessage, type PostChatMessageResult } from "@/actions/chat";
+import { server } from "@/mocks/node";
 
 import { ChatInput } from "./ChatInput";
 
 vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
+
+beforeEach(() => {
+  server.use(http.get("*/api/emoji", () => HttpResponse.json([])));
+});
 
 describe("ChatInput", () => {
   const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
