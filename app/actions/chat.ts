@@ -86,7 +86,7 @@ export async function postChatMessage(
     const { username } = await getSession();
 
     // Before admitting, so a paste that's too long doesn't use up a post.
-    const maxLength = maxTextLength(username);
+    const maxLength = maxTextLength(username.length);
     const raw = formData.get("text");
     if (typeof raw === "string" && raw.trim().length > maxLength) {
       return {

@@ -4,7 +4,7 @@ import { MAX_TEXT_LENGTH, maxTextLength } from "./messageLength";
 
 describe("maxTextLength", () => {
   it("leaves room for the username prefix", () => {
-    expect(maxTextLength("test-user")).toBe(1989);
+    expect(maxTextLength("test-user".length)).toBe(1989);
   });
 });
 
