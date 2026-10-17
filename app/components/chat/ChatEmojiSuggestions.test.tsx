@@ -140,12 +140,12 @@ describe("ChatEmojiSuggestions", () => {
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
   });
 
-  it("keeps the choice within the list at its ends", async () => {
+  it("keeps the choice within the list at its ends, leaving Home and End to the caret", async () => {
     const { user, input } = setup();
 
     await user.type(input, ":fire");
     await screen.findByRole("listbox");
-    await user.keyboard("{ArrowUp}{ArrowLeft}");
+    await user.keyboard("{ArrowUp}{ArrowLeft}{End}");
     expect(chosen()).toHaveAccessibleName("fire");
     await user.keyboard("{ArrowRight}{ArrowRight}{ArrowDown}");
 

@@ -98,7 +98,8 @@ export const ChatEmojiSuggestions = ({
         onPick(match.emoji);
         return;
       }
-      // Until one is chosen, left and right still move the caret.
+      // Home and End stay with the caret; until one is chosen, left and right do too.
+      if (event.key === "Home" || event.key === "End") return;
       if (active === null) {
         if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
         event.preventDefault();
