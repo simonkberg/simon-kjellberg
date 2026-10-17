@@ -5,7 +5,6 @@ import {
   type ToggleEvent,
   use,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -46,15 +45,6 @@ export function prefetchShortcodes() {
   void loadShortcodes();
 }
 
-/** What typing on would add to the query to spell the name, or the whole name when it doesn't start with it. */
-function completes(name: string | undefined, query: string) {
-  if (name === undefined) return null;
-  const typed = query.toLowerCase();
-  return name.startsWith(typed)
-    ? `${name.slice(typed.length)}:`
-    : ` → :${name}:`;
-}
-
 // A short query may be an emoticon like ":D", so Enter only picks once one is chosen.
 const initialActive = (query: string) => (query.length >= 2 ? 0 : null);
 
@@ -62,15 +52,12 @@ export const ChatEmojiSuggestions = ({
   id,
   input,
   query,
-  typed,
   onPick,
   onDismiss,
 }: {
   id: string;
   input: RefObject<HTMLInputElement | null>;
   query: string;
-  /** The input's text, when the shortcode ends it and a completion can follow. */
-  typed: string | null;
   onPick: (emoji: string) => void;
   onDismiss: () => void;
 }) => {
@@ -85,11 +72,6 @@ export const ChatEmojiSuggestions = ({
 
   const matches = query ? searchEmoji(emoji, query, LIMIT) : REACTION_EMOJI;
   const shown = matches.length > 0;
-  const completion = completes(
-    active === null ? undefined : matches[active]?.name,
-    query,
-  );
-  const overlay = useRef<HTMLSpanElement>(null);
 
   // aria-expanded is set here, since only this knows whether the list has loaded and has matches.
   useEffect(() => {
@@ -162,56 +144,37 @@ export const ChatEmojiSuggestions = ({
     };
   });
 
-  // Lies over the input, its typed text hidden, so the completion follows the caret.
-  useLayoutEffect(() => {
-    const field = input.current;
-    const ghost = overlay.current;
-    if (!field || !ghost) return;
-    ghost.style.inset = `${field.offsetTop}px auto auto ${field.offsetLeft}px`;
-    ghost.style.width = `${field.offsetWidth}px`;
-    ghost.style.height = `${field.offsetHeight}px`;
-    ghost.scrollLeft = field.scrollLeft;
-  });
-
   if (!shown) return null;
 
   return (
-    <>
-      {typed !== null && completion && (
-        <span ref={overlay} className="emoji-completion" aria-hidden="true">
-          <span className="typed">{typed}</span>
-          {completion}
-        </span>
-      )}
-      <div
-        ref={picker}
-        id={id}
-        popover="auto"
-        role="listbox"
-        aria-label="Emoji"
-        tabIndex={-1}
-        className="emoji-picker"
-        // Keeps focus in the input, so typing carries on filtering.
-        onMouseDown={(event) => event.preventDefault()}
-        onToggle={(event: ToggleEvent<HTMLDivElement>) => {
-          if (event.newState === "closed") onDismiss();
-        }}
-      >
-        {matches.map(({ emoji, name }, index) => (
-          <EmojiButton
-            key={emoji}
-            id={`${id}-${index}`}
-            emoji={emoji}
-            name={name}
-            picker={id}
-            type="button"
-            role="option"
-            aria-selected={index === active}
-            tabIndex={-1}
-            onClick={() => onPick(emoji)}
-          />
-        ))}
-      </div>
-    </>
+    <div
+      ref={picker}
+      id={id}
+      popover="auto"
+      role="listbox"
+      aria-label="Emoji"
+      tabIndex={-1}
+      className="emoji-picker"
+      // Keeps focus in the input, so typing carries on filtering.
+      onMouseDown={(event) => event.preventDefault()}
+      onToggle={(event: ToggleEvent<HTMLDivElement>) => {
+        if (event.newState === "closed") onDismiss();
+      }}
+    >
+      {matches.map(({ emoji, name }, index) => (
+        <EmojiButton
+          key={emoji}
+          id={`${id}-${index}`}
+          emoji={emoji}
+          name={name}
+          picker={id}
+          type="button"
+          role="option"
+          aria-selected={index === active}
+          tabIndex={-1}
+          onClick={() => onPick(emoji)}
+        />
+      ))}
+    </div>
   );
 };
