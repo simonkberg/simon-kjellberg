@@ -38,7 +38,9 @@ export const DiscordMessageSchema = z.object({
   content: z.string(),
   timestamp: z.string(),
   edited_timestamp: z.string().nullable().optional(),
-  message_reference: z.object({ message_id: z.string().optional() }).optional(),
+  message_reference: z
+    .object({ type: z.number().optional(), message_id: z.string().optional() })
+    .optional(),
   reactions: z
     .array(z.object({ count: z.number(), me: z.boolean(), emoji: EmojiSchema }))
     .optional(),

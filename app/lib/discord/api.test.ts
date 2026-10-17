@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { env } from "@/lib/env";
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
@@ -636,6 +637,25 @@ describe("getChannelMessages", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(memberLookups).not.toHaveBeenCalled();
     expect(reactorLookups).not.toHaveBeenCalled();
+  });
+
+  it("should show a forward as a message of its own", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage([], "1"),
+          {
+            ...rawMessage([], "2"),
+            message_reference: { type: 1, message_id: "1" },
+          },
+        ]),
+      ),
+    );
+
+    expect(await getChannelMessages()).toMatchObject([
+      { id: "1", replies: [] },
+      { id: "2", replies: [] },
+    ]);
   });
 
   it("should filter out non-standard message types", async () => {
@@ -1531,28 +1551,64 @@ describe("rate limiting", () => {
     );
   });
 
-  it("should keep the gate when a caller gives up on a 429", async () => {
+  it("should keep the gate when a caller gives up, for no longer than anyone waits", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
-    const requests = vi.fn();
+    const messageRequests = vi.fn();
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        requests();
-        return HttpResponse.json(
-          { message: "Rate limited", retry_after: 35, global: false },
+      http.put(`${REACTIONS_URL}/@me`, () =>
+        HttpResponse.json(
+          { message: "Rate limited", retry_after: 3600, global: true },
           { status: 429 },
-        );
+        ),
+      ),
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
+        messageRequests();
+        return HttpResponse.json([]);
       }),
     );
 
-    await expect(getChannelMessages()).rejects.toThrow(
+    await expect(addBotReaction("1", "👍")).rejects.toThrow(
       "Discord rate limit exceeded",
     );
-    resetGlobal("simon.dev/discord-store");
-    await expect(getChannelMessages()).rejects.toThrow(
-      "Discord rate limit exceeded",
+    const messages = getChannelMessages();
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(messageRequests).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await messages;
+    expect(messageRequests).toHaveBeenCalledOnce();
+  });
+
+  it("should gate each channel separately", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([]),
+      ),
+    );
+    const channelId = env.DISCORD_CHANNEL_ID;
+    env.DISCORD_CHANNEL_ID = "222";
+    try {
+      _setRateLimitGate("GET", "channels/111/messages", Date.now() + 31_000);
+      await expect(getChannelMessages()).resolves.toEqual([]);
+    } finally {
+      env.DISCORD_CHANNEL_ID = channelId;
+    }
+  });
+
+  it("should reject a successful response whose body isn't JSON", async () => {
+    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () =>
+        HttpResponse.html("<html>Hello</html>", { status: 200 }),
+      ),
     );
 
-    expect(requests).toHaveBeenCalledOnce();
+    await expect(addBotReaction("1", "👍")).rejects.toThrow(SyntaxError);
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 200 }),
+      "Discord API body couldn't be read",
+    );
   });
 
   it("should gate each method on a route separately", async () => {
@@ -1597,6 +1653,38 @@ describe("rate limiting", () => {
     );
 
     await expect(getChannelMessages()).rejects.toBe(timeout);
+  });
+
+  it("should keep waiting when the gate moves during the wait", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const requests = vi.fn();
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () => {
+        requests();
+        return requests.mock.calls.length === 1
+          ? HttpResponse.json(
+              { message: "Rate limited", retry_after: 5, global: false },
+              { status: 429 },
+            )
+          : new HttpResponse(null, { status: 204 });
+      }),
+    );
+    _setRateLimitGate(
+      "PUT",
+      "channels/test-discord-channel-id/messages/1/reactions/x/@me",
+      Date.now() + 1000,
+    );
+
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.8);
+    const first = addBotReaction("1", "👍");
+    const second = addBotReaction("2", "🎉");
+
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(requests).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await Promise.all([first, second]);
+    expect(requests).toHaveBeenCalledTimes(3);
   });
 
   it("should spread out callers waiting on the same gate", async () => {

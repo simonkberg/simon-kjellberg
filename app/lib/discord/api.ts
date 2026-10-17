@@ -45,12 +45,14 @@ export class DiscordApiError extends Error {
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
-// Discord limits by method and route, so a 429 for one message holds back the others.
+// Discord buckets by method, route and channel or guild, so one message's 429 holds back the others.
 function routeOf(method: string, endpoint: string): string {
   const route = endpoint
     .split("/")
     .map((segment, i, segments) => {
-      if (segments[i - 1] === "reactions") return ":emoji";
+      const previous = segments[i - 1];
+      if (previous === "channels" || previous === "guilds") return segment;
+      if (previous === "reactions") return ":emoji";
       return /^\d+$/.test(segment) ? ":id" : segment;
     })
     .join("/");
@@ -101,8 +103,12 @@ async function call<T extends z.ZodType>(
   let retries = 0;
 
   while (true) {
-    const waitMs = gateUntil(route) - Date.now();
-    if (waitMs > 0) {
+    // Re-read after each sleep: another caller's 429 may have pushed the gate further.
+    for (
+      let waitMs = gateUntil(route) - Date.now();
+      waitMs > 0;
+      waitMs = gateUntil(route) - Date.now()
+    ) {
       const elapsedMs = performance.now() - startTime;
       if (elapsedMs + waitMs > RATE_LIMIT_TIMEOUT_MS) {
         log.error(
@@ -126,12 +132,16 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
     const json =
       response.status === 204
         ? null
         : await response.json().catch((err: unknown) => {
-            if (err instanceof SyntaxError) return null;
+            // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
+            if (err instanceof SyntaxError && !response.ok) return null;
+            log.error(
+              { err, endpoint, status: response.status },
+              "Discord API body couldn't be read",
+            );
             throw err;
           });
 
@@ -144,9 +154,10 @@ async function call<T extends z.ZodType>(
         : 1000;
       const global = rateLimit.success && rateLimit.data.global;
 
-      // The gate is the server's state, so it holds even when this caller gives up.
+      // The gate is the server's state, so it outlives a caller that gives up, but no caller waits longer.
       const gate = global ? GLOBAL_GATE : route;
-      const newUntil = Date.now() + retryAfterMs;
+      const newUntil =
+        Date.now() + Math.min(retryAfterMs, RATE_LIMIT_TIMEOUT_MS);
       const existing = rateLimitUntil.get(gate) ?? 0;
       rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
@@ -400,13 +411,17 @@ const messageIdComparator = comparing(
   stringComparator,
 );
 
+const FORWARD = 1;
+
+function parentId(message: DiscordMessage): string | undefined {
+  const reference = message.message_reference;
+  return reference?.type === FORWARD ? undefined : reference?.message_id;
+}
+
 export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
   const window = (await getStore().messages()).slice(-limit);
 
-  const byParent = Map.groupBy(
-    window,
-    (message) => message.message_reference?.message_id,
-  );
+  const byParent = Map.groupBy(window, parentId);
 
   // Only what hangs off a root is converted, so a reply whose parent is gone costs nothing.
   const toMessages = async (
