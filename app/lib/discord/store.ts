@@ -29,6 +29,8 @@ type Reaction = NonNullable<DiscordMessage["reactions"]>[number];
 type Emoji = Reaction["emoji"];
 
 export const WINDOW = 100;
+// A seed is retried when an event lands during it; past this it keeps what it got.
+const MAX_SEED_ATTEMPTS = 3;
 // A stale store seeds again after this, so a busy channel can't keep it fetching.
 const RESEED_DELAY_MS = 10_000;
 const MAX_RESEED_DELAY_MS = 5 * 60_000;
@@ -302,41 +304,47 @@ export class ChannelStore {
     }, delay).unref();
   }
 
-  // An event during the fetch leaves the store stale, for the timer to seed again.
   async #load(): Promise<void> {
-    this.#changed = false;
-    const messages = await this.#source.fetchMessages();
-    if (this.#changed) {
-      log.info("Seeded the channel store while it was changing");
-      // Events already applied to the window are newer than this fetch.
-      if (!this.#gap) {
-        this.#stale = true;
-        return;
-      }
-    }
-
-    const previous = this.#messages;
-    this.#messages = new Map(
-      messages
-        .filter(isShown)
-        .slice(-WINDOW)
-        .map((m) => [m.id, m]),
-    );
-    // Without a gap, events kept who reacted exact wherever the counts still agree.
-    for (const [id, reactors] of this.#reactors) {
-      for (const emoji of reactors.keys()) {
-        const count = countOf(this.#messages.get(id), emoji);
-        if (count === undefined || count !== countOf(previous.get(id), emoji)) {
-          reactors.delete(emoji);
+    for (let attempt = 1; ; attempt++) {
+      this.#changed = false;
+      const messages = await this.#source.fetchMessages();
+      if (this.#changed && attempt < MAX_SEED_ATTEMPTS) continue;
+      if (this.#changed) {
+        log.warn({ attempt }, "Seeded the channel store while it was changing");
+        // Events already applied to the window are newer than this fetch.
+        if (!this.#gap) {
+          this.#stale = true;
+          return;
         }
       }
-      if (reactors.size === 0) this.#reactors.delete(id);
+
+      const previous = this.#messages;
+      this.#messages = new Map(
+        messages
+          .filter(isShown)
+          .slice(-WINDOW)
+          .map((m) => [m.id, m]),
+      );
+      // Without a gap, events kept who reacted exact wherever the counts still agree.
+      for (const [id, reactors] of this.#reactors) {
+        for (const emoji of reactors.keys()) {
+          const count = countOf(this.#messages.get(id), emoji);
+          if (
+            count === undefined ||
+            count !== countOf(previous.get(id), emoji)
+          ) {
+            reactors.delete(emoji);
+          }
+        }
+        if (reactors.size === 0) this.#reactors.delete(id);
+      }
+      this.#reactorFetches.clear();
+      this.#seeded = true;
+      this.#gap = false;
+      this.#stale = this.#changed;
+      this.#notify();
+      return;
     }
-    this.#reactorFetches.clear();
-    this.#seeded = true;
-    this.#gap = false;
-    this.#stale = this.#changed;
-    this.#notify();
   }
 
   #rememberName(userId: string, name: string | undefined): void {

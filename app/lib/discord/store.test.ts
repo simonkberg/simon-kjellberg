@@ -125,7 +125,7 @@ function react(
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.spyOn(log, "info").mockImplementation(() => {});
+  vi.spyOn(log, "warn").mockImplementation(() => {});
   vi.spyOn(log, "error").mockImplementation(() => {});
 });
 
@@ -226,20 +226,18 @@ describe("ChannelStore", () => {
     store.apply({ t: "READY" });
     first.resolve([message("1")]);
     await vi.advanceTimersByTimeAsync(0);
-    expect(await store.messages()).toHaveLength(1);
 
-    await vi.advanceTimersByTimeAsync(10_000);
     expect(await store.messages()).toHaveLength(2);
     expect(source.fetchMessages).toHaveBeenCalledTimes(3);
   });
 
-  it("should keep a first seed an event lands during and seed again later", async () => {
+  it("should give up seeding again after a few attempts and retry later", async () => {
     const { store, source } = createStore();
     source.fetchMessages.mockImplementation(churn(store));
 
     expect(await store.messages()).toHaveLength(1);
-    expect(source.fetchMessages).toHaveBeenCalledOnce();
-    expect(log.info).toHaveBeenCalledOnce();
+    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
+    expect(log.warn).toHaveBeenCalledOnce();
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
     await vi.advanceTimersByTimeAsync(10_000);
@@ -255,7 +253,7 @@ describe("ChannelStore", () => {
 
     store.apply(del("0"));
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(4);
     expect(await store.messages()).toMatchObject([{ id: "1" }, { id: "2" }]);
 
     store.apply(react("MESSAGE_REACTION_ADD", "user-2"));
@@ -264,7 +262,7 @@ describe("ChannelStore", () => {
 
     store.apply({ t: "READY" });
     await vi.advanceTimersByTimeAsync(0);
-    expect(source.fetchMessages).toHaveBeenCalledTimes(3);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(7);
     expect(await store.messages()).toMatchObject([{ id: "1" }]);
   });
 
@@ -282,7 +280,7 @@ describe("ChannelStore", () => {
 
     source.fetchMessages.mockImplementation(churn(store));
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(log.info).toHaveBeenCalledOnce();
+    expect(log.warn).toHaveBeenCalledOnce();
     listener.mockClear();
 
     source.fetchMessages.mockResolvedValue([message("1"), message("2")]);
