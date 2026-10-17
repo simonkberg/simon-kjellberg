@@ -1375,6 +1375,10 @@ ul {
     padding-left: var(--reply-padding);
     border-left: var(--reply-rule);
 
+    &:empty {
+      display: none;
+    }
+
     > li {
       position: relative;
 

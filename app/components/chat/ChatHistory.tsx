@@ -70,16 +70,15 @@ const ChatHistoryMessages = ({
             replyToId={replyToId}
             setReplyToId={setReplyToId}
           />
-          {item.replies.length > 0 && (
-            <ul>
-              <ChatHistoryMessages
-                messages={item.replies}
-                replyToId={replyToId}
-                setReplyToId={setReplyToId}
-                nested
-              />
-            </ul>
-          )}
+          {/* Always mounted, so a first reply slides in and a last one slides out. */}
+          <ul>
+            <ChatHistoryMessages
+              messages={item.replies}
+              replyToId={replyToId}
+              setReplyToId={setReplyToId}
+              nested
+            />
+          </ul>
         </animated.li>
       ))}
     </>
