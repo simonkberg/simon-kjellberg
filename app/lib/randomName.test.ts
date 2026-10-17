@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { randomName } from "./randomName";
+import { MAX_NAME_LENGTH } from "./messageLength";
+import { longestNameLength, randomName } from "./randomName";
 
 describe("randomName", () => {
   it("returns at least two words separated by dash", () => {
@@ -23,6 +24,10 @@ describe("randomName", () => {
     const name = randomName();
 
     expect(name).not.toMatch(/\s/);
+  });
+
+  it("generates no name longer than the chat input leaves room for", () => {
+    expect(longestNameLength()).toBeLessThanOrEqual(MAX_NAME_LENGTH);
   });
 
   it("returns lowercase string", () => {
