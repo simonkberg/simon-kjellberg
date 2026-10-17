@@ -10,14 +10,8 @@
 :root {
   color-scheme: light dark;
 
-  --ground: Canvas;
   --surface: var(--ground);
   --wash: var(--ground);
-  --ink: CanvasText;
-  --muted: GrayText;
-  --rule: GrayText;
-  --accent: CanvasText;
-  --on-accent: Canvas;
   --heat: transparent;
 
   --leading: 1.5;
@@ -30,7 +24,6 @@
   --link-thickness: auto;
   --link-offset: 0.2em;
   --link-transition: none;
-  --link-hover-color: inherit;
   --link-hover-bg: transparent;
   --link-hover-line: currentColor;
   --link-hover-decoration: underline;
@@ -40,7 +33,6 @@
   --page-padding: 0;
 
   --header-position: static;
-  --header-padding: 0;
   --header-bg: transparent;
   --header-size: 1rem;
   --header-leading: inherit;
@@ -50,7 +42,6 @@
   --header-inline: 0;
   --title-display: block;
   --title-weight: bold;
-  --title-case: none;
   --title-prefix: none;
   --title-suffix: none;
   --title-link-display: inline;
@@ -119,7 +110,6 @@
 
   --tracks-max: none;
   --track-display: block;
-  --track-padding: 0;
   --track-indent: 0;
   --track-marker: none;
   --track-time-float: none;
@@ -152,13 +142,11 @@
   --topbar-translate: none;
   --topbar-justify: normal;
   --topbar-gap: 0;
-  --topbar-padding: 0;
   --topbar-bg: transparent;
   --topbar-color: var(--muted);
   --topbar-rule: none;
   --topbar-size: inherit;
   --control-padding: 0;
-  --control-maximize: none;
   --status-dot: none;
   --status-push: 0;
   --status-weight: normal;
@@ -166,7 +154,6 @@
   --control-hover-bg: transparent;
 
   --fade: 0.75rem;
-  --history-padding: 0.5rem;
   --message-gap: 0;
   --reply-margin: 0 0 0 1.5ch;
   --reply-padding: 0;
@@ -193,9 +180,7 @@
   --replying-clear-top: 0.25rem;
 
   --input-bleed: 0;
-  --input-padding: 0.5rem 0;
   --input-rule: 1px solid var(--rule);
-  --prompt: ">";
   --prompt-weight: normal;
   --buddy-size: inherit;
   --buddy-leading: inherit;
@@ -209,7 +194,6 @@
   --toast-bg: var(--ink);
   --toast-fg: var(--ground);
   --toast-size: inherit;
-  --toast-error-bg: oklch(0.6 0.19 27);
   --toast-error-fg: white;
 
   --menu-gap: 0 2ch;
@@ -238,9 +222,6 @@
   --rank-color: var(--muted);
   --row-hover: var(--wash);
 
-  --skeleton-bg: var(--rule);
-  --skeleton-height: 0.7em;
-  --skeleton-align: -0.05em;
   --skeleton-animation: pulse 1.6s ease-in-out infinite;
 }
 
