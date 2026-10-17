@@ -308,6 +308,40 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should page through every Discord reactor", async () => {
+    const page = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}` }));
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          rawMessage(
+            [{ count: 101, me: false, emoji: { id: null, name: "😂" } }],
+            "many-reactors",
+          ),
+        ]),
+      ),
+      http.get(REACTIONS_URL, ({ request }) =>
+        HttpResponse.json(
+          new URL(request.url).searchParams.get("after") === "r99"
+            ? [{ id: "r100" }]
+            : page,
+        ),
+      ),
+      http.get(
+        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
+        ({ params }) =>
+          HttpResponse.json({
+            user: { username: String(params["userId"]), global_name: null },
+            nick: null,
+          }),
+      ),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages[0]?.reactions?.[0]?.users).toHaveLength(101);
+    expect(messages[0]?.reactions?.[0]?.users.at(-1)).toBe("r100");
+  });
+
   it("should skip Discord reactors who left the server", async () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>

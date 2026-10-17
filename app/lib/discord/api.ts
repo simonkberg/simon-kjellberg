@@ -261,15 +261,23 @@ const ReactorsResponseSchema = z.array(
   z.object({ id: z.string(), bot: z.boolean().optional() }),
 );
 
-// Skips bots so the mirror doesn't name itself.
+const REACTORS_PAGE = 100;
+
+// Pages through everyone, since the store keeps the set as exact. Skips bots so the mirror doesn't name itself.
 async function getReactorIds(messageId: string, emoji: string) {
-  const reactors = await call(
-    "GET",
-    reactionEndpoint(messageId, emoji),
-    ReactorsResponseSchema,
-    { limit: 100 },
-  );
-  return reactors.flatMap(({ id, bot }) => (bot ? [] : [id]));
+  const ids: string[] = [];
+  let after: string | undefined;
+  for (;;) {
+    const page = await call(
+      "GET",
+      reactionEndpoint(messageId, emoji),
+      ReactorsResponseSchema,
+      after ? { limit: REACTORS_PAGE, after } : { limit: REACTORS_PAGE },
+    );
+    for (const { id, bot } of page) if (!bot) ids.push(id);
+    after = page.at(-1)?.id;
+    if (page.length < REACTORS_PAGE || !after) return ids;
+  }
 }
 
 async function getRecentMessages(): Promise<DiscordMessage[]> {
