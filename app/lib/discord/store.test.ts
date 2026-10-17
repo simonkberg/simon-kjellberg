@@ -465,6 +465,21 @@ describe("ChannelStore", () => {
     expect(await store.messages()).toEqual([]);
   });
 
+  it("should refill the window after a delete", async () => {
+    const { store, source } = createStore([message("1"), message("2")]);
+    await store.messages();
+    source.fetchMessages.mockResolvedValue([message("0"), message("2")]);
+
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "x" } });
+    expect(source.fetchMessages).toHaveBeenCalledOnce();
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "1" } });
+
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toMatchObject([{ id: "0" }, { id: "2" }]);
+    });
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+  });
+
   it("should ignore an update for a message outside the window", async () => {
     const { store } = createStore();
     await store.messages();
@@ -516,6 +531,8 @@ describe("ChannelStore", () => {
     const fetch = Promise.withResolvers<string[]>();
     source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
     await store.messages();
+
+    source.fetchMessages.mockResolvedValue([]);
 
     const first = store.reactorIds("1", "😄");
     const second = store.reactorIds("1", "😄");

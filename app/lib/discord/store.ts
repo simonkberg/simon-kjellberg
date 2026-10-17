@@ -196,10 +196,10 @@ export class ChannelStore {
         return;
       }
       case "MESSAGE_DELETE":
-        this.#delete(event.d.id);
+        this.#remove([event.d.id]);
         return;
       case "MESSAGE_DELETE_BULK":
-        for (const id of event.d.ids) this.#delete(id);
+        this.#remove(event.d.ids);
         return;
       case "MESSAGE_REACTION_ADD": {
         const { member, message_id, user_id, emoji } = event.d;
@@ -289,6 +289,13 @@ export class ChannelStore {
     } else if (event.t === "MESSAGE_DELETE_BULK") {
       for (const id of event.d.ids) this.#older.delete(id);
     }
+  }
+
+  #remove(ids: string[]): void {
+    const removed = ids.filter((id) => this.#messages.has(id));
+    for (const id of removed) this.#delete(id);
+    // Older messages move into the window, and only a fetch knows them.
+    if (removed.length > 0) this.#reseed();
   }
 
   #delete(id: string): void {
