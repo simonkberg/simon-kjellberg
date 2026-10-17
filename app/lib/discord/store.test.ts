@@ -219,6 +219,28 @@ describe("ChannelStore", () => {
     expect(source.fetchMessages).toHaveBeenCalledTimes(calls + 1);
   });
 
+  it("should keep a name an event learned when an earlier lookup fails", async () => {
+    const { store, source } = createStore();
+    const lookup = Promise.withResolvers<string | undefined>();
+    source.fetchMemberName.mockReturnValueOnce(lookup.promise);
+    await store.messages();
+
+    const failed = store.memberName("user-2");
+    store.apply({
+      t: "MESSAGE_CREATE",
+      d: {
+        ...message("2", { author: { id: "user-2", username: "user2" } }),
+        channel_id: CHANNEL,
+        member: { nick: "Nick" },
+      },
+    });
+    lookup.reject(new Error("down"));
+    await expect(failed).rejects.toThrow("down");
+
+    expect(await store.memberName("user-2")).toBe("Nick");
+    expect(source.fetchMemberName).toHaveBeenCalledOnce();
+  });
+
   it("should forget names learned in an earlier session", async () => {
     const { store, source } = createStore();
     await store.messages();
@@ -415,7 +437,12 @@ describe("ChannelStore", () => {
     });
     store.apply({
       t: "MESSAGE_UPDATE",
-      d: { id: "1", channel_id: CHANNEL, content: "edited" },
+      d: {
+        id: "1",
+        channel_id: CHANNEL,
+        content: "edited",
+        author: { id: "user-1" },
+      },
     });
     store.apply({
       t: "MESSAGE_CREATE",
@@ -423,7 +450,11 @@ describe("ChannelStore", () => {
     });
 
     expect(await store.messages()).toMatchObject([
-      { id: "1", content: "edited", author: { id: "user-1" } },
+      {
+        id: "1",
+        content: "edited",
+        author: { id: "user-1", username: "user1" },
+      },
       { id: "2" },
     ]);
 

@@ -145,7 +145,9 @@ export class ChannelStore {
     if (!name) {
       name = this.#source.fetchMemberName(userId);
       this.#names.set(userId, name);
-      name.catch(() => this.#names.delete(userId));
+      name.catch(() => {
+        if (this.#names.get(userId) === name) this.#names.delete(userId);
+      });
     }
     return name;
   }
@@ -188,7 +190,8 @@ export class ChannelStore {
       case "MESSAGE_UPDATE": {
         const existing = this.#messages.get(event.d.id);
         if (!existing) return;
-        const { reactions: _, ...update } = event.d;
+        // An author can't change, and an update's copy may be partial.
+        const { reactions: _, author: __, ...update } = event.d;
         this.#messages.set(existing.id, { ...existing, ...update });
         return;
       }
