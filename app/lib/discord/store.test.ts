@@ -496,6 +496,51 @@ describe("ChannelStore", () => {
     expect(source.fetchMessages).toHaveBeenCalledTimes(2);
   });
 
+  it("should keep what it knows across a refill where the counts agree", async () => {
+    const { store, source } = createStore([
+      reacted("1"),
+      message("2", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
+      message("3"),
+    ]);
+    source.fetchReactorIds.mockResolvedValue(["user-2"]);
+    await store.messages();
+    await store.reactorIds("1", "😄");
+    await store.reactorIds("2", "😄");
+    await store.find("old");
+    source.fetchMessages.mockResolvedValue([
+      reacted("1"),
+      message("2", { reactions: [{ count: 2, me: false, emoji: SMILE }] }),
+    ]);
+
+    store.apply({ t: "MESSAGE_DELETE", d: { channel_id: CHANNEL, id: "3" } });
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toHaveLength(2);
+    });
+
+    await store.reactorIds("1", "😄");
+    await store.reactorIds("2", "😄");
+    await store.find("old");
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(3);
+    expect(source.fetchMessage).toHaveBeenCalledOnce();
+  });
+
+  it("should forget who reacted and older messages on a new session", async () => {
+    const { store, source } = createStore([reacted("1")]);
+    await store.messages();
+    await store.reactorIds("1", "😄");
+    await store.find("old");
+
+    store.apply({ t: "READY" });
+    await vi.waitFor(() => {
+      expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+    });
+
+    await store.reactorIds("1", "😄");
+    await store.find("old");
+    expect(source.fetchReactorIds).toHaveBeenCalledTimes(2);
+    expect(source.fetchMessage).toHaveBeenCalledTimes(2);
+  });
+
   it("should ignore an update for a message outside the window", async () => {
     const { store } = createStore();
     await store.messages();

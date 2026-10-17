@@ -143,6 +143,8 @@ export class ChannelStore {
     if (event.t === "READY" || event.t === "MISSED") {
       // Names refresh once a session, which bounds how long a missed nick change lasts.
       if (event.t === "READY") this.#names.clear();
+      this.#reactors.clear();
+      this.#older.clear();
       this.#reseed();
       return;
     }
@@ -246,15 +248,27 @@ export class ChannelStore {
         log.warn({ attempt }, "Seeded the channel store while it was changing");
       }
 
+      const previous = this.#messages;
       this.#messages = new Map(
         messages
           .filter(isShown)
           .slice(-WINDOW)
           .map((m) => [m.id, m]),
       );
-      this.#reactors.clear();
+      // Without a gap, events kept who reacted exact wherever the counts still agree.
+      for (const [id, reactors] of this.#reactors) {
+        for (const emoji of reactors.keys()) {
+          const count = countOf(this.#messages.get(id), emoji);
+          if (
+            count === undefined ||
+            count !== countOf(previous.get(id), emoji)
+          ) {
+            reactors.delete(emoji);
+          }
+        }
+        if (reactors.size === 0) this.#reactors.delete(id);
+      }
       this.#reactorFetches.clear();
-      this.#older.clear();
       this.#seeded = true;
       this.#stale = this.#changed;
       this.#notify();
@@ -366,6 +380,15 @@ export class ChannelStore {
       else reactors.delete(userId);
     }
   }
+}
+
+function countOf(
+  message: DiscordMessage | undefined,
+  emoji: string,
+): number | undefined {
+  return message?.reactions?.find(
+    (r) => r.emoji.id === null && r.emoji.name === emoji,
+  )?.count;
 }
 
 function sameEmoji(a: Emoji, b: Emoji): boolean {
