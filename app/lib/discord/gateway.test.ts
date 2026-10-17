@@ -916,6 +916,39 @@ describe("subscribe", () => {
     expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
   });
 
+  it("should resume after a resumable INVALID_SESSION", async () => {
+    const { subscribe } = await import("./gateway");
+    const resumeGateway = ws.link(
+      "wss://resume.discord.gg/?v=10&encoding=json",
+    );
+    const resumeMessages: Payload[] = [];
+
+    server.use(
+      createHandshakeHandler({
+        session: {
+          ...DEFAULT_SESSION,
+          resume_gateway_url: "wss://resume.discord.gg",
+        },
+      }),
+      resumeGateway.addEventListener("connection", ({ client }) => {
+        client.send(
+          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
+        );
+        client.addEventListener("message", (event) => {
+          resumeMessages.push(PayloadSchema.parse(event.data));
+        });
+      }),
+    );
+
+    await subscribe(vi.fn());
+    getLastClient(gateway.clients)?.send(
+      createPayload(GatewayOpcode.INVALID_SESSION, true),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+  });
+
   describe("dead sockets", () => {
     // A dead peer never answers the close handshake, so onclose never fires.
     class DeadSocket {
