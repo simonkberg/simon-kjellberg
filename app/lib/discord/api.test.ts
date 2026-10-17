@@ -981,6 +981,25 @@ describe("getMessageChain", () => {
     });
   });
 
+  it("should stop at a forward", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([], "2"),
+            message_reference: { type: 1, message_id: "1" },
+          },
+          rawMessage([], "1"),
+        ]),
+      ),
+    );
+    await getChannelMessages();
+
+    const chain = await getMessageChain("2");
+
+    expect(chain.map((m) => m.id)).toEqual(["2"]);
+  });
+
   it("should stop on circular reference", async () => {
     server.use(
       http.get(
@@ -1604,10 +1623,13 @@ describe("rate limiting", () => {
       ),
     );
 
-    await expect(addBotReaction("1", "👍")).rejects.toThrow(SyntaxError);
+    await expect(addBotReaction("1", "👍")).rejects.toMatchObject({
+      name: "DiscordApiError",
+      message: "Discord API error: 200 body isn't JSON",
+    });
     expect(logErrorSpy).toHaveBeenCalledWith(
       expect.objectContaining({ status: 200 }),
-      "Discord API body couldn't be read",
+      "Discord API body isn't JSON",
     );
   });
 
@@ -1711,6 +1733,20 @@ describe("rate limiting", () => {
     await vi.advanceTimersByTimeAsync(200);
     await Promise.all([first, second]);
     expect(requests).toHaveBeenCalledTimes(2);
+  });
+
+  it("should count the jitter against the wait budget", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(Math.random).mockReturnValue(0.8);
+    _setRateLimitGate(
+      "GET",
+      "channels/test-discord-channel-id/messages",
+      Date.now() + 29_900,
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord rate limit exceeded",
+    );
   });
 
   it("should include retry count in log messages", async () => {

@@ -48,6 +48,14 @@ export const DiscordMessageSchema = z.object({
 
 export type DiscordMessage = z.infer<typeof DiscordMessageSchema>;
 
+const FORWARD = 1;
+
+// A forward references the message it copies, not one it replies to.
+export function parentId(message: DiscordMessage): string | undefined {
+  const reference = message.message_reference;
+  return reference?.type === FORWARD ? undefined : reference?.message_id;
+}
+
 // Default messages and replies; the rest are system messages.
 export function isShown(message: DiscordMessage): boolean {
   return message.type === 0 || message.type === 19;

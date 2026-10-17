@@ -14,6 +14,7 @@ import {
   DiscordMessageSchema,
   displayName,
   GuildMemberSchema,
+  parentId,
 } from "./schemas";
 import { ChannelStore, type Reactor, WINDOW } from "./store";
 
@@ -104,21 +105,19 @@ async function call<T extends z.ZodType>(
 
   while (true) {
     // Re-read after each sleep: another caller's 429 may have pushed the gate further.
-    for (
-      let waitMs = gateUntil(route) - Date.now();
-      waitMs > 0;
-      waitMs = gateUntil(route) - Date.now()
-    ) {
+    for (;;) {
+      const waitMs = gateUntil(route) - Date.now();
+      if (waitMs <= 0) break;
+      // Spreads out the callers waiting on one gate, so they don't all retry at once.
+      const jitterMs = Math.random() * GATE_JITTER_MS;
       const elapsedMs = performance.now() - startTime;
-      if (elapsedMs + waitMs > RATE_LIMIT_TIMEOUT_MS) {
+      if (elapsedMs + waitMs + jitterMs > RATE_LIMIT_TIMEOUT_MS) {
         log.error(
           { endpoint, elapsedMs, waitMs, retries },
           "Discord rate limit exceeded max wait time",
         );
         throw new Error(`Discord rate limit exceeded`);
       }
-      // Spreads out the callers waiting on one gate, so they don't all retry at once.
-      const jitterMs = Math.random() * GATE_JITTER_MS;
       await new Promise((resolve) => setTimeout(resolve, waitMs + jitterMs));
     }
 
@@ -136,13 +135,17 @@ async function call<T extends z.ZodType>(
       response.status === 204
         ? null
         : await response.json().catch((err: unknown) => {
+            if (!(err instanceof SyntaxError)) throw err;
             // An HTML error page from Cloudflare or a proxy falls back like an unexpected body.
-            if (err instanceof SyntaxError && !response.ok) return null;
+            if (!response.ok) return null;
             log.error(
-              { err, endpoint, status: response.status },
-              "Discord API body couldn't be read",
+              { endpoint, status: response.status },
+              "Discord API body isn't JSON",
             );
-            throw err;
+            throw new DiscordApiError(
+              `Discord API error: ${response.status} body isn't JSON`,
+              undefined,
+            );
           });
 
     if (response.status === 429) {
@@ -411,13 +414,6 @@ const messageIdComparator = comparing(
   stringComparator,
 );
 
-const FORWARD = 1;
-
-function parentId(message: DiscordMessage): string | undefined {
-  const reference = message.message_reference;
-  return reference?.type === FORWARD ? undefined : reference?.message_id;
-}
-
 export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
   const window = (await getStore().messages()).slice(-limit);
 
@@ -488,7 +484,7 @@ export async function getMessageChain(
       reactions: toReactions(response),
     });
 
-    currentId = response.message_reference?.message_id;
+    currentId = parentId(response);
   }
 
   return chain;
