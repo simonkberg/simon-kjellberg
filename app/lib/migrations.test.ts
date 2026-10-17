@@ -3,8 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
-import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { batch, query } from "@/lib/turso";
+import { createSqliteQuery, sqliteBatch } from "@/mocks/sqlite";
 
 import {
   MIGRATIONS,
@@ -13,7 +13,7 @@ import {
 } from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
 
 let sqlite: typeof query;
 
@@ -54,6 +54,7 @@ describe("runMigrations", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
     sqlite = createSqliteQuery();
+    vi.mocked(batch).mockImplementation(sqliteBatch(query));
     vi.mocked(query).mockImplementation(sqlite);
   });
 
@@ -206,6 +207,17 @@ describe("runMigrations", () => {
     expect((await query("SELECT * FROM locks")).rows).toEqual([]);
   });
 
+  it("should roll back a migration it fails to record", async () => {
+    failNext("INSERT INTO migrations");
+
+    await expect(runMigrations()).rejects.toThrow("boom");
+    expect(await appliedVersions()).toEqual([]);
+    const { rows } = await query(
+      "SELECT name FROM sqlite_master WHERE name = 'memories'",
+    );
+    expect(rows).toEqual([]);
+  });
+
   it("should succeed when releasing the lock fails", async () => {
     failNext("DELETE FROM locks");
 
@@ -225,6 +237,7 @@ describe("runMigrationsUntilApplied", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
     sqlite = createSqliteQuery();
+    vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   afterEach(() => {

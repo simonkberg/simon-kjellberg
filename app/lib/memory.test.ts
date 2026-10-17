@@ -3,8 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
-import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { batch, query } from "@/lib/turso";
+import { createSqliteQuery, sqliteBatch } from "@/mocks/sqlite";
 
 import {
   buildMemoryContext,
@@ -19,7 +19,7 @@ import {
 import { MIGRATIONS } from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
 
 const CREATED_AT = "2025-01-01T00:00:00.000Z";
 
@@ -50,6 +50,7 @@ async function stored(id: number) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  vi.mocked(batch).mockImplementation(sqliteBatch(query));
 });
 
 afterEach(() => {

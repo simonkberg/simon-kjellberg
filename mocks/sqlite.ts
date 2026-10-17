@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 
-import type { query, QueryResult, Row } from "@/lib/turso";
+import type { batch, query, QueryResult, Row } from "@/lib/turso";
 
 export const emptyResult: QueryResult = {
   rows: [],
@@ -25,5 +25,22 @@ export function createSqliteQuery(setup: readonly string[] = []): typeof query {
       statement.run(...(args ?? []));
     }
     return { rows, rowsAffected: changes() - before, lastInsertRowId: null };
+  };
+}
+
+// Goes through the given query, so failures a test injects there reach batches too.
+export function sqliteBatch(run: typeof query): typeof batch {
+  return async (statements) => {
+    await run("BEGIN");
+    try {
+      const results: QueryResult[] = [];
+      for (const { sql, args } of statements)
+        results.push(await run(sql, args));
+      await run("COMMIT");
+      return results;
+    } catch (err) {
+      await run("ROLLBACK").catch(() => {});
+      throw err;
+    }
   };
 }

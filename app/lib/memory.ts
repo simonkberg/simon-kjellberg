@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 
 import { log } from "@/lib/log";
-import { query, type Value } from "@/lib/turso";
+import { batch, query, type Value } from "@/lib/turso";
 
 export const CORE_CATEGORIES = {
   self: "who you are",
@@ -227,17 +227,19 @@ export async function buildMemoryContext(
       .filter((category) => category !== undefined);
     const shown = [...new Set([...Object.keys(CORE_CATEGORIES), ...people])];
 
-    const [{ rows: memoryRows }, { rows: countRows }] = await Promise.all([
-      query(
-        `SELECT id, category, content, created_at FROM memories
+    const [memoryResult, countResult] = await batch([
+      {
+        sql: `SELECT id, category, content, created_at FROM memories
          WHERE category IN (${shown.map(() => "?").join(", ")})
          ORDER BY created_at, id`,
-        shown,
-      ),
-      query(
-        "SELECT category, COUNT(*) AS count FROM memories GROUP BY category ORDER BY category",
-      ),
+        args: shown,
+      },
+      {
+        sql: "SELECT category, COUNT(*) AS count FROM memories GROUP BY category ORDER BY category",
+      },
     ]);
+    const memoryRows = memoryResult?.rows ?? [];
+    const countRows = countResult?.rows ?? [];
 
     const byCategory = new Map<string, Memory[]>();
     for (const row of memoryRows) {

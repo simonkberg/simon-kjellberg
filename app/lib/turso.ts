@@ -25,28 +25,33 @@ const valueSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("blob"), base64: z.string() }),
 ]);
 
+const stmtResultSchema = z.object({
+  cols: z.array(z.object({ name: z.string().nullable() })),
+  rows: z.array(z.array(valueSchema)),
+  affected_row_count: z.number(),
+  last_insert_rowid: z.string().nullable(),
+});
+
+const errorSchema = z.object({ message: z.string() });
+
 const pipelineResponseSchema = z.object({
   results: z.array(
     z.discriminatedUnion("type", [
       z.object({
         type: z.literal("ok"),
         response: z.discriminatedUnion("type", [
+          z.object({ type: z.literal("execute"), result: stmtResultSchema }),
           z.object({
-            type: z.literal("execute"),
+            type: z.literal("batch"),
             result: z.object({
-              cols: z.array(z.object({ name: z.string().nullable() })),
-              rows: z.array(z.array(valueSchema)),
-              affected_row_count: z.number(),
-              last_insert_rowid: z.string().nullable(),
+              step_results: z.array(stmtResultSchema.nullable()),
+              step_errors: z.array(errorSchema.nullable()),
             }),
           }),
           z.object({ type: z.literal("close") }),
         ]),
       }),
-      z.object({
-        type: z.literal("error"),
-        error: z.object({ message: z.string() }),
-      }),
+      z.object({ type: z.literal("error"), error: errorSchema }),
     ]),
   ),
 });
@@ -80,22 +85,41 @@ function pipelineUrl(): string {
   return `${base}/v2/pipeline`;
 }
 
-export async function query(
-  sql: string,
-  args: Value[] = [],
-): Promise<QueryResult> {
+export type Statement = { sql: string; args?: Value[] };
+
+function encodeStatement({ sql, args = [] }: Statement) {
+  return { sql, args: args.map(encodeValue) };
+}
+
+function decodeResult({
+  cols,
+  rows,
+  affected_row_count,
+  last_insert_rowid,
+}: z.infer<typeof stmtResultSchema>): QueryResult {
+  return {
+    rows: rows.map((row) =>
+      Object.fromEntries(
+        row.map((value, index) => [
+          cols[index]?.name ?? String(index),
+          decodeValue(value),
+        ]),
+      ),
+    ),
+    rowsAffected: affected_row_count,
+    lastInsertRowId:
+      last_insert_rowid === null ? null : Number(last_insert_rowid),
+  };
+}
+
+async function pipeline(request: object) {
   const response = await fetch(pipelineUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${env.TURSO_AUTH_TOKEN}`,
     },
-    body: JSON.stringify({
-      requests: [
-        { type: "execute", stmt: { sql, args: args.map(encodeValue) } },
-        { type: "close" },
-      ],
-    }),
+    body: JSON.stringify({ requests: [request, { type: "close" }] }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
@@ -113,26 +137,59 @@ export async function query(
   if (result.type === "error") {
     throw new Error(`Turso query error: ${result.error.message}`);
   }
-  if (result.response.type !== "execute") {
-    throw new Error(`Turso returned unexpected ${result.response.type} result`);
+  return result.response;
+}
+
+export async function query(
+  sql: string,
+  args: Value[] = [],
+): Promise<QueryResult> {
+  const response = await pipeline({
+    type: "execute",
+    stmt: encodeStatement({ sql, args }),
+  });
+  if (response.type !== "execute") {
+    throw new Error(`Turso returned unexpected ${response.type} result`);
+  }
+  return decodeResult(response.result);
+}
+
+/** Runs the statements in one request and one transaction: all of them apply, or none. */
+export async function batch(statements: Statement[]): Promise<QueryResult[]> {
+  const commit = statements.length + 1;
+  const response = await pipeline({
+    type: "batch",
+    batch: {
+      steps: [
+        { stmt: { sql: "BEGIN" } },
+        ...statements.map((statement, index) => ({
+          condition: { type: "ok", step: index },
+          stmt: encodeStatement(statement),
+        })),
+        {
+          condition: { type: "ok", step: commit - 1 },
+          stmt: { sql: "COMMIT" },
+        },
+        {
+          condition: { type: "not", cond: { type: "ok", step: commit } },
+          stmt: { sql: "ROLLBACK" },
+        },
+      ],
+    },
+  });
+  if (response.type !== "batch") {
+    throw new Error(`Turso returned unexpected ${response.type} result`);
   }
 
-  const { cols, rows, affected_row_count, last_insert_rowid } =
-    result.response.result;
-
-  return {
-    rows: rows.map((row) =>
-      Object.fromEntries(
-        row.map((value, index) => [
-          cols[index]?.name ?? String(index),
-          decodeValue(value),
-        ]),
-      ),
-    ),
-    rowsAffected: affected_row_count,
-    lastInsertRowId:
-      last_insert_rowid === null ? null : Number(last_insert_rowid),
-  };
+  const { step_results, step_errors } = response.result;
+  const error = step_errors.slice(0, commit + 1).find((e) => e !== null);
+  if (error) {
+    throw new Error(`Turso query error: ${error.message}`);
+  }
+  return step_results.slice(1, commit).map((result) => {
+    if (!result) throw new Error("Turso skipped a statement");
+    return decodeResult(result);
+  });
 }
 
 export function keepWarm(): void {

@@ -2,11 +2,10 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { log } from "@/lib/log";
-import { query } from "@/lib/turso";
+import { batch, query } from "@/lib/turso";
 
 // Append only, and never edit an entry once applied: boot fails on a changed
-// checksum. Each entry is one statement that must be safe to re-run, since a
-// crash between applying and recording it re-applies it on the next boot.
+// checksum. Each entry is one statement, applied and recorded in one transaction.
 export const MIGRATIONS: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS memories (
     id INTEGER PRIMARY KEY,
@@ -134,11 +133,13 @@ async function applyPending(): Promise<void> {
     const version = index + 1;
     if (applied.has(version)) continue;
 
-    await query(sql);
-    await query(
-      "INSERT INTO migrations (version, applied_at, checksum) VALUES (?, ?, ?)",
-      [version, new Date().toISOString(), checksum(sql)],
-    );
+    await batch([
+      { sql },
+      {
+        sql: "INSERT INTO migrations (version, applied_at, checksum) VALUES (?, ?, ?)",
+        args: [version, new Date().toISOString(), checksum(sql)],
+      },
+    ]);
     log.info({ version }, "Applied migration");
   }
 }
