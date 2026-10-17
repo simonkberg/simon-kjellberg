@@ -115,14 +115,18 @@ describe("ChatReactionPicker", () => {
     expect(getEmoji("thumbsup")).toHaveFocus();
   });
 
-  it("leaves other keys and modified arrows to the browser", async () => {
-    const user = userEvent.setup();
+  it("leaves other keys and modified arrows to the browser", () => {
     renderWithContext(<ChatReactionPicker messageId="1" />);
     openPicker();
     getEmoji("thumbsup").focus();
 
-    await user.keyboard("a{Alt>}{ArrowRight}{/Alt}");
-
+    expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "a" })).toBe(true);
+    expect(
+      fireEvent.keyDown(getEmoji("thumbsup"), {
+        key: "ArrowRight",
+        altKey: true,
+      }),
+    ).toBe(true);
     expect(getEmoji("thumbsup")).toHaveFocus();
   });
 

@@ -58,6 +58,7 @@ describe("arrowFocus", () => {
     button("a").focus();
 
     expect(fireEvent.keyDown(button("a"), { key: "ArrowUp" })).toBe(true);
+    expect(fireEvent.keyDown(button("a"), { key: "Home" })).toBe(true);
     expect(button("a")).toHaveFocus();
   });
 });
