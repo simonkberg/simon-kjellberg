@@ -5,7 +5,7 @@ import { env } from "@/lib/env";
 import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 
-import { type DiscordMessage, DiscordMessageSchema } from "./schemas";
+import { type ChannelEvent, ChannelEventSchema } from "./schemas";
 
 const GatewayOpcode = {
   DISPATCH: 0,
@@ -43,13 +43,16 @@ const ReadyDataSchema = z.object({
 
 const MessageEventDataSchema = z.object({ channel_id: z.string() });
 
-export type MessageSubscriber = (message: DiscordMessage) => void;
+const CHANNEL_EVENTS: ReadonlySet<string> = new Set(
+  ChannelEventSchema.options.map((option) => option.shape.t.value),
+);
+
+export type EventSubscriber = (event: ChannelEvent) => void;
 export type StatusSubscriber = (ready: boolean) => void;
 
 class DiscordGateway {
   #ws: WebSocket | null = null;
-  #subscribers = new Set<() => void>();
-  #messageSubscribers = new Set<MessageSubscriber>();
+  #subscribers = new Set<EventSubscriber>();
   #statusSubscribers = new Set<StatusSubscriber>();
 
   // Session state (for resume)
@@ -73,38 +76,20 @@ class DiscordGateway {
   // Set when no retry with this config can succeed; retrying would re-send IDENTIFY, and Discord resets the token past its daily limit.
   #fatal: Error | null = null;
 
-  addSubscriber(callback: () => void): void {
+  addSubscriber(callback: EventSubscriber): void {
     this.#subscribers.add(callback);
   }
 
-  removeSubscriber(callback: () => void): void {
+  removeSubscriber(callback: EventSubscriber): void {
     this.#subscribers.delete(callback);
   }
 
-  #notifySubscribers(): void {
+  #notifySubscribers(event: ChannelEvent): void {
     for (const callback of this.#subscribers) {
       try {
-        callback();
+        callback(event);
       } catch (err) {
         log.error({ err }, "Subscriber callback error");
-      }
-    }
-  }
-
-  addMessageSubscriber(callback: MessageSubscriber): void {
-    this.#messageSubscribers.add(callback);
-  }
-
-  removeMessageSubscriber(callback: MessageSubscriber): void {
-    this.#messageSubscribers.delete(callback);
-  }
-
-  #notifyMessageSubscribers(message: DiscordMessage): void {
-    for (const callback of this.#messageSubscribers) {
-      try {
-        callback(message);
-      } catch (err) {
-        log.error({ err }, "Message subscriber callback error");
       }
     }
   }
@@ -340,29 +325,18 @@ class DiscordGateway {
         this.#onReady();
         break;
 
-      case "MESSAGE_CREATE":
-      case "MESSAGE_UPDATE":
-      case "MESSAGE_DELETE":
-      case "MESSAGE_DELETE_BULK":
-      case "MESSAGE_REACTION_ADD":
-      case "MESSAGE_REACTION_REMOVE":
-      case "MESSAGE_REACTION_REMOVE_ALL":
-      case "MESSAGE_REACTION_REMOVE_EMOJI": {
-        const parsed = MessageEventDataSchema.safeParse(data);
-        if (
-          parsed.success &&
-          parsed.data.channel_id === env.DISCORD_CHANNEL_ID
-        ) {
-          log.debug({ event: eventName }, "Message event for our channel");
-          this.#notifySubscribers();
+      default: {
+        if (eventName === null || !CHANNEL_EVENTS.has(eventName)) break;
+        const { data: target } = MessageEventDataSchema.safeParse(data);
+        if (target?.channel_id !== env.DISCORD_CHANNEL_ID) break;
 
-          if (eventName === "MESSAGE_CREATE") {
-            const parsedMessage = DiscordMessageSchema.safeParse(data);
-            if (parsedMessage.success) {
-              this.#notifyMessageSubscribers(parsedMessage.data);
-            }
-          }
+        const parsed = ChannelEventSchema.safeParse({ t: eventName, d: data });
+        if (!parsed.success) {
+          log.warn({ err: parsed.error, eventName }, "Invalid channel event");
+          break;
         }
+        log.debug({ event: eventName }, "Message event for our channel");
+        this.#notifySubscribers(parsed.data);
         break;
       }
     }
@@ -411,20 +385,14 @@ function getGateway(): DiscordGateway {
   return getGlobal("simon.dev/discord-gateway", () => new DiscordGateway());
 }
 
-export async function subscribe(callback: () => void): Promise<() => void> {
+/** Calls back with every message and reaction event in the site's channel. */
+export async function subscribe(
+  callback: EventSubscriber,
+): Promise<() => void> {
   const gw = getGateway();
   gw.addSubscriber(callback);
   await gw.connect();
   return () => gw.removeSubscriber(callback);
-}
-
-export async function subscribeToMessages(
-  callback: MessageSubscriber,
-): Promise<() => void> {
-  const gw = getGateway();
-  gw.addMessageSubscriber(callback);
-  await gw.connect();
-  return () => gw.removeMessageSubscriber(callback);
 }
 
 /** Called with `false` when the gateway drops and `true` once it's back. */

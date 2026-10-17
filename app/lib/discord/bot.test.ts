@@ -11,7 +11,7 @@ import { createSqliteQuery } from "@/mocks/sqlite";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
-import { subscribeToMessages } from "./gateway";
+import { subscribe } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
 vi.mock(import("server-only"), () => ({}));
@@ -32,7 +32,7 @@ vi.mock(import("@/lib/anthropic"), async (importOriginal) => {
 
 vi.mock(import("./gateway"), async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, subscribeToMessages: vi.fn() };
+  return { ...actual, subscribe: vi.fn() };
 });
 
 function createMessage(
@@ -519,12 +519,44 @@ describe("handleMessage", () => {
 });
 
 describe("startBotSubscription", () => {
-  it("should subscribe to messages with handleMessage", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(getMessageChain).mockResolvedValue([]);
     vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.mocked(subscribeToMessages).mockResolvedValue(() => {});
+    vi.mocked(subscribe).mockResolvedValue(() => {});
+  });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function startAndGetSubscriber() {
     await startBotSubscription();
+    const callback = vi.mocked(subscribe).mock.calls[0]?.[0];
+    if (!callback) throw new Error("Bot did not subscribe");
+    return callback;
+  }
 
-    expect(subscribeToMessages).toHaveBeenCalledWith(handleMessage);
+  it("should handle created messages", async () => {
+    const callback = await startAndGetSubscriber();
+
+    callback({
+      t: "MESSAGE_CREATE",
+      d: { ...createMessage({ content: "hey simon-bot" }), channel_id: "c" },
+    });
+
+    await vi.waitFor(() => {
+      expect(getMessageChain).toHaveBeenCalledWith("msg-1");
+    });
+  });
+
+  it("should ignore other channel events", async () => {
+    const callback = await startAndGetSubscriber();
+
+    callback({ t: "MESSAGE_DELETE", d: { id: "msg-1", channel_id: "c" } });
+    await Promise.resolve();
+
+    expect(query).not.toHaveBeenCalled();
   });
 });
