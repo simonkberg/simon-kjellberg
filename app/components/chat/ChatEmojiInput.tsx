@@ -50,14 +50,14 @@ export const ChatEmojiInput = ({
   const id = useId();
   const list = useRef<HTMLDivElement>(null);
   const [emoji, setEmoji] = useState<EmojiShortcodes[] | null>(null);
-  // Tagged with the value it was typed in, so a reset by the form closes it.
+  // Tagged with the value it was typed in, so a reset by the form forgets it.
   const [typed, setTyped] = useState<{
     query: string;
     value: string;
     dismissed: boolean;
   } | null>(null);
-  const query =
-    typed && !typed.dismissed && typed.value === value ? typed.query : null;
+  if (typed && typed.value !== value) setTyped(null);
+  const query = typed && !typed.dismissed ? typed.query : null;
 
   const [active, setActive] = useState<number | null>(null);
   const [previousQuery, setPreviousQuery] = useState(query);

@@ -128,13 +128,16 @@ describe("ChatEmojiInput", () => {
   });
 
   it("forgets a dismissal once the message is sent", async () => {
+    const { promise, resolve } = Promise.withResolvers<{ status: "ok" }>();
+    vi.mocked(postChatMessage).mockReturnValue(promise);
     const { user, input } = setup();
 
     await user.type(input, "hi :S");
     await screen.findByRole("listbox");
     await user.keyboard("{Escape}{Enter}");
+    resolve({ status: "ok" });
     await waitFor(() => expect(input).toHaveValue(""));
-    await user.paste(":S");
+    await user.paste("hi :S");
 
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
   });
