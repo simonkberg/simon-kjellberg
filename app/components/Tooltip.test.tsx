@@ -253,6 +253,18 @@ describe("Tooltip", () => {
     expect(secondTip).toHaveAttribute("data-popover-open");
   });
 
+  it("stays open when shown again", async () => {
+    render(<Button />);
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+    const hidePopover = vi.spyOn(tooltip, "hidePopover");
+
+    await userEvent.tab();
+    await userEvent.hover(screen.getByRole("button", { name: "Reply" }));
+
+    expect(hidePopover).not.toHaveBeenCalled();
+    expect(isOpen()).toBe(true);
+  });
+
   it("stays open anywhere in its anchor", () => {
     render(
       <div id="anchor">

@@ -28,10 +28,10 @@ export function useTooltip(anchor?: () => HTMLElement | null) {
   };
 
   const show = (button: HTMLElement) => {
+    dismiss.current?.abort();
     // One at a time: tell any other open tooltip to close.
     document.dispatchEvent(new Event("tooltipshow"));
     tip.current?.showPopover({ source: anchor?.() ?? button });
-    dismiss.current?.abort();
     dismiss.current = new AbortController();
     const { signal } = dismiss.current;
     document.addEventListener("tooltipshow", hide, { signal });
