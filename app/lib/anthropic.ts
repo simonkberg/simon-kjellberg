@@ -198,7 +198,7 @@ const rememberInputSchema = z.object({
   category: categorySchema.describe(
     `Category: one of the core ones (${describeCoreCategories()}), "people/<username>", or one of your own`,
   ),
-  content: contentSchema.describe("One short note"),
+  content: contentSchema.describe("One short note, on one line"),
 });
 const recallInputSchema = z.object({
   category: categorySchema.optional().describe("Only this category"),
@@ -221,7 +221,7 @@ const currentTextSchema = z
 const editInputSchema = z.object({
   id: noteIdSchema,
   old_content: currentTextSchema,
-  new_content: contentSchema.describe("The full replacement text"),
+  new_content: contentSchema.describe("The full replacement text, on one line"),
   category: categorySchema
     .optional()
     .describe(
@@ -545,8 +545,8 @@ async function send(
       delayMs: Math.max(retryAfterMs(response), backoffMs(attempt)),
     };
   } catch (err) {
-    // Network failures only: a timeout already took a whole attempt, so retrying would multiply it.
-    if (!(err instanceof TypeError)) throw err;
+    // Undici gives network failures a cause; a timeout already took a whole attempt, so retrying would multiply it.
+    if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
     return { error: err, retryable: true, delayMs: backoffMs(attempt) };
   }
 }

@@ -616,7 +616,12 @@ describe("createMessage", () => {
     // Node's body read rejects with this; happy-dom's would wrap it in an EncodingError.
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       Object.assign(new Response(), {
-        json: () => Promise.reject(new TypeError("terminated")),
+        json: () =>
+          Promise.reject(
+            new TypeError("terminated", {
+              cause: new Error("other side closed"),
+            }),
+          ),
       }),
     );
     server.use(
@@ -660,7 +665,7 @@ describe("createMessage", () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     // Node's fetch rejects with this; happy-dom's would throw its own NetworkError.
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-      new TypeError("fetch failed"),
+      new TypeError("fetch failed", { cause: new Error("ECONNRESET") }),
     );
     let callCount = 0;
     server.use(
@@ -682,6 +687,22 @@ describe("createMessage", () => {
     expect(responses).toEqual(["back again"]);
     expect(callCount).toBe(1);
     expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should not retry a TypeError that isn't from the network", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+      new TypeError("Invalid header value"),
+    );
+
+    await expect(
+      collectResponses(
+        createMessage([
+          { role: "user", username: TEST_USERNAME, content: "Test" },
+        ]),
+      ),
+    ).rejects.toThrow("Invalid header value");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
   });
 
   it("should not retry a timeout", async () => {
