@@ -172,6 +172,21 @@ describe("ChatStream", () => {
       expect(refreshChatHistory).toHaveBeenCalledOnce();
     });
 
+    it("refreshes the history when the gateway behind the stream recovers", () => {
+      vi.mocked(refreshChatHistory).mockClear();
+      render(<ChatStream />);
+      const instance = mockEventSource.getInstance();
+      act(() => instance.onopen());
+
+      act(() => instance.sendStatus("live"));
+      expect(refreshChatHistory).not.toHaveBeenCalled();
+
+      act(() => instance.sendStatus("connecting"));
+      act(() => instance.sendStatus("live"));
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
     it("closes EventSource on unmount", () => {
       const { getInstance } = mockEventSource;
 

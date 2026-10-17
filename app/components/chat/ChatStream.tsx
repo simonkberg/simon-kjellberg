@@ -16,6 +16,7 @@ export const ChatStream = () => {
     let eventSource: EventSource | null = null;
     let reconnectAttempts = 0;
     let opened = false;
+    let gatewayDown = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const disconnect = () => {
@@ -37,7 +38,11 @@ export const ChatStream = () => {
       };
       eventSource.onmessage = () => void refreshChatHistory();
       eventSource.addEventListener("status", (event) => {
-        setStatus(event.data === "live" ? "live" : "connecting");
+        const live = event.data === "live";
+        // The store missed changes while the gateway was down.
+        if (live && gatewayDown) void refreshChatHistory();
+        gatewayDown = !live;
+        setStatus(live ? "live" : "connecting");
       });
       eventSource.onerror = () => {
         disconnect();

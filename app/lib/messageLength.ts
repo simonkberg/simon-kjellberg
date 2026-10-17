@@ -1,8 +1,14 @@
+import { MAX_NAME_LENGTH } from "./randomName";
+
 /** Discord's limit on a message's content, which a site post shares with its `username: ` prefix. */
 export const MAX_CONTENT_LENGTH = 2000;
 
-/** Leaves room for the longest generated username's prefix, so the input needs no session. */
-export const MAX_TEXT_LENGTH = 1970;
+export const PREFIX_SEPARATOR = ": ";
 
-export const maxTextLength = (username: string) =>
-  MAX_CONTENT_LENGTH - `${username}: `.length;
+const roomBeside = (nameLength: number) =>
+  MAX_CONTENT_LENGTH - nameLength - PREFIX_SEPARATOR.length;
+
+export const maxTextLength = (username: string) => roomBeside(username.length);
+
+/** Fits beside the longest generated username, so the input needs no session. */
+export const MAX_TEXT_LENGTH = roomBeside(MAX_NAME_LENGTH);

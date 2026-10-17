@@ -5,6 +5,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
+import { PREFIX_SEPARATOR } from "@/lib/messageLength";
 import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
@@ -527,7 +528,7 @@ export async function postChannelMessage(
   replyToMessageId?: string,
 ): Promise<string> {
   const body = {
-    content: `${username}: ${text}`,
+    content: `${username}${PREFIX_SEPARATOR}${text}`,
     message_reference: replyToMessageId
       ? { message_id: replyToMessageId }
       : undefined,

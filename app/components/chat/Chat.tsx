@@ -27,6 +27,13 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
+// Snowflakes grow with time, so an id at or past the oldest loaded one was in the window.
+const isInWindow = (messages: Message[], id: string): boolean =>
+  messages.some(
+    (message) =>
+      BigInt(message.id) <= BigInt(id) || isInWindow(message.replies, id),
+  );
+
 function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
   if (!existing) {
@@ -124,8 +131,10 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const replyToMessage = replyToId
     ? findMessageById(messages, replyToId)
     : null;
-  // A deleted target would make Discord reject the reply.
-  if (replyToId && !replyToMessage) setReplyToId(null);
+  // A deleted target would make Discord reject the reply; one that scrolled out still exists.
+  if (replyToId && !replyToMessage && isInWindow(messages, replyToId)) {
+    setReplyToId(null);
+  }
 
   return (
     <ChatReactionsContext value={{ reacting, react }}>

@@ -149,37 +149,40 @@ describe("Chat", () => {
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
     });
 
-    it("drops the reply when its message is deleted", async () => {
+    const replyToFirst = async (ids: string[]) => {
       const user = userEvent.setup();
-      const message = createMessage({
-        id: "will-be-deleted",
-        content: "Soon gone",
-      });
-      const initialResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [message],
-      };
-
-      const { rerender } = await act(async () =>
-        render(chatElement(initialResult)),
+      const messages = ids.map((id) => createMessage({ id, content: id }));
+      const view = await act(async () =>
+        render(chatElement({ status: "ok", messages })),
       );
-
-      await user.click(screen.getByRole("button", { name: "Reply" }));
+      await user.click(screen.getAllByRole("button", { name: "Reply" })[0]!);
       expect(screen.getByText("Replying to")).toBeInTheDocument();
+      return (ids: string[]) =>
+        act(async () =>
+          view.rerender(
+            chatElement({
+              status: "ok",
+              messages: ids.map((id) => createMessage({ id, content: id })),
+            }),
+          ),
+        );
+    };
 
-      // Re-render with messages that don't include the replied-to message
-      const updatedResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [
-          createMessage({ id: "different-msg", content: "New message" }),
-        ],
-      };
+    it("drops the reply when its message is deleted", async () => {
+      const update = await replyToFirst(["200", "300"]);
 
-      await act(async () => rerender(chatElement(updatedResult)));
+      await update(["100", "300"]);
 
-      // Reply preview should be hidden since the message no longer exists
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
       expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
+    });
+
+    it("keeps the reply when its message scrolls out of the window", async () => {
+      const update = await replyToFirst(["200", "300"]);
+
+      await update(["300", "400"]);
+
+      expect(screen.getByPlaceholderText("Write a reply...")).toBeVisible();
     });
   });
 
