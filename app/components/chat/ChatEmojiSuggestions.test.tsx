@@ -235,6 +235,37 @@ describe("ChatEmojiSuggestions", () => {
     expect(input).toHaveValue("hi :fire");
   });
 
+  it("types out the rest of the chosen name after the caret until it's picked", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, "so :fi");
+    await screen.findByRole("listbox");
+    const completion = () => document.querySelector(".emoji-completion");
+    expect(completion()).toHaveTextContent("so :firefighter:");
+    expect(completion()?.querySelector(".typed")).toHaveTextContent("so :fi");
+
+    await user.keyboard("{ArrowRight}");
+    expect(completion()).toHaveTextContent("so :fire:");
+
+    await user.clear(input);
+    await user.type(input, ":eleton");
+    expect(completion()).toHaveTextContent(":eleton → :skeleton:");
+  });
+
+  it("shows no completion before text after the caret, or before one is chosen", async () => {
+    const { user, input } = setup();
+    const completion = () => document.querySelector(".emoji-completion");
+
+    await user.type(input, ":S");
+    await screen.findByRole("listbox");
+    expect(completion()).toBeNull();
+
+    await user.type(input, "ku!");
+    await user.keyboard("{ArrowLeft}");
+    await screen.findByRole("listbox");
+    expect(completion()).toBeNull();
+  });
+
   it("shows each emoji's shortcode as its tooltip", async () => {
     const { user, input } = setup();
 

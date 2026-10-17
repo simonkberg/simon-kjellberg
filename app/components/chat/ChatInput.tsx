@@ -51,7 +51,8 @@ export const ChatInput = ({
   });
   const [pending, startTransition] = useTransition();
   const [inputValue, setInputValue] = useState("");
-  const [shortcode, setShortcode] = useState<string | null>(null);
+  const [shortcode, setShortcode] =
+    useState<ReturnType<typeof typedShortcode>>(null);
   const [dismissed, setDismissed] = useState(false);
   const suggestionsId = useId();
   const suggesting = shortcode !== null && !dismissed;
@@ -84,8 +85,9 @@ export const ChatInput = ({
 
   // A dismissal holds only for the shortcode it closed on.
   function trackShortcode(input: HTMLInputElement) {
-    const typed = typedShortcode(input)?.query ?? null;
-    if (typed !== shortcode) setDismissed(false);
+    const typed = typedShortcode(input);
+    if (typed?.query !== shortcode?.query || typed?.start !== shortcode?.start)
+      setDismissed(false);
     setShortcode(typed);
   }
 
@@ -163,7 +165,9 @@ export const ChatInput = ({
               <ChatEmojiSuggestions
                 id={suggestionsId}
                 input={inputRef}
-                query={shortcode}
+                query={shortcode.query}
+                // The completion would cover any text after the caret.
+                typed={shortcode.end === inputValue.length ? inputValue : null}
                 onPick={pickEmoji}
                 onDismiss={() => setDismissed(true)}
               />

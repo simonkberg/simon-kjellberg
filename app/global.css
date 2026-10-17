@@ -1634,6 +1634,23 @@ ul {
   }
 }
 
+.emoji-completion {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding: 0 9ch 0 1ch;
+  overflow: hidden;
+  /* Stops where the input's text does, short of the caret buddy. */
+  clip-path: inset(0 9ch 0 0);
+  color: var(--muted);
+  white-space: pre;
+  pointer-events: none;
+
+  > .typed {
+    visibility: hidden;
+  }
+}
+
 .caret-buddy {
   position: absolute;
   right: 0;
