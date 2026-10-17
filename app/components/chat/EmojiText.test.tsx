@@ -75,6 +75,31 @@ describe("EmojiText", () => {
     expect(tooltip).toHaveAttribute("data-popover-open");
   });
 
+  it("shows on tap after a press that closed it ended elsewhere", async () => {
+    render(
+      <>
+        <p>elsewhere</p>
+        <EmojiText text="❤️" />
+      </>,
+    );
+    const emoji = screen.getByText("❤️");
+    const elsewhere = screen.getByText("elsewhere");
+    const tooltip = screen.getByRole("tooltip", { hidden: true });
+
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+    await act(() =>
+      userEvent.pointer([
+        { keys: "[TouchA>]", target: emoji },
+        { pointerName: "TouchA", target: elsewhere },
+        { keys: "[/TouchA]", target: elsewhere },
+      ]),
+    );
+    expect(tooltip).not.toHaveAttribute("data-popover-open");
+    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
+
+    expect(tooltip).toHaveAttribute("data-popover-open");
+  });
+
   it("names toned emoji whose base has a text style", async () => {
     render(<EmojiText text="🏌🏽‍♂️" />);
 

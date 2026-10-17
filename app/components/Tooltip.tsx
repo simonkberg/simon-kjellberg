@@ -204,6 +204,7 @@ export const TooltipText = ({
 }) => {
   const { tip, show, closedBy } = useTooltip();
   const [shown, setShown] = useState(false);
+  const closing = useRef(false);
   const reveal = (text: HTMLElement) => {
     setShown(true);
     show(text);
@@ -215,11 +216,17 @@ export const TooltipText = ({
         onPointerEnter={(event) => {
           if (event.pointerType !== "touch") reveal(event.currentTarget);
         }}
+        // A tap on the open tooltip's text closes it, like a tap anywhere else.
+        onPointerDown={(event) => {
+          closing.current = closedBy(event.currentTarget);
+        }}
         onPointerUp={(event) => {
           const text = event.currentTarget;
-          // A tap on the open tooltip's text closes it, like a tap anywhere else.
-          const closed = closedBy(text);
-          if (event.pointerType === "touch" && !closed && !selects(text)) {
+          if (
+            event.pointerType === "touch" &&
+            !closing.current &&
+            !selects(text)
+          ) {
             reveal(text);
           }
         }}
