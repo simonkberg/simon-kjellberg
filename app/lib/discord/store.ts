@@ -185,9 +185,13 @@ export class ChannelStore {
     }
 
     this.#forgetOlder(event);
-    // Unseeded, the next seed includes it and notifies.
+    // Unseeded, the next seed includes it and notifies; an event brings it forward from any backoff.
     if (!this.#seeded) {
-      if (!this.#seeding) this.#scheduleReseed(0);
+      if (!this.#seeding) {
+        clearTimeout(this.#reseedTimer);
+        this.#reseedTimer = undefined;
+        this.#scheduleReseed(0);
+      }
       return;
     }
     const revision = this.#revision;
