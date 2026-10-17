@@ -52,6 +52,7 @@ export class ChannelStore {
   // Set until a seed lands after a gap, when any fetch beats the window it has.
   #gap = true;
   #reseedTimer: ReturnType<typeof setTimeout> | undefined;
+  #reseedAt = 0;
   #reseedDelay = RESEED_DELAY_MS;
   #changed = false;
   #revision = 0;
@@ -185,12 +186,10 @@ export class ChannelStore {
     }
 
     this.#forgetOlder(event);
-    // Unseeded, the next seed includes it and notifies; an event brings it forward from any backoff.
+    // Unseeded, the next seed includes it and notifies. An event brings it forward, but only as far as the first backoff after a failure.
     if (!this.#seeded) {
       if (!this.#seeding) {
-        clearTimeout(this.#reseedTimer);
-        this.#reseedTimer = undefined;
-        this.#scheduleReseed(0);
+        this.#scheduleReseed(this.#reseedTimer ? RESEED_DELAY_MS : 0);
       }
       return;
     }
@@ -304,8 +303,13 @@ export class ChannelStore {
     }));
   }
 
+  // The earliest request wins, so a burst shares one reseed.
   #scheduleReseed(delay: number): void {
-    this.#reseedTimer ??= setTimeout(() => {
+    const at = Date.now() + delay;
+    if (this.#reseedTimer && this.#reseedAt <= at) return;
+    clearTimeout(this.#reseedTimer);
+    this.#reseedAt = at;
+    this.#reseedTimer = setTimeout(() => {
       this.#reseedTimer = undefined;
       this.#reseed();
     }, delay).unref();

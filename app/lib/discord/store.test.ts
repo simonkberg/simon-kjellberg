@@ -150,7 +150,7 @@ describe("ChannelStore", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it("should retry a failed first seed later, or on the next event", async () => {
+  it("should retry a failed first seed later, sooner after an event", async () => {
     const { store, source, listener } = createStore();
     source.fetchMessages.mockRejectedValueOnce(new Error("down"));
     await expect(store.messages()).rejects.toThrow("down");
@@ -159,9 +159,14 @@ describe("ChannelStore", () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(source.fetchMessages).toHaveBeenCalledTimes(2);
 
-    store.apply(create(message("2")));
+    // Events bring the 20s retry forward to 10s, and no further.
+    for (let i = 0; i < 5; i++) {
+      store.apply(create(message("2")));
+      await vi.advanceTimersByTimeAsync(1_000);
+    }
     expect(listener).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(0);
+    expect(source.fetchMessages).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(source.fetchMessages).toHaveBeenCalledTimes(3);
     expect(listener).toHaveBeenCalledOnce();
     expect(await store.messages()).toMatchObject([{ id: "1" }]);
