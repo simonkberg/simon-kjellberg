@@ -283,6 +283,52 @@ describe("Chat", () => {
       await settle();
     });
 
+    it("keeps a pending removal a refreshed history already has", async () => {
+      const settle = holdReaction();
+      const { rerender } = await renderReactions([
+        { emoji: "👍", count: 1, users: [], mine: true },
+      ]);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await act(async () =>
+        rerender(chatElement({ status: "ok", messages: [createMessage()] })),
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /👍/ }),
+      ).not.toBeInTheDocument();
+      await settle();
+    });
+
+    it("ignores a second pick while the message's reaction is pending", async () => {
+      const settle = holdReaction();
+      await renderReactions([]);
+
+      const pickTada = async () => {
+        const picker = screen.getByRole("toolbar", {
+          name: "Pick a reaction",
+          hidden: true,
+        });
+        fireEvent(
+          picker,
+          Object.assign(new Event("beforetoggle"), { newState: "open" }),
+        );
+        await userEvent.click(
+          within(picker).getByRole("button", { name: "tada", hidden: true }),
+        );
+      };
+      await pickTada();
+      await pickTada();
+
+      await waitFor(() => expect(requests).toHaveLength(1));
+      expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await settle();
+      expect(requests).toHaveLength(1);
+    });
+
     it("drops a pill at once when the last reaction is taken back", async () => {
       const settle = holdReaction();
       await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
@@ -384,12 +430,12 @@ describe("Chat", () => {
       await userEvent.click(slow!);
       await userEvent.click(quick!);
 
-      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
       const [busy, free] = screen.getAllByRole("button", {
         name: "Add reaction",
       });
+      await waitFor(() => expect(free).toBeEnabled());
       expect(busy).toBeDisabled();
-      expect(free).toBeEnabled();
+      expect(router.refresh).toHaveBeenCalledOnce();
       await act(async () => resolve());
     });
 
@@ -399,11 +445,13 @@ describe("Chat", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
-      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Add reaction" }),
+        ).toBeEnabled(),
+      );
+      expect(router.refresh).toHaveBeenCalledOnce();
       expect(requests).toEqual([{ messageId: "msg-1", emoji: "👍" }]);
-      expect(
-        screen.getByRole("button", { name: "Add reaction" }),
-      ).toBeEnabled();
     });
 
     it.each([
@@ -424,6 +472,16 @@ describe("Chat", () => {
       {
         failure: "the result isn't one it knows",
         respond: () => HttpResponse.json({ status: "maybe" }),
+        error: "Failed to react to chat message",
+      },
+      {
+        failure: "the result isn't an object",
+        respond: () => HttpResponse.json(null),
+        error: "Failed to react to chat message",
+      },
+      {
+        failure: "the error has no message",
+        respond: () => HttpResponse.json({ status: "error" }, { status: 500 }),
         error: "Failed to react to chat message",
       },
       {
@@ -453,6 +511,22 @@ describe("Chat", () => {
         expect(router.refresh).not.toHaveBeenCalled();
       },
     );
+
+    it("gives up on a request that hangs past its timeout", async () => {
+      const timeout = vi
+        .spyOn(AbortSignal, "timeout")
+        .mockReturnValue(AbortSignal.abort());
+      answer(ok);
+      await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      expect(
+        await screen.findByText("Failed to react to chat message"),
+      ).toBeInTheDocument();
+      expect(timeout).toHaveBeenCalledWith(45_000);
+      timeout.mockRestore();
+    });
 
     it("shows the same error again on a repeated failure", async () => {
       answer(() =>

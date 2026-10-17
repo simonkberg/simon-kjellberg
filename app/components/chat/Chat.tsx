@@ -8,10 +8,7 @@ import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
 import { TooltipButton } from "@/components/Tooltip";
 import type { Message, Reaction } from "@/lib/discord/api";
-import {
-  type ReactionResult,
-  ReactionResultSchema,
-} from "@/lib/reactionResult";
+import type { ReactionResult } from "@/lib/reactionResult";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
@@ -90,12 +87,22 @@ async function postReaction(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageId, emoji }),
+      // Past the rate-limit gate's 30s, so only a hung connection gives up.
+      signal: AbortSignal.timeout(45_000),
     });
-    const result = ReactionResultSchema.safeParse(await response.json());
-    if (!result.success || (!response.ok && result.data.status === "ok")) {
+    const body: unknown = await response.json();
+    if (typeof body !== "object" || body === null || !("status" in body)) {
       return REACTION_FAILED;
     }
-    return result.data;
+    if (body.status === "ok" && response.ok) return { status: "ok" };
+    if (
+      body.status === "error" &&
+      "error" in body &&
+      typeof body.error === "string"
+    ) {
+      return { status: "error", error: body.error };
+    }
+    return REACTION_FAILED;
   } catch {
     return REACTION_FAILED;
   }
