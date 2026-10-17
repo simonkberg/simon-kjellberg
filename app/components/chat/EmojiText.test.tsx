@@ -97,6 +97,25 @@ describe("EmojiText", () => {
     getSelection()?.removeAllRanges();
   });
 
+  it("shows on tap while other text is selected", async () => {
+    render(
+      <>
+        <p>elsewhere</p>
+        <EmojiText text="❤️" />
+      </>,
+    );
+    getSelection()?.selectAllChildren(screen.getByText("elsewhere"));
+
+    await act(() =>
+      userEvent.pointer({ keys: "[TouchA]", target: screen.getByText("❤️") }),
+    );
+
+    expect(screen.getByRole("tooltip", { hidden: true })).toHaveAttribute(
+      "data-popover-open",
+    );
+    getSelection()?.removeAllRanges();
+  });
+
   it("hides on a mouse click, as on buttons", async () => {
     render(<EmojiText text="👍" />);
     const emoji = screen.getByText("👍");

@@ -166,6 +166,15 @@ export const TooltipButton = ({
   );
 };
 
+// A long press that selected the text ends in a pointerup too.
+const selects = (node: Node) => {
+  const selection = getSelection();
+  return (
+    selection?.isCollapsed === false &&
+    selection.getRangeAt(0).intersectsNode(node)
+  );
+};
+
 /**
  * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. A tap shows it, since
  * tapping text does nothing else; a long press stays a text selection.
@@ -191,8 +200,7 @@ export const TooltipText = ({
           if (event.pointerType !== "touch") reveal(event.currentTarget);
         }}
         onPointerUp={(event) => {
-          // Not at the end of a long press that selected text.
-          if (event.pointerType === "touch" && getSelection()?.isCollapsed) {
+          if (event.pointerType === "touch" && !selects(event.currentTarget)) {
             reveal(event.currentTarget);
           }
         }}
