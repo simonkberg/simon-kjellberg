@@ -76,7 +76,6 @@ class DiscordGateway {
   // Reconnection state
   #reconnectAttempts = 0;
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  #shouldResume = true;
 
   // Settles on whichever attempt reaches READY; rejects only when no later attempt can succeed.
   #pending: PromiseWithResolvers<void> | null = null;
@@ -147,13 +146,12 @@ class DiscordGateway {
   }
 
   #open(): void {
-    const url =
-      this.#shouldResume && this.#resumeGatewayUrl
-        ? `${this.#resumeGatewayUrl}/?v=10&encoding=json`
-        : GATEWAY_URL;
+    const url = this.#resumeGatewayUrl
+      ? `${this.#resumeGatewayUrl}/?v=10&encoding=json`
+      : GATEWAY_URL;
 
     log.info(
-      { url, resume: this.#shouldResume },
+      { url, resume: this.#sessionId !== null },
       "Connecting to Discord Gateway",
     );
 
@@ -235,7 +233,7 @@ class DiscordGateway {
   #heartbeat(): void {
     if (this.#awaitingAck) {
       log.warn("No heartbeat ACK received, reconnecting");
-      this.#ws?.close(4000, "Heartbeat timeout");
+      this.#abandon(4000, "Heartbeat timeout");
       return;
     }
 
@@ -267,14 +265,12 @@ class DiscordGateway {
 
         case GatewayOpcode.RECONNECT:
           log.info("Received RECONNECT, closing connection");
-          this.#shouldResume = true;
           this.#ws?.close(4000, "Reconnect requested");
           break;
 
         case GatewayOpcode.INVALID_SESSION:
           log.info({ resumable: payload.d }, "Received INVALID_SESSION");
-          this.#shouldResume = payload.d === true;
-          if (!this.#shouldResume) {
+          if (payload.d !== true) {
             this.#sessionId = null;
             this.#resumeGatewayUrl = null;
             this.#seq = null;
@@ -285,7 +281,7 @@ class DiscordGateway {
         case GatewayOpcode.HELLO: {
           const hello = HelloDataSchema.parse(payload.d);
           this.#startHeartbeat(hello.heartbeat_interval);
-          if (this.#shouldResume && this.#sessionId) {
+          if (this.#sessionId) {
             this.#resume();
           } else {
             this.#identify();
@@ -357,6 +353,17 @@ class DiscordGateway {
     }
   }
 
+  // A dead connection may never finish the close handshake, so this doesn't wait for onclose.
+  #abandon(code: number, reason: string): void {
+    const ws = this.#ws;
+    if (ws) {
+      ws.onclose = null;
+      ws.onmessage = null;
+      ws.close(code, reason);
+    }
+    this.#handleClose(code, reason);
+  }
+
   #handleClose(code: number, reason: string): void {
     log.info({ code, reason }, "Gateway connection closed");
 
@@ -377,7 +384,6 @@ class DiscordGateway {
 
     // Check if we need to re-identify instead of resume
     if (RE_IDENTIFY_CLOSE_CODES.has(code)) {
-      this.#shouldResume = false;
       this.#sessionId = null;
       this.#resumeGatewayUrl = null;
       this.#seq = null;

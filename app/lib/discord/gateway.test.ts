@@ -132,6 +132,7 @@ describe("subscribe", () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("should complete handshake and resolve", async () => {
@@ -876,6 +877,76 @@ describe("subscribe", () => {
     expect(secondConnectionMessages).toMatchObject([
       { op: GatewayOpcode.IDENTIFY },
     ]);
+  });
+
+  it("should resume a session that followed a non-resumable INVALID_SESSION", async () => {
+    const { subscribe } = await import("./gateway");
+    const resumeGateway = ws.link(
+      "wss://resume.discord.gg/?v=10&encoding=json",
+    );
+    const resumeMessages: Payload[] = [];
+
+    server.use(
+      createHandshakeHandler({
+        session: {
+          ...DEFAULT_SESSION,
+          resume_gateway_url: "wss://resume.discord.gg",
+        },
+      }),
+      resumeGateway.addEventListener("connection", ({ client }) => {
+        client.send(
+          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
+        );
+        client.addEventListener("message", (event) => {
+          resumeMessages.push(PayloadSchema.parse(event.data));
+        });
+      }),
+    );
+
+    await subscribe(vi.fn());
+    getLastClient(gateway.clients)?.send(
+      createPayload(GatewayOpcode.INVALID_SESSION, false),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(resumeMessages).toEqual([]);
+
+    getLastClient(gateway.clients)?.close(4000, "Dropped");
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+  });
+
+  it("should reconnect after a heartbeat timeout even if the close handshake never finishes", async () => {
+    // A dead peer never answers the close handshake, so onclose never fires.
+    class DeadSocket {
+      static readonly OPEN = 1;
+      static readonly instances: DeadSocket[] = [];
+      readyState = DeadSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onmessage: ((event: { data: string }) => void) | null = null;
+      constructor() {
+        DeadSocket.instances.push(this);
+      }
+      send() {}
+      close() {}
+    }
+    vi.stubGlobal("WebSocket", DeadSocket);
+    const { subscribe } = await import("./gateway");
+
+    const subscribed = subscribe(vi.fn());
+    const socket = DeadSocket.instances[0];
+    socket?.onmessage?.({
+      data: createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 1000 }),
+    });
+    socket?.onmessage?.({
+      data: createPayload(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY"),
+    });
+    await subscribed;
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(DeadSocket.instances).toHaveLength(2);
   });
 
   it("should not reconnect on fatal close codes", async () => {
