@@ -1,10 +1,20 @@
 "use client";
 
-import { createContext, use, useId, useState } from "react";
+import {
+  createContext,
+  type KeyboardEvent,
+  type ToggleEvent,
+  use,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
+
+import { arrowFocus } from "./arrowFocus";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -15,6 +25,12 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   reacting: new Set(),
   react: () => {},
 });
+
+function columns(buttons: HTMLElement[]): number {
+  const top = buttons[0]?.offsetTop;
+  const wrap = buttons.findIndex((button) => button.offsetTop !== top);
+  return wrap === -1 ? buttons.length : wrap;
+}
 
 export const ChatReactionPicker = ({
   messageId,
@@ -27,10 +43,48 @@ export const ChatReactionPicker = ({
   const pickerId = useId();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
   const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  const toggle = (event: ToggleEvent<HTMLDivElement>) => {
+    setOpen(event.newState === "open");
+    // The emoji unmount as it closes, which would otherwise leave focus on the page.
+    if (
+      event.newState !== "closed" ||
+      !event.currentTarget.contains(document.activeElement)
+    ) {
+      return;
+    }
+    const button = trigger.current;
+    // A pick disables the button before the picker closes.
+    (button?.disabled
+      ? button.closest<HTMLElement>(".chat-message")
+      : button
+    )?.focus();
+  };
+
+  const focusFirst = (event: ToggleEvent<HTMLDivElement>) => {
+    if (event.newState === "open") {
+      event.currentTarget.querySelector("button")?.focus();
+    }
+  };
+
+  const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
+    const picker = event.currentTarget;
+    if (event.key === "Tab") {
+      // Closing moves focus to the button, so Tab moves on past it and Shift+Tab lands on it.
+      picker.hidePopover();
+      if (event.shiftKey) event.preventDefault();
+      return;
+    }
+    const buttons = [...picker.querySelectorAll("button")];
+    // Also at its edges, where the key would scroll the chat behind the picker.
+    if (arrowFocus(event, buttons, columns(buttons))) event.preventDefault();
+  };
 
   return (
     <>
       <TooltipButton
+        ref={trigger}
         tooltip="Add reaction"
         className="react"
         popoverTarget={pickerId}
@@ -41,10 +95,13 @@ export const ChatReactionPicker = ({
       <div
         id={pickerId}
         popover="auto"
-        role="group"
+        role="toolbar"
         aria-label="Pick a reaction"
+        tabIndex={-1}
         className="chat-reaction-picker"
-        onBeforeToggle={(event) => setOpen(event.newState === "open")}
+        onBeforeToggle={toggle}
+        onToggle={focusFirst}
+        onKeyDown={navigate}
       >
         {open &&
           REACTION_EMOJI.map(({ emoji, name }) => (
