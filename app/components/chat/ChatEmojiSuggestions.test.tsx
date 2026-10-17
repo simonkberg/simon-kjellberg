@@ -22,7 +22,11 @@ const EMOJI: EmojiShortcodes[] = [
 const setup = (replyToId: string | null = null) => {
   const setReplyToId = vi.fn();
   const user = userEvent.setup({ delay: null });
-  render(<ChatInput replyToId={replyToId} setReplyToId={setReplyToId} />);
+  render(
+    <ChatInput replyToId={replyToId} setReplyToId={setReplyToId}>
+      <button type="button">Next</button>
+    </ChatInput>,
+  );
   return { user, setReplyToId, input: screen.getByRole("combobox") };
 };
 
@@ -131,6 +135,17 @@ describe("ChatEmojiSuggestions", () => {
 
     await user.keyboard("u");
     expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("closes when focus moves on", async () => {
+    const { user, input } = setup();
+
+    await user.type(input, ":S");
+    await screen.findByRole("listbox");
+    await user.tab();
+
+    expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("inserts a clicked emoji and keeps focus in the input", async () => {

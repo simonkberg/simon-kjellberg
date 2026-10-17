@@ -25,11 +25,7 @@ let shortcodes: Promise<EmojiShortcodes[]> | undefined;
 // Fetched on the first shortcode, so the full set never ships with the page.
 function loadShortcodes(): Promise<EmojiShortcodes[]> {
   shortcodes ??= fetch("/api/emoji")
-    .then((response) =>
-      response.ok
-        ? (response.json() as Promise<EmojiShortcodes[]>)
-        : REACTION_SHORTCODES,
-    )
+    .then((response) => response.json() as Promise<EmojiShortcodes[]>)
     .catch(() => REACTION_SHORTCODES);
   return shortcodes;
 }
