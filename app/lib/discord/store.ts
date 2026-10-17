@@ -3,7 +3,12 @@ import { log } from "@/lib/log";
 import { LruMap } from "@/lib/LruMap";
 
 import type { GatewayEvent } from "./gateway";
-import type { ChannelEvent, DiscordMessage } from "./schemas";
+import {
+  type ChannelEvent,
+  type DiscordMessage,
+  displayName,
+  isShown,
+} from "./schemas";
 
 /** Where the store gets what the gateway can't tell it. */
 export type StoreSource = {
@@ -27,20 +32,6 @@ const MAX_SEED_ATTEMPTS = 3;
 // A stale store seeds again after this, so a busy channel can't keep it fetching.
 const RESEED_DELAY_MS = 10_000;
 
-function isShown(message: DiscordMessage): boolean {
-  return message.type === 0 || message.type === 19;
-}
-
-function displayName(
-  user: {
-    username?: string | undefined;
-    global_name?: string | null | undefined;
-  },
-  member?: { nick?: string | null | undefined },
-): string | undefined {
-  return member?.nick ?? user.global_name ?? user.username;
-}
-
 /** The channel's latest messages, seeded over REST and kept current by gateway events. */
 export class ChannelStore {
   #source: StoreSource;
@@ -48,7 +39,7 @@ export class ChannelStore {
   // Per message, per emoji: who reacted, once known. A reaction the gateway saw start is always known.
   #reactors = new Map<string, Map<string, Set<string>>>();
   #reactorFetches = new Map<string, Promise<string[]>>();
-  #names = new Map<string, Promise<string | undefined>>();
+  #names = new LruMap<string, Promise<string | undefined>>(1000);
   // Messages before the window, for reply chains; events drop the ones they change.
   #older = new LruMap<string, Promise<DiscordMessage>>(WINDOW);
   #seeding: Promise<void> | null = null;
@@ -89,79 +80,73 @@ export class ChannelStore {
     const message = this.#messages.get(id);
     if (message) return Promise.resolve(message);
 
-    let fetch = this.#older.get(id);
-    if (!fetch) {
-      fetch = this.#source.fetchMessage(id);
-      this.#older.set(id, fetch);
-      fetch.catch(() => {
-        if (this.#older.get(id) === fetch) this.#older.delete(id);
-      });
-    }
-    return fetch;
+    return this.#shared(this.#older, id, () => this.#source.fetchMessage(id));
   }
 
-  async reactorIds(
+  reactorIds(messageId: string, emoji: string): Promise<string[]> {
+    return this.#reactorIds(messageId, emoji, true);
+  }
+
+  async #reactorIds(
     messageId: string,
     emoji: string,
-    retry = true,
+    retry: boolean,
   ): Promise<string[]> {
     const known = this.#reactors.get(messageId)?.get(emoji);
     if (known) return [...known];
 
     const key = `${messageId}/${emoji}`;
-    let fetch = this.#reactorFetches.get(key);
-    if (!fetch) {
-      fetch = this.#source.fetchReactorIds(messageId, emoji);
-      this.#reactorFetches.set(key, fetch);
-      void fetch.then(
-        (ids) => {
-          // An event since the fetch began has made it stale.
-          if (this.#reactorFetches.get(key) !== fetch) return;
-          this.#reactorFetches.delete(key);
-          if (this.#messages.has(messageId)) {
-            this.#reactorsOf(messageId).set(emoji, new Set(ids));
-          }
-        },
-        () => {
-          if (this.#reactorFetches.get(key) === fetch) {
-            this.#reactorFetches.delete(key);
-          }
-        },
-      );
-    }
+    const fetch = this.#shared(this.#reactorFetches, key, () =>
+      this.#source.fetchReactorIds(messageId, emoji),
+    );
     const ids = await fetch;
-    // An event may have settled who reacted while this fetch was out.
+    // Events drop a fetch they make stale, so one still held is current.
+    if (this.#reactorFetches.get(key) === fetch) {
+      this.#reactorFetches.delete(key);
+      if (this.#messages.has(messageId)) {
+        this.#reactorsOf(messageId).set(emoji, new Set(ids));
+      }
+    }
     const settled = this.#reactors.get(messageId)?.get(emoji);
     if (settled) return [...settled];
-    // Or made it stale without settling it.
     if (retry && this.#messages.has(messageId)) {
-      return this.reactorIds(messageId, emoji, false).catch(() => ids);
+      return this.#reactorIds(messageId, emoji, false).catch(() => ids);
     }
     return ids;
   }
 
   memberName(userId: string): Promise<string | undefined> {
-    let name = this.#names.get(userId);
-    if (!name) {
-      name = this.#source.fetchMemberName(userId);
-      this.#names.set(userId, name);
-      name.catch(() => {
-        if (this.#names.get(userId) === name) this.#names.delete(userId);
-      });
-    }
-    return name;
+    return this.#shared(this.#names, userId, () =>
+      this.#source.fetchMemberName(userId),
+    );
+  }
+
+  // One request per key, forgotten if it fails so the next read asks again.
+  #shared<T>(
+    cache: Map<string, Promise<T>>,
+    key: string,
+    load: () => Promise<T>,
+  ): Promise<T> {
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const loading = load();
+    cache.set(key, loading);
+    loading.catch(() => {
+      if (cache.get(key) === loading) cache.delete(key);
+    });
+    return loading;
   }
 
   apply(event: GatewayEvent): void {
-    if (event.t === "READY") {
-      // A new session means missed events are gone, so the window is fetched again,
-      // and a seed already in flight may predate the gap.
-      this.#changed = true;
+    this.#changed = true;
+    // Events may be gone, so the window is fetched again, and a seed already in flight may predate the gap.
+    if (event.t === "READY" || event.t === "MISSED") {
+      // Names refresh once a session, which bounds how long a missed nick change lasts.
+      if (event.t === "READY") this.#names.clear();
       this.#reseed();
       return;
     }
 
-    this.#changed = true;
     this.#forgetOlder(event);
     // Unseeded, the next seed includes it; the refresh this triggers is what reads it.
     if (this.#seeded) this.#applyEvent(event);
@@ -269,8 +254,6 @@ export class ChannelStore {
       );
       this.#reactors.clear();
       this.#reactorFetches.clear();
-      // Names refresh once a session, which bounds how long a missed nick change lasts.
-      this.#names.clear();
       this.#older.clear();
       this.#seeded = true;
       this.#stale = this.#changed;
@@ -353,10 +336,9 @@ export class ChannelStore {
 
     const count = (reaction?.count ?? 0) + delta;
     if (count <= 0) {
-      this.#messages.set(messageId, {
-        ...message,
-        reactions: reactions.filter((r) => r !== reaction),
-      });
+      this.#updateReactions(messageId, (rs) =>
+        rs.filter((r) => r !== reaction),
+      );
       this.#forgetReactors(messageId, name);
       return;
     }
@@ -367,12 +349,9 @@ export class ChannelStore {
       me: isBot ? delta > 0 : (reaction?.me ?? false),
       emoji,
     };
-    this.#messages.set(messageId, {
-      ...message,
-      reactions: reaction
-        ? reactions.map((r) => (r === reaction ? next : r))
-        : [...reactions, next],
-    });
+    this.#updateReactions(messageId, (rs) =>
+      reaction ? rs.map((r) => (r === reaction ? next : r)) : [...rs, next],
+    );
 
     // The gateway saw a new reaction start, so it knows everyone on it, unless the window missed events.
     if (!reaction && !this.#stale) {

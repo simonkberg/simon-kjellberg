@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
+import { mockEnv } from "@/mocks/env";
 
 import type { DiscordMessage } from "./schemas";
 import { ChannelStore, type StoreSource, WINDOW } from "./store";
 
 vi.mock(import("server-only"), () => ({}));
 
-const CHANNEL = "test-discord-channel-id";
+const CHANNEL = mockEnv.DISCORD_CHANNEL_ID;
 const BOT = "bot-user-id";
 const SMILE = { id: null, name: "😄" };
 
@@ -34,6 +35,10 @@ function createStore(messages: DiscordMessage[] = [message("1")]) {
     botUserId: () => BOT,
   };
   return { store: new ChannelStore(source), source };
+}
+
+function reacted(id: string) {
+  return message(id, { reactions: [{ count: 1, me: false, emoji: SMILE }] });
 }
 
 async function stored(store: ChannelStore, id: string) {
@@ -241,6 +246,21 @@ describe("ChannelStore", () => {
     expect(source.fetchMemberName).toHaveBeenCalledOnce();
   });
 
+  it("should seed again after an event it couldn't read, keeping names", async () => {
+    const { store, source } = createStore();
+    await store.messages();
+    await store.memberName("user-2");
+    source.fetchMessages.mockResolvedValueOnce([message("1"), message("2")]);
+
+    store.apply({ t: "MISSED" });
+
+    await vi.waitFor(async () => {
+      expect(await store.messages()).toHaveLength(2);
+    });
+    await store.memberName("user-2");
+    expect(source.fetchMemberName).toHaveBeenCalledOnce();
+  });
+
   it("should forget names learned in an earlier session", async () => {
     const { store, source } = createStore();
     await store.messages();
@@ -266,7 +286,7 @@ describe("ChannelStore", () => {
       .mockReturnValueOnce(second.promise);
     await store.messages();
 
-    const failed = store.reactorIds("1", "😄", false);
+    const failed = store.reactorIds("1", "😄");
     store.apply(react("MESSAGE_REACTION_REMOVE", "user-2"));
     const ids = store.reactorIds("1", "😄");
     first.reject(new Error("down"));
@@ -280,14 +300,12 @@ describe("ChannelStore", () => {
   });
 
   it("should drop reactor fetches when every reaction is cleared", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     const fetch = Promise.withResolvers<string[]>();
     source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
     await store.messages();
 
-    const ids = store.reactorIds("1", "😄", false);
+    const ids = store.reactorIds("1", "😄");
     store.apply({
       t: "MESSAGE_REACTION_REMOVE_ALL",
       d: { channel_id: CHANNEL, message_id: "1" },
@@ -391,7 +409,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_ADD",
       d: {
         ...react("MESSAGE_REACTION_ADD", "nameless").d,
-        member: { user: { id: "nameless" } },
+        member: { user: {} },
       },
     });
     await store.memberName("nameless");
@@ -404,9 +422,7 @@ describe("ChannelStore", () => {
   });
 
   it("should hand back who reacted as an event settled it mid-fetch", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     const fetch = Promise.withResolvers<string[]>();
     source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
     await store.messages();
@@ -525,9 +541,7 @@ describe("ChannelStore", () => {
   });
 
   it("should share one fetch of who reacted, and skip it for a deleted message", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     const fetch = Promise.withResolvers<string[]>();
     source.fetchReactorIds.mockReturnValueOnce(fetch.promise);
     await store.messages();
@@ -545,9 +559,7 @@ describe("ChannelStore", () => {
   });
 
   it("should fetch who reacted again after a failure", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     source.fetchReactorIds
       .mockRejectedValueOnce(new Error("down"))
       .mockResolvedValue(["user-2"]);
@@ -611,7 +623,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_ADD",
       d: {
         ...react("MESSAGE_REACTION_ADD", "other-bot").d,
-        member: { user: { id: "other-bot", bot: true, username: "b" } },
+        member: { user: { bot: true, username: "b" } },
       },
     });
 
@@ -681,9 +693,7 @@ describe("ChannelStore", () => {
   });
 
   it("should fetch who reacted to a seeded reaction once, then follow events", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     source.fetchReactorIds.mockResolvedValue(["user-2"]);
     await store.messages();
 
@@ -694,9 +704,7 @@ describe("ChannelStore", () => {
   });
 
   it("should keep the first fetch's reactors when fetching again fails", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     const first = Promise.withResolvers<string[]>();
     source.fetchReactorIds
       .mockReturnValueOnce(first.promise)
@@ -727,9 +735,7 @@ describe("ChannelStore", () => {
   });
 
   it("should fetch who reacted again when an event makes a fetch stale", async () => {
-    const { store, source } = createStore([
-      message("1", { reactions: [{ count: 1, me: false, emoji: SMILE }] }),
-    ]);
+    const { store, source } = createStore([reacted("1")]);
     const first = Promise.withResolvers<string[]>();
     source.fetchReactorIds
       .mockReturnValueOnce(first.promise)
@@ -784,7 +790,7 @@ describe("ChannelStore", () => {
       t: "MESSAGE_REACTION_ADD",
       d: {
         ...react("MESSAGE_REACTION_ADD", "user-3").d,
-        member: { nick: null, user: { id: "user-3", username: "three" } },
+        member: { nick: null, user: { username: "three" } },
       },
     });
 

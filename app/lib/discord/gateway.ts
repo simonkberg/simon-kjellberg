@@ -48,8 +48,11 @@ const CHANNEL_EVENTS: ReadonlySet<string> = new Set(
   ChannelEventSchema.options.map((option) => option.shape.t.value),
 );
 
-/** A `READY` starts a new session: events missed since the last one are lost, not replayed. */
-export type GatewayEvent = ChannelEvent | { t: "READY" };
+/**
+ * A `READY` starts a new session: events missed since the last one are lost, not replayed.
+ * A `MISSED` is a channel event that couldn't be read.
+ */
+export type GatewayEvent = ChannelEvent | { t: "READY" } | { t: "MISSED" };
 
 export type EventSubscriber = (event: GatewayEvent) => void;
 export type StatusSubscriber = (ready: boolean) => void;
@@ -344,6 +347,7 @@ class DiscordGateway {
         const parsed = ChannelEventSchema.safeParse({ t: eventName, d: data });
         if (!parsed.success) {
           log.warn({ err: parsed.error, eventName }, "Invalid channel event");
+          this.#notifySubscribers({ t: "MISSED" });
           break;
         }
         log.debug({ event: eventName }, "Message event for our channel");

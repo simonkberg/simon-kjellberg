@@ -9,7 +9,12 @@ import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
 import { connect, getBotUserId, subscribe } from "./gateway";
-import { type DiscordMessage, DiscordMessageSchema } from "./schemas";
+import {
+  type DiscordMessage,
+  DiscordMessageSchema,
+  displayName,
+  GuildMemberSchema,
+} from "./schemas";
 import { ChannelStore, WINDOW } from "./store";
 
 const BASE_URL = "https://discord.com/api/v10";
@@ -149,16 +154,11 @@ async function call<T extends z.ZodType>(
   }
 }
 
-const GetGuildMemberResponseSchema = z.object({
-  user: z.object({ username: z.string(), global_name: z.string().nullable() }),
-  nick: z.string().nullable(),
-});
-
 async function getGuildMember(userId: string) {
   return call(
     "GET",
     `guilds/${env.DISCORD_GUILD_ID}/members/${userId}`,
-    GetGuildMemberResponseSchema,
+    GuildMemberSchema,
   );
 }
 
@@ -190,9 +190,7 @@ function parseUsernamePrefix(content: string): [string, string] | undefined {
 
 async function authorName(msg: DiscordMessage): Promise<string> {
   const name =
-    (await getStore().memberName(msg.author.id)) ??
-    msg.author.global_name ??
-    msg.author.username;
+    (await getStore().memberName(msg.author.id)) ?? displayName(msg.author);
   if (name === undefined) {
     throw new Error(`No name for Discord user ${msg.author.id}`);
   }
@@ -213,8 +211,8 @@ const GONE_CODES = new Set<number | undefined>([10007, 10013]);
 
 async function getMemberName(userId: string): Promise<string | undefined> {
   try {
-    const { nick, user } = await getGuildMember(userId);
-    return nick ?? user.global_name ?? user.username;
+    const member = await getGuildMember(userId);
+    return displayName(member.user, member);
   } catch (err) {
     // Someone who left the server has no member; asking again won't change that.
     if (err instanceof DiscordApiError && GONE_CODES.has(err.code)) {

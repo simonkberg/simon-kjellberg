@@ -15,6 +15,17 @@ const DiscordUserSchema = z.object({
 
 const MemberSchema = z.object({ nick: z.string().nullable().optional() });
 
+export const GuildMemberSchema = MemberSchema.extend({
+  user: DiscordUserSchema.omit({ id: true }),
+});
+
+export function displayName(
+  user: Omit<z.infer<typeof DiscordUserSchema>, "id">,
+  member?: z.infer<typeof MemberSchema>,
+): string | undefined {
+  return member?.nick ?? user.global_name ?? user.username;
+}
+
 /**
  * Discord message schema - used by both gateway events and API responses.
  * Only includes fields we actually use.
@@ -34,6 +45,11 @@ export const DiscordMessageSchema = z.object({
 });
 
 export type DiscordMessage = z.infer<typeof DiscordMessageSchema>;
+
+// Default messages and replies; the rest are system messages.
+export function isShown(message: DiscordMessage): boolean {
+  return message.type === 0 || message.type === 19;
+}
 
 const ChannelSchema = z.object({ channel_id: z.string() });
 
@@ -70,9 +86,7 @@ export const ChannelEventSchema = z.discriminatedUnion("t", [
   }),
   z.object({
     t: z.literal("MESSAGE_REACTION_ADD"),
-    d: ReactionEventSchema.extend({
-      member: MemberSchema.extend({ user: DiscordUserSchema }).optional(),
-    }),
+    d: ReactionEventSchema.extend({ member: GuildMemberSchema.optional() }),
   }),
   z.object({ t: z.literal("MESSAGE_REACTION_REMOVE"), d: ReactionEventSchema }),
   z.object({

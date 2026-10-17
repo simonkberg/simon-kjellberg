@@ -1116,7 +1116,7 @@ describe("subscribe", () => {
         channel_id: "test-discord-channel-id",
       });
 
-      expect(callback).not.toHaveBeenCalled();
+      expect(callback).toHaveBeenCalledExactlyOnceWith({ t: "MISSED" });
       expect(log.warn).toHaveBeenCalledWith(
         expect.objectContaining({ eventName: "MESSAGE_DELETE" }),
         "Invalid channel event",
