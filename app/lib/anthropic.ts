@@ -198,7 +198,9 @@ const rememberInputSchema = z.object({
   category: categorySchema.describe(
     `Category: one of the core ones (${describeCoreCategories()}), "people/<username>", or one of your own`,
   ),
-  content: contentSchema.describe("One short note, on one line"),
+  content: contentSchema.describe(
+    "One short note on one line; line breaks become spaces",
+  ),
 });
 const recallInputSchema = z.object({
   category: categorySchema.optional().describe("Only this category"),
@@ -221,7 +223,9 @@ const currentTextSchema = z
 const editInputSchema = z.object({
   id: noteIdSchema,
   old_content: currentTextSchema,
-  new_content: contentSchema.describe("The full replacement text, on one line"),
+  new_content: contentSchema.describe(
+    "The full replacement text on one line; line breaks become spaces",
+  ),
   category: categorySchema
     .optional()
     .describe(
@@ -565,7 +569,7 @@ async function send(
     };
   } catch (err) {
     const error = new Error(
-      `Anthropic API error: ${response.status} ${response.statusText}: reading the body failed`,
+      `Anthropic API error: could not read the body of a ${response.status} response`,
       { cause: err },
     );
     // Only the stream breaking is retried; a timeout or a garbled body fails the turn.

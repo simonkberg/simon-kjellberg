@@ -25,6 +25,12 @@ export const MIGRATIONS: readonly string[] = [
     username TEXT NOT NULL,
     UNIQUE (message_id, emoji, username)
   )`,
+  // contentSchema writes notes on one line; this backfills older ones, on the same characters.
+  `UPDATE memories SET content = trim(
+    replace(replace(replace(replace(replace(replace(replace(replace(content,
+      char(13, 10), ' '), char(13), ' '), char(10), ' '), char(11), ' '),
+      char(12), ' '), char(133), ' '), char(8232), ' '), char(8233), ' ')
+  )`,
 ];
 
 // Outside MIGRATIONS: the lock and the version list need these before it can run.

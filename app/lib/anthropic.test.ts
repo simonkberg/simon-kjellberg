@@ -658,7 +658,9 @@ describe("createMessage", () => {
           { role: "user", username: TEST_USERNAME, content: "Test" },
         ]),
       ),
-    ).rejects.toThrow(/^Anthropic API error: 503 .*reading the body failed$/);
+    ).rejects.toThrow(
+      "Anthropic API error: could not read the body of a 503 response",
+    );
     expect(sleep).not.toHaveBeenCalled();
   });
 
@@ -690,7 +692,8 @@ describe("createMessage", () => {
       {
         loop: "reply",
         err: expect.objectContaining({
-          message: expect.stringContaining("reading the body failed"),
+          message:
+            "Anthropic API error: could not read the body of a 200 response",
           cause: new TypeError("terminated"),
         }),
         delayMs: 500,
