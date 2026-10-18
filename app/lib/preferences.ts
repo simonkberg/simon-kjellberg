@@ -81,11 +81,19 @@ export function syncThemeColor() {
 // Before paint. A tag it changes no longer matches React's, so React adds its own after it.
 const themeColorScript = `{
   const root = document.documentElement;
-  const ground = ${JSON.stringify(grounds)}[root.getAttribute("data-variant")];
+  const variant = root.getAttribute("data-variant");
   const theme = root.getAttribute("data-theme");
+  const ground = ${JSON.stringify(grounds)}[
+    ${JSON.stringify(variantPreference.options)}.includes(variant)
+      ? variant
+      : ${JSON.stringify(variantPreference.fallback)}
+  ];
   for (const meta of document.querySelectorAll(${JSON.stringify(themeColorTags)})) {
     const scheme = meta.matches('[media*="dark"]') ? "dark" : "light";
-    meta.setAttribute("content", ground[theme === "system" ? scheme : theme]);
+    meta.setAttribute(
+      "content",
+      ground[${JSON.stringify(colorSchemes)}.includes(theme) ? theme : scheme],
+    );
   }
 }`;
 

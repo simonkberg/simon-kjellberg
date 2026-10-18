@@ -83,6 +83,16 @@ describe("preferencesScript", () => {
 
     expect(themeColors()).toEqual([grounds.manual.dark, grounds.manual.dark]);
   });
+
+  it("falls back to the fallback variant per scheme on unknown values", () => {
+    root.setAttribute("data-variant", "neon");
+    root.setAttribute("data-theme", "sepia");
+    renderThemeColorTags();
+
+    runPreferencesScript();
+
+    expect(themeColors()).toEqual([grounds.panes.light, grounds.panes.dark]);
+  });
 });
 
 describe("syncThemeColor", () => {

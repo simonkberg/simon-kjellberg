@@ -58,6 +58,16 @@ describe("PreferenceSwitch", () => {
     expect(themeColors()).toEqual([grounds.ledger.light, grounds.ledger.dark]);
   });
 
+  it("tints theme-color tags added before it mounts", () => {
+    root.setAttribute("data-variant", "manual");
+    document.cookie = preferenceCookie(themePreference, "dark");
+    renderThemeColorTags();
+
+    render(<PreferenceSwitch preference={themePreference} />);
+
+    expect(themeColors()).toEqual([grounds.manual.dark, grounds.manual.dark]);
+  });
+
   it("re-applies the saved option on mount", () => {
     document.cookie = preferenceCookie(themePreference, "light");
 
