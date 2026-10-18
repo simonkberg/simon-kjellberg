@@ -9,9 +9,6 @@ import {
   type GetTopArtistsResult,
   getTopTracks,
   type GetTopTracksResult,
-  type TopAlbum,
-  type TopArtist,
-  type TopTrack,
 } from "@/actions/lastfm";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
@@ -25,27 +22,21 @@ import {
 } from "@/lib/lastfm";
 
 import { PeriodSelector } from "./components/PeriodSelector";
-import {
-  TopTable,
-  type TopTableColumn,
-  TopTableSkeleton,
-} from "./components/TopTable";
+import { TopTable, TopTableSkeleton } from "./components/TopTable";
 
 export const prefetch = "partial";
 // Reading params behind Suspense would turn invalid periods into soft 404s.
 export const instant = false;
 
-const trackColumns: TopTableColumn<TopTrack>[] = [
+const trackColumns = [
   { label: "Track", key: "name" },
   { label: "Artist", key: "artist" },
-];
-const artistColumns: TopTableColumn<TopArtist>[] = [
-  { label: "Artist", key: "name" },
-];
-const albumColumns: TopTableColumn<TopAlbum>[] = [
+] as const;
+const artistColumns = [{ label: "Artist", key: "name" }] as const;
+const albumColumns = [
   { label: "Album", key: "name" },
   { label: "Artist", key: "artist" },
-];
+] as const;
 
 const trackRows = (result: GetTopTracksResult) =>
   result.status === "ok" ? result.tracks : undefined;

@@ -3,17 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { TopTrack } from "@/actions/lastfm";
 
-import { TopTable, type TopTableColumn, TopTableSkeleton } from "./TopTable";
+import { TopTable, TopTableSkeleton } from "./TopTable";
 
 vi.mock(import("@/components/AnimatedNumber"), () => ({
   AnimatedNumber: ({ value }: { value: number }) => <span>{value}</span>,
 }));
 
 const identity = (rows: TopTrack[] | undefined) => rows;
-const columns: TopTableColumn<TopTrack>[] = [
+const columns = [
   { label: "Track", key: "name" },
   { label: "Artist", key: "artist" },
-];
+] as const;
 
 describe("TopTable", () => {
   it("renders a ranked row per item under the given columns", async () => {
