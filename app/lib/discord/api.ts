@@ -22,13 +22,11 @@ const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
 const GATE_JITTER_MS = 250;
 const MAX_RETRIES = 5;
-const BODY_SNIPPET_LENGTH = 200;
 
 const RateLimitResponseSchema = z.object({
   message: z.string(),
   retry_after: z.number(),
   global: z.boolean(),
-  code: z.number().optional(),
 });
 
 const ErrorResponseSchema = z.object({ code: z.number() });
@@ -43,28 +41,111 @@ export class DiscordApiError extends Error {
   }
 }
 
-// Route key (or GLOBAL_GATE) → when requests may go again.
+type Method = "GET" | "POST" | "PUT" | "DELETE";
+
+type Placeholders<Route extends string> =
+  Route extends `${string}{${infer Name}}${infer Rest}`
+    ? Name | Placeholders<Rest>
+    : never;
+
+// The one channel and guild this app talks to come from env.
+type RouteParams<Route extends string> = Record<
+  Exclude<Placeholders<Route>, "channel.id" | "guild.id">,
+  string
+>;
+
+function fillRoute(route: string, params: Record<string, string>): string {
+  const values: Record<string, string> = {
+    ...params,
+    "channel.id": env.DISCORD_CHANNEL_ID,
+    "guild.id": env.DISCORD_GUILD_ID,
+  };
+  return route.replace(/\{([^}]+)\}/g, (_, name: string) =>
+    encodeURIComponent(values[name] ?? ""),
+  );
+}
+
+// Bucket (or GLOBAL_GATE) → when requests may go again. Only a 429 sets a gate; a success
+// leaves it to expire, since clearing it could wipe a newer 429's gate on the same bucket.
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
-/** @internal Exported for testing. Discord buckets by method, route and channel or guild. */
-export function routeOf(method: string, endpoint: string): string {
-  const route = endpoint
-    .replace(/\?.*$/, "")
-    .split("/")
-    .map((segment, i, segments) => {
-      const previous = segments[i - 1];
-      if (previous === "channels" || previous === "guilds") return segment;
-      if (previous === "reactions") return ":emoji";
-      return /^\d+$/.test(segment) ? ":id" : segment;
-    })
-    .join("/");
-  return `${method} ${route}`;
+/** @internal Exported for test cleanup only */
+export function _resetRateLimitState(): void {
+  rateLimitUntil.clear();
+}
+
+/** @internal Exported for testing gates */
+export function _setRateLimitGate(
+  method: Method,
+  route: string,
+  until: number,
+): void {
+  rateLimitUntil.set(`${method} ${route}`, until);
+}
+
+function gateUntil(bucket: string): number {
+  let until = 0;
+  for (const gate of [bucket, GLOBAL_GATE]) {
+    const value = rateLimitUntil.get(gate);
+    if (value === undefined) continue;
+    if (value <= Date.now()) rateLimitUntil.delete(gate);
+    else until = Math.max(until, value);
+  }
+  return until;
 }
 
 // Counts the most jitter a wait can add, so a 429 and the gate agree on whether to give up.
 function exceedsWaitBudget(elapsedMs: number, waitMs: number): boolean {
   return elapsedMs + waitMs + GATE_JITTER_MS > RATE_LIMIT_TIMEOUT_MS;
+}
+
+function rateLimitExceeded(details: Record<string, unknown>): Error {
+  log.error(details, "Discord rate limit exceeded max wait time");
+  return new Error("Discord rate limit exceeded");
+}
+
+async function waitForGate(
+  bucket: string,
+  startTime: number,
+  context: { endpoint: string; retries: number },
+): Promise<void> {
+  // Re-read after each sleep, since another 429 may have moved the gate.
+  while (true) {
+    const waitMs = gateUntil(bucket) - Date.now();
+    if (waitMs <= 0) return;
+    const elapsedMs = performance.now() - startTime;
+    if (exceedsWaitBudget(elapsedMs, waitMs)) {
+      throw rateLimitExceeded({ ...context, elapsedMs, waitMs });
+    }
+    // Jitter, so callers waiting on one gate don't all retry at once.
+    const jitterMs = Math.random() * GATE_JITTER_MS;
+    await new Promise((resolve) => setTimeout(resolve, waitMs + jitterMs));
+  }
+}
+
+function snippet(text: string): string {
+  return text.slice(0, 200);
+}
+
+// An empty body reads as null, and so does a proxy's HTML error page; a success can't.
+async function readBody(response: Response, endpoint: string) {
+  const text = await response.text();
+  if (text === "") return { json: null, text };
+  try {
+    return { json: JSON.parse(text) as unknown, text };
+  } catch {
+    const { ok, status } = response;
+    if (!ok) return { json: null, text };
+    log.error(
+      { endpoint, status, body: snippet(text) },
+      "Discord API body isn't JSON",
+    );
+    throw new DiscordApiError(
+      `Discord API error: ${status} body isn't JSON`,
+      undefined,
+    );
+  }
 }
 
 // Retry-After is either delta-seconds or an HTTP-date.
@@ -77,166 +158,87 @@ function retryAfterHeaderMs(value: string | null): number | undefined {
   return Number.isNaN(date) ? undefined : date - Date.now();
 }
 
-function gateUntil(route: string): number {
-  let until = 0;
-  for (const key of [route, GLOBAL_GATE]) {
-    const value = rateLimitUntil.get(key);
-    if (value === undefined) continue;
-    if (value <= Date.now()) rateLimitUntil.delete(key);
-    else until = Math.max(until, value);
-  }
-  return until;
+function rateLimitOf(response: Response, json: unknown, retries: number) {
+  const body = RateLimitResponseSchema.safeParse(json).data;
+  const reportedMs = body
+    ? body.retry_after * 1000
+    : retryAfterHeaderMs(response.headers.get("retry-after"));
+  // A delay of zero or less, or a date already past, would retry back to back.
+  const retryAfterMs =
+    reportedMs !== undefined && reportedMs > 0
+      ? reportedMs
+      : 1000 * 2 ** (retries - 1);
+  const global =
+    body?.global === true ||
+    response.headers.get("x-ratelimit-global") === "true";
+  return { retryAfterMs, global };
 }
 
-/** @internal Exported for test cleanup only */
-export function _resetRateLimitState(): void {
-  rateLimitUntil.clear();
-}
-
-/** @internal Exported for testing gates */
-export function _setRateLimitGate(
-  method: string,
-  endpoint: string,
-  until: number,
-): void {
-  rateLimitUntil.set(routeOf(method, endpoint), until);
-}
-
-async function call<T extends z.ZodType>(
-  method: string,
-  endpoint: string,
+async function call<Route extends string, T extends z.ZodType>(
+  method: Method,
+  route: Route,
+  params: RouteParams<Route>,
   schema: T,
-  params: Record<string, unknown> = {},
+  data?: Record<string, unknown>,
 ): Promise<z.infer<T>> {
-  const url = new URL(`${BASE_URL}/${endpoint}`);
-
+  const endpoint = fillRoute(route, params);
+  const url = new URL(BASE_URL + endpoint);
   if (method === "GET") {
-    for (const [key, value] of Object.entries(params)) {
+    for (const [key, value] of Object.entries(data ?? {})) {
       url.searchParams.set(key, String(value));
     }
   }
 
-  const route = routeOf(method, endpoint);
+  // Discord buckets by route and channel or guild, and those never vary here.
+  const bucket = `${method} ${route}`;
   const startTime = performance.now();
   let retries = 0;
 
   while (true) {
-    // Re-read after each sleep, since another 429 may have moved the gate.
-    for (;;) {
-      const waitMs = gateUntil(route) - Date.now();
-      if (waitMs <= 0) break;
-      const elapsedMs = performance.now() - startTime;
-      if (exceedsWaitBudget(elapsedMs, waitMs)) {
-        log.error(
-          { endpoint, elapsedMs, waitMs, retries },
-          "Discord rate limit exceeded max wait time",
-        );
-        throw new Error(`Discord rate limit exceeded`);
-      }
-      // Jitter, so callers waiting on one gate don't all retry at once.
-      const jitterMs = Math.random() * GATE_JITTER_MS;
-      await new Promise((resolve) => setTimeout(resolve, waitMs + jitterMs));
-    }
+    await waitForGate(bucket, startTime, { endpoint, retries });
 
     const response = await fetch(url, {
       method,
-      body: method === "POST" ? JSON.stringify(params) : undefined,
+      body: method === "GET" ? undefined : JSON.stringify(data),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
       },
       signal: AbortSignal.timeout(5000),
     });
-
-    const text = await response.text();
-    let json: unknown = null;
-    if (text !== "") {
-      try {
-        json = JSON.parse(text);
-      } catch {
-        // A proxy's HTML error page falls back like an unexpected body; a success can't.
-        if (response.ok) {
-          log.error(
-            {
-              endpoint,
-              status: response.status,
-              body: text.slice(0, BODY_SNIPPET_LENGTH),
-            },
-            "Discord API body isn't JSON",
-          );
-          throw new DiscordApiError(
-            `Discord API error: ${response.status} body isn't JSON`,
-            undefined,
-          );
-        }
-      }
-    }
+    const { json, text } = await readBody(response, endpoint);
 
     if (response.status === 429) {
       retries++;
-
-      const rateLimit = RateLimitResponseSchema.safeParse(json);
-      const reportedMs = rateLimit.success
-        ? rateLimit.data.retry_after * 1000
-        : retryAfterHeaderMs(response.headers.get("retry-after"));
-      // A delay of zero or less, or a date already past, would retry back to back.
-      const retryAfterMs =
-        reportedMs !== undefined && reportedMs > 0
-          ? reportedMs
-          : 1000 * 2 ** (retries - 1);
-      const global =
-        (rateLimit.success && rateLimit.data.global) ||
-        response.headers.get("x-ratelimit-global") === "true";
-
+      const { retryAfterMs, global } = rateLimitOf(response, json, retries);
+      const until = Date.now() + retryAfterMs;
+      const gate = global ? GLOBAL_GATE : bucket;
       // The true deadline, so callers that can't wait fail fast rather than re-hit Discord.
-      const gate = global ? GLOBAL_GATE : route;
-      rateLimitUntil.set(
-        gate,
-        Math.max(rateLimitUntil.get(gate) ?? 0, Date.now() + retryAfterMs),
-      );
+      rateLimitUntil.set(gate, Math.max(rateLimitUntil.get(gate) ?? 0, until));
 
+      const details = { endpoint, retryAfterMs, global, retries };
       const elapsedMs = performance.now() - startTime;
-
       if (retries > MAX_RETRIES || exceedsWaitBudget(elapsedMs, retryAfterMs)) {
-        log.error(
-          { endpoint, elapsedMs, retryAfterMs, global, retries },
-          "Discord rate limit exceeded max wait time",
-        );
-        throw new Error(`Discord rate limit exceeded`);
+        throw rateLimitExceeded({ ...details, elapsedMs });
       }
-
-      log.warn(
-        { endpoint, retryAfterMs, global, retries },
-        "Discord rate limited, retrying",
-      );
+      log.warn(details, "Discord rate limited, retrying");
       continue;
     }
 
     if (!response.ok) {
+      const { status, statusText } = response;
       log.error(
-        {
-          endpoint,
-          status: response.status,
-          body: json ?? text.slice(0, BODY_SNIPPET_LENGTH),
-        },
+        { endpoint, status, body: json ?? snippet(text) },
         "Discord API call failed",
       );
       throw new DiscordApiError(
-        `Discord API error: ${response.status} ${response.statusText}`,
+        `Discord API error: ${status} ${statusText}`,
         ErrorResponseSchema.safeParse(json).data?.code,
       );
     }
 
     return schema.parse(json);
   }
-}
-
-async function getGuildMember(userId: string) {
-  return call(
-    "GET",
-    `guilds/${env.DISCORD_GUILD_ID}/members/${userId}`,
-    GuildMemberSchema,
-  );
 }
 
 const UserSchema = z.object({
@@ -260,29 +262,24 @@ function toUser(name: string): User {
 
 const USERNAME_PREFIX_PATTERN = /^(.+?):(?:\s(.*))?$/s;
 
-function parseUsernamePrefix(content: string): [string, string] | undefined {
-  const match = content.match(USERNAME_PREFIX_PATTERN);
-  return match ? [match[1]!, match[2] ?? ""] : undefined;
-}
-
-async function authorName(msg: DiscordMessage): Promise<string> {
-  return (
-    (await getStore().memberName(msg.author.id)) ??
-    displayName(msg.author) ??
-    msg.author.id
-  );
-}
-
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
-  const parsed = msg.author.bot ? parseUsernamePrefix(msg.content) : undefined;
-  const username = parsed ? parsed[0] : await authorName(msg);
+  // Messages the bot posts for the site carry their author as a prefix.
+  const prefixed = msg.author.bot
+    ? msg.content.match(USERNAME_PREFIX_PATTERN)
+    : null;
+  if (prefixed) {
+    return { username: prefixed[1]!, content: (prefixed[2] ?? "").trim() };
+  }
+  const username =
+    (await getStore().memberName(msg.author.id)) ??
+    displayName(msg.author) ??
+    msg.author.id;
   // A forward's own content is empty; what it forwards is in its snapshot.
-  const text =
+  const content =
     msg.content || (msg.message_snapshots?.[0]?.message.content ?? "");
-  const content = (parsed?.[1] ?? text).trim();
-  return { username, content };
+  return { username, content: content.trim() };
 }
 
 // Discord's "Unknown Member" and "Unknown User".
@@ -290,7 +287,12 @@ const GONE_CODES = new Set<number | undefined>([10007, 10013]);
 
 async function getMemberName(userId: string): Promise<string | undefined> {
   try {
-    const member = await getGuildMember(userId);
+    const member = await call(
+      "GET",
+      "/guilds/{guild.id}/members/{user.id}",
+      { "user.id": userId },
+      GuildMemberSchema,
+    );
     return displayName(member.user, member);
   } catch (err) {
     // Someone who left the server has no member; asking again won't change that.
@@ -304,12 +306,11 @@ async function getMemberName(userId: string): Promise<string | undefined> {
 function getMessage(id: string): Promise<DiscordMessage> {
   return call(
     "GET",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages/${id}`,
+    "/channels/{channel.id}/messages/{message.id}",
+    { "message.id": id },
     DiscordMessageSchema,
   );
 }
-
-const GetMessagesResponseSchema = z.array(DiscordMessageSchema);
 
 const ReactionSchema = z.object({
   emoji: z.string(),
@@ -347,7 +348,8 @@ async function getReactors(messageId: string, emoji: string) {
   for (;;) {
     const page = await call(
       "GET",
-      reactionEndpoint(messageId, emoji),
+      "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}",
+      { "message.id": messageId, emoji },
       ReactorsResponseSchema,
       after ? { limit: REACTORS_PAGE, after } : { limit: REACTORS_PAGE },
     );
@@ -360,8 +362,9 @@ async function getReactors(messageId: string, emoji: string) {
 async function getRecentMessages(): Promise<DiscordMessage[]> {
   const messages = await call(
     "GET",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
-    GetMessagesResponseSchema,
+    "/channels/{channel.id}/messages",
+    {},
+    z.array(DiscordMessageSchema),
     { limit: WINDOW },
   );
   return messages.toReversed();
@@ -451,38 +454,33 @@ const messageIdComparator = comparing(
 
 export async function getChannelMessages(limit = WINDOW): Promise<Message[]> {
   const window = (await getStore().messages()).slice(-limit);
-
   const byParent = Map.groupBy(window, parentId);
 
-  // Only replies reachable from a root are converted.
-  const toMessages = async (
-    discordMessages: DiscordMessage[],
-  ): Promise<Message[]> => {
-    const messages = await Promise.all(
-      discordMessages.map(async (discordMessage) => {
-        const [{ username, content }, reactions, children] = await Promise.all([
-          resolveMessageContent(discordMessage),
-          withDiscordReactors(discordMessage.id, toReactions(discordMessage)),
-          toMessages(byParent.get(discordMessage.id) ?? []),
-        ]);
+  // Starts from the roots, so a reply whose parent isn't in the window is left out.
+  async function toMessage(msg: DiscordMessage): Promise<Message> {
+    const [{ username, content }, reactions, replies] = await Promise.all([
+      resolveMessageContent(msg),
+      withDiscordReactors(msg.id, toReactions(msg)),
+      toMessages(byParent.get(msg.id)),
+    ]);
+    const message = MessageSchema.decode({
+      id: msg.id,
+      user: toUser(username),
+      content,
+      edited: msg.edited_timestamp !== null,
+      timestamp: msg.timestamp,
+      reactions,
+      replies: [],
+    });
+    return { ...message, replies };
+  }
 
-        const message = MessageSchema.decode({
-          id: discordMessage.id,
-          user: toUser(username),
-          content,
-          edited: discordMessage.edited_timestamp !== null,
-          timestamp: discordMessage.timestamp,
-          reactions,
-          replies: [],
-        });
-        message.replies = children;
-        return message;
-      }),
-    );
+  async function toMessages(msgs: DiscordMessage[] = []): Promise<Message[]> {
+    const messages = await Promise.all(msgs.map(toMessage));
     return messages.sort(messageIdComparator);
-  };
+  }
 
-  return toMessages(byParent.get(undefined) ?? []);
+  return toMessages(byParent.get(undefined));
 }
 
 export type ChainMessage = {
@@ -560,7 +558,8 @@ export async function searchChannelMessages(params: {
 }): Promise<SearchResult> {
   const response = await call(
     "GET",
-    `guilds/${env.DISCORD_GUILD_ID}/messages/search`,
+    "/guilds/{guild.id}/messages/search",
+    {},
     SearchGuildMessagesResponseSchema,
     { channel_id: env.DISCORD_CHANNEL_ID, ...params },
   );
@@ -602,7 +601,8 @@ export async function postChannelMessage(
 
   const response = await call(
     "POST",
-    `channels/${env.DISCORD_CHANNEL_ID}/messages`,
+    "/channels/{channel.id}/messages",
+    {},
     PostChannelMessageResponseSchema,
     body,
   );
@@ -610,24 +610,19 @@ export async function postChannelMessage(
   return response.id;
 }
 
-function reactionEndpoint(messageId: string, emoji: string): string {
-  return `channels/${env.DISCORD_CHANNEL_ID}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`;
+async function botReaction(method: Method, messageId: string, emoji: string) {
+  await call(
+    method,
+    "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me",
+    { "message.id": messageId, emoji },
+    z.null(),
+  );
 }
 
-function botReactionEndpoint(messageId: string, emoji: string): string {
-  return `${reactionEndpoint(messageId, emoji)}/@me`;
+export async function addBotReaction(messageId: string, emoji: string) {
+  await botReaction("PUT", messageId, emoji);
 }
 
-export async function addBotReaction(
-  messageId: string,
-  emoji: string,
-): Promise<void> {
-  await call("PUT", botReactionEndpoint(messageId, emoji), z.null());
-}
-
-export async function removeBotReaction(
-  messageId: string,
-  emoji: string,
-): Promise<void> {
-  await call("DELETE", botReactionEndpoint(messageId, emoji), z.null());
+export async function removeBotReaction(messageId: string, emoji: string) {
+  await botReaction("DELETE", messageId, emoji);
 }

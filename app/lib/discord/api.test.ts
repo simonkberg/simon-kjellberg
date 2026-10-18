@@ -1,7 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { env } from "@/lib/env";
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
@@ -10,7 +9,6 @@ import { server } from "@/mocks/node";
 import {
   _resetRateLimitState,
   _setRateLimitGate,
-  routeOf,
   addBotReaction,
   getChannelMessages,
   getMessageChain,
@@ -1282,28 +1280,6 @@ describe("bot reactions", () => {
   });
 });
 
-describe("routeOf", () => {
-  it.each([
-    ["GET", "channels/123/messages", "GET channels/123/messages"],
-    ["GET", "channels/123/messages/456", "GET channels/123/messages/:id"],
-    [
-      "PUT",
-      "channels/123/messages/456/reactions/%F0%9F%91%8D/@me",
-      "PUT channels/123/messages/:id/reactions/:emoji/@me",
-    ],
-    [
-      "GET",
-      "channels/123/messages/456/reactions/%F0%9F%91%8D",
-      "GET channels/123/messages/:id/reactions/:emoji",
-    ],
-    ["GET", "guilds/789/members/456", "GET guilds/789/members/:id"],
-    ["GET", "guilds/789/messages/search", "GET guilds/789/messages/search"],
-    ["GET", "channels/123/messages?limit=100", "GET channels/123/messages"],
-  ])("should key %s %s as %s", (method, endpoint, route) => {
-    expect(routeOf(method, endpoint)).toBe(route);
-  });
-});
-
 describe("rate limiting", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -1526,8 +1502,11 @@ describe("rate limiting", () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
 
     // Directly set a gate 31 seconds in the future — exceeds RATE_LIMIT_TIMEOUT_MS (30s)
-    const endpoint = "channels/test-discord-channel-id/messages";
-    _setRateLimitGate("GET", endpoint, Date.now() + 31_000);
+    _setRateLimitGate(
+      "GET",
+      "/channels/{channel.id}/messages",
+      Date.now() + 31_000,
+    );
 
     // A fresh request checks the gate: waitMs=31000, elapsedMs≈0, 0+31000 > 30000 → throws
     await expect(getChannelMessages()).rejects.toThrow(
@@ -1535,7 +1514,12 @@ describe("rate limiting", () => {
     );
 
     expect(logErrorSpy).toHaveBeenCalledWith(
-      { endpoint, elapsedMs: expect.any(Number), waitMs: 31_000, retries: 0 },
+      {
+        endpoint: "/channels/test-discord-channel-id/messages",
+        elapsedMs: expect.any(Number),
+        waitMs: 31_000,
+        retries: 0,
+      },
       "Discord rate limit exceeded max wait time",
     );
   });
@@ -1815,23 +1799,6 @@ describe("rate limiting", () => {
     expect(messageRequests).not.toHaveBeenCalled();
   });
 
-  it("should gate each channel separately", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json([]),
-      ),
-    );
-    const channelId = env.DISCORD_CHANNEL_ID;
-    env.DISCORD_CHANNEL_ID = "222";
-    try {
-      _setRateLimitGate("GET", "channels/111/messages", Date.now() + 31_000);
-      await expect(getChannelMessages()).resolves.toEqual([]);
-    } finally {
-      env.DISCORD_CHANNEL_ID = channelId;
-    }
-  });
-
   it("should reject a successful response whose body isn't JSON", async () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
@@ -1910,7 +1877,7 @@ describe("rate limiting", () => {
     );
     _setRateLimitGate(
       "PUT",
-      "channels/test-discord-channel-id/messages/1/reactions/x/@me",
+      "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me",
       Date.now() + 1000,
     );
 
@@ -1936,7 +1903,7 @@ describe("rate limiting", () => {
     );
     _setRateLimitGate(
       "PUT",
-      "channels/test-discord-channel-id/messages/1/reactions/x/@me",
+      "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me",
       Date.now() + 1000,
     );
 
@@ -1957,7 +1924,7 @@ describe("rate limiting", () => {
     vi.mocked(Math.random).mockReturnValue(0.8);
     _setRateLimitGate(
       "GET",
-      "channels/test-discord-channel-id/messages",
+      "/channels/{channel.id}/messages",
       Date.now() + 29_900,
     );
 
