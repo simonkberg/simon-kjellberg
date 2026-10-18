@@ -10,11 +10,17 @@ import {
   useState,
 } from "react";
 
-import { type EmojiShortcodes, REACTION_EMOJI, searchEmoji } from "@/lib/emoji";
+import {
+  type EmojiShortcodes,
+  REACTION_EMOJI,
+  searchEmoji,
+  withSkinTone,
+} from "@/lib/emoji";
 
 import { arrowIndex, gridColumns } from "./arrowFocus";
 import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
 import { loadShortcodes, reloadShortcodes } from "./shortcodes";
+import { useSkinTone } from "./skinTone";
 
 const LIMIT = 24;
 
@@ -66,12 +72,14 @@ export const ChatEmojiInput = ({
     setActive(query === null ? null : initialActive(query));
   }
 
-  const matches =
+  const { modifier } = useSkinTone();
+  const matches = (
     query === null || !emoji
       ? []
       : query
         ? searchEmoji(emoji, query, LIMIT)
-        : REACTION_EMOJI;
+        : REACTION_EMOJI
+  ).map(({ emoji, name }) => ({ emoji: withSkinTone(emoji, modifier), name }));
   const open = matches.length > 0;
   const chosen = active === null ? undefined : matches[active];
 

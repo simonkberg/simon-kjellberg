@@ -64,6 +64,18 @@ describe("ChatEmojiInput", () => {
     expect(postChatMessage).not.toHaveBeenCalled();
   });
 
+  it("suggests and inserts emoji in the picked skin tone", async () => {
+    localStorage.setItem("skin-tone", "2");
+    const { user, input } = renderChatInput();
+
+    await user.type(input, ":fire");
+    await screen.findByRole("listbox");
+    expect(options()).toBe("🔥🧑🏼‍🚒");
+    await user.keyboard("{ArrowRight}{Enter}");
+
+    expect(input).toHaveValue("🧑🏼‍🚒 ");
+  });
+
   it("moves the choice with the arrow keys and picks it with Tab", async () => {
     const { user, input } = renderChatInput();
 
