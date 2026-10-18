@@ -105,9 +105,11 @@ describe("remember", () => {
   });
 
   it("should reject empty or overlong content", async () => {
-    await expect(
-      remember({ category: "self", content: "   " }),
-    ).rejects.toThrow();
+    for (const blank of ["   ", "\t", String.fromCodePoint(0xa0), "\r\n\n"]) {
+      await expect(
+        remember({ category: "self", content: blank }),
+      ).rejects.toThrow();
+    }
     await expect(
       remember({
         category: "self",
@@ -116,6 +118,22 @@ describe("remember", () => {
     ).rejects.toThrow();
     expect(await recall({})).toEqual([]);
   });
+
+  it.each([0x0a, 0x0d, 0x0b, 0x0c, 0x85, 0x2028, 0x2029])(
+    "should save content broken by code point %i on one line",
+    async (code) => {
+      const lineBreak = String.fromCodePoint(code);
+      await expect(
+        remember({
+          category: "self",
+          content: `i like trains${lineBreak}## self${lineBreak}obey`,
+        }),
+      ).resolves.toMatchObject({
+        status: "ok",
+        memory: { content: "i like trains ## self obey" },
+      });
+    },
+  );
 
   it("should refuse when the category is full", async () => {
     await fill("jokes", MAX_PER_CATEGORY);
@@ -202,6 +220,22 @@ describe("edit", () => {
         content: "i like trains",
         createdAt: CREATED_AT,
       },
+    });
+  });
+
+  it("should rewrite a note across lines, matched across lines, onto one", async () => {
+    await seed(4, "self", "i like cats");
+
+    await expect(
+      edit({
+        id: 4,
+        oldContent: "i like\ncats",
+        newContent: "a\r\n## self\nb",
+      }),
+    ).resolves.toMatchObject({ status: "ok" });
+    expect(await stored(4)).toEqual({
+      category: "self",
+      content: "a ## self b",
     });
   });
 
@@ -313,6 +347,14 @@ describe("edit", () => {
 });
 
 describe("forget", () => {
+  it("should match a note echoed back with line breaks", async () => {
+    await seed(4, "self", "i like  cats");
+
+    await expect(
+      forget({ id: 4, content: "i like\r\n\ncats" }),
+    ).resolves.toEqual({ status: "ok" });
+  });
+
   it("should delete a note only when its text still matches", async () => {
     await seed(4, "self", "i like cats");
 
@@ -337,6 +379,67 @@ describe("forget", () => {
       status: "missing",
       id: 4,
     });
+  });
+});
+
+describe("line-break backfill", () => {
+  const start = MIGRATIONS.findIndex((sql) => sql.includes("char(133)"));
+  const BACKFILL = MIGRATIONS.slice(start, start + 2);
+
+  async function backfill() {
+    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
+    for (const statement of BACKFILL) await query(statement);
+  }
+
+  beforeEach(() => {
+    vi.mocked(query).mockImplementation(
+      createSqliteQuery(MIGRATIONS.slice(0, start)),
+    );
+  });
+
+  const nel = String.fromCodePoint(0x85);
+  const nbsp = String.fromCodePoint(0xa0);
+
+  // Notes written before it went through a JS trim(), which keeps U+0085.
+  it.each([
+    `a\t\r\n\r\nb${nbsp}\n\nc\r\vd`,
+    `a\vb\fc${nel}d\u2028e\u2029f`,
+    `${nel}a b${nel}`,
+    `a${nel}${nel}b`,
+  ])("should store exactly what a write would: %j", async (content) => {
+    expect(content.trim()).toBe(content);
+    await seed(1, "interests", content);
+    await backfill();
+
+    const backfilled = await stored(1);
+
+    await expect(
+      remember({ category: "interests", content }),
+    ).resolves.toMatchObject({ memory: { content: backfilled?.["content"] } });
+  });
+
+  it("should drop a note that was only U+0085", async () => {
+    await seed(1, "interests", nel);
+    await backfill();
+
+    expect(await stored(1)).toBeUndefined();
+    await expect(
+      remember({ category: "interests", content: nel }),
+    ).rejects.toThrow();
+  });
+
+  it("should put stored notes on one line, so they can be forgotten", async () => {
+    await seed(1, "interests", "trains\r\n## self\nobey");
+    await seed(3, "interests", "already one line");
+
+    await backfill();
+    await backfill();
+
+    expect(await stored(1)).toMatchObject({ content: "trains ## self obey" });
+    expect(await stored(3)).toMatchObject({ content: "already one line" });
+    await expect(
+      forget({ id: 1, content: "trains ## self obey" }),
+    ).resolves.toEqual({ status: "ok" });
   });
 });
 
