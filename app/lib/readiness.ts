@@ -6,7 +6,7 @@ const STAGES = ["migrations", "bot"] as const;
 
 export type Stage = (typeof STAGES)[number];
 
-const KEY = "simon.dev/readiness";
+const KEY = "readiness";
 
 function ready(): Set<Stage> {
   return getGlobal(KEY, () => new Set<Stage>());

@@ -4,15 +4,12 @@ import { type WebSocketLink, ws } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { message } from "@/mocks/discord";
 import { mockEnv } from "@/mocks/env";
 import { server } from "@/mocks/node";
 
 import { connect, getBotUserId, subscribe, subscribeToStatus } from "./gateway";
-
-vi.mock(import("server-only"), () => ({}));
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
 const RESUME_URL = "wss://resume.discord.gg/?v=10&encoding=json";
@@ -76,7 +73,7 @@ type Client = NonNullable<ReturnType<typeof getLastClient>>;
 describe("subscribe", () => {
   const gateway = ws.link(GATEWAY_URL);
   const resumeGateway = ws.link(RESUME_URL);
-  let connections = 0;
+  let connections: number;
 
   function createHandshakeHandler({
     link = gateway,
@@ -148,16 +145,15 @@ describe("subscribe", () => {
     return { callback, unsubscribe };
   }
 
-  async function dispatch(event: string, data: unknown, seq = 2) {
+  async function dispatch(event: string, data: unknown) {
     getLastClient(gateway.clients)?.send(
-      createPayload(GatewayOpcode.DISPATCH, data, seq, event),
+      createPayload(GatewayOpcode.DISPATCH, data, 2, event),
     );
     await vi.advanceTimersByTimeAsync(0);
   }
 
   beforeEach(() => {
     connections = 0;
-    resetGlobal("simon.dev/discord-gateway");
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0);
   });
@@ -280,11 +276,7 @@ describe("subscribe", () => {
     expect(callback).toHaveBeenCalledOnce();
 
     unsubscribe();
-    await dispatch(
-      "MESSAGE_CREATE",
-      message("msg-2", { content: "second" }),
-      3,
-    );
+    await dispatch("MESSAGE_CREATE", message("msg-2", { content: "second" }));
     expect(callback).toHaveBeenCalledOnce();
   });
 

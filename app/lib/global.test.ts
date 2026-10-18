@@ -1,14 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { getGlobal, resetGlobal } from "./global";
+import { getGlobal, resetGlobals } from "./global";
 
-const KEY = "simon.dev/test";
+const KEY = "test";
 
 describe("getGlobal", () => {
-  beforeEach(() => {
-    resetGlobal(KEY);
-  });
-
   it("should create the value once and return the same instance", () => {
     const init = vi.fn(() => ({}));
 
@@ -30,7 +26,7 @@ describe("getGlobal", () => {
 
   it("should create a new value after reset", () => {
     const first = getGlobal(KEY, () => ({}));
-    resetGlobal(KEY);
+    resetGlobals();
 
     expect(getGlobal(KEY, () => ({}))).not.toBe(first);
   });

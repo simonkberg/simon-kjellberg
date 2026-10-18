@@ -218,7 +218,7 @@ export async function batch<const T extends readonly Statement[]>(
 }
 
 export function keepWarm(): void {
-  getGlobal("simon.dev/turso-keep-warm", () =>
+  getGlobal("turso-keep-warm", () =>
     setInterval(() => {
       query("SELECT 1").catch((err: unknown) => {
         log.warn({ err }, "Turso keep-warm query failed");

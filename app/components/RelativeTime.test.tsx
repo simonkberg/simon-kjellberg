@@ -26,13 +26,13 @@ describe("RelativeTime", () => {
   });
 
   it.each([
-    { offset: 30 * 1000, expected: /30 seconds ago/, description: "seconds" },
-    { offset: 30 * MINUTE, expected: /30 minutes ago/, description: "minutes" },
-    { offset: 5 * HOUR, expected: /5 hours ago/, description: "hours" },
-    { offset: 5 * DAY, expected: /5 days ago/, description: "days" },
-    { offset: 60 * DAY, expected: /2 months ago/, description: "months" },
-    { offset: 2 * 365 * DAY, expected: /2 years ago/, description: "years" },
-  ])('displays "$description ago" format', async ({ offset, expected }) => {
+    { offset: 30 * 1000, expected: /30 seconds ago/ },
+    { offset: 30 * MINUTE, expected: /30 minutes ago/ },
+    { offset: 5 * HOUR, expected: /5 hours ago/ },
+    { offset: 5 * DAY, expected: /5 days ago/ },
+    { offset: 60 * DAY, expected: /2 months ago/ },
+    { offset: 2 * 365 * DAY, expected: /2 years ago/ },
+  ])("displays $expected", async ({ offset, expected }) => {
     await act(() => render(<RelativeTime date={new Date(now - offset)} />));
 
     expect(screen.getByText(expected)).toBeInTheDocument();
@@ -78,9 +78,9 @@ describe("RelativeTime", () => {
   );
 
   it.each([
-    { style: "short" as const, expected: /5 min. ago/, description: "short" },
-    { style: "narrow" as const, expected: /5m ago/, description: "narrow" },
-  ])('formats with "$description" style', async ({ style, expected }) => {
+    { style: "short" as const, expected: /5 min. ago/ },
+    { style: "narrow" as const, expected: /5m ago/ },
+  ])('formats with "$style" style', async ({ style, expected }) => {
     await act(() =>
       render(<RelativeTime date={new Date(now - 5 * MINUTE)} style={style} />),
     );

@@ -4,12 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
-import {
-  CREATED_AT,
-  fillCategory,
-  seedMemory as seed,
-  storedMemory as stored,
-} from "@/mocks/memory";
+import { CREATED_AT, fillCategory, seed, stored } from "@/mocks/memory";
 import { sqliteBeforeEach } from "@/mocks/sqlite";
 
 import {
@@ -24,7 +19,6 @@ import {
 } from "./memory";
 import { MIGRATIONS } from "./migrations";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );

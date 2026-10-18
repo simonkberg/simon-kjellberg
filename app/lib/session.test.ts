@@ -6,8 +6,6 @@ import { mockCookieJar } from "@/mocks/headers";
 
 import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 
-vi.mock(import("server-only"), () => ({}));
-
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
 describe("session", () => {

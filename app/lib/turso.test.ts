@@ -1,13 +1,10 @@
 import { http, HttpResponse, type JsonBodyType } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { server } from "@/mocks/node";
 
 import { batch, keepWarm, query } from "./turso";
-
-vi.mock(import("server-only"), () => ({}));
 
 const PIPELINE_URL = "https://test-db.turso.io/v2/pipeline";
 
@@ -31,10 +28,6 @@ function pipelineResponse(result: Record<string, unknown> = {}) {
       ...result,
     },
   });
-}
-
-function respond(body: JsonBodyType) {
-  server.use(http.post(PIPELINE_URL, () => HttpResponse.json(body)));
 }
 
 function capture(body: JsonBodyType = pipelineResponse()) {
@@ -78,7 +71,7 @@ describe("query", () => {
   });
 
   it("should decode rows into objects keyed by column name", async () => {
-    respond(
+    capture(
       pipelineResponse({
         cols: [
           { name: "id" },
@@ -131,7 +124,7 @@ describe("query", () => {
   });
 
   it("should throw on statement errors", async () => {
-    respond({
+    capture({
       results: [
         { type: "error", error: { message: "no such table: nope" } },
         { type: "ok", response: { type: "close" } },
@@ -144,7 +137,7 @@ describe("query", () => {
   });
 
   it("should throw when the first result is not an execute result", async () => {
-    respond({ results: [{ type: "ok", response: { type: "close" } }] });
+    capture({ results: [{ type: "ok", response: { type: "close" } }] });
 
     await expect(query("SELECT 1")).rejects.toThrow(
       "Turso returned unexpected close result",
@@ -152,7 +145,7 @@ describe("query", () => {
   });
 
   it("should throw when the response has no results", async () => {
-    respond({ results: [] });
+    capture({ results: [] });
 
     await expect(query("SELECT 1")).rejects.toThrow(
       "Turso returned no results",
@@ -252,7 +245,7 @@ describe("batch", () => {
   ])("should name the step that failed: $step", async ({ failed, step }) => {
     // BEGIN, two statements, COMMIT and ROLLBACK.
     const steps = Array.from({ length: 5 }, (_, index) => index);
-    respond(
+    capture(
       batchResponse(
         steps.map((index) =>
           index < failed || index === 4 ? stmtResult(0) : null,
@@ -269,7 +262,7 @@ describe("batch", () => {
   });
 
   it("should throw when a step has neither a result nor an error", async () => {
-    respond(batchResponse([stmtResult(0), null, stmtResult(0), null]));
+    capture(batchResponse([stmtResult(0), null, stmtResult(0), null]));
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
       "Turso query error in statement 1: no result",
@@ -277,7 +270,7 @@ describe("batch", () => {
   });
 
   it("should throw when the result is not a batch result", async () => {
-    respond(pipelineResponse());
+    capture(pipelineResponse());
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
       "Turso returned unexpected execute result",
@@ -288,10 +281,6 @@ describe("batch", () => {
 describe("keepWarm", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["setInterval"] });
-  });
-
-  afterEach(() => {
-    resetGlobal("simon.dev/turso-keep-warm");
   });
 
   it("should query Turso every minute", async () => {

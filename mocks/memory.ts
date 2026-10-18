@@ -5,7 +5,7 @@ export const CREATED_AT = "2025-01-01T00:00:00.000Z";
 
 // Needs @/lib/turso mocked with sqliteBeforeEach, and the real @/lib/memory for MAX_PER_CATEGORY.
 
-export async function seedMemory(
+export async function seed(
   id: number,
   category: string,
   content: string,
@@ -19,11 +19,11 @@ export async function seedMemory(
 
 export async function fillCategory(category: string, count = MAX_PER_CATEGORY) {
   for (let i = 0; i < count; i++) {
-    await seedMemory(100 + i, category, `note ${i}`);
+    await seed(100 + i, category, `note ${i}`);
   }
 }
 
-export async function storedMemory(id: number) {
+export async function stored(id: number) {
   const { rows } = await query(
     "SELECT category, content FROM memories WHERE id = ?",
     [id],

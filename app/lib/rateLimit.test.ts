@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
 import { emptyResult, failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
@@ -10,7 +9,6 @@ import { emptyResult, failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 import { MIGRATIONS } from "./migrations";
 import { rateLimit } from "./rateLimit";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );
@@ -26,7 +24,6 @@ const sqlite = sqliteBeforeEach(query, MIGRATIONS);
 
 describe("rateLimit", () => {
   beforeEach(() => {
-    resetGlobal("simon.dev/rate-limit-blocked");
     vi.useFakeTimers({ now: 1_000_000 });
   });
 

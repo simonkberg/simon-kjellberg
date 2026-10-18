@@ -14,8 +14,6 @@ import type { Username } from "@/lib/session";
 
 import RootPage from "./page";
 
-vi.mock(import("server-only"), () => ({}));
-
 vi.mock(import("next/cache"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, io: vi.fn(async () => {}) };

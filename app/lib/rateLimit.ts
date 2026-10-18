@@ -8,7 +8,7 @@ type RateLimitResult =
   | { success: true }
   | { success: false; retryAfterSeconds: number };
 
-const KEY = "simon.dev/rate-limit-blocked";
+const KEY = "rate-limit-blocked";
 
 // Per-process cache of over-limit keys, so a flood skips the database.
 function blockedUntil(): LruMap<string, number> {

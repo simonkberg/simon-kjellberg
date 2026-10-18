@@ -10,8 +10,6 @@ import {
   userGetTopTracks,
 } from "./lastfm";
 
-vi.mock(import("server-only"), () => ({}));
-
 const LASTFM_BASE_URL = "https://ws.audioscrobbler.com/2.0/";
 
 function lastfmReturns(body: JsonBodyType | Response) {

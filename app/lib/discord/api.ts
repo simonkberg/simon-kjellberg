@@ -368,7 +368,7 @@ async function getRecentMessages(): Promise<DiscordMessage[]> {
 }
 
 function getStore(): ChannelStore {
-  return getGlobal("simon.dev/discord-store", () => {
+  return getGlobal("discord-store", () => {
     const store = new ChannelStore({
       fetchMessages: getRecentMessages,
       fetchMessage: getMessage,

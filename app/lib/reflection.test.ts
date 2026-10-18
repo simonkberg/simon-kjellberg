@@ -10,7 +10,6 @@ import {
 
 import { reflect } from "./reflection";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/anthropic"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, runAgentLoop: vi.fn(), buildSystem: vi.fn() };

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
-import { sendToggle } from "@/mocks/popover";
+import { isOpen, sendToggle } from "@/mocks/popover";
 
 import {
   ChatReactionList,
@@ -130,7 +130,7 @@ describe("ChatReactionPicker", () => {
 
     await user.keyboard(keys);
 
-    expect(getPicker()).not.toHaveAttribute("data-popover-open");
+    expect(isOpen(getPicker())).toBe(false);
   });
 
   it("closes on Escape without leaving it to the page", () => {
@@ -138,7 +138,7 @@ describe("ChatReactionPicker", () => {
     getEmoji("heart").focus();
 
     expect(fireEvent.keyDown(getEmoji("heart"), { key: "Escape" })).toBe(false);
-    expect(getPicker()).not.toHaveAttribute("data-popover-open");
+    expect(isOpen(getPicker())).toBe(false);
   });
 
   it("returns focus to its button when it closes around it", () => {

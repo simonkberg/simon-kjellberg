@@ -8,13 +8,11 @@ import { MIGRATIONS } from "@/lib/migrations";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 import { message } from "@/mocks/discord";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
 import { subscribe } from "./gateway";
-
-vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
 
@@ -68,6 +66,8 @@ const heyTurn = {
 
 const OOPS = "oops, something went wrong... try again later!";
 
+const sqlite = sqliteBeforeEach(query, MIGRATIONS);
+
 beforeEach(() => {
   vi.mocked(reflect).mockResolvedValue(undefined);
   vi.mocked(postChannelMessage).mockResolvedValue("response-1");
@@ -75,19 +75,13 @@ beforeEach(() => {
 
 describe("handleMessage", () => {
   beforeEach(() => {
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([
       link("msg-1", 0, "User1", "hey simon-bot"),
     ]);
   });
 
   it("should respond when bot is mentioned in the message, even if pruning fails", async () => {
-    const sqlite = createSqliteQuery(MIGRATIONS);
-    vi.mocked(query).mockImplementation(async (sql, args) =>
-      sql.startsWith("DELETE")
-        ? Promise.reject(new Error("boom"))
-        : sqlite(sql, args),
-    );
+    vi.mocked(query).mockImplementation(failQuery(sqlite(), "DELETE"));
     replyWith("hello there!");
 
     await handleMessage(message("msg-1", { content: "User1: hey simon-bot!" }));
@@ -170,7 +164,6 @@ describe("handleMessage", () => {
 
   it("should forget handled messages after an hour", async () => {
     vi.useFakeTimers({ now: 0 });
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([]);
     const seen = async () =>
       (await query("SELECT id FROM seen_messages ORDER BY id")).rows;
@@ -442,7 +435,6 @@ describe("handleMessage", () => {
 
 describe("startBotSubscription", () => {
   beforeEach(() => {
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([]);
     vi.mocked(subscribe).mockResolvedValue(() => {});
   });

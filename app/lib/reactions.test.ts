@@ -2,14 +2,11 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  addBotReaction,
-  type Message,
-  removeBotReaction,
-} from "@/lib/discord/api";
+import { addBotReaction, removeBotReaction } from "@/lib/discord/api";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
+import { createMessage } from "@/mocks/messages";
 import { emptyResult, failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
@@ -22,7 +19,6 @@ import {
   withSiteReactions,
 } from "./reactions";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );
@@ -33,19 +29,6 @@ vi.mock(import("@/lib/discord/api"), () => ({
 
 const alice = "alice" as Username;
 const bob = "bob" as Username;
-
-function message(id: string, overrides: Partial<Message> = {}): Message {
-  return {
-    id,
-    user: { name: "someone", color: "hsl(0 0% 0%)" },
-    content: "hi",
-    edited: false,
-    timestamp: new Date(0),
-    reactions: [],
-    replies: [],
-    ...overrides,
-  };
-}
 
 const sqlite = sqliteBeforeEach(query, MIGRATIONS);
 
@@ -132,13 +115,15 @@ describe("toggleReaction", () => {
 describe("markOwnReactions", () => {
   it("marks the visitor's reactions and leaves them out of the names, replies included", () => {
     const messages = [
-      message("1", {
+      createMessage({
+        id: "1",
         reactions: [
           { emoji: "👍", count: 2, users: ["alice", "bob"] },
           { emoji: "🎉", count: 1, users: ["bob"] },
         ],
         replies: [
-          message("2", {
+          createMessage({
+            id: "2",
             reactions: [{ emoji: "😂", count: 1, users: ["alice"] }],
           }),
         ],
@@ -165,11 +150,15 @@ describe("withSiteReactions", () => {
     await toggleReaction("2", "🎉", bob);
 
     const messages = await withSiteReactions([
-      message("1", {
+      createMessage({
+        id: "1",
         reactions: [{ emoji: "👍", count: 1, users: ["simon"] }],
-        replies: [message("2")],
+        replies: [createMessage({ id: "2" })],
       }),
-      message("3", { reactions: [{ emoji: "😮", count: 2, users: [] }] }),
+      createMessage({
+        id: "3",
+        reactions: [{ emoji: "😮", count: 2, users: [] }],
+      }),
     ]);
 
     expect(messages).toMatchObject([
@@ -189,7 +178,7 @@ describe("withSiteReactions", () => {
 
   it("falls back to Discord's reactions when Turso fails", async () => {
     vi.mocked(query).mockRejectedValueOnce(new Error("down"));
-    const messages = [message("1")];
+    const messages = [createMessage({ id: "1" })];
 
     expect(await withSiteReactions(messages)).toBe(messages);
     expect(log.error).toHaveBeenCalledOnce();

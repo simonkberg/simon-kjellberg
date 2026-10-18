@@ -9,7 +9,6 @@ import { sendToggle } from "@/mocks/popover";
 
 import { Chat } from "./Chat";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
 
 describe("Chat", () => {

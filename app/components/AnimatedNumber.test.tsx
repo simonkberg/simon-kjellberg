@@ -2,15 +2,7 @@ import { Globals } from "@react-spring/web";
 import { act, render, screen } from "@testing-library/react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  onTestFinished,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { AnimatedNumber } from "./AnimatedNumber";
 
@@ -22,10 +14,6 @@ function preferReducedMotion() {
 
 beforeEach(() => {
   Globals.assign({ skipAnimation: false });
-});
-
-afterEach(() => {
-  Globals.assign({ skipAnimation: true });
 });
 
 describe("AnimatedNumber", () => {
