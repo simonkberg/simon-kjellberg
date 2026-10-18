@@ -30,7 +30,10 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
 
 const HAND = "✋";
 
-const focus = (button: HTMLButtonElement | null) => button?.focus();
+// One function for every option, so it runs once as the row opens, not when the tone changes.
+const focusPressed = (button: HTMLButtonElement | null) => {
+  if (button?.getAttribute("aria-pressed") === "true") button.focus();
+};
 
 const SkinTonePicker = ({ picker }: { picker: string }) => {
   const tone = useSkinTone();
@@ -43,7 +46,7 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
         SKIN_TONES.map((option) => (
           <TooltipButton
             key={option.name}
-            ref={option === tone ? focus : undefined}
+            ref={focusPressed}
             tooltip={option.name}
             anchor={picker}
             aria-pressed={option === tone}
@@ -104,11 +107,11 @@ const ReactionEmoji = ({
 
 export const ChatReactionPicker = ({
   messageId,
-  reactions = [],
+  reactions,
   glyph = "☺",
 }: {
   messageId: string;
-  reactions?: Reaction[];
+  reactions: Reaction[];
   glyph?: string;
 }) => {
   const { reacting } = use(ChatReactionsContext);

@@ -31,7 +31,9 @@ function openPicker() {
 }
 
 function renderOpenPicker() {
-  const context = renderWithContext(<ChatReactionPicker messageId="1" />);
+  const context = renderWithContext(
+    <ChatReactionPicker messageId="1" reactions={[]} />,
+  );
   getPicker().showPopover();
   openPicker();
   return context;
@@ -60,7 +62,7 @@ function layOutGrid(columns: number) {
 
 describe("ChatReactionPicker", () => {
   it("renders no emoji until opened", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
+    renderWithContext(<ChatReactionPicker messageId="1" reactions={[]} />);
 
     expect(
       within(getPicker()).queryAllByRole("button", { hidden: true }),
@@ -218,7 +220,7 @@ describe("ChatReactionPicker", () => {
   it("returns focus to its message when a pick has disabled its button", () => {
     renderWithContext(
       <article className="chat-message" tabIndex={-1}>
-        <ChatReactionPicker messageId="1" />
+        <ChatReactionPicker messageId="1" reactions={[]} />
       </article>,
       { reacting: new Set(["1"]) },
     );
@@ -233,8 +235,8 @@ describe("ChatReactionPicker", () => {
   it("disables the button only while its own message's reaction is pending", () => {
     renderWithContext(
       <>
-        <ChatReactionPicker messageId="1" />
-        <ChatReactionPicker messageId="2" />
+        <ChatReactionPicker messageId="1" reactions={[]} />
+        <ChatReactionPicker messageId="2" reactions={[]} />
       </>,
       { reacting: new Set(["1"]) },
     );
