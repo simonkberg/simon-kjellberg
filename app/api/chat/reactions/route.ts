@@ -32,8 +32,27 @@ const FAILED: ReactionResult = {
   error: "Failed to react to chat message",
 };
 
+// A reaction is under 100 characters; a server action had Next's 1MB cap, a route has none.
+const MAX_BODY_LENGTH = 1024;
+
 function respond(result: ReactionResult, status = 200) {
   return NextResponse.json(result, { status });
+}
+
+async function readJson(request: NextRequest): Promise<unknown> {
+  const reader = request.body?.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  while (reader) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    text += decoder.decode(value, { stream: true });
+    if (text.length > MAX_BODY_LENGTH) {
+      await reader.cancel();
+      return null;
+    }
+  }
+  return JSON.parse(text + decoder.decode());
 }
 
 export async function POST(request: NextRequest) {
@@ -68,7 +87,9 @@ export async function POST(request: NextRequest) {
     );
     if (denied) return respond(denied.result, denied.httpStatus);
 
-    const parsed = BodySchema.safeParse(await request.json().catch(() => null));
+    const parsed = BodySchema.safeParse(
+      await readJson(request).catch(() => null),
+    );
     if (!parsed.success) {
       log.warn(
         { err: parsed.error, action: "reactToChatMessage" },
@@ -88,7 +109,12 @@ export async function POST(request: NextRequest) {
       { username, messageId, emoji, mine, action: "reactToChatMessage" },
       "Set reaction",
     );
-    return respond({ status: "ok", savedAt: await reactionsClock() });
+    // The reaction is saved either way, so a failed read only leaves it undated.
+    const savedAt = await reactionsClock().catch((err: unknown) => {
+      log.warn({ err, action: "reactToChatMessage" }, "Failed to read clock");
+      return null;
+    });
+    return respond({ status: "ok", savedAt });
   } catch (err) {
     if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
       return respond(

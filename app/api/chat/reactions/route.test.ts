@@ -186,6 +186,15 @@ describe("POST /api/chat/reactions", () => {
     ],
     ["a reaction without the state to set", { messageId: "123", emoji: "👍" }],
     ["a body that isn't JSON", "{"],
+    [
+      "a body over 1KB",
+      JSON.stringify({
+        messageId: "123",
+        emoji: "👍",
+        mine: true,
+        padding: "x".repeat(1024),
+      }),
+    ],
   ])("rejects %s", async (_, body) => {
     expect(await result(await react(body))).toEqual({
       status: 400,
@@ -266,6 +275,23 @@ describe("POST /api/chat/reactions", () => {
       (await react({ messageId: "123", emoji: "👍", mine: true })).status,
     ).toBe(500);
     expect(revalidateTag).toHaveBeenCalledWith("getChatHistory", { expire: 0 });
+  });
+
+  it("answers a save Turso's clock couldn't date as saved", async () => {
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query).mockImplementation((sql, args) =>
+      sql.includes("unixepoch")
+        ? Promise.reject(new Error("timeout"))
+        : sqlite(sql, args),
+    );
+
+    expect(
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
+    ).toEqual({ status: 200, body: { status: "ok", savedAt: null } });
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "Failed to read clock",
+    );
   });
 
   it("dates a save by Turso's clock", async () => {

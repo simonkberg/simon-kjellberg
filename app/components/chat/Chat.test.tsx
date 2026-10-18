@@ -531,6 +531,24 @@ describe("Chat", () => {
       );
     });
 
+    it("holds a save Turso couldn't date only until the next history", async () => {
+      answer(() =>
+        HttpResponse.json<ReactionResult>({ status: "ok", savedAt: null }),
+      );
+      const { rerender } = await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      expect(screen.getByRole("button", { name: "👍 2" })).toBeEnabled();
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+      await refreshWith(rerender, thumbs, 0);
+      expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    });
+
     it("keeps one message's error when another's reaction succeeds", async () => {
       answer((messageId) =>
         messageId === "msg-1"
@@ -641,17 +659,17 @@ describe("Chat", () => {
       {
         failure: "the result isn't one it knows",
         respond: () => HttpResponse.json({ status: "maybe" }),
-        error: "Failed to react to chat message",
+        error: "Failed to react to chat message (HTTP 200)",
       },
       {
         failure: "the result isn't an object",
         respond: () => HttpResponse.json(null),
-        error: "Failed to react to chat message",
+        error: "Failed to react to chat message (HTTP 200)",
       },
       {
         failure: "the result lacks the saved state",
         respond: () => HttpResponse.json({ status: "ok" }),
-        error: "Failed to react to chat message",
+        error: "Failed to react to chat message (HTTP 200)",
       },
       {
         failure: "the error has no message",

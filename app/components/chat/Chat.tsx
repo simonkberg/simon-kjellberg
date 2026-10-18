@@ -85,7 +85,7 @@ function readResult(body: unknown, ok: boolean): ReactionResult | null {
     ok &&
     body.status === "ok" &&
     "savedAt" in body &&
-    typeof body.savedAt === "number"
+    (typeof body.savedAt === "number" || body.savedAt === null)
   ) {
     return { status: "ok", savedAt: body.savedAt };
   }
@@ -103,40 +103,36 @@ async function postReaction(
   messageId: string,
   { emoji, mine }: OwnReaction,
 ): Promise<ReactionOutcome> {
-  let response: Response;
+  const failed = "Failed to react to chat message";
   try {
-    response = await fetch("/api/chat/reactions", {
+    const response = await fetch("/api/chat/reactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageId, emoji, mine }),
       // Past the rate-limit gate's 30s, so only a hung connection gives up.
       signal: AbortSignal.timeout(45_000),
     });
-  } catch {
-    return { status: "unknown", error: "Failed to react to chat message" };
-  }
-  const result = readResult(
-    await response.json().catch(() => null),
-    response.ok,
-  );
-  // A server error may follow a write that landed, so only a 4xx rejects for sure.
-  if (result?.status === "error" && response.status >= 500) {
-    return { status: "unknown", error: result.error };
-  }
-  return (
-    result ?? {
-      status: "unknown",
-      error: response.ok
-        ? "Failed to react to chat message"
-        : `Failed to react to chat message (HTTP ${response.status})`,
+    const result = readResult(
+      await response.json().catch(() => null),
+      response.ok,
+    );
+    // A server error may follow a write that landed, so only a 4xx rejects for sure.
+    if (result?.status === "ok" || (result && response.status < 500)) {
+      return result;
     }
-  );
+    return {
+      status: "unknown",
+      error: result?.error ?? `${failed} (HTTP ${response.status})`,
+    };
+  } catch {
+    return { status: "unknown", error: failed };
+  }
 }
 
 interface SavedReaction extends OwnReaction {
   messageId: string;
-  // None when the outcome is unknown.
-  savedAt?: number;
+  // Null when the outcome is unknown or Turso couldn't date it.
+  savedAt: number | null;
   // The history shown when it settled.
   heldOver?: ChatHistoryResult;
 }
@@ -213,7 +209,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
           new Map(current).set(`${messageId} ${emoji}`, {
             ...own,
             messageId,
-            ...(reaction.status === "ok" && { savedAt: reaction.savedAt }),
+            savedAt: reaction.status === "ok" ? reaction.savedAt : null,
           }),
         );
       }
