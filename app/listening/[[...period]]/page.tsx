@@ -18,7 +18,8 @@ import { PeriodSelector } from "./components/PeriodSelector";
 import { TopTable, TopTableSkeleton } from "./components/TopTable";
 
 export const prefetch = "partial";
-// Reading params behind Suspense would turn invalid periods into soft 404s.
+export const unstable_paramMatching = { period: "not-found" };
+// Every valid period is prerendered, so reading params up front never blocks.
 export const instant = false;
 
 const trackColumns = [
@@ -60,7 +61,7 @@ export function generateStaticParams(): Awaited<
   ListeningPageProps["params"]
 >[] {
   return periods.map((period) => ({
-    period: period === "overall" ? undefined : [period],
+    period: period === "overall" ? [] : [period],
   }));
 }
 
