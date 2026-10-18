@@ -1253,6 +1253,17 @@ describe("bot reactions", () => {
     },
   );
 
+  it("should accept a success with an empty body", async () => {
+    server.use(
+      http.put(
+        `${REACTIONS_URL}/@me`,
+        () => new HttpResponse(null, { status: 200 }),
+      ),
+    );
+
+    await expect(addBotReaction("1", "👍")).resolves.toBeUndefined();
+  });
+
   it("should carry Discord's error code", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
@@ -1287,6 +1298,7 @@ describe("routeOf", () => {
     ],
     ["GET", "guilds/789/members/456", "GET guilds/789/members/:id"],
     ["GET", "guilds/789/messages/search", "GET guilds/789/messages/search"],
+    ["GET", "channels/123/messages?limit=100", "GET channels/123/messages"],
   ])("should key %s %s as %s", (method, endpoint, route) => {
     expect(routeOf(method, endpoint)).toBe(route);
   });
@@ -1641,6 +1653,7 @@ describe("rate limiting", () => {
     ["exponent", () => "1e3", 1000],
     ["fraction", () => "1.5", 1000],
     ["a malformed date", () => "Sun, 99 Foo 2026 00:00:00 GMT", 1000],
+    ["a past date", () => new Date(Date.now() - 3000).toUTCString(), 1000],
     ["empty", () => "", 1000],
   ])(
     "should read a Retry-After given as %s",

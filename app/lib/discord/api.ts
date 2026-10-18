@@ -50,6 +50,7 @@ const GLOBAL_GATE = "global";
 /** @internal Exported for testing. Discord buckets by method, route and channel or guild. */
 export function routeOf(method: string, endpoint: string): string {
   const route = endpoint
+    .replace(/\?.*$/, "")
     .split("/")
     .map((segment, i, segments) => {
       const previous = segments[i - 1];
@@ -72,8 +73,9 @@ function retryAfterHeaderMs(value: string | null): number | undefined {
   if (/^\d+$/.test(header)) return Number(header) * 1000;
   // An HTTP-date starts with its weekday, which keeps Date.parse off forms like "-5".
   if (!/^[a-z]{3,9},/i.test(header)) return undefined;
-  const date = Date.parse(header);
-  return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
+  // A date already past says more about clock skew than the limit, so it falls back too.
+  const waitMs = Date.parse(header) - Date.now();
+  return waitMs > 0 ? waitMs : undefined;
 }
 
 function gateUntil(route: string): number {
@@ -147,25 +149,27 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    const text = response.status === 204 ? "null" : await response.text();
+    const text = await response.text();
     let json: unknown = null;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      // A proxy's HTML error page falls back like an unexpected body; a success can't.
-      if (response.ok) {
-        log.error(
-          {
-            endpoint,
-            status: response.status,
-            body: text.slice(0, BODY_SNIPPET_LENGTH),
-          },
-          "Discord API body isn't JSON",
-        );
-        throw new DiscordApiError(
-          `Discord API error: ${response.status} body isn't JSON`,
-          undefined,
-        );
+    if (text !== "") {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // A proxy's HTML error page falls back like an unexpected body; a success can't.
+        if (response.ok) {
+          log.error(
+            {
+              endpoint,
+              status: response.status,
+              body: text.slice(0, BODY_SNIPPET_LENGTH),
+            },
+            "Discord API body isn't JSON",
+          );
+          throw new DiscordApiError(
+            `Discord API error: ${response.status} body isn't JSON`,
+            undefined,
+          );
+        }
       }
     }
 
