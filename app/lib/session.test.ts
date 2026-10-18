@@ -1,5 +1,5 @@
+import { SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { forbidden } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
@@ -10,12 +10,6 @@ import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
-
-vi.mock(import("next/navigation"), () => ({
-  forbidden: vi.fn(() => {
-    throw new Error("NEXT_FORBIDDEN");
-  }),
-}));
 
 describe("session", () => {
   afterEach(() => {
@@ -66,27 +60,28 @@ describe("session", () => {
     });
 
     it("should return undefined for invalid token", async () => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
       const result = await decrypt("invalid-token");
       expect(result).toBeUndefined();
-      expect(logErrorSpy).toHaveBeenCalledOnce();
+      expect(logWarnSpy).toHaveBeenCalledOnce();
     });
 
-    it("should return undefined for tampered token", async () => {
+    it("logs a token signed with another secret as an error", async () => {
       const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
-      const payload = SessionSchema.parse({ username: "testuser" });
-      const encrypted = await encrypt(payload);
-      const tampered = encrypted.slice(0, -5) + "xxxxx";
+      const token = await new SignJWT({ username: "testuser" })
+        .setProtectedHeader({ alg: "HS256" })
+        .sign(new TextEncoder().encode("another_secret"));
 
-      const result = await decrypt(tampered);
-      expect(result).toBeUndefined();
+      expect(await decrypt(token)).toBeUndefined();
       expect(logErrorSpy).toHaveBeenCalledOnce();
+      expect(logWarnSpy).not.toHaveBeenCalled();
     });
 
     it("should validate session schema and reject invalid payload", async () => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
       // Payload has 'name' instead of 'username' - should fail schema validation
       const invalidPayload = { name: "testuser" };
@@ -95,11 +90,11 @@ describe("session", () => {
       const decrypted = await decrypt(encrypted);
 
       expect(decrypted).toBeUndefined();
-      expect(logErrorSpy).toHaveBeenCalledOnce();
+      expect(logWarnSpy).toHaveBeenCalledOnce();
     });
 
     it("should return undefined for expired token", async () => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
       vi.useFakeTimers({ shouldAdvanceTime: true });
       const payload = SessionSchema.parse({ username: "testuser" });
@@ -110,7 +105,7 @@ describe("session", () => {
 
       const result = await decrypt(encrypted);
       expect(result).toBeUndefined();
-      expect(logErrorSpy).toHaveBeenCalledOnce();
+      expect(logWarnSpy).toHaveBeenCalledOnce();
     });
   });
 
@@ -128,32 +123,29 @@ describe("session", () => {
       expect(result).toEqual(payload);
     });
 
-    it("should call forbidden when no session cookie exists", async () => {
+    it("should throw when no session cookie exists", async () => {
       vi.mocked(cookies).mockResolvedValue(new MockCookies(new Headers()));
 
-      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
-      expect(forbidden).toHaveBeenCalledOnce();
+      await expect(getSession()).rejects.toThrow("No session on the request");
     });
 
-    it("should call forbidden when session cookie is invalid", async () => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+    it("should throw when session cookie is invalid", async () => {
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
       vi.mocked(cookies).mockResolvedValue(
         new MockCookies(new Headers({ cookie: "session=invalid-token" })),
       );
 
-      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
-      expect(forbidden).toHaveBeenCalledOnce();
-      expect(logErrorSpy).toHaveBeenCalledOnce();
+      await expect(getSession()).rejects.toThrow("No session on the request");
+      expect(logWarnSpy).toHaveBeenCalledOnce();
     });
 
-    it("should call forbidden when session cookie is empty", async () => {
+    it("should throw when session cookie is empty", async () => {
       vi.mocked(cookies).mockResolvedValue(
         new MockCookies(new Headers({ cookie: "session=" })),
       );
 
-      await expect(getSession()).rejects.toThrow("NEXT_FORBIDDEN");
-      expect(forbidden).toHaveBeenCalledOnce();
+      await expect(getSession()).rejects.toThrow("No session on the request");
     });
   });
 });

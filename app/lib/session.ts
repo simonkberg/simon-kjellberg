@@ -1,7 +1,6 @@
 import "server-only";
-import { type JWTPayload, jwtVerify, SignJWT } from "jose";
+import { errors, type JWTPayload, jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { forbidden } from "next/navigation";
 import { z } from "zod";
 
 import { env } from "@/lib/env";
@@ -33,7 +32,12 @@ export async function decrypt(session: string | undefined) {
     });
     return SessionSchema.parse(payload);
   } catch (err) {
-    log.error({ err }, "Failed to verify session");
+    // A bad signature on a well-formed token is what a changed SESSION_SECRET looks like.
+    if (err instanceof errors.JWSSignatureVerificationFailed) {
+      log.error({ err }, "Session signature didn't match SESSION_SECRET");
+    } else {
+      log.warn({ err }, "Failed to verify session");
+    }
     return;
   }
 }
@@ -46,9 +50,8 @@ async function readSession() {
 export async function getSession() {
   const session = await readSession();
 
-  if (!session) {
-    return forbidden();
-  }
+  // proxy.ts forwards a session on every request it matches.
+  if (!session) throw new Error("No session on the request");
 
   return session;
 }

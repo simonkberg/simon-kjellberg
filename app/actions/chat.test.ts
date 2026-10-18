@@ -23,7 +23,7 @@ import { identifiers } from "@/lib/identifiers";
 import { IP_DENY_LIST_URL, refreshIpDenyList } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
-import type { Username } from "@/lib/session";
+import { getSession, type Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 import { server } from "@/mocks/node";
 import { createSqliteQuery } from "@/mocks/sqlite";
@@ -35,7 +35,8 @@ vi.mock(import("next/cache"), () => ({
   refresh: vi.fn(),
   updateTag: vi.fn(),
 }));
-vi.mock(import("@/lib/identifiers"), () => ({
+vi.mock(import("@/lib/identifiers"), async (importOriginal) => ({
+  ...(await importOriginal()),
   identifiers: vi.fn(() =>
     Promise.resolve({ ip: "0.0.0.0", userAgent: "vitest" }),
   ),
@@ -219,6 +220,27 @@ describe("postChatMessage", () => {
     expect(await post()).toEqual({ status: "ok" });
   });
 
+  it("limits an IPv6 /64 as one IP", async () => {
+    vi.mocked(identifiers).mockResolvedValue({
+      ip: "2001:db8:1:2::1",
+      userAgent: "vitest",
+    });
+    await postUpToTheLimit();
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "2001:db8:1:2:ffff::1",
+      userAgent: "vitest",
+    });
+
+    expect(await post()).toMatchObject({ status: "error" });
+
+    vi.mocked(identifiers).mockResolvedValueOnce({
+      ip: "2001:db8:1:3::1",
+      userAgent: "vitest",
+    });
+
+    expect(await post()).toEqual({ status: "ok" });
+  });
+
   it("limits by username when the IP is unavailable", async () => {
     vi.mocked(identifiers).mockResolvedValue({
       ip: undefined,
@@ -250,6 +272,21 @@ describe("postChatMessage", () => {
       { err: error, action: "postChatMessage" },
       "Error posting chat message",
     );
+  });
+
+  it("returns an error result when the request has no session", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
+
+    expect(await postChatMessage(new FormData())).toEqual({
+      status: "error",
+      error: "Failed to post chat message",
+    });
+    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
+    expect(await reactToChatMessage("1", "👍")).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
   });
 
   it("returns error when form data is invalid", async () => {

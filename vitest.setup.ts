@@ -28,7 +28,7 @@ if (
 }
 
 beforeAll(() => {
-  server.listen();
+  server.listen({ onUnhandledFrame: "error" });
 });
 
 afterEach(() => {

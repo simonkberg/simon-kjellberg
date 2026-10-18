@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { notFound } from "next/navigation";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   getTopAlbums,
@@ -109,6 +109,10 @@ describe("generateStaticParams", () => {
 });
 
 describe("ListeningPage", () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
   it("should render page with period content", async () => {
     await act(async () =>
       render(
@@ -167,6 +171,29 @@ describe("ListeningPage", () => {
     expect(
       screen.getByRole("heading", { name: /Top Albums/ }),
     ).toBeInTheDocument();
+  });
+
+  it("says each list that failed to load is unavailable", async () => {
+    const error = { status: "error", error: "Failed" } as const;
+    vi.mocked(getTopTracks).mockResolvedValue(error);
+    vi.mocked(getTopArtists).mockResolvedValue(error);
+    vi.mocked(getTopAlbums).mockResolvedValue(error);
+
+    await act(async () =>
+      render(
+        <ListeningPage
+          params={Promise.resolve({ period: undefined })}
+          searchParams={searchParams}
+        />,
+      ),
+    );
+
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    for (const noun of ["tracks", "artists", "albums"]) {
+      expect(
+        screen.getByText(`Top ${noun} are temporarily unavailable :(`),
+      ).toBeInTheDocument();
+    }
   });
 
   it("should show loading state while data is fetching", async () => {
