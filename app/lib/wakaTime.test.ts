@@ -145,7 +145,6 @@ describe("getStats", () => {
     await getStats();
 
     expect(timeoutSpy).toHaveBeenCalledWith(3000);
-    timeoutSpy.mockRestore();
   });
 
   it.each([

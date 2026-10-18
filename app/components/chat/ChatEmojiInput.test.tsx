@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { postChatMessage } from "@/actions/chat";
 import { type EmojiShortcodes, REACTION_EMOJI } from "@/lib/emoji";
@@ -42,10 +42,6 @@ describe("ChatEmojiInput", () => {
   beforeEach(() => {
     server.use(http.get("*/api/emoji", () => HttpResponse.json(EMOJI)));
     vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
   });
 
   it("offers the reactions on a bare colon, with none chosen", async () => {

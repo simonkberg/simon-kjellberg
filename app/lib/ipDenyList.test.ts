@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
@@ -29,11 +29,6 @@ describe("isDeniedIp", () => {
     vi.useFakeTimers({ now: 0, toFake: ["Date"] });
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("should deny only listed IPs, skipping anything that isn't one", async () => {

@@ -1,6 +1,6 @@
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { MockCookies } from "@/mocks/headers";
@@ -12,10 +12,6 @@ vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
 describe("session", () => {
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
   describe("encrypt", () => {
     it("should encrypt a session payload with username", async () => {
       const payload = SessionSchema.parse({ username: "testuser" });

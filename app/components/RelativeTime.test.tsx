@@ -17,8 +17,6 @@ describe("RelativeTime", () => {
     const timeElement = screen.getByText(/5 minutes ago/).closest("time");
     expect(timeElement).toHaveAttribute("dateTime", testDate.toISOString());
     expect(timeElement).toHaveAttribute("title", testDate.toLocaleString());
-
-    vi.useRealTimers();
   });
 
   it.each([
@@ -57,8 +55,6 @@ describe("RelativeTime", () => {
     await act(() => render(<RelativeTime date={new Date(now - offset)} />));
 
     expect(screen.getByText(expected)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it.each([
@@ -102,8 +98,6 @@ describe("RelativeTime", () => {
       });
 
       expect(screen.getByText(updatedText)).toBeInTheDocument();
-
-      vi.useRealTimers();
     },
   );
 
@@ -119,8 +113,6 @@ describe("RelativeTime", () => {
 
     // "long" style produces full words like "5 minutes ago"
     expect(screen.getByText(/5 minutes ago/)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it.each([
@@ -139,8 +131,6 @@ describe("RelativeTime", () => {
     );
 
     expect(screen.getByText(expected)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it("updates formatter when style prop changes", async () => {
@@ -162,8 +152,6 @@ describe("RelativeTime", () => {
     });
 
     expect(screen.getByText(/5m ago/)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it("does not update display for times older than a day", async () => {
@@ -183,7 +171,5 @@ describe("RelativeTime", () => {
     });
 
     expect(screen.getByText(/2 days ago/)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 });

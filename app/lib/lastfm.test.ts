@@ -133,7 +133,6 @@ describe("userGetRecentTracks", () => {
     await userGetRecentTracks("testuser");
 
     expect(timeoutSpy).toHaveBeenCalledWith(10000);
-    timeoutSpy.mockRestore();
   });
 
   it.each([

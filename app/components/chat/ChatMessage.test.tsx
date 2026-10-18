@@ -66,8 +66,6 @@ describe("ChatMessage", () => {
     );
 
     expect(screen.getByText(/5m ago/)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it("does not show edited indicator when edited is false", () => {

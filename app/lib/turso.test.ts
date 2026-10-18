@@ -34,10 +34,6 @@ function pipelineResponse(result: Record<string, unknown> = {}) {
 }
 
 describe("query", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("should send the statement with encoded args and the auth header", async () => {
     let body: unknown;
     server.use(
@@ -333,8 +329,6 @@ describe("keepWarm", () => {
 
   afterEach(() => {
     resetGlobal("simon.dev/turso-keep-warm");
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("should query Turso every minute", async () => {

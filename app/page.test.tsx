@@ -152,7 +152,6 @@ describe("RootPage", () => {
         expect(within(region).queryByRole("status")).not.toBeInTheDocument();
         expect(within(region).getByTestId("stats-list")).toBeInTheDocument();
       });
-      vi.useRealTimers();
     });
   });
 
@@ -215,7 +214,6 @@ describe("RootPage", () => {
           within(region).getByTestId("recent-tracks-list"),
         ).toBeInTheDocument();
       });
-      vi.useRealTimers();
     });
   });
 
@@ -286,7 +284,6 @@ describe("RootPage", () => {
         expect(within(region).queryByText("Loading")).not.toBeInTheDocument();
         expect(within(region).getByTestId("chat")).toBeInTheDocument();
       });
-      vi.useRealTimers();
     });
   });
 

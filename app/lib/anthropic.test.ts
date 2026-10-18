@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { config } from "@/config";
 import { getChannelMessages, searchChannelMessages } from "@/lib/discord/api";
@@ -157,11 +157,6 @@ describe("createMessage", () => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.useRealTimers();
-  });
-
   it("should create message and yield text content", async () => {
     server.use(
       http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
@@ -257,10 +252,6 @@ describe("createMessage", () => {
   });
 
   describe("memory tools", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
     const changed = (content: string) => ({
       error:
         "Note #3 has changed since you read it - work from its current text",
@@ -1126,7 +1117,6 @@ describe("formatConversation", () => {
 
 describe("react tool", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   });
 

@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { notFound } from "next/navigation";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   getTopAlbums,
@@ -109,10 +109,6 @@ describe("generateStaticParams", () => {
 });
 
 describe("ListeningPage", () => {
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
   it("should render page with period content", async () => {
     await act(async () =>
       render(

@@ -18,7 +18,6 @@ beforeEach(() => {
 
 afterEach(() => {
   Globals.assign({ skipAnimation: true });
-  vi.restoreAllMocks();
 });
 
 describe("AnimatedNumber", () => {

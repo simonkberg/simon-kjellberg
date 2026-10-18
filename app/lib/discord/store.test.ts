@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { mockEnv } from "@/mocks/env";
@@ -127,11 +127,6 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.spyOn(log, "warn").mockImplementation(() => {});
   vi.spyOn(log, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
 });
 
 describe("ChannelStore", () => {

@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
@@ -25,11 +25,6 @@ describe("rateLimit", () => {
     resetGlobal("simon.dev/rate-limit-blocked");
     vi.useFakeTimers({ now: 1_000_000 });
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("should allow requests up to the limit", async () => {

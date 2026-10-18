@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
@@ -50,12 +50,7 @@ async function stored(id: number) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-});
-
-afterEach(() => {
-  vi.useRealTimers();
 });
 
 describe("peopleCategory", () => {

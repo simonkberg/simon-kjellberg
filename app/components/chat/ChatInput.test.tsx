@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { postChatMessage, type PostChatMessageResult } from "@/actions/chat";
 
@@ -10,11 +10,6 @@ vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
 describe("ChatInput", () => {
   const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
-
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
-  });
 
   it("renders input field with correct attributes", () => {
     render(<ChatInput {...defaultReplyProps} />);
@@ -401,10 +396,6 @@ describe("CaretBuddy integration", () => {
 
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it("shows idle state when input is empty and no recent activity", async () => {

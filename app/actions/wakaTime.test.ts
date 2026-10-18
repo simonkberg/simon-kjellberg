@@ -1,5 +1,5 @@
 import { cacheLife } from "next/cache";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { getStats, type WakaTimeStats } from "@/lib/wakaTime";
@@ -9,10 +9,6 @@ import { getWakaTimeStats } from "./wakaTime";
 vi.mock(import("@/lib/wakaTime"), () => ({ getStats: vi.fn() }));
 
 vi.mock(import("next/cache"), () => ({ cacheLife: vi.fn() }));
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("getWakaTimeStats", () => {
   it("should return success status with stats when getStats succeeds", async () => {

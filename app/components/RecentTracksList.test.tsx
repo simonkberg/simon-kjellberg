@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { GetRecentTracksResult, RecentTrack } from "@/actions/lastfm";
 import { refreshRecentTracks } from "@/actions/lastfm";
@@ -19,10 +19,6 @@ describe("RecentTracksList", () => {
     nowPlaying: false,
     loved: false,
     ...overrides,
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
   });
 
   it("renders tracks as list items with name and artist", async () => {
@@ -123,8 +119,6 @@ describe("RecentTracksList", () => {
     const item = screen.getByRole("listitem");
     expect(item).toHaveTextContent("Past Song");
     expect(screen.getByText(/5 minutes ago/)).toBeInTheDocument();
-
-    vi.useRealTimers();
   });
 
   it("displays error message when tracks fetch fails", async () => {
@@ -192,8 +186,6 @@ describe("RecentTracksList", () => {
       });
 
       expect(refreshRecentTracks).toHaveBeenCalledTimes(2);
-
-      vi.useRealTimers();
     });
 
     it("shows the tracks the refreshed page brings", async () => {
@@ -250,8 +242,6 @@ describe("RecentTracksList", () => {
 
       // Should not have been called again after unmount
       expect(refreshRecentTracks).toHaveBeenCalledTimes(1);
-
-      vi.useRealTimers();
     });
   });
 });

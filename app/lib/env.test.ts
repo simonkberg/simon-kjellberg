@@ -1,13 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  expectTypeOf,
-  it,
-  type Mock,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { mockEnv } from "@/mocks/env";
 
@@ -16,10 +7,6 @@ import type { Env } from "./env";
 describe("env", () => {
   beforeEach(() => {
     vi.resetModules();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   describe("successful validation", () => {
@@ -97,14 +84,8 @@ describe("env", () => {
   });
 
   describe("validation failures", () => {
-    let consoleErrorSpy: Mock<Console["error"]>;
-
     beforeEach(() => {
-      consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      consoleErrorSpy.mockRestore();
+      vi.spyOn(console, "error").mockImplementation(() => {});
     });
 
     it("should throw when SESSION_SECRET is missing in production", async () => {

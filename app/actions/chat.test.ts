@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { cacheLife, cacheTag, refresh, updateTag } from "next/cache";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   dismissChatTip,
@@ -76,10 +76,6 @@ async function postUpToTheLimit() {
     expect(await post()).toEqual({ status: "ok" });
   }
 }
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
 
 describe("getChatHistory", () => {
   beforeEach(() => {
@@ -157,11 +153,6 @@ describe("postChatMessage", () => {
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(postChannelMessage).mockResolvedValue("msg-123");
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("posts message to Discord and returns ok on success", async () => {
@@ -339,11 +330,6 @@ describe("reactToChatMessage", () => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(addBotReaction).mockResolvedValue();
     vi.mocked(removeBotReaction).mockResolvedValue();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("toggles the visitor's reaction and refreshes", async () => {

@@ -800,7 +800,6 @@ describe("getChannelMessages", () => {
     await getChannelMessages();
 
     expect(timeoutSpy).toHaveBeenCalledWith(5000);
-    timeoutSpy.mockRestore();
   });
 
   it.each([
@@ -1340,8 +1339,6 @@ describe("rate limiting", () => {
   });
 
   afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
     _resetRateLimitState();
   });
 

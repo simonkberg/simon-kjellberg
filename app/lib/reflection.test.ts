@@ -17,7 +17,6 @@ describe("reflect", () => {
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(buildSystem).mockResolvedValue(system);
   });
 

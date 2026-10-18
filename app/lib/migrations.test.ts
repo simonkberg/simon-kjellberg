@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
@@ -52,15 +52,10 @@ function lockOwners(): unknown[] {
 
 describe("runMigrations", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
     sqlite = createSqliteQuery();
     vi.mocked(query).mockImplementation(sqlite);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it("should record a checksum for each applied migration", async () => {
@@ -233,15 +228,10 @@ describe("runMigrations", () => {
 
 describe("runMigrationsUntilApplied", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.useFakeTimers();
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
     sqlite = createSqliteQuery();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it("should retry with capped backoff until Turso answers", async () => {
