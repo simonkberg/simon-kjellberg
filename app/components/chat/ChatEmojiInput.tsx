@@ -103,7 +103,13 @@ export const ChatEmojiInput = ({
     const input = ref.current;
     const shortcode = input && typedShortcode(input);
     if (!input || !shortcode) return;
-    input.setRangeText(glyph, shortcode.start, shortcode.end, "end");
+    const spaced = /^\s/.test(input.value.slice(shortcode.end));
+    input.setRangeText(
+      spaced ? glyph : `${glyph} `,
+      shortcode.start,
+      shortcode.end,
+      "end",
+    );
     setTyped(null);
     onValueChange(input.value);
     input.focus();

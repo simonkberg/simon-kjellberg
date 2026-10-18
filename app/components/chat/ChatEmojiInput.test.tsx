@@ -58,7 +58,7 @@ describe("ChatEmojiInput", () => {
 
     await user.keyboard("{Enter}");
 
-    expect(input).toHaveValue("hi 🔥");
+    expect(input).toHaveValue("hi 🔥 ");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(input).toHaveAttribute("aria-expanded", "false");
     expect(postChatMessage).not.toHaveBeenCalled();
@@ -73,7 +73,7 @@ describe("ChatEmojiInput", () => {
     expect(chosen()).toHaveAccessibleName("firefighter");
     await user.keyboard("{ArrowLeft}{ArrowRight}{Tab}");
 
-    expect(input).toHaveValue("🧑‍🚒");
+    expect(input).toHaveValue("🧑‍🚒 ");
     expect(input).toHaveFocus();
   });
 
@@ -131,7 +131,7 @@ describe("ChatEmojiInput", () => {
     await screen.findByRole("listbox");
     await user.keyboard("{ArrowUp}{Enter}");
 
-    expect(input).toHaveValue("💀");
+    expect(input).toHaveValue("💀 ");
   });
 
   it("closes on Escape without clearing the reply, until the shortcode changes", async () => {
@@ -213,7 +213,7 @@ describe("ChatEmojiInput", () => {
     await user.type(input, "so :s");
     await user.click(await screen.findByRole("option", { name: "skull" }));
 
-    expect(input).toHaveValue("so 💀");
+    expect(input).toHaveValue("so 💀 ");
     expect(input).toHaveFocus();
   });
 
