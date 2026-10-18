@@ -54,13 +54,16 @@ export const SKIN_TONES = [
 
 export type SkinTone = (typeof SKIN_TONES)[number];
 
-const TONEABLE = /^\p{Emoji_Modifier_Base}\uFE0F?$/u;
+/** Exactly one emoji, as Unicode recommends it for general interchange. */
+export const RGI_EMOJI = /^\p{RGI_Emoji}$/v;
 
-/** A single emoji in a tone, if it takes one; the tone replaces any U+FE0F. */
-export const withSkinTone = (emoji: string, modifier: string) =>
-  modifier && TONEABLE.test(emoji)
-    ? emoji.replace("\uFE0F", "") + modifier
-    : emoji;
+/** An emoji in a tone, if it takes one. */
+export function withSkinTone(emoji: string, modifier: string): string {
+  if (!modifier) return emoji;
+  const toned = emoji.replace(/^(.)\uFE0F?/u, `$1${modifier}`);
+  // Unicode lists every sequence that takes a tone, so families and pairs, which need one per person, stay as they are.
+  return RGI_EMOJI.test(toned) ? toned : emoji;
+}
 
 /** The emoji without its tones, as the shortcode set names it; a tone stands where a text-style base takes U+FE0F. */
 export const withoutSkinTone = (emoji: string) =>

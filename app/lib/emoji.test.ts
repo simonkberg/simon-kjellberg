@@ -43,7 +43,8 @@ describe("withSkinTone", () => {
   it.each([
     ["👍", "\u{1F3FC}", "👍🏼"],
     ["☝️", "\u{1F3FC}", "☝🏼"],
-    ["🔥", "\u{1F3FC}", "🔥"],
+    ["🧑‍🚒", "\u{1F3FC}", "🧑🏼‍🚒"],
+    ["👨‍👩‍👧", "\u{1F3FC}", "👨‍👩‍👧"],
     ["👍", "", "👍"],
   ])("tones %s with %j as %s", (emoji, modifier, toned) => {
     expect(withSkinTone(emoji, modifier)).toBe(toned);

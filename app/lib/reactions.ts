@@ -7,12 +7,13 @@ import {
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
+import { RGI_EMOJI } from "@/lib/emoji";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
 
 /** One emoji as Discord stores a reaction's name. */
-export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
+export const EmojiSchema = z.string().regex(RGI_EMOJI);
 // Discord snowflakes, at most 20 digits.
 export const MessageIdSchema = z.string().max(20).regex(/^\d+$/);
 
