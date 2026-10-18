@@ -37,7 +37,7 @@ export async function removeReaction(
   });
 }
 
-/** Adds a reaction and mirrors it on Discord; adding one that's already there changes nothing. */
+/** Adds a reaction and mirrors it on Discord; adding one that's already there only mirrors it again. */
 export async function addReaction(
   messageId: string,
   emoji: string,
@@ -48,7 +48,13 @@ export async function addReaction(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
-  if (inserted.rowsAffected === 0) return;
+  if (inserted.rowsAffected === 0) {
+    // Mirrored again in case an earlier add's mirror and rollback both failed.
+    await addBotReaction(messageId, emoji).catch((err: unknown) => {
+      log.warn({ err, messageId, emoji }, "Failed to add bot reaction");
+    });
+    return;
+  }
   try {
     // Discord turns away a message or emoji it doesn't know.
     await addBotReaction(messageId, emoji);

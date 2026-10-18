@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       username,
       REACTION_RATE_LIMIT,
     );
-    if (denied) return respond(denied, 429);
+    if (denied) return respond(denied.result, denied.httpStatus);
 
     const parsed = BodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {

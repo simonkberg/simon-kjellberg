@@ -618,19 +618,24 @@ describe("Chat", () => {
         error: "Failed to react to chat message",
       },
     ])(
-      "shows the history and refreshes it when $failure",
+      "keeps the reaction until the next history when $failure",
       async ({ respond, error }) => {
         answer(respond);
-        await renderReactions(thumbs);
+        const { rerender } = await renderReactions(thumbs);
 
         await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
         expect(await screen.findByText(error)).toBeInTheDocument();
-        const pill = screen.getByRole("button", { name: "👍 1" });
-        expect(pill).toHaveAttribute("aria-pressed", "false");
+        const pill = screen.getByRole("button", { name: "👍 2" });
+        expect(pill).toHaveAttribute("aria-pressed", "true");
         expect(pill).toBeEnabled();
         // It may have been saved before it failed, so the refreshed history decides.
         expect(router.refresh).toHaveBeenCalledOnce();
+        await refreshWith(rerender, thumbs, 0);
+        expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+          "aria-pressed",
+          "false",
+        );
       },
     );
 

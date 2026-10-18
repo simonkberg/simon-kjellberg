@@ -131,7 +131,9 @@ async function postReaction(
 
 interface SavedReaction extends OwnReaction {
   messageId: string;
-  savedAt: number;
+  // An unknown outcome has no savedAt, so it is held over the history shown when it settled.
+  savedAt?: number;
+  heldOver?: ChatHistoryResult;
 }
 
 const NOT_REACTING: ReadonlyMap<string, OwnReaction> = new Map();
@@ -150,7 +152,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   // State, not an async transition: React holds every other transition until
   // one settles, and Discord's rate limit can hold a toggle 30s.
   const [pending, setPending] = useState(NOT_REACTING);
-  // What the route saved, shown over any history read before it.
+  // What the route saved or may have, shown over any history read before it.
   const [saved, setSaved] = useState(NONE_SAVED);
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
@@ -159,9 +161,25 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   }>();
   const shown =
     result.status === "ok" ? result : { messages: [], fetchedAt: -Infinity };
-  // A history read after a save already has it, so the save can go.
-  const unseen = [...saved].filter(([, own]) => own.savedAt > shown.fetchedAt);
-  if (unseen.length < saved.size) setSaved(new Map(unseen));
+  // A history read after a save already has it, so the save can go. An unknown
+  // outcome may not have been saved, so the next history to arrive decides.
+  const unseen = [...saved]
+    .map(([key, own]) =>
+      own.savedAt === undefined && own.heldOver === undefined
+        ? ([key, { ...own, heldOver: result }] as const)
+        : ([key, own] as const),
+    )
+    .filter(([, own]) =>
+      own.savedAt === undefined
+        ? own.heldOver === result
+        : own.savedAt >= shown.fetchedAt,
+    );
+  if (
+    unseen.length < saved.size ||
+    unseen.some(([key, own]) => own !== saved.get(key))
+  ) {
+    setSaved(new Map(unseen));
+  }
   let messages = shown.messages;
   for (const [, own] of unseen) {
     messages = withOwnReaction(messages, own.messageId, own);
@@ -186,13 +204,12 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
         next.delete(messageId);
         return next;
       });
-      if (reaction.status === "ok") {
-        const { savedAt } = reaction;
+      if (reaction.status !== "error") {
         setSaved((current) =>
           new Map(current).set(`${messageId} ${emoji}`, {
             ...own,
             messageId,
-            savedAt,
+            ...(reaction.status === "ok" && { savedAt: reaction.savedAt }),
           }),
         );
       }

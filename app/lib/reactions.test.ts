@@ -103,7 +103,27 @@ describe("addReaction and removeReaction", () => {
     await addReaction("1", "👍", alice);
 
     expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
-    expect(addBotReaction).toHaveBeenCalledOnce();
+  });
+
+  it("mirrors a reaction again when an earlier mirror and rollback both failed", async () => {
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",
+    );
+
+    await addReaction("1", "👍", alice);
+
+    expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
+  });
+
+  it("keeps an existing reaction when mirroring it again fails", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    await addReaction("1", "👍", alice);
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("down"));
+
+    await addReaction("1", "👍", alice);
+
+    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+    expect(log.warn).toHaveBeenCalledOnce();
   });
 
   it("adds nothing when Discord turns the reaction away", async () => {

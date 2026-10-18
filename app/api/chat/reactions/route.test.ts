@@ -201,7 +201,7 @@ describe("POST /api/chat/reactions", () => {
     expect(
       await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
-      status: 429,
+      status: 403,
       body: {
         status: "error",
         error: "Reacting from your network is blocked.",

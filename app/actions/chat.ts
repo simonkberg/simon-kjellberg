@@ -66,7 +66,7 @@ export async function postChatMessage(
       username,
       RATE_LIMIT,
     );
-    if (denied) return denied;
+    if (denied) return denied.result;
 
     const text = z.string().trim().min(1).parse(formData.get("text"));
     const replyToId = z
