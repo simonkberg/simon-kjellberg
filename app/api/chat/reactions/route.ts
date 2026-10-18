@@ -11,6 +11,7 @@ import {
   addReaction,
   EmojiSchema,
   MessageIdSchema,
+  reactionsClock,
   removeReaction,
 } from "@/lib/reactions";
 import { decrypt } from "@/lib/session";
@@ -77,14 +78,17 @@ export async function POST(request: NextRequest) {
     }
     const { messageId, emoji, mine } = parsed.data;
 
-    await (mine ? addReaction : removeReaction)(messageId, emoji, username);
+    try {
+      await (mine ? addReaction : removeReaction)(messageId, emoji, username);
+    } finally {
+      // Expired on failure too, as the write may have landed before what threw.
+      revalidateTag("getChatHistory", { expire: 0 });
+    }
     log.info(
       { username, messageId, emoji, mine, action: "reactToChatMessage" },
       "Set reaction",
     );
-
-    revalidateTag("getChatHistory", { expire: 0 });
-    return respond({ status: "ok", savedAt: Date.now() });
+    return respond({ status: "ok", savedAt: await reactionsClock() });
   } catch (err) {
     if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
       return respond(

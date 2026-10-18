@@ -1,6 +1,14 @@
 import { http, HttpResponse } from "msw";
 import { cacheLife, cacheTag, refresh, updateTag } from "next/cache";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import {
   dismissChatTip,
@@ -79,22 +87,36 @@ describe("getChatHistory", () => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   });
 
-  it("returns messages on success, with when they were read", async () => {
-    vi.useFakeTimers({ now: 1_000, toFake: ["Date"] });
+  it("returns messages on success, with when Turso read them", async () => {
     const mockMessages = [
       createMockMessage({ id: "1", content: "First message" }),
       createMockMessage({ id: "2", content: "Second message" }),
     ];
     vi.mocked(getChannelMessages).mockResolvedValue(mockMessages);
 
+    const before = Date.now();
     const result = await getChatHistory();
 
-    expect(result).toEqual({
+    assert(result.status === "ok");
+    expect(result.messages).toEqual(mockMessages);
+    expect(result.fetchedAt).toBeGreaterThanOrEqual(before);
+    expect(result.fetchedAt).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("dates the history before every save when Turso's clock fails", async () => {
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query).mockImplementation((sql, args) =>
+      sql.includes("unixepoch")
+        ? Promise.reject(new Error("timeout"))
+        : sqlite(sql, args),
+    );
+    vi.mocked(getChannelMessages).mockResolvedValue([]);
+
+    expect(await getChatHistory()).toEqual({
       status: "ok",
-      messages: mockMessages,
-      fetchedAt: 1_000,
+      messages: [],
+      fetchedAt: -Infinity,
     });
-    vi.useRealTimers();
   });
 
   it("returns error and logs when Discord API fails", async () => {

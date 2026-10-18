@@ -119,6 +119,10 @@ async function postReaction(
     await response.json().catch(() => null),
     response.ok,
   );
+  // A server error may follow a write that landed, so only a 4xx rejects for sure.
+  if (result?.status === "error" && response.status >= 500) {
+    return { status: "unknown", error: result.error };
+  }
   return (
     result ?? {
       status: "unknown",

@@ -75,7 +75,10 @@ describe("POST /api/chat/reactions", () => {
   it("adds the visitor's reaction and expires the history", async () => {
     expect(
       await result(await react({ messageId: "123", emoji: "👍", mine: true })),
-    ).toEqual({ status: 200, body: { status: "ok", savedAt: 1_000_000 } });
+    ).toEqual({
+      status: 200,
+      body: { status: "ok", savedAt: expect.any(Number) },
+    });
 
     expect(
       (await query("SELECT message_id, emoji, username FROM reactions")).rows,
@@ -97,7 +100,10 @@ describe("POST /api/chat/reactions", () => {
 
     expect(
       await result(await react({ messageId: "123", emoji: "👍", mine: false })),
-    ).toEqual({ status: 200, body: { status: "ok", savedAt: 1_000_000 } });
+    ).toEqual({
+      status: 200,
+      body: { status: "ok", savedAt: expect.any(Number) },
+    });
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
   });
 
@@ -246,7 +252,32 @@ describe("POST /api/chat/reactions", () => {
       status: 500,
       body: { status: "error", error: "Failed to react to chat message" },
     });
-    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("expires the history when a write that may have landed fails", async () => {
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query).mockImplementation((sql, args) =>
+      sql.startsWith("INSERT INTO reactions")
+        ? Promise.reject(new Error("timeout"))
+        : sqlite(sql, args),
+    );
+
+    expect(
+      (await react({ messageId: "123", emoji: "👍", mine: true })).status,
+    ).toBe(500);
+    expect(revalidateTag).toHaveBeenCalledWith("getChatHistory", { expire: 0 });
+  });
+
+  it("dates a save by Turso's clock", async () => {
+    vi.useRealTimers();
+    const before = Date.now();
+
+    const { body } = await result(
+      await react({ messageId: "123", emoji: "👍", mine: true }),
+    );
+
+    expect(body.savedAt).toBeGreaterThanOrEqual(before);
+    expect(body.savedAt).toBeLessThanOrEqual(Date.now());
   });
 
   it("explains Discord's cap on emoji per message", async () => {

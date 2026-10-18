@@ -604,6 +604,15 @@ describe("Chat", () => {
         error: "Failed to react to chat message (HTTP 500)",
       },
       {
+        failure: "the route fails after it may have saved",
+        respond: () =>
+          HttpResponse.json<ReactionResult>(
+            { status: "error", error: "Failed to react to chat message" },
+            { status: 500 },
+          ),
+        error: "Failed to react to chat message",
+      },
+      {
         failure: "the status says it failed",
         respond: () =>
           HttpResponse.json<ReactionResult>(

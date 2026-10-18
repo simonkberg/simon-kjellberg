@@ -115,6 +115,31 @@ describe("addReaction and removeReaction", () => {
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
   });
 
+  it("drops a mirror that lands after the last reaction was taken back", async () => {
+    vi.mocked(addBotReaction).mockImplementationOnce(() =>
+      removeReaction("1", "👍", alice),
+    );
+
+    await addReaction("1", "👍", alice);
+
+    expect(removeBotReaction).toHaveBeenCalledTimes(2);
+  });
+
+  it("still adds the reaction when checking the mirror fails", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const sqlite = vi.mocked(query).getMockImplementation()!;
+    vi.mocked(query).mockImplementation((sql, args) =>
+      sql.startsWith("SELECT 1")
+        ? Promise.reject(new Error("blip"))
+        : sqlite(sql, args),
+    );
+
+    await addReaction("1", "👍", alice);
+
+    expect(log.warn).toHaveBeenCalledOnce();
+    expect(removeBotReaction).not.toHaveBeenCalled();
+  });
+
   it("keeps an existing reaction when mirroring it again fails", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     await addReaction("1", "👍", alice);

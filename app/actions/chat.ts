@@ -12,7 +12,7 @@ import {
 } from "@/lib/discord/api";
 import { identifiers } from "@/lib/identifiers";
 import { log } from "@/lib/log";
-import { withSiteReactions } from "@/lib/reactions";
+import { reactionsClock, withSiteReactions } from "@/lib/reactions";
 import { getSession } from "@/lib/session";
 
 export type ChatHistoryResult =
@@ -25,9 +25,13 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
   cacheTag("getChatHistory");
 
   try {
-    // Taken before the reads, so the history has every reaction saved before it.
-    const fetchedAt = Date.now();
-    const messages = await withSiteReactions(await getChannelMessages());
+    // Read before the reactions, so the history has every reaction saved before it.
+    // Without the clock, Turso's reads likely fail too, so saved reactions show over it.
+    const [fetchedAt, channel] = await Promise.all([
+      reactionsClock().catch(() => -Infinity),
+      getChannelMessages(),
+    ]);
+    const messages = await withSiteReactions(channel);
     return { status: "ok", messages, fetchedAt };
   } catch (err) {
     log.error({ err, action: "getChatHistory" }, "Error fetching chat history");

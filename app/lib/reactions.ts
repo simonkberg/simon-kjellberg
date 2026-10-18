@@ -48,17 +48,15 @@ export async function addReaction(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
-  if (inserted.rowsAffected === 0) {
-    // Mirrored again in case an earlier add's mirror and rollback both failed.
-    await addBotReaction(messageId, emoji).catch((err: unknown) => {
-      log.warn({ err, messageId, emoji }, "Failed to add bot reaction");
-    });
-    return;
-  }
   try {
-    // Discord turns away a message or emoji it doesn't know.
+    // Discord turns away a message or emoji it doesn't know. An existing row is
+    // mirrored again, in case an earlier add's mirror and rollback both failed.
     await addBotReaction(messageId, emoji);
   } catch (err) {
+    if (inserted.rowsAffected === 0) {
+      log.warn({ err, messageId, emoji }, "Failed to add bot reaction");
+      return;
+    }
     // Discord's error is the one the visitor needs, so a failed rollback only logs.
     await deleteRow(messageId, emoji, username).catch((rollbackErr: unknown) =>
       log.warn(
@@ -68,6 +66,18 @@ export async function addReaction(
     );
     throw err;
   }
+  // A removal of the last row may have dropped the mirror before this one landed.
+  await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
+    log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+  });
+}
+
+/** Turso's clock in ms, so saves and history reads on different replicas compare on one clock. */
+export async function reactionsClock(): Promise<number> {
+  const { rows } = await query(
+    "SELECT CAST(unixepoch('subsec') * 1000 AS INTEGER) AS now",
+  );
+  return Number(rows[0]?.["now"]);
 }
 
 async function dropMirrorIfUnused(messageId: string, emoji: string) {
