@@ -19,12 +19,6 @@ vi.mock(import("@/lib/turso"), async () =>
 
 const sqlite = sqliteBeforeEach(query);
 
-beforeEach(() => {
-  vi.spyOn(log, "info").mockImplementation(() => {});
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
-});
-
 function failNext(prefix: string, { afterRunning = false } = {}) {
   vi.mocked(query).mockImplementation(
     failQuery(

@@ -69,9 +69,6 @@ const heyTurn = {
 const OOPS = "oops, something went wrong... try again later!";
 
 beforeEach(() => {
-  vi.spyOn(log, "info").mockImplementation(() => {});
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
   vi.mocked(reflect).mockResolvedValue(undefined);
   vi.mocked(postChannelMessage).mockResolvedValue("response-1");
 });

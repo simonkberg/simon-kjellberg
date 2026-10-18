@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   addBotReaction,
@@ -48,11 +48,6 @@ function message(id: string, overrides: Partial<Message> = {}): Message {
 }
 
 const sqlite = sqliteBeforeEach(query, MIGRATIONS);
-
-beforeEach(() => {
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
-});
 
 async function storedReactions() {
   return (await sqlite()("SELECT * FROM reactions")).rows;

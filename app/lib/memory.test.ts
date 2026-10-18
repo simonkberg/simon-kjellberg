@@ -461,7 +461,6 @@ describe("buildMemoryContext", () => {
   });
 
   it("should return an empty string and log when the database fails", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValue(new Error("db down"));
 
     await expect(buildMemoryContext(["Alice"])).resolves.toBe("");

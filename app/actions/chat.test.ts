@@ -85,8 +85,6 @@ async function postUpToTheLimit() {
 
 beforeEach(async () => {
   vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
-  vi.spyOn(log, "info").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   resetGlobal("simon.dev/rate-limit-blocked");
   await loadDenyList("6.6.6.6");

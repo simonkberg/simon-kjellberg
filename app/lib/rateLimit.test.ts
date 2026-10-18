@@ -28,7 +28,6 @@ describe("rateLimit", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/rate-limit-blocked");
     vi.useFakeTimers({ now: 1_000_000 });
-    vi.spyOn(log, "warn").mockImplementation(() => {});
   });
 
   it("should reject past the limit until the oldest request leaves the window", async () => {

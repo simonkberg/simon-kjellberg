@@ -1,5 +1,5 @@
 import { SignJWT } from "jose";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { mockCookieJar } from "@/mocks/headers";
@@ -9,11 +9,6 @@ import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
-
-beforeEach(() => {
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
-});
 
 describe("session", () => {
   describe("encrypt", () => {

@@ -13,18 +13,6 @@ import { server } from "@/mocks/node";
 import { connect, getBotUserId, subscribe, subscribeToStatus } from "./gateway";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/log"), async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    log: {
-      ...actual.log,
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-    },
-  };
-});
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
 const RESUME_URL = "wss://resume.discord.gg/?v=10&encoding=json";

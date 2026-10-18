@@ -317,7 +317,6 @@ describe("keepWarm", () => {
   });
 
   it("should log a failed query and keep going", async () => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(
       http.post(PIPELINE_URL, () => new HttpResponse(null, { status: 503 })),
     );
@@ -326,7 +325,7 @@ describe("keepWarm", () => {
     vi.advanceTimersByTime(60_000);
 
     await vi.waitFor(() =>
-      expect(warn).toHaveBeenCalledWith(
+      expect(log.warn).toHaveBeenCalledWith(
         { err: expect.any(Error) },
         "Turso keep-warm query failed",
       ),

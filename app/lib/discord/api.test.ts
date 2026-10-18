@@ -32,8 +32,6 @@ vi.mock(import("./gateway"), () => ({
 beforeEach(() => {
   resetGlobal("simon.dev/discord-store");
   _resetRateLimitState();
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
 });
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";

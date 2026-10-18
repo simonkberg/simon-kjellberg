@@ -9,7 +9,6 @@ vi.mock(import("server-only"), () => ({}));
 describe("readiness", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/readiness");
-    vi.spyOn(log, "info").mockImplementation(() => {});
   });
 
   it("should start with every stage pending", () => {
