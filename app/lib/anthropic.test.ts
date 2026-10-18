@@ -546,14 +546,17 @@ describe("createMessage", () => {
     await expect(ask()).rejects.toThrow(/: x{500}$/);
   });
 
-  it("should not retry a TypeError that isn't from the network", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-      new TypeError("Invalid header value"),
-    );
+  it("should retry a request that never connected", async () => {
+    const failure = new TypeError("fetch failed");
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(failure);
+    respond(() => reply([text("connected")]));
 
-    await expect(ask()).rejects.toThrow("Invalid header value");
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(sleep).not.toHaveBeenCalled();
+    expect(await ask()).toEqual(["connected"]);
+    expect(log.warn).toHaveBeenCalledWith(
+      { loop: "reply", err: failure, delayMs: 500 },
+      "simon-bot retrying request",
+    );
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
   });
 
   it("should not retry a timeout", async () => {

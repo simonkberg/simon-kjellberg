@@ -562,10 +562,8 @@ async function attemptPost(
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
-    if (err instanceof TypeError && err.cause !== undefined) {
-      throw new RetryableError(err, backoff);
-    }
+    // fetch rejects a network failure as a TypeError; a timeout already took a whole attempt.
+    if (err instanceof TypeError) throw new RetryableError(err, backoff);
     throw err;
   }
 
