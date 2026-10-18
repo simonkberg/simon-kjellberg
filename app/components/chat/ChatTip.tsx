@@ -19,9 +19,9 @@ function subscribe(onChange: () => void) {
 const readCookie = () =>
   document.cookie.split("; ").includes(`${CHAT_TIP_COOKIE}=true`);
 
-/** The server's answer until hydration, then the browser's cookie. */
+// Either side counts: the server skips setting a cookie it already sees, even one the page can't read.
 export const useChatTipDismissed = (serverDismissed: boolean) =>
-  useSyncExternalStore(subscribe, readCookie, () => serverDismissed);
+  useSyncExternalStore(subscribe, readCookie, () => false) || serverDismissed;
 
 export const ChatTip = () => (
   <p className="chat-tip">
