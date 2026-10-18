@@ -533,6 +533,62 @@ function retryAfterMs(response: Response): number {
   return Number.isNaN(date) ? 0 : date - Date.now();
 }
 
+// A failed attempt worth repeating after delayMs.
+class RetryableError extends Error {
+  constructor(
+    readonly error: Error,
+    readonly delayMs: number,
+  ) {
+    super(error.message, { cause: error });
+  }
+}
+
+async function attemptPost(
+  body: string,
+  timeoutMs: number,
+  attempt: number,
+): Promise<unknown> {
+  const backoff = backoffMs(attempt);
+  let response: Response;
+  try {
+    response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
+    if (err instanceof TypeError && err.cause !== undefined) {
+      throw new RetryableError(err, backoff);
+    }
+    throw err;
+  }
+
+  let text: string;
+  try {
+    if (response.ok) return await response.json();
+    text = await response.text();
+  } catch (err) {
+    const error = new Error(
+      `Anthropic API error: could not read the body of a ${response.status} response`,
+      { cause: err },
+    );
+    // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
+    throw err instanceof TypeError ? new RetryableError(error, backoff) : error;
+  }
+
+  const error = new Error(
+    `Anthropic API error: ${response.status} ${response.statusText}: ${text.slice(0, MAX_ERROR_BODY_LENGTH)}`,
+  );
+  if (!isRetryable(response.status)) throw error;
+  throw new RetryableError(error, Math.max(retryAfterMs(response), backoff));
+}
+
 async function postMessages(
   body: string,
   {
@@ -543,53 +599,18 @@ async function postMessages(
 ): Promise<unknown> {
   let waitedMs = 0;
   for (let attempt = 0; ; attempt++) {
-    let response: Response | undefined;
-    let error: Error;
-    let retryable = true;
-    let delayMs = backoffMs(attempt);
     try {
-      response = await fetch(BASE_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": env.ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body,
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      if (response.ok) return await response.json();
-      const text = (await response.text()).slice(0, MAX_ERROR_BODY_LENGTH);
-      error = new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}: ${text}`,
-      );
-      retryable = isRetryable(response.status);
-      delayMs = Math.max(retryAfterMs(response), delayMs);
+      return await attemptPost(body, timeoutMs, attempt);
     } catch (err) {
-      if (response === undefined) {
-        // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
-        if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
-        error = err;
-      } else {
-        error = new Error(
-          `Anthropic API error: could not read the body of a ${response.status} response`,
-          { cause: err },
-        );
-        // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
-        if (!(err instanceof TypeError)) throw error;
+      if (!(err instanceof RetryableError)) throw err;
+      const { error, delayMs } = err;
+      if (attempt >= MAX_RETRIES || waitedMs + delayMs > maxRetrySleepMs) {
+        throw error;
       }
+      log.warn({ loop, err: error, delayMs }, "simon-bot retrying request");
+      await sleep(delayMs);
+      waitedMs += delayMs;
     }
-
-    if (
-      attempt >= MAX_RETRIES ||
-      !retryable ||
-      waitedMs + delayMs > maxRetrySleepMs
-    ) {
-      throw error;
-    }
-    log.warn({ loop, err: error, delayMs }, "simon-bot retrying request");
-    await sleep(delayMs);
-    waitedMs += delayMs;
   }
 }
 
