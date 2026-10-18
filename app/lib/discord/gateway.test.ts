@@ -270,6 +270,25 @@ describe("subscribe", () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
+  it("should log a throwing subscriber and still notify the rest", async () => {
+    server.use(createHandshakeHandler());
+    await subscribe(() => {
+      throw new Error("Subscriber failed");
+    });
+    const callback = vi.fn();
+    await subscribe(callback);
+
+    await dispatch("MESSAGE_CREATE", chatMessage("msg-1", "first"));
+
+    expect(log.error).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "Subscriber callback error",
+    );
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ t: "MESSAGE_CREATE" }),
+    );
+  });
+
   it("should stop notifying after unsubscribe", async () => {
     const { callback, unsubscribe } = await subscribed();
 
