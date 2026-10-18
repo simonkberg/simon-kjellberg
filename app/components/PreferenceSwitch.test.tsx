@@ -3,11 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  grounds,
   preferenceCookie,
   themePreference,
   variantPreference,
 } from "@/lib/preferences";
-import { resetPreferences } from "@/mocks/preferences";
+import {
+  renderThemeColorTags,
+  resetPreferences,
+  themeColors,
+} from "@/mocks/preferences";
 
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
@@ -40,6 +45,27 @@ describe("PreferenceSwitch", () => {
       "aria-pressed",
       "true",
     );
+  });
+
+  it("colours the browser with the chosen option's ground", async () => {
+    root.setAttribute("data-variant", "panes");
+    root.setAttribute("data-theme", "system");
+    renderThemeColorTags();
+    render(<PreferenceSwitch preference={variantPreference} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "ledger" }));
+
+    expect(themeColors()).toEqual([grounds.ledger.light, grounds.ledger.dark]);
+  });
+
+  it("tints theme-color tags added before it mounts", () => {
+    root.setAttribute("data-variant", "manual");
+    document.cookie = preferenceCookie(themePreference, "dark");
+    renderThemeColorTags();
+
+    render(<PreferenceSwitch preference={themePreference} />);
+
+    expect(themeColors()).toEqual([grounds.manual.dark, grounds.manual.dark]);
   });
 
   it("re-applies the saved option on mount", () => {

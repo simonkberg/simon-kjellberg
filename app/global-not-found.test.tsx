@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { config } from "@/config";
 
-import GlobalNotFound, { metadata } from "./global-not-found";
+import GlobalNotFound, { metadata, viewport } from "./global-not-found";
 
 vi.mock(import("@/components/Layout"), () => ({
   Layout: ({ children }: PropsWithChildren) => (
@@ -18,6 +18,12 @@ describe("metadata", () => {
       title: `Not Found - ${config.title}`,
       description: "The page you are looking for does not exist.",
     });
+  });
+});
+
+describe("viewport", () => {
+  it("covers the safe areas", () => {
+    expect(viewport).toEqual({ viewportFit: "cover" });
   });
 });
 

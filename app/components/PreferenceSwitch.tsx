@@ -7,6 +7,7 @@ import {
   applySavedPreferences,
   type Preference,
   preferenceCookie,
+  syncThemeColor,
 } from "@/lib/preferences";
 
 const attributeOf = (preference: Preference) => `data-${preference.name}`;
@@ -23,6 +24,7 @@ function subscribe(preference: Preference, onChange: () => void) {
 function selectOption<T extends string>(preference: Preference<T>, value: T) {
   document.documentElement.setAttribute(attributeOf(preference), value);
   document.cookie = preferenceCookie(preference, value);
+  syncThemeColor();
 }
 
 export interface PreferenceSwitchProps<T extends string> {
@@ -48,8 +50,12 @@ export const PreferenceSwitch = <T extends string>({
   );
 
   // The head script applies the cookie before paint, but the dev-mode
-  // remount resets <html> attributes, so apply it again.
-  useLayoutEffect(() => applySavedPreferences([preference]), [preference]);
+  // remount resets <html> attributes, so apply it again. Hydration can add
+  // fallback theme-color tags after the script's, so tint those too.
+  useLayoutEffect(() => {
+    applySavedPreferences([preference]);
+    syncThemeColor();
+  }, [preference]);
 
   return (
     <div className="switch" role="group" aria-labelledby={labelId}>

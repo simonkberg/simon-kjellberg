@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { Heading } from "@/components/Heading";
 import { Layout } from "@/components/Layout";
@@ -6,6 +6,8 @@ import { Page } from "@/components/Page";
 import { config } from "@/config";
 
 const description = "The page you are looking for does not exist.";
+
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export const metadata: Metadata = {
   title: `Not Found - ${config.title}`,

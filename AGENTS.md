@@ -331,6 +331,10 @@ the server renders the fallbacks and a script in `<head>` applies the cookies be
 paint. Don't read them with `cookies()` in the layout: every page would render per request
 and lose its static shell. Check chat changes in all three variants.
 
+`theme-color` follows both from `grounds` in `app/lib/preferences.ts`, each variant's
+`--ground` (a test keeps it in step with the CSS): the head script adds tags ahead of the
+rendered fallbacks, and `PreferenceSwitch` retints them.
+
 ### Markdown Rendering
 
 Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.

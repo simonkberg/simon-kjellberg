@@ -1,12 +1,24 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it } from "vitest";
 
-import { resetPreferences } from "@/mocks/preferences";
+import {
+  renderThemeColorTags,
+  resetPreferences,
+  runPreferencesScript,
+  themeColors,
+} from "@/mocks/preferences";
 
 import {
   applySavedPreferences,
+  grounds,
   preferenceCookie,
   preferences,
   preferencesScript,
+  syncThemeColor,
+  themePreference,
+  variantPreference,
 } from "./preferences";
 
 const root = document.documentElement;
@@ -46,5 +58,80 @@ describe("applySavedPreferences", () => {
     for (const preference of preferences) {
       expect(preferencesScript).toContain(JSON.stringify(preference.options));
     }
+  });
+});
+
+describe("preferencesScript", () => {
+  function runWith(variant: string, theme: string) {
+    root.setAttribute("data-variant", variantPreference.fallback);
+    root.setAttribute("data-theme", themePreference.fallback);
+    document.cookie = `variant=${variant}; path=/`;
+    document.cookie = `theme=${theme}; path=/`;
+    renderThemeColorTags();
+    runPreferencesScript();
+  }
+
+  it("colours the browser per scheme under the system theme", () => {
+    runWith("ledger", "system");
+
+    expect(root).toHaveAttribute("data-variant", "ledger");
+    expect(themeColors()).toEqual([grounds.ledger.light, grounds.ledger.dark]);
+  });
+
+  it("colours the browser with the chosen theme for both schemes", () => {
+    runWith("manual", "dark");
+
+    expect(themeColors()).toEqual([grounds.manual.dark, grounds.manual.dark]);
+  });
+
+  it("falls back to the fallback variant per scheme on unknown values", () => {
+    root.setAttribute("data-variant", "neon");
+    root.setAttribute("data-theme", "sepia");
+    renderThemeColorTags();
+
+    runPreferencesScript();
+
+    expect(themeColors()).toEqual([grounds.panes.light, grounds.panes.dark]);
+  });
+});
+
+describe("syncThemeColor", () => {
+  it("retints the tags after a change", () => {
+    renderThemeColorTags();
+    root.setAttribute("data-variant", "ledger");
+    root.setAttribute("data-theme", "light");
+
+    syncThemeColor();
+
+    expect(themeColors()).toEqual([grounds.ledger.light, grounds.ledger.light]);
+
+    root.setAttribute("data-theme", "system");
+    syncThemeColor();
+
+    expect(themeColors()).toEqual([grounds.ledger.light, grounds.ledger.dark]);
+  });
+
+  it("falls back to the fallback variant's ground", () => {
+    renderThemeColorTags();
+    root.setAttribute("data-variant", "neon");
+    root.setAttribute("data-theme", "dark");
+
+    syncThemeColor();
+
+    expect(themeColors()).toEqual([grounds.panes.dark, grounds.panes.dark]);
+  });
+});
+
+describe("grounds", () => {
+  const css = readFileSync(join(import.meta.dirname, "../global.css"), "utf8");
+
+  it.each(variantPreference.options)("is %s's --ground", (variant) => {
+    const start = css.indexOf(`:root[data-variant="${variant}"] {`);
+    const block = css.slice(start, css.indexOf("\n}", start));
+    const { light, dark } = grounds[variant];
+
+    expect(block.match(/--ground:[^;]*;/g)).toEqual([
+      `--ground: light-dark(${light}, ${dark});`,
+    ]);
   });
 });

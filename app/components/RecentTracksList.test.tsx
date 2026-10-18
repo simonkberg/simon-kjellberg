@@ -196,6 +196,32 @@ describe("RecentTracksList", () => {
       vi.useRealTimers();
     });
 
+    it("shows the tracks the refreshed page brings", async () => {
+      const { rerender } = await act(() =>
+        render(
+          <RecentTracksList
+            recentTracks={Promise.resolve({
+              status: "ok",
+              tracks: [createMockTrack({ name: "Old Song" })],
+            })}
+          />,
+        ),
+      );
+
+      await act(async () =>
+        rerender(
+          <RecentTracksList
+            recentTracks={Promise.resolve({
+              status: "ok",
+              tracks: [createMockTrack({ name: "New Song" })],
+            })}
+          />,
+        ),
+      );
+
+      expect(screen.getByRole("listitem")).toHaveTextContent("New Song");
+    });
+
     it("cleans up interval on unmount", async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
 

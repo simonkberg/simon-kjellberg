@@ -5,6 +5,8 @@ import type { PropsWithChildren } from "react";
 import { iosevka } from "@/assets/fonts";
 import { config } from "@/config";
 import {
+  colorSchemes,
+  grounds,
   preferencesScript,
   themePreference,
   variantPreference,
@@ -21,6 +23,15 @@ export const Layout = ({ children }: PropsWithChildren) => {
       suppressHydrationWarning
     >
       <head>
+        {/* Not viewport.themeColor: Next re-renders those on navigation, undoing the script. */}
+        {colorSchemes.map((scheme) => (
+          <meta
+            key={scheme}
+            name="theme-color"
+            media={`(prefers-color-scheme: ${scheme})`}
+            content={grounds[variantPreference.fallback][scheme]}
+          />
+        ))}
         <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
       </head>
       <GoogleTagManager gtmId={config.gtmId} />
