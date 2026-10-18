@@ -762,9 +762,9 @@ describe("rate limiting", () => {
     await promise;
 
     expect(requests).toHaveBeenCalledTimes(4);
-    expect(vi.mocked(log.warn)).toHaveBeenCalledTimes(3);
+    expect(log.warn).toHaveBeenCalledTimes(3);
     for (const retries of [1, 2, 3]) {
-      expect(vi.mocked(log.warn)).toHaveBeenNthCalledWith(
+      expect(log.warn).toHaveBeenNthCalledWith(
         retries,
         expect.objectContaining({ retries }),
         "Discord rate limited, retrying",
@@ -779,7 +779,7 @@ describe("rate limiting", () => {
       "Discord rate limit exceeded",
     );
 
-    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         elapsedMs: 0,
@@ -807,7 +807,7 @@ describe("rate limiting", () => {
     await assertion;
 
     expect(requests).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
+    expect(log.warn).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         retryAfterMs: 15000,
@@ -816,7 +816,7 @@ describe("rate limiting", () => {
       },
       "Discord rate limited, retrying",
     );
-    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         elapsedMs: 15000,
@@ -842,8 +842,8 @@ describe("rate limiting", () => {
 
     // 1 initial + 5 retries = 6 total attempts
     expect(requests).toHaveBeenCalledTimes(6);
-    expect(vi.mocked(log.warn)).toHaveBeenCalledTimes(5);
-    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
+    expect(log.warn).toHaveBeenCalledTimes(5);
+    expect(log.error).toHaveBeenCalledWith(
       expect.objectContaining({ retries: 6 }),
       "Discord rate limit exceeded max wait time",
     );
@@ -965,7 +965,7 @@ describe("rate limiting", () => {
       await promise;
 
       expect(requests).toHaveBeenCalledTimes(2);
-      expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
+      expect(log.warn).toHaveBeenCalledWith(
         expect.objectContaining({ retryAfterMs }),
         "Discord rate limited, retrying",
       );
@@ -980,7 +980,7 @@ describe("rate limiting", () => {
     await promise;
 
     for (const [i, retryAfterMs] of [1000, 2000, 4000].entries()) {
-      expect(vi.mocked(log.warn)).toHaveBeenNthCalledWith(
+      expect(log.warn).toHaveBeenNthCalledWith(
         i + 1,
         expect.objectContaining({ retryAfterMs, global: false }),
         "Discord rate limited, retrying",
@@ -1040,7 +1040,7 @@ describe("rate limiting", () => {
       await expect(getChannelMessages()).rejects.toThrow(
         "Discord rate limit exceeded",
       );
-      expect(vi.mocked(log.error)).toHaveBeenCalledWith(
+      expect(log.error).toHaveBeenCalledWith(
         {
           endpoint: "/channels/test-discord-channel-id/messages",
           elapsedMs: expect.any(Number),
@@ -1058,8 +1058,8 @@ describe("rate limiting", () => {
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
     );
-    expect(vi.mocked(log.warn)).not.toHaveBeenCalled();
-    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
+    expect(log.warn).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(
       expect.objectContaining({ retryAfterMs: 29_900, retries: 1 }),
       "Discord rate limit exceeded max wait time",
     );

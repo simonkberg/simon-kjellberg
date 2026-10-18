@@ -380,7 +380,7 @@ describe("subscribe", () => {
     );
   });
 
-  it("should reject waiting subscribers when a reconnect cannot open a socket", async () => {
+  it("should reject waiting and later subscribers when a reconnect cannot open a socket", async () => {
     server.use(
       createHandshakeHandler({
         session: { ...DEFAULT_SESSION, resume_gateway_url: "nope" },
@@ -401,6 +401,7 @@ describe("subscribe", () => {
       { err: expect.any(Error) },
       "Failed to open gateway connection",
     );
+    await expect(subscribe(vi.fn())).rejects.toThrow("Invalid URL");
   });
 
   it("should drop the callback of a subscribe that failed to connect", async () => {
