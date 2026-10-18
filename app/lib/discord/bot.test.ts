@@ -7,12 +7,12 @@ import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
+import { message } from "@/mocks/discord";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
 import { subscribe } from "./gateway";
-import type { DiscordMessage } from "./schemas";
 
 vi.mock(import("server-only"), () => ({}));
 
@@ -35,29 +35,26 @@ vi.mock(import("./gateway"), async (importOriginal) => {
   return { ...actual, subscribe: vi.fn() };
 });
 
-function createMessage(
-  overrides: Partial<DiscordMessage> = {},
-): DiscordMessage {
-  return {
-    type: 0,
-    id: "msg-1",
-    channel_id: "test-channel",
-    author: { id: "user1" },
-    content: "User1: hello",
-    timestamp: "2025-01-01T00:00:00.000000+00:00",
-    edited_timestamp: null,
-    ...overrides,
-  };
-}
-
 function link(
   id: string,
   type: number,
   username: string,
   content: string,
-  reactions: ChainMessage["reactions"] = [],
 ): ChainMessage {
-  return { id, type, username, content, reactions };
+  return { id, type, username, content, reactions: [] };
+}
+
+function replyWith(...texts: string[]) {
+  vi.mocked(createAnthropicMessage).mockImplementation(async function* () {
+    yield* texts;
+  });
+}
+
+function failAfter(...texts: string[]) {
+  vi.mocked(createAnthropicMessage).mockImplementation(async function* () {
+    yield* texts;
+    throw new Error("model timed out");
+  });
 }
 
 const heyTurn = {
@@ -68,46 +65,48 @@ const heyTurn = {
   reactions: [],
 };
 
+const OOPS = "oops, something went wrong... try again later!";
+
+beforeEach(() => {
+  vi.spyOn(log, "info").mockImplementation(() => {});
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+  vi.mocked(reflect).mockResolvedValue(undefined);
+  vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+});
+
 describe("handleMessage", () => {
   beforeEach(() => {
-    vi.mocked(reflect).mockResolvedValue(undefined);
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(getMessageChain).mockResolvedValue([
+      link("msg-1", 0, "User1", "hey simon-bot"),
+    ]);
   });
 
   it("should respond when bot is mentioned in the message, even if pruning fails", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
     const sqlite = createSqliteQuery(MIGRATIONS);
     vi.mocked(query).mockImplementation(async (sql, args) =>
       sql.startsWith("DELETE")
         ? Promise.reject(new Error("boom"))
         : sqlite(sql, args),
     );
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot!"),
-    ]);
+    replyWith("hello there!");
 
-    async function* mockResponse() {
-      yield "hello there!";
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
-
-    await handleMessage(createMessage({ content: "User1: hey simon-bot!" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot!" }));
 
     expect(postChannelMessage).toHaveBeenCalledWith(
       "hello there!",
       "simon-bot",
       "msg-1",
     );
-    expect(warn).toHaveBeenCalledWith(
+    expect(log.warn).toHaveBeenCalledWith(
       { err: expect.any(Error) },
       "Failed to prune seen messages",
     );
   });
 
   it("should not respond when bot is not mentioned", async () => {
-    await handleMessage(createMessage({ content: "User1: hello world" }));
+    await handleMessage(message("msg-1", { content: "User1: hello world" }));
 
     expect(query).not.toHaveBeenCalled();
     expect(getMessageChain).not.toHaveBeenCalled();
@@ -116,8 +115,7 @@ describe("handleMessage", () => {
 
   it("should not treat a forward as a reply", async () => {
     await handleMessage(
-      createMessage({
-        id: "msg-2",
+      message("msg-2", {
         message_reference: { type: 1, message_id: "msg-1" },
         content: "User2: look at this",
       }),
@@ -129,8 +127,7 @@ describe("handleMessage", () => {
 
   it("should not be summoned by a forward of someone else's mention", async () => {
     await handleMessage(
-      createMessage({
-        id: "msg-2",
+      message("msg-2", {
         content: "",
         message_reference: { type: 1, message_id: "msg-1" },
         message_snapshots: [{ message: { content: "User1: hey simon-bot" } }],
@@ -148,9 +145,8 @@ describe("handleMessage", () => {
     ]);
 
     await handleMessage(
-      createMessage({
+      message("msg-2", {
         type: 19,
-        id: "msg-2",
         message_reference: { message_id: "msg-1" },
         content: "User2: hi",
       }),
@@ -161,61 +157,46 @@ describe("handleMessage", () => {
   });
 
   it("should handle a message only once across instances", async () => {
-    const info = vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([]);
 
-    const message = createMessage({ content: "User1: hey simon-bot" });
-    await handleMessage(message);
-    await handleMessage(message);
+    const mention = message("msg-1", { content: "User1: hey simon-bot" });
+    await handleMessage(mention);
+    await handleMessage(mention);
 
     expect(getMessageChain).toHaveBeenCalledTimes(1);
-    expect(info).toHaveBeenCalledWith(
+    expect(log.info).toHaveBeenCalledWith(
       { messageId: "msg-1" },
       "Message already handled by another instance",
     );
   });
 
   it("should forget handled messages after an hour", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
     vi.useFakeTimers({ now: 0 });
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([]);
     const seen = async () =>
       (await query("SELECT id FROM seen_messages ORDER BY id")).rows;
 
-    await handleMessage(
-      createMessage({ id: "1", content: "User1: simon-bot" }),
-    );
+    await handleMessage(message("1", { content: "User1: simon-bot" }));
     vi.setSystemTime(60 * 60 * 1000 - 1);
-    await handleMessage(
-      createMessage({ id: "2", content: "User1: simon-bot" }),
-    );
+    await handleMessage(message("2", { content: "User1: simon-bot" }));
     expect(await seen()).toEqual([{ id: "1" }, { id: "2" }]);
 
     vi.setSystemTime(60 * 60 * 1000);
-    await handleMessage(
-      createMessage({ id: "3", content: "User1: simon-bot" }),
-    );
+    await handleMessage(message("3", { content: "User1: simon-bot" }));
     expect(await seen()).toEqual([{ id: "2" }, { id: "3" }]);
   });
 
   it("should respond when bot is mentioned in parent message", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
       link("msg-1", 0, "User1", "hey simon-bot help"),
       link("msg-2", 19, "User2", "thanks!"),
     ]);
-
-    async function* mockResponse() {
-      yield "you're welcome!";
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+    replyWith("you're welcome!");
 
     await handleMessage(
-      createMessage({
+      message("msg-2", {
         type: 19,
-        id: "msg-2",
         message_reference: { message_id: "msg-1" },
         content: "User2: thanks!",
       }),
@@ -229,23 +210,16 @@ describe("handleMessage", () => {
   });
 
   it("should map bot messages to assistant role in conversation", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
       link("msg-1", 0, "User1", "hey simon-bot!"),
       link("msg-2", 19, "simon-bot", "hello there!"),
       link("msg-3", 19, "User1", "thanks!"),
     ]);
-
-    async function* mockResponse() {
-      yield "you're welcome!";
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+    replyWith("you're welcome!");
 
     await handleMessage(
-      createMessage({
+      message("msg-3", {
         type: 19,
-        id: "msg-3",
         message_reference: { message_id: "msg-2" },
         content: "User1: thanks!",
       }),
@@ -276,42 +250,25 @@ describe("handleMessage", () => {
     ]);
   });
 
-  it("should show the bot each message's reactions, the site's included", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
+  it("should show the bot the site's reactions on each message", async () => {
     await query(
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '😂', 'otter')",
     );
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot", [
-        { emoji: "😂", count: 1, users: [] },
-      ]),
-    ]);
-    async function* mockResponse() {}
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+    replyWith();
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
     expect(createAnthropicMessage).toHaveBeenCalledWith([
       expect.objectContaining({
-        reactions: [{ emoji: "😂", count: 2, users: ["otter"] }],
+        reactions: [{ emoji: "😂", count: 1, users: ["otter"] }],
       }),
     ]);
   });
 
   it("should reflect on the conversation after replying", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot"),
-    ]);
+    replyWith("one sec", "hello");
 
-    async function* mockResponse() {
-      yield "one sec";
-      yield "hello";
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
-
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
@@ -322,26 +279,11 @@ describe("handleMessage", () => {
   });
 
   it("should still reflect when a later reply fails", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot"),
-    ]);
+    failAfter("one sec");
 
-    async function* mockResponse() {
-      yield "one sec";
-      throw new Error("model timed out");
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
-
-    expect(postChannelMessage).toHaveBeenCalledWith(
-      "oops, something went wrong... try again later!",
-      "simon-bot",
-      "msg-1",
-    );
+    expect(postChannelMessage).toHaveBeenCalledWith(OOPS, "simon-bot", "msg-1");
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
       heyTurn,
@@ -350,24 +292,14 @@ describe("handleMessage", () => {
   });
 
   it("should still reflect when the error message can't be posted either", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot"),
-    ]);
-
-    async function* mockResponse() {
-      yield "one sec";
-      throw new Error("model timed out");
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+    failAfter("one sec");
     vi.mocked(postChannelMessage)
       .mockResolvedValueOnce("response-1")
       .mockRejectedValueOnce(new Error("discord down"));
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       { err: expect.any(Error), messageId: "msg-1" },
       "Bot message handling failed",
     );
@@ -379,22 +311,19 @@ describe("handleMessage", () => {
   });
 
   it("should reflect when the bot chose not to reply", async () => {
-    const info = vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockResolvedValue([
       link("msg-1", 0, "simon", "simon-bot try sounding less like grok please"),
     ]);
-
-    async function* mockResponse() {}
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
+    replyWith();
 
     await handleMessage(
-      createMessage({
+      message("msg-1", {
         content: "simon-bot try sounding less like grok please",
       }),
     );
 
     expect(postChannelMessage).not.toHaveBeenCalled();
-    expect(info).toHaveBeenCalledWith(
+    expect(log.info).toHaveBeenCalledWith(
       { messageId: "msg-1", replies: 0 },
       "Bot chose not to reply",
     );
@@ -424,7 +353,7 @@ describe("handleMessage", () => {
     }
     vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
 
-    await handleMessage(createMessage({ content: "thanks simon-bot" }));
+    await handleMessage(message("msg-1", { content: "thanks simon-bot" }));
 
     await vi.waitFor(() => expect(reflect).toHaveBeenCalled());
     expect(reflect).toHaveBeenCalledWith([
@@ -438,40 +367,30 @@ describe("handleMessage", () => {
     ]);
   });
 
-  it("should not reflect when the reply failed before anything was said", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot"),
-    ]);
+  it("should post an error and not reflect when the reply fails before anything was said", async () => {
+    failAfter();
 
-    vi.mocked(createAnthropicMessage).mockImplementation(() => {
-      throw new Error("model down");
-    });
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot!" }));
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
-
+    expect(postChannelMessage).toHaveBeenCalledExactlyOnceWith(
+      OOPS,
+      "simon-bot",
+      "msg-1",
+    );
+    expect(log.error).toHaveBeenCalledWith(
+      { err: new Error("model timed out"), messageId: "msg-1" },
+      "Bot response failed",
+    );
     expect(reflect).not.toHaveBeenCalled();
   });
 
   it("should log a failed reflection without affecting the reply", async () => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(reflect).mockRejectedValue(new Error("reflection broke"));
+    replyWith("hello");
 
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot"),
-    ]);
-
-    async function* mockResponse() {
-      yield "hello";
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(mockResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("response-1");
-
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(
+      expect(log.error).toHaveBeenCalledWith(
         { err: expect.any(Error), messageId: "msg-1" },
         "Bot reflection failed",
       );
@@ -482,60 +401,37 @@ describe("handleMessage", () => {
   it("should skip if chain is empty", async () => {
     vi.mocked(getMessageChain).mockResolvedValue([]);
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
     expect(createAnthropicMessage).not.toHaveBeenCalled();
   });
 
   it("should ignore non-standard message types", async () => {
     await handleMessage(
-      createMessage({
-        type: 7, // guild member join
-        content: "User1: hey simon-bot!",
-      }),
+      message("msg-1", { type: 7, content: "User1: hey simon-bot!" }),
     );
 
-    // Should exit early before dedup check
     expect(query).not.toHaveBeenCalled();
   });
 
   it("should skip bot's own messages", async () => {
-    await handleMessage(createMessage({ content: "simon-bot: hello there!" }));
+    await handleMessage(
+      message("msg-1", { content: "simon-bot: hello there!" }),
+    );
 
-    // Should exit early before dedup check
     expect(query).not.toHaveBeenCalled();
   });
 
   it("should log error silently on pre-commitment failure", async () => {
-    const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getMessageChain).mockRejectedValue(new Error("API error"));
 
-    await handleMessage(createMessage({ content: "User1: hey simon-bot" }));
+    await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
-    expect(errorSpy).toHaveBeenCalled();
-    expect(postChannelMessage).not.toHaveBeenCalled();
-  });
-
-  it("should post error message on post-commitment failure", async () => {
-    const errorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(getMessageChain).mockResolvedValue([
-      link("msg-1", 0, "User1", "hey simon-bot!"),
-    ]);
-
-    async function* failingResponse(): AsyncGenerator<string> {
-      yield await Promise.reject(new Error("Anthropic error"));
-    }
-    vi.mocked(createAnthropicMessage).mockReturnValue(failingResponse());
-    vi.mocked(postChannelMessage).mockResolvedValue("error-msg-id");
-
-    await handleMessage(createMessage({ content: "User1: hey simon-bot!" }));
-
-    expect(errorSpy).toHaveBeenCalled();
-    expect(postChannelMessage).toHaveBeenCalledWith(
-      "oops, something went wrong... try again later!",
-      "simon-bot",
-      "msg-1",
+    expect(log.error).toHaveBeenCalledWith(
+      { err: new Error("API error"), messageId: "msg-1" },
+      "Bot message handling failed",
     );
+    expect(postChannelMessage).not.toHaveBeenCalled();
   });
 });
 
@@ -543,44 +439,21 @@ describe("startBotSubscription", () => {
   beforeEach(() => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([]);
-    vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(subscribe).mockResolvedValue(() => {});
   });
 
-  async function startAndGetSubscriber() {
+  it("should handle created messages and ignore other channel events", async () => {
     await startBotSubscription();
     const callback = vi.mocked(subscribe).mock.calls[0]?.[0];
-    if (!callback) throw new Error("Bot did not subscribe");
-    return callback;
-  }
-
-  it("should handle created messages", async () => {
-    const callback = await startAndGetSubscriber();
-
-    callback({
-      t: "MESSAGE_CREATE",
-      d: { ...createMessage({ content: "hey simon-bot" }), channel_id: "c" },
-    });
-
-    await vi.waitFor(() => {
-      expect(getMessageChain).toHaveBeenCalledWith("msg-1");
-    });
-  });
-
-  it("should ignore other channel events", async () => {
-    const callback = await startAndGetSubscriber();
 
     // Would reach the chain lookup if the bot handled updates as new messages.
-    callback({
+    callback?.({
       t: "MESSAGE_UPDATE",
-      d: { ...createMessage({ content: "hey simon-bot" }), channel_id: "c" },
+      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
     });
-    callback({
+    callback?.({
       t: "MESSAGE_CREATE",
-      d: {
-        ...createMessage({ id: "msg-2", content: "hey simon-bot" }),
-        channel_id: "c",
-      },
+      d: { ...message("msg-2", { content: "hey simon-bot" }), channel_id: "c" },
     });
 
     await vi.waitFor(() => {

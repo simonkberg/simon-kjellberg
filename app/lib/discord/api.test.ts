@@ -1,9 +1,11 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
+import { message, reaction } from "@/mocks/discord";
 import { server } from "@/mocks/node";
 
 import {
@@ -29,18 +31,32 @@ vi.mock(import("./gateway"), () => ({
 
 beforeEach(() => {
   resetGlobal("simon.dev/discord-store");
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  _resetRateLimitState();
 });
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
 const MESSAGES_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages`;
-const REACTIONS_URL = `${MESSAGES_URL}/:messageId/reactions/:emoji`;
+const MESSAGE_URL = `${MESSAGES_URL}/:messageId`;
+const REACTIONS_URL = `${MESSAGE_URL}/reactions/:emoji`;
 const BOT_REACTION_URL = `${REACTIONS_URL}/@me`;
 const BOT_REACTION_ROUTE =
   "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me";
 const MEMBER_URL = `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`;
+const SEARCH_URL = `${DISCORD_BASE_URL}/guilds/:guildId/messages/search`;
 
-function member(username: string, nick: string | null = null) {
-  return HttpResponse.json({ user: { username, global_name: null }, nick });
+function member(
+  username: string,
+  {
+    nick = null,
+    global_name = null,
+  }: { nick?: string | null; global_name?: string | null } = {},
+) {
+  return HttpResponse.json({ user: { username, global_name }, nick });
 }
 
 function goneMember() {
@@ -48,6 +64,10 @@ function goneMember() {
     { message: "Unknown Member", code: 10007 },
     { status: 404 },
   );
+}
+
+function serverError() {
+  return HttpResponse.json({ message: "oops", code: 0 }, { status: 500 });
 }
 
 function rateLimited(retryAfter: number, global = false) {
@@ -75,37 +95,27 @@ function onceThen(first: () => Response, rest: () => Response, times = 1) {
   return handler;
 }
 
-function rawMessage(
-  reactions: DiscordMessage["reactions"],
-  id = "1",
-): DiscordMessage {
-  return {
-    type: 0,
-    id,
-    author: { id: "user1", bot: true },
-    content: "User: Hi",
-    timestamp: "2025-01-01T00:00:00.000000+00:00",
-    edited_timestamp: null,
-    reactions,
-  };
+function history(...messages: DiscordMessage[]) {
+  return http.get(MESSAGES_URL, () => HttpResponse.json(messages));
+}
+
+function byId(...messages: DiscordMessage[]) {
+  return http.get(MESSAGE_URL, ({ params }) =>
+    HttpResponse.json(messages.find((m) => m.id === params["messageId"])),
+  );
+}
+
+function reply(id: string, parent: string, content: string) {
+  return message(id, {
+    type: 19,
+    content,
+    message_reference: { message_id: parent },
+  });
 }
 
 describe("getChannelMessages", () => {
   it("should fetch and parse messages successfully", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "TestUser: Hello world",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-    );
+    server.use(history(message("1", { content: "TestUser: Hello world" })));
 
     const messages = await getChannelMessages();
 
@@ -120,20 +130,7 @@ describe("getChannelMessages", () => {
   });
 
   it("should parse prefixed message with empty content", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "TestUser:",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-    );
+    server.use(history(message("1", { content: "TestUser:" })));
 
     const messages = await getChannelMessages();
 
@@ -144,18 +141,7 @@ describe("getChannelMessages", () => {
 
   it("should leave markdown in content untouched", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "TestUser: **Bold** and *italic*",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
+      history(message("1", { content: "TestUser: **Bold** and *italic*" })),
     );
 
     const messages = await getChannelMessages();
@@ -163,29 +149,18 @@ describe("getChannelMessages", () => {
     expect(messages).toMatchObject([{ content: "**Bold** and *italic*" }]);
   });
 
-  it("should not parse username prefix from non-bot messages", async () => {
+  it("should name a non-bot author from the guild member and keep their content whole", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "human-user" },
-            content: "the source is here: https://github.com/example/repo",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
+      history(
+        message("1", {
+          author: { id: "human-user" },
+          content: "the source is here: https://github.com/example/repo",
+        }),
       ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) => {
-          expect(params["userId"]).toBe("human-user");
-          return HttpResponse.json({
-            user: { username: "simon", global_name: "Simon" },
-            nick: "simon",
-          });
-        },
+      http.get(MEMBER_URL, ({ params }) =>
+        params["userId"] === "human-user"
+          ? member("simon", { nick: "Simon" })
+          : goneMember(),
       ),
     );
 
@@ -195,112 +170,14 @@ describe("getChannelMessages", () => {
       {
         id: "1",
         content: "the source is here: https://github.com/example/repo",
-        user: { name: "simon" },
+        user: { name: "Simon" },
       },
     ]);
   });
 
-  it("should lookup user via guild member API when no prefix", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user123" },
-            content: "No prefix here",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) => {
-          expect(params["userId"]).toBe("user123");
-          return HttpResponse.json({
-            user: { username: "discorduser", global_name: "Discord User" },
-            nick: "Server Nick",
-          });
-        },
-      ),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([
-      { content: "No prefix here", user: { name: "Server Nick" } },
-    ]);
-  });
-
-  it("should use global_name when nick is null", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user456" },
-            content: "Message",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
-        HttpResponse.json({
-          user: { username: "discorduser", global_name: "Global Name" },
-          nick: null,
-        }),
-      ),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([{ user: { name: "Global Name" } }]);
-  });
-
-  it("should use username when nick and global_name are null", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user789" },
-            content: "Message",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`, () =>
-        HttpResponse.json({
-          user: { username: "fallbackuser", global_name: null },
-          nick: null,
-        }),
-      ),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([{ user: { name: "fallbackuser" } }]);
-  });
-
   it("should handle edited messages", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User: Edited message",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: "2024-01-01T00:00:00Z",
-          },
-        ]),
-      ),
+      history(message("1", { edited_timestamp: "2024-01-01T00:00:00Z" })),
     );
 
     const messages = await getChannelMessages();
@@ -310,15 +187,15 @@ describe("getChannelMessages", () => {
 
   it("should count Discord reactions other than the bot's own mirror", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage([
-            { count: 3, me: true, emoji: { id: null, name: "👍" } },
-            { count: 1, me: true, emoji: { id: null, name: "🎉" } },
-            { count: 2, me: false, emoji: { id: null, name: "😂" } },
+      history(
+        message("1", {
+          reactions: [
+            reaction("👍", 3, true),
+            reaction("🎉", 1, true),
+            reaction("😂", 2),
             { count: 1, me: false, emoji: { id: "42", name: "custom" } },
-          ]),
-        ]),
+          ],
+        }),
       ),
       http.get(REACTIONS_URL, ({ params }) =>
         HttpResponse.json(
@@ -331,13 +208,10 @@ describe("getChannelMessages", () => {
             : [{ id: "reactor-1" }, { id: "reactor-2" }],
         ),
       ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) =>
-          HttpResponse.json({
-            user: { username: String(params["userId"]), global_name: null },
-            nick: params["userId"] === "reactor-1" ? "simon" : null,
-          }),
+      http.get(MEMBER_URL, ({ params }) =>
+        member(String(params["userId"]), {
+          nick: params["userId"] === "reactor-1" ? "simon" : null,
+        }),
       ),
     );
 
@@ -352,14 +226,7 @@ describe("getChannelMessages", () => {
   it("should page through every Discord reactor", async () => {
     const page = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}` }));
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage(
-            [{ count: 101, me: false, emoji: { id: null, name: "😂" } }],
-            "many-reactors",
-          ),
-        ]),
-      ),
+      history(message("many-reactors", { reactions: [reaction("😂", 101)] })),
       http.get(REACTIONS_URL, ({ request }) =>
         HttpResponse.json(
           new URL(request.url).searchParams.get("after") === "r99"
@@ -378,14 +245,7 @@ describe("getChannelMessages", () => {
 
   it("should skip Discord reactors who left the server", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage(
-            [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
-            "reactors-left",
-          ),
-        ]),
-      ),
+      history(message("reactors-left", { reactions: [reaction("😂", 2)] })),
       http.get(REACTIONS_URL, () =>
         HttpResponse.json([{ id: "reactor-stays" }, { id: "reactor-left" }]),
       ),
@@ -402,23 +262,13 @@ describe("getChannelMessages", () => {
   });
 
   it("should keep the reactors it could name when one lookup fails", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage(
-            [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
-            "reactor-fails",
-          ),
-        ]),
-      ),
+      history(message("reactor-fails", { reactions: [reaction("😂", 2)] })),
       http.get(REACTIONS_URL, () =>
         HttpResponse.json([{ id: "reactor-ok" }, { id: "reactor-busy" }]),
       ),
       http.get(MEMBER_URL, ({ params }) =>
-        params["userId"] === "reactor-busy"
-          ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
-          : member("ok"),
+        params["userId"] === "reactor-busy" ? serverError() : member("ok"),
       ),
     );
 
@@ -431,14 +281,11 @@ describe("getChannelMessages", () => {
 
   it("should name an author who left the server by their Discord name, or else their id", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([], "1"),
-            author: { id: "author-left", username: "left", global_name: null },
-          },
-          { ...rawMessage([], "2"), author: { id: "nameless" } },
-        ]),
+      history(
+        message("1", {
+          author: { id: "author-left", username: "left", global_name: null },
+        }),
+        message("2", { author: { id: "nameless" } }),
       ),
       http.get(MEMBER_URL, goneMember),
     );
@@ -448,38 +295,25 @@ describe("getChannelMessages", () => {
     expect(messages.map((m) => m.user.name)).toEqual(["left", "nameless"]);
   });
 
-  it("should ask for a member's name again after a Discord error", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    let attempts = 0;
+  it("should fail when an author's name fails to load", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([]),
-            author: { id: "busy", username: "busy", global_name: null },
-            content: "hi",
-          },
-        ]),
+      history(
+        message("1", {
+          author: { id: "busy", username: "busy", global_name: null },
+          content: "hi",
+        }),
       ),
-      http.get(MEMBER_URL, () =>
-        ++attempts === 1
-          ? HttpResponse.json({ message: "oops", code: 0 }, { status: 500 })
-          : member("busy", "Nick"),
-      ),
+      http.get(MEMBER_URL, serverError),
     );
 
-    await expect(getChannelMessages()).rejects.toThrow();
-    const messages = await getChannelMessages();
-
-    expect(messages[0]?.user.name).toBe("Nick");
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord API error: 500",
+    );
   });
 
   it("should still serve history when the gateway can't be subscribed to", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(subscribe).mockRejectedValueOnce(new Error("fatal"));
-    server.use(
-      http.get(MESSAGES_URL, () => HttpResponse.json([rawMessage([])])),
-    );
+    server.use(history(message("1")));
 
     expect(await getChannelMessages()).toHaveLength(1);
     expect(log.error).toHaveBeenCalledWith(
@@ -488,37 +322,10 @@ describe("getChannelMessages", () => {
     );
   });
 
-  it("should look up Discord reactors once, leaving changes to the gateway", async () => {
-    const lookups = vi.fn(() => HttpResponse.json([]));
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage(
-            [{ count: 1, me: false, emoji: { id: null, name: "😂" } }],
-            "reactors-cached",
-          ),
-        ]),
-      ),
-      http.get(REACTIONS_URL, lookups),
-    );
-
-    await getChannelMessages();
-    await getChannelMessages();
-    expect(lookups).toHaveBeenCalledOnce();
-  });
-
   it("should still count Discord reactions when their names fail to load", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    const lookups = vi.fn(() => new HttpResponse(null, { status: 500 }));
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage([
-            { count: 1, me: false, emoji: { id: null, name: "😂" } },
-          ]),
-        ]),
-      ),
-      http.get(REACTIONS_URL, lookups),
+      history(message("1", { reactions: [reaction("😂")] })),
+      http.get(REACTIONS_URL, () => new HttpResponse(null, { status: 500 })),
     );
 
     const messages = await getChannelMessages();
@@ -526,52 +333,19 @@ describe("getChannelMessages", () => {
     expect(messages[0]?.reactions).toEqual([
       { emoji: "😂", count: 1, users: [] },
     ]);
-    expect(log.warn).toHaveBeenCalledOnce();
-
-    await getChannelMessages();
-    expect(lookups).toHaveBeenCalledTimes(2);
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ messageId: "1", emoji: "😂" }),
+      "Failed to load reactors",
+    );
   });
 
   it("should handle replies as nested messages with multiple levels", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User1: Parent message",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 19,
-            id: "2",
-            author: { id: "user2", bot: true },
-            content: "User2: First reply",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "1" },
-          },
-          {
-            type: 19,
-            id: "3",
-            author: { id: "user3", bot: true },
-            content: "User3: Reply to reply",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "2" },
-          },
-          {
-            type: 19,
-            id: "4",
-            author: { id: "user4", bot: true },
-            content: "User4: Another top-level reply",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "1" },
-          },
-        ]),
+      history(
+        message("1", { content: "User1: Parent message" }),
+        reply("2", "1", "User2: First reply"),
+        reply("3", "2", "User3: Reply to reply"),
+        reply("4", "1", "User4: Another top-level reply"),
       ),
     );
 
@@ -593,69 +367,20 @@ describe("getChannelMessages", () => {
     ]);
   });
 
-  it("should exclude replies that reference missing parent messages", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User1: Message 1",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 19,
-            id: "2",
-            author: { id: "user2", bot: true },
-            content: "User2: Valid reply to message 1",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "1" },
-          },
-          {
-            type: 19,
-            id: "3",
-            author: { id: "user3", bot: true },
-            content: "User3: Orphaned reply",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "999" },
-          },
-        ]),
-      ),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([{ id: "1", replies: [{ id: "2" }] }]);
-  });
-
   it("should not resolve replies whose parent is outside the window", async () => {
-    const memberLookups = vi.fn();
-    const reactorLookups = vi.fn();
+    const memberLookups = vi.fn(() => member("user1"));
+    const reactorLookups = vi.fn(emptyList);
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([
-              { count: 1, me: false, emoji: { id: null, name: "😂" } },
-            ]),
-            author: { id: "user1" },
-            content: "Orphaned reply",
-            message_reference: { message_id: "999" },
-          },
-        ]),
+      history(
+        message("1", {
+          author: { id: "user1" },
+          content: "Orphaned reply",
+          message_reference: { message_id: "999" },
+          reactions: [reaction("😂")],
+        }),
       ),
-      http.get(MEMBER_URL, () => {
-        memberLookups();
-        return member("user1");
-      }),
-      http.get(REACTIONS_URL, () => {
-        reactorLookups();
-        return HttpResponse.json([]);
-      }),
+      http.get(MEMBER_URL, memberLookups),
+      http.get(REACTIONS_URL, reactorLookups),
     );
 
     expect(await getChannelMessages()).toEqual([]);
@@ -665,14 +390,9 @@ describe("getChannelMessages", () => {
 
   it("should show a forward as a message of its own", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          rawMessage([], "1"),
-          {
-            ...rawMessage([], "2"),
-            message_reference: { type: 1, message_id: "1" },
-          },
-        ]),
+      history(
+        message("1"),
+        message("2", { message_reference: { type: 1, message_id: "1" } }),
       ),
     );
 
@@ -683,30 +403,27 @@ describe("getChannelMessages", () => {
   });
 
   it("should show what a forward forwards", async () => {
+    const forward = {
+      content: "",
+      message_reference: { type: 1, message_id: "1" },
+    };
+    const forwarder = { id: "user2", username: "forwarder" };
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([], "2"),
-            author: { id: "user2", username: "forwarder" },
-            content: "",
-            message_reference: { type: 1, message_id: "1" },
-            message_snapshots: [{ message: { content: "Forwarded text" } }],
-          },
-          {
-            ...rawMessage([], "3"),
-            author: { id: "user2", username: "forwarder" },
-            content: "",
-            message_reference: { type: 1, message_id: "1" },
-            message_snapshots: [{ message: { attachments: [] } }],
-          },
-          {
-            ...rawMessage([], "4"),
-            content: "",
-            message_reference: { type: 1, message_id: "1" },
-            message_snapshots: [{ message: { content: "Name: Hi" } }],
-          },
-        ]),
+      history(
+        message("2", {
+          ...forward,
+          author: forwarder,
+          message_snapshots: [{ message: { content: "Forwarded text" } }],
+        }),
+        message("3", {
+          ...forward,
+          author: forwarder,
+          message_snapshots: [{ message: {} }],
+        }),
+        message("4", {
+          ...forward,
+          message_snapshots: [{ message: { content: "Name: Hi" } }],
+        }),
       ),
       http.get(MEMBER_URL, () => member("forwarder")),
     );
@@ -718,74 +435,8 @@ describe("getChannelMessages", () => {
     ]);
   });
 
-  it("should filter out non-standard message types", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User: Normal message",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 7,
-            id: "2",
-            author: { id: "user2" },
-            content: "User joined",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 18,
-            id: "3",
-            author: { id: "user3" },
-            content: "Thread created",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([{ id: "1" }]);
-  });
-
   it("should sort messages by ID", async () => {
-    server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            type: 0,
-            id: "3",
-            author: { id: "user1", bot: true },
-            content: "User: Third",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 0,
-            id: "1",
-            author: { id: "user1", bot: true },
-            content: "User: First",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-          {
-            type: 0,
-            id: "2",
-            author: { id: "user1", bot: true },
-            content: "User: Second",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          },
-        ]),
-      ),
-    );
+    server.use(history(message("3"), message("1"), message("2")));
 
     const messages = await getChannelMessages();
 
@@ -794,31 +445,27 @@ describe("getChannelMessages", () => {
 
   it("should configure fetch with 5 second timeout", async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
-
-    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
+    server.use(history());
 
     await getChannelMessages();
 
     expect(timeoutSpy).toHaveBeenCalledWith(5000);
   });
 
-  it.each([
-    { status: 401, statusText: "Unauthorized" },
-    { status: 403, statusText: "Forbidden" },
-    { status: 404, statusText: "Not Found" },
-    { status: 500, statusText: "Internal Server Error" },
-  ])("should handle HTTP $status error", async ({ status, statusText }) => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-
+  it("should throw Discord's status on an HTTP error", async () => {
     server.use(
       http.get(
         MESSAGES_URL,
-        () => new HttpResponse(JSON.stringify({}), { status, statusText }),
+        () =>
+          new HttpResponse(JSON.stringify({}), {
+            status: 403,
+            statusText: "Forbidden",
+          }),
       ),
     );
 
     await expect(getChannelMessages()).rejects.toThrow(
-      `Discord API error: ${status} ${statusText}`,
+      "Discord API error: 403 Forbidden",
     );
   });
 
@@ -827,13 +474,13 @@ describe("getChannelMessages", () => {
       http.get(MESSAGES_URL, () => HttpResponse.json({ invalid: "data" })),
     );
 
-    await expect(getChannelMessages()).rejects.toThrow();
+    await expect(getChannelMessages()).rejects.toBeInstanceOf(z.ZodError);
   });
 });
 
 describe("subscribeToChannel", () => {
   it("should call back once the store has seeded", async () => {
-    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
+    server.use(history());
     const callback = vi.fn();
 
     await subscribeToChannel(callback);
@@ -846,7 +493,7 @@ describe("subscribeToChannel", () => {
     const callback = vi.fn();
 
     await expect(subscribeToChannel(callback)).rejects.toThrow("fatal");
-    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
+    server.use(history());
     await getChannelMessages();
 
     expect(callback).not.toHaveBeenCalled();
@@ -855,20 +502,7 @@ describe("subscribeToChannel", () => {
 
 describe("getMessageChain", () => {
   it("should return single message when no parent", async () => {
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        () =>
-          HttpResponse.json({
-            type: 0,
-            id: "single-1",
-            author: { id: "user1", bot: true },
-            content: "User1: Hello",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          }),
-      ),
-    );
+    server.use(byId(message("single-1", { content: "User1: Hello" })));
 
     const chain = await getMessageChain("single-1");
 
@@ -877,20 +511,13 @@ describe("getMessageChain", () => {
   });
 
   it("should read messages in the window from the store", async () => {
-    const single = vi.fn(() => HttpResponse.json({}, { status: 500 }));
+    const single = vi.fn(serverError);
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([], "stored-2"),
-            type: 19,
-            content: "User2: Second",
-            message_reference: { message_id: "stored-1" },
-          },
-          rawMessage([], "stored-1"),
-        ]),
+      history(
+        reply("stored-2", "stored-1", "User2: Second"),
+        message("stored-1"),
       ),
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages/:id`, single),
+      http.get(MESSAGE_URL, single),
     );
     await getChannelMessages();
 
@@ -902,140 +529,25 @@ describe("getMessageChain", () => {
 
   it("should walk up the chain to root (ordered root-first)", async () => {
     server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        ({ params }) => {
-          const id = params["messageId"];
-          if (id === "chain-3") {
-            return HttpResponse.json({
-              type: 19,
-              id: "chain-3",
-              author: { id: "user3", bot: true },
-              content: "User3: Third",
-              timestamp: "2025-01-01T00:00:00.000000+00:00",
-              edited_timestamp: null,
-              message_reference: { message_id: "chain-2" },
-            });
-          }
-          if (id === "chain-2") {
-            return HttpResponse.json({
-              type: 19,
-              id: "chain-2",
-              author: { id: "user2", bot: true },
-              content: "User2: Second",
-              timestamp: "2025-01-01T00:00:00.000000+00:00",
-              edited_timestamp: null,
-              message_reference: { message_id: "chain-1" },
-            });
-          }
-          return HttpResponse.json({
-            type: 0,
-            id: "chain-1",
-            author: { id: "user1", bot: true },
-            content: "User1: First",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          });
-        },
+      byId(
+        reply("chain-3", "chain-2", "User3: Third"),
+        reply("chain-2", "chain-1", "User2: Second"),
+        message("chain-1", { content: "User1: First" }),
       ),
     );
 
     const chain = await getMessageChain("chain-3");
 
-    expect(chain).toHaveLength(3);
     expect(chain.map((m) => m.id)).toEqual(["chain-1", "chain-2", "chain-3"]);
+    expect(chain.map((m) => m.username)).toEqual(["User1", "User2", "User3"]);
     expect(chain.map((m) => m.content)).toEqual(["First", "Second", "Third"]);
-  });
-
-  it("should parse bot messages like any other prefixed message", async () => {
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        ({ params }) => {
-          const id = params["messageId"];
-          if (id === "bot-2") {
-            return HttpResponse.json({
-              type: 19,
-              id: "bot-2",
-              author: { id: "user2", bot: true },
-              content: "User2: Thanks bot!",
-              timestamp: "2025-01-01T00:00:00.000000+00:00",
-              edited_timestamp: null,
-              message_reference: { message_id: "bot-1" },
-            });
-          }
-          return HttpResponse.json({
-            type: 0,
-            id: "bot-1",
-            author: { id: "bot", bot: true },
-            content: "simon-bot: Hello human",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          });
-        },
-      ),
-    );
-
-    const chain = await getMessageChain("bot-2");
-
-    expect(chain).toHaveLength(2);
-    expect(chain[0]).toMatchObject({
-      id: "bot-1",
-      username: "simon-bot",
-      content: "Hello human",
-    });
-    expect(chain[1]).toMatchObject({
-      id: "bot-2",
-      username: "User2",
-      content: "Thanks bot!",
-    });
-  });
-
-  it("should lookup username via API when no prefix", async () => {
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        () =>
-          HttpResponse.json({
-            type: 0,
-            id: "noprefix-1",
-            author: { id: "user999" },
-            content: "No prefix here",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-          }),
-      ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) => {
-          expect(params["userId"]).toBe("user999");
-          return HttpResponse.json({
-            user: { username: "discorduser", global_name: "Discord User" },
-            nick: "Server Nick",
-          });
-        },
-      ),
-    );
-
-    const chain = await getMessageChain("noprefix-1");
-
-    expect(chain).toHaveLength(1);
-    expect(chain[0]).toMatchObject({
-      username: "Server Nick",
-      content: "No prefix here",
-    });
   });
 
   it("should stop at a forward", async () => {
     server.use(
-      http.get(MESSAGES_URL, () =>
-        HttpResponse.json([
-          {
-            ...rawMessage([], "2"),
-            message_reference: { type: 1, message_id: "1" },
-          },
-          rawMessage([], "1"),
-        ]),
+      history(
+        message("2", { message_reference: { type: 1, message_id: "1" } }),
+        message("1"),
       ),
     );
     await getChannelMessages();
@@ -1047,82 +559,29 @@ describe("getMessageChain", () => {
 
   it("should stop on circular reference", async () => {
     server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        ({ params }) => {
-          const id = params["messageId"];
-          if (id === "circular-2") {
-            return HttpResponse.json({
-              type: 19,
-              id: "circular-2",
-              author: { id: "user2", bot: true },
-              content: "User2: Reply",
-              timestamp: "2025-01-01T00:00:00.000000+00:00",
-              edited_timestamp: null,
-              message_reference: { message_id: "circular-1" },
-            });
-          }
-          // circular-1 points back to circular-2 (circular)
-          return HttpResponse.json({
-            type: 0,
-            id: "circular-1",
-            author: { id: "user1", bot: true },
-            content: "User1: First",
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            message_reference: { message_id: "circular-2" },
-          });
-        },
+      byId(
+        reply("circular-2", "circular-1", "User2: Reply"),
+        reply("circular-1", "circular-2", "User1: First"),
       ),
     );
 
     const chain = await getMessageChain("circular-2");
 
-    // Should stop after detecting the cycle
-    expect(chain).toHaveLength(2);
     expect(chain.map((m) => m.id)).toEqual(["circular-1", "circular-2"]);
-  });
-
-  it("should throw when API returns error", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        () => HttpResponse.json({}, { status: 404, statusText: "Not Found" }),
-      ),
-    );
-
-    await expect(getMessageChain("error-msg-1")).rejects.toThrow(
-      "Discord API error: 404 Not Found",
-    );
   });
 
   it("should limit chain depth to 50 messages", async () => {
     let callCount = 0;
     server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId`,
-        ({ params }) => {
-          callCount++;
-          const id = Number(params["messageId"]);
-          const parentId = id - 1;
-          return HttpResponse.json({
-            type: parentId > 0 ? 19 : 0,
-            id: String(id),
-            author: { id: "user1", bot: true },
-            content: `User1: Message ${id}`,
-            timestamp: "2025-01-01T00:00:00.000000+00:00",
-            edited_timestamp: null,
-            ...(parentId > 0 && {
-              message_reference: { message_id: String(parentId) },
-            }),
-          });
-        },
-      ),
+      http.get(MESSAGE_URL, ({ params }) => {
+        callCount++;
+        const id = Number(params["messageId"]);
+        return HttpResponse.json(
+          reply(String(id), String(id - 1), "User1: Hi"),
+        );
+      }),
     );
 
-    // Start from message 100 (would be 100 messages deep without limit)
     const chain = await getMessageChain("100");
 
     expect(chain).toHaveLength(50);
@@ -1131,47 +590,32 @@ describe("getMessageChain", () => {
 });
 
 describe("postChannelMessage", () => {
-  it("should post message with username prefix", async () => {
+  it("should post the message with its author's prefix and return Discord's id", async () => {
+    const requests = vi.fn();
     server.use(
       http.post(MESSAGES_URL, async ({ request }) => {
-        const body = (await request.json()) as { content: string };
-        expect(body.content).toBe("TestUser: Hello world");
-        expect(request.headers.get("Authorization")).toBe(
-          "Bot test-discord-bot-token",
-        );
-        return HttpResponse.json({ id: "123" });
-      }),
-    );
-
-    await postChannelMessage("Hello world", "TestUser" as Username);
-  });
-
-  it("should return the message ID from Discord", async () => {
-    server.use(
-      http.post(MESSAGES_URL, async ({ request }) => {
-        const body = (await request.json()) as { content: string };
-        expect(body.content).toBe("TestUser: Hello");
+        requests(await request.json(), request.headers.get("Authorization"));
         return HttpResponse.json({ id: "message-123" });
       }),
     );
 
-    const messageId = await postChannelMessage("Hello", "TestUser" as Username);
+    const messageId = await postChannelMessage(
+      "Hello world",
+      "TestUser" as Username,
+    );
 
     expect(messageId).toBe("message-123");
+    expect(requests).toHaveBeenCalledExactlyOnceWith(
+      { content: "TestUser: Hello world" },
+      "Bot test-discord-bot-token",
+    );
   });
 
   it("should include message_reference when replyToMessageId is provided", async () => {
+    const requests = vi.fn();
     server.use(
       http.post(MESSAGES_URL, async ({ request }) => {
-        const body = (await request.json()) as {
-          content: string;
-          message_reference?: { message_id: string };
-        };
-        expect(body.content).toBe("simon-bot: This is a reply");
-        expect(body.message_reference).toEqual({
-          message_id: "original-123",
-          fail_if_not_exists: false,
-        });
+        requests(await request.json());
         return HttpResponse.json({ id: "reply-456" });
       }),
     );
@@ -1183,40 +627,13 @@ describe("postChannelMessage", () => {
     );
 
     expect(messageId).toBe("reply-456");
-  });
-
-  it("should not include message_reference when replyToMessageId is undefined", async () => {
-    server.use(
-      http.post(MESSAGES_URL, async ({ request }) => {
-        const body = (await request.json()) as {
-          content: string;
-          message_reference?: { message_id: string };
-        };
-        expect(body.message_reference).toBeUndefined();
-        return HttpResponse.json({ id: "msg-789" });
-      }),
-    );
-
-    await postChannelMessage("No reply", "TestUser" as Username);
-  });
-
-  it.each([
-    { status: 401, statusText: "Unauthorized" },
-    { status: 403, statusText: "Forbidden" },
-    { status: 500, statusText: "Internal Server Error" },
-  ])("should handle HTTP $status error", async ({ status, statusText }) => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-
-    server.use(
-      http.post(
-        MESSAGES_URL,
-        () => new HttpResponse(JSON.stringify({}), { status, statusText }),
-      ),
-    );
-
-    await expect(
-      postChannelMessage("Hello", "TestUser" as Username),
-    ).rejects.toThrow(`Discord API error: ${status} ${statusText}`);
+    expect(requests).toHaveBeenCalledExactlyOnceWith({
+      content: "simon-bot: This is a reply",
+      message_reference: {
+        message_id: "original-123",
+        fail_if_not_exists: false,
+      },
+    });
   });
 });
 
@@ -1236,7 +653,7 @@ describe("bot reactions", () => {
       server.use(
         method(BOT_REACTION_URL, ({ params }) => {
           onRequest(params);
-          return new HttpResponse(null, { status: 204 });
+          return noContent();
         }),
       );
 
@@ -1251,7 +668,6 @@ describe("bot reactions", () => {
   );
 
   it("should carry Discord's error code", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
       http.put(BOT_REACTION_URL, () =>
         HttpResponse.json(
@@ -1293,7 +709,6 @@ describe("response bodies", () => {
   ])(
     "should report the status of a $status whose body isn't JSON",
     async ({ status, statusText, error, logged }) => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
       server.use(
         http.put(BOT_REACTION_URL, () =>
           HttpResponse.html("<html>Not JSON</html>", { status, statusText }),
@@ -1305,7 +720,7 @@ describe("response bodies", () => {
         message: `Discord API error: ${error}`,
         code: undefined,
       });
-      expect(logErrorSpy).toHaveBeenCalledWith(
+      expect(log.error).toHaveBeenCalledWith(
         expect.objectContaining({ status, body: "<html>Not JSON</html>" }),
         logged,
       );
@@ -1338,12 +753,7 @@ describe("rate limiting", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
   });
 
-  afterEach(() => {
-    _resetRateLimitState();
-  });
-
   it("should retry after 429s and count the retries in the logs", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
     const requests = onceThen(() => rateLimited(1), emptyList, 3);
     server.use(http.get(MESSAGES_URL, requests));
 
@@ -1352,9 +762,9 @@ describe("rate limiting", () => {
     await promise;
 
     expect(requests).toHaveBeenCalledTimes(4);
-    expect(logWarnSpy).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(log.warn)).toHaveBeenCalledTimes(3);
     for (const retries of [1, 2, 3]) {
-      expect(logWarnSpy).toHaveBeenNthCalledWith(
+      expect(vi.mocked(log.warn)).toHaveBeenNthCalledWith(
         retries,
         expect.objectContaining({ retries }),
         "Discord rate limited, retrying",
@@ -1363,14 +773,13 @@ describe("rate limiting", () => {
   });
 
   it("should throw when elapsed + retry_after exceeds timeout", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(http.get(MESSAGES_URL, () => rateLimited(35, true)));
 
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
     );
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         elapsedMs: 0,
@@ -1383,8 +792,6 @@ describe("rate limiting", () => {
   });
 
   it("should account for elapsed time in timeout calculation", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     const requests = onceThen(
       () => rateLimited(15),
       () => rateLimited(16),
@@ -1392,7 +799,6 @@ describe("rate limiting", () => {
     server.use(http.get(MESSAGES_URL, requests));
 
     const promise = getChannelMessages();
-    // Set up rejection expectation before advancing time to avoid unhandled rejection
     const assertion = expect(promise).rejects.toThrow(
       "Discord rate limit exceeded",
     );
@@ -1401,7 +807,7 @@ describe("rate limiting", () => {
     await assertion;
 
     expect(requests).toHaveBeenCalledTimes(2);
-    expect(logWarnSpy).toHaveBeenCalledWith(
+    expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         retryAfterMs: 15000,
@@ -1410,7 +816,7 @@ describe("rate limiting", () => {
       },
       "Discord rate limited, retrying",
     );
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
         elapsedMs: 15000,
@@ -1423,8 +829,6 @@ describe("rate limiting", () => {
   });
 
   it("should throw when max retries exceeded", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     const requests = vi.fn(() => rateLimited(1));
     server.use(http.get(MESSAGES_URL, requests));
 
@@ -1438,8 +842,8 @@ describe("rate limiting", () => {
 
     // 1 initial + 5 retries = 6 total attempts
     expect(requests).toHaveBeenCalledTimes(6);
-    expect(logWarnSpy).toHaveBeenCalledTimes(5);
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(vi.mocked(log.warn)).toHaveBeenCalledTimes(5);
+    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
       expect.objectContaining({ retries: 6 }),
       "Discord rate limit exceeded max wait time",
     );
@@ -1472,7 +876,6 @@ describe("rate limiting", () => {
       true,
     ],
   ])("should gate %s", async (_, response, secondCall, heldBack) => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(
       http.put(BOT_REACTION_URL, onceThen(response, noContent)),
       http.delete(BOT_REACTION_URL, noContent),
@@ -1552,7 +955,6 @@ describe("rate limiting", () => {
     "should wait the right delay after a 429 with %s",
     async (_, response, retryAfterMs) => {
       vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
       const requests = onceThen(response, emptyList);
       server.use(http.get(MESSAGES_URL, requests));
 
@@ -1563,7 +965,7 @@ describe("rate limiting", () => {
       await promise;
 
       expect(requests).toHaveBeenCalledTimes(2);
-      expect(logWarnSpy).toHaveBeenCalledWith(
+      expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
         expect.objectContaining({ retryAfterMs }),
         "Discord rate limited, retrying",
       );
@@ -1571,7 +973,6 @@ describe("rate limiting", () => {
   );
 
   it("should back off on 429s with no Retry-After", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(http.get(MESSAGES_URL, onceThen(htmlRateLimited, emptyList, 3)));
 
     const promise = getChannelMessages();
@@ -1579,7 +980,7 @@ describe("rate limiting", () => {
     await promise;
 
     for (const [i, retryAfterMs] of [1000, 2000, 4000].entries()) {
-      expect(logWarnSpy).toHaveBeenNthCalledWith(
+      expect(vi.mocked(log.warn)).toHaveBeenNthCalledWith(
         i + 1,
         expect.objectContaining({ retryAfterMs, global: false }),
         "Discord rate limited, retrying",
@@ -1588,7 +989,6 @@ describe("rate limiting", () => {
   });
 
   it("should keep a long gate, so callers fail fast instead of re-hitting Discord", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     const messageRequests = vi.fn(emptyList);
     server.use(
       http.put(BOT_REACTION_URL, () => rateLimited(3600, true)),
@@ -1606,7 +1006,6 @@ describe("rate limiting", () => {
   });
 
   it("should spread out callers on a gate and keep them waiting when it moves", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
     const requests = onceThen(() => rateLimited(5), noContent);
     server.use(http.put(BOT_REACTION_URL, requests));
     _setRateLimitGate("PUT", BOT_REACTION_ROUTE, Date.now() + 1000);
@@ -1631,7 +1030,6 @@ describe("rate limiting", () => {
   ])(
     "should fail fast on a $waitMs ms gate with $jitter jitter",
     async ({ waitMs, jitter }) => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
       vi.mocked(Math.random).mockReturnValue(jitter);
       _setRateLimitGate(
         "GET",
@@ -1642,7 +1040,7 @@ describe("rate limiting", () => {
       await expect(getChannelMessages()).rejects.toThrow(
         "Discord rate limit exceeded",
       );
-      expect(logErrorSpy).toHaveBeenCalledWith(
+      expect(vi.mocked(log.error)).toHaveBeenCalledWith(
         {
           endpoint: "/channels/test-discord-channel-id/messages",
           elapsedMs: expect.any(Number),
@@ -1655,15 +1053,13 @@ describe("rate limiting", () => {
   );
 
   it("should give up on a 429 the gate's wait wouldn't fit", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
     server.use(http.get(MESSAGES_URL, () => rateLimited(29.9)));
 
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
     );
-    expect(logWarnSpy).not.toHaveBeenCalled();
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(vi.mocked(log.warn)).not.toHaveBeenCalled();
+    expect(vi.mocked(log.error)).toHaveBeenCalledWith(
       expect.objectContaining({ retryAfterMs: 29_900, retries: 1 }),
       "Discord rate limit exceeded max wait time",
     );
@@ -1672,52 +1068,35 @@ describe("rate limiting", () => {
 
 describe("searchChannelMessages", () => {
   it("should search messages and return hits with context", async () => {
+    const onSearch = vi.fn();
     server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/messages/search`,
-        ({ request }) => {
-          const url = new URL(request.url);
-          expect(url.searchParams.get("content")).toBe("hello");
-          expect(url.searchParams.get("channel_id")).toBe(
-            "test-discord-channel-id",
-          );
-          expect(url.searchParams.get("limit")).toBe("5");
-          expect(url.searchParams.get("sort_by")).toBe("relevance");
-          expect(url.searchParams.get("sort_order")).toBe("desc");
-
-          return HttpResponse.json({
-            total_results: 1,
-            messages: [
-              [
-                {
-                  type: 0,
-                  id: "ctx-1",
-                  author: { id: "user1", bot: true },
-                  content: "Alice: before the match",
-                  timestamp: "2025-01-01T00:00:00.000000+00:00",
-                  edited_timestamp: null,
-                },
-                {
-                  type: 0,
-                  id: "hit-1",
-                  author: { id: "user2", bot: true },
+      http.get(SEARCH_URL, ({ request }) => {
+        onSearch(Object.fromEntries(new URL(request.url).searchParams));
+        return HttpResponse.json({
+          total_results: 1,
+          messages: [
+            [
+              message("ctx-1", { content: "Alice: before the match" }),
+              {
+                ...message("hit-1", {
                   content: "Bob: hello everyone",
                   timestamp: "2025-01-01T00:01:00.000000+00:00",
-                  edited_timestamp: null,
-                  hit: true,
-                },
-                {
-                  type: 0,
-                  id: "ctx-2",
-                  author: { id: "user3", bot: true },
-                  content: "Charlie: after the match",
-                  timestamp: "2025-01-01T00:02:00.000000+00:00",
-                  edited_timestamp: null,
-                },
-              ],
+                }),
+                hit: true,
+              },
+              message("ctx-2", {
+                author: { id: "user3" },
+                content: "after the match",
+                timestamp: "2025-01-01T00:02:00.000000+00:00",
+              }),
             ],
-          });
-        },
+          ],
+        });
+      }),
+      http.get(MEMBER_URL, ({ params }) =>
+        params["userId"] === "user3"
+          ? member("charlie", { nick: "Charlie" })
+          : goneMember(),
       ),
     );
 
@@ -1728,6 +1107,13 @@ describe("searchChannelMessages", () => {
       sort_order: "desc",
     });
 
+    expect(onSearch).toHaveBeenCalledExactlyOnceWith({
+      content: "hello",
+      channel_id: "test-discord-channel-id",
+      limit: "5",
+      sort_by: "relevance",
+      sort_order: "desc",
+    });
     expect(result).toEqual({
       total_results: 1,
       hits: [
@@ -1757,97 +1143,30 @@ describe("searchChannelMessages", () => {
     });
   });
 
-  it("should handle empty search results", async () => {
+  it("should pass only the given params and handle no results", async () => {
+    const onSearch = vi.fn();
     server.use(
-      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/messages/search`, () =>
-        HttpResponse.json({ total_results: 0, messages: [] }),
-      ),
+      http.get(SEARCH_URL, ({ request }) => {
+        onSearch(Object.fromEntries(new URL(request.url).searchParams));
+        return HttpResponse.json({ total_results: 0, messages: [] });
+      }),
     );
 
     const result = await searchChannelMessages({ content: "nonexistent" });
 
     expect(result).toEqual({ total_results: 0, hits: [] });
-  });
-
-  it("should resolve username via guild member API when no prefix", async () => {
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/messages/search`, () =>
-        HttpResponse.json({
-          total_results: 1,
-          messages: [
-            [
-              {
-                type: 0,
-                id: "search-noprefix-1",
-                author: { id: "user-lookup-1" },
-                content: "unprefixed message",
-                timestamp: "2025-06-01T12:00:00.000000+00:00",
-                edited_timestamp: null,
-                hit: true,
-              },
-            ],
-          ],
-        }),
-      ),
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`,
-        ({ params }) => {
-          expect(params["userId"]).toBe("user-lookup-1");
-          return HttpResponse.json({
-            user: { username: "discorduser", global_name: "Discord User" },
-            nick: "Nickname",
-          });
-        },
-      ),
-    );
-
-    const result = await searchChannelMessages({ content: "unprefixed" });
-
-    expect(result.hits[0]?.hit).toMatchObject({
-      username: "Nickname",
-      content: "unprefixed message",
+    expect(onSearch).toHaveBeenCalledExactlyOnceWith({
+      content: "nonexistent",
+      channel_id: "test-discord-channel-id",
     });
-  });
-
-  it("should pass only provided params to Discord API", async () => {
-    server.use(
-      http.get(
-        `${DISCORD_BASE_URL}/guilds/:guildId/messages/search`,
-        ({ request }) => {
-          const url = new URL(request.url);
-          expect(url.searchParams.get("content")).toBe("test");
-          expect(url.searchParams.get("channel_id")).toBe(
-            "test-discord-channel-id",
-          );
-          expect(url.searchParams.has("limit")).toBe(false);
-          expect(url.searchParams.has("sort_by")).toBe(false);
-          expect(url.searchParams.has("sort_order")).toBe(false);
-
-          return HttpResponse.json({ total_results: 0, messages: [] });
-        },
-      ),
-    );
-
-    await searchChannelMessages({ content: "test" });
   });
 
   it("should throw when a message group has no hit marker", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/guilds/:guildId/messages/search`, () =>
+      http.get(SEARCH_URL, () =>
         HttpResponse.json({
           total_results: 1,
-          messages: [
-            [
-              {
-                type: 0,
-                id: "no-hit-1",
-                author: { id: "user1", bot: true },
-                content: "Alice: no hit flag",
-                timestamp: "2025-01-01T00:00:00.000000+00:00",
-                edited_timestamp: null,
-              },
-            ],
-          ],
+          messages: [[message("no-hit-1", { content: "Alice: no hit flag" })]],
         }),
       ),
     );

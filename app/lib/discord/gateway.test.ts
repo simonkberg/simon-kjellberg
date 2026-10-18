@@ -5,7 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { resetGlobal } from "@/lib/global";
+import { log } from "@/lib/log";
+import { message } from "@/mocks/discord";
+import { mockEnv } from "@/mocks/env";
 import { server } from "@/mocks/node";
+
+import { connect, getBotUserId, subscribe, subscribeToStatus } from "./gateway";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/log"), async (importOriginal) => {
@@ -22,6 +27,8 @@ vi.mock(import("@/lib/log"), async (importOriginal) => {
 });
 
 const GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json";
+const RESUME_URL = "wss://resume.discord.gg/?v=10&encoding=json";
+const CHANNEL = mockEnv.DISCORD_CHANNEL_ID;
 
 const GatewayOpcode = {
   DISPATCH: 0,
@@ -58,6 +65,11 @@ const DEFAULT_SESSION = {
   resume_gateway_url: "wss://gateway.discord.gg",
 } as const;
 
+const RESUME_SESSION = {
+  ...DEFAULT_SESSION,
+  resume_gateway_url: "wss://resume.discord.gg",
+};
+
 function createPayload(
   op: number,
   d: unknown,
@@ -71,29 +83,42 @@ function getLastClient(clients: WebSocketLink["clients"]) {
   return [...clients].at(-1);
 }
 
-type Client = ReturnType<typeof getLastClient>;
+type Client = NonNullable<ReturnType<typeof getLastClient>>;
+
+function chatMessage(id: string, content = "hello world") {
+  return {
+    ...message(id, { author: { id: "user-123" }, content }),
+    channel_id: CHANNEL,
+  };
+}
 
 describe("subscribe", () => {
   const gateway = ws.link(GATEWAY_URL);
+  const resumeGateway = ws.link(RESUME_URL);
+  let connections = 0;
 
   function createHandshakeHandler({
+    link = gateway,
     heartbeatInterval = 60000,
     session = DEFAULT_SESSION,
     sequence = 1,
+    dropFirst = false,
     onMessage,
     onClose,
   }: {
+    link?: WebSocketLink;
     heartbeatInterval?: number;
-    session?: {
-      user: { id: string };
-      session_id: string;
-      resume_gateway_url: string;
-    };
+    session?: unknown;
     sequence?: number;
-    onMessage?: (payload: Payload, client: NonNullable<Client>) => void;
+    dropFirst?: boolean;
+    onMessage?: (payload: Payload, client: Client) => void;
     onClose?: (event: CloseEvent) => void;
   } = {}) {
-    return gateway.addEventListener("connection", ({ client }) => {
+    return link.addEventListener("connection", ({ client }) => {
+      if (connections++ === 0 && dropFirst) {
+        client.close(4000, "Dropped");
+        return;
+      }
       client.send(
         createPayload(GatewayOpcode.HELLO, {
           heartbeat_interval: heartbeatInterval,
@@ -107,6 +132,10 @@ describe("subscribe", () => {
           client.send(
             createPayload(GatewayOpcode.DISPATCH, session, sequence, "READY"),
           );
+        } else if (payload.op === GatewayOpcode.RESUME) {
+          client.send(
+            createPayload(GatewayOpcode.DISPATCH, null, sequence, "RESUMED"),
+          );
         }
 
         onMessage?.(payload, client);
@@ -118,56 +147,48 @@ describe("subscribe", () => {
     });
   }
 
+  // What the bot sends to the resume gateway, which answers like the main one.
+  function recordResumes() {
+    const messages: Payload[] = [];
+    server.use(
+      createHandshakeHandler({
+        link: resumeGateway,
+        onMessage: (payload) => messages.push(payload),
+      }),
+    );
+    return messages;
+  }
+
+  async function subscribed() {
+    server.use(createHandshakeHandler());
+    const callback = vi.fn();
+    const unsubscribe = await subscribe(callback);
+    callback.mockClear();
+    return { callback, unsubscribe };
+  }
+
+  async function dispatch(event: string, data: unknown, seq = 2) {
+    getLastClient(gateway.clients)?.send(
+      createPayload(GatewayOpcode.DISPATCH, data, seq, event),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+  }
+
   beforeEach(() => {
-    vi.resetModules();
+    connections = 0;
     resetGlobal("simon.dev/discord-gateway");
     vi.useFakeTimers();
-    // Make jitter deterministic (0 jitter)
     vi.spyOn(Math, "random").mockReturnValue(0);
   });
 
   afterEach(() => {
-    gateway.clients.forEach((client) => {
+    for (const client of [...gateway.clients, ...resumeGateway.clients]) {
       client.close();
-    });
+    }
   });
 
-  it("should complete handshake and resolve", async () => {
-    const { subscribe } = await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const unsubscribe = await subscribe(vi.fn());
-
-    expect(unsubscribe).toBeTypeOf("function");
-  });
-
-  it("should send heartbeat after interval", async () => {
-    const { subscribe } = await import("./gateway");
-    const receivedMessages: Payload[] = [];
-
-    server.use(
-      createHandshakeHandler({
-        heartbeatInterval: 1000,
-        onMessage: (payload) => receivedMessages.push(payload),
-      }),
-    );
-
-    await subscribe(vi.fn());
-
-    // Clear the IDENTIFY message
-    receivedMessages.length = 0;
-
-    // Advance time past the heartbeat interval (with 0 jitter)
-    await vi.advanceTimersByTimeAsync(1000);
-
-    expect(receivedMessages).toMatchObject([
-      { op: GatewayOpcode.HEARTBEAT, d: 1 },
-    ]);
-  });
-
-  it("should continue heartbeating when ACK is received", async () => {
-    const { subscribe } = await import("./gateway");
-    let heartbeatCount = 0;
+  it("should heartbeat at the interval with the last sequence while ACKs arrive", async () => {
+    const heartbeats: Payload[] = [];
     let connectionClosed = false;
 
     server.use(
@@ -175,7 +196,7 @@ describe("subscribe", () => {
         heartbeatInterval: 1000,
         onMessage: (payload, client) => {
           if (payload.op === GatewayOpcode.HEARTBEAT) {
-            heartbeatCount++;
+            heartbeats.push(payload);
             client.send(createPayload(GatewayOpcode.HEARTBEAT_ACK, null));
           }
         },
@@ -186,26 +207,22 @@ describe("subscribe", () => {
     );
 
     await subscribe(vi.fn());
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1000);
 
-    // First heartbeat fires immediately (jitter = 0)
-    // Then subsequent heartbeats fire every interval
-    await vi.advanceTimersByTimeAsync(1000); // Second heartbeat
-    await vi.advanceTimersByTimeAsync(1000); // Third heartbeat
-
-    // 1 immediate + 2 interval = 3 total, connection should stay open
-    expect(heartbeatCount).toBe(3);
+    expect(heartbeats).toEqual(
+      Array(3).fill({ op: GatewayOpcode.HEARTBEAT, d: 1 }),
+    );
     expect(connectionClosed).toBe(false);
   });
 
   it("should close connection when no ACK received (zombie detection)", async () => {
-    const { subscribe } = await import("./gateway");
     let closeCode: number | undefined;
     let closeReason: string | undefined;
 
     server.use(
       createHandshakeHandler({
         heartbeatInterval: 1000,
-        // Intentionally NOT responding to HEARTBEAT with ACK
         onClose: (event) => {
           closeCode = event.code;
           closeReason = event.reason;
@@ -215,8 +232,7 @@ describe("subscribe", () => {
 
     await subscribe(vi.fn());
 
-    // First heartbeat fires immediately (jitter = 0), sets awaitingAck = true
-    // Second heartbeat at 1000ms sees awaitingAck = true, closes connection
+    // The first heartbeat goes out at once (no jitter), so the one at 1000ms finds it unanswered.
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(closeCode).toBe(4000);
@@ -224,202 +240,61 @@ describe("subscribe", () => {
   });
 
   it("should respond immediately to server-requested heartbeat", async () => {
-    const { subscribe } = await import("./gateway");
     const receivedMessages: Payload[] = [];
 
     server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        client.send(
-          // Use long interval so scheduled heartbeats don't interfere
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-
-        client.addEventListener("message", (event) => {
-          const payload = PayloadSchema.parse(event.data);
+      createHandshakeHandler({
+        sequence: 5,
+        onMessage: (payload, client) => {
           receivedMessages.push(payload);
-
           if (payload.op === GatewayOpcode.IDENTIFY) {
-            client.send(
-              createPayload(
-                GatewayOpcode.DISPATCH,
-                DEFAULT_SESSION,
-                5, // Use sequence 5 to verify it's included in response
-                "READY",
-              ),
-            );
-
-            // Server requests an immediate heartbeat
             client.send(createPayload(GatewayOpcode.HEARTBEAT, null));
           }
-        });
+        },
       }),
     );
 
     await subscribe(vi.fn());
 
-    // Should have IDENTIFY and immediate HEARTBEAT response
-    expect(receivedMessages).toHaveLength(2);
-    expect(receivedMessages[1]).toEqual({
-      op: GatewayOpcode.HEARTBEAT,
-      d: 5, // sequence number from READY
-    });
-  });
-
-  it("should notify subscribers on MESSAGE_CREATE for matching channel", async () => {
-    const { subscribe } = await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    callback.mockClear();
-
-    expect(callback).not.toHaveBeenCalled();
-
-    // Send MESSAGE_CREATE for matching channel
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        {
-          type: 0,
-          id: "msg-test",
-          channel_id: "test-discord-channel-id",
-          author: { id: "user-123" },
-          content: "test message",
-          timestamp: "2025-01-01T00:00:00.000000+00:00",
-          edited_timestamp: null,
-        },
-        2,
-        "MESSAGE_CREATE",
-      ),
-    );
-
-    // Allow microtask queue to process the message
-    await vi.advanceTimersByTimeAsync(0);
-
-    expect(callback).toHaveBeenCalledTimes(1);
-  });
-
-  it.each([
-    "MESSAGE_REACTION_ADD",
-    "MESSAGE_REACTION_REMOVE",
-    "MESSAGE_REACTION_REMOVE_ALL",
-    "MESSAGE_REACTION_REMOVE_EMOJI",
-  ])("should notify subscribers on %s", async (event) => {
-    const { subscribe } = await import("./gateway");
-    server.use(createHandshakeHandler());
-
-    const callback = vi.fn();
-    await subscribe(callback);
-    callback.mockClear();
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        {
-          channel_id: "test-discord-channel-id",
-          message_id: "msg-test",
-          user_id: "user-123",
-          emoji: { id: null, name: "👍" },
-        },
-        2,
-        event,
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-
-    expect(callback).toHaveBeenCalledOnce();
+    expect(receivedMessages).toEqual([
+      expect.objectContaining({ op: GatewayOpcode.IDENTIFY }),
+      { op: GatewayOpcode.HEARTBEAT, d: 5 },
+    ]);
   });
 
   it("should ignore messages from other channels", async () => {
-    const { subscribe } = await import("./gateway");
-    server.use(createHandshakeHandler());
+    const { callback } = await subscribed();
 
-    const callback = vi.fn();
-    await subscribe(callback);
-    callback.mockClear();
-
-    // Send MESSAGE_CREATE for a DIFFERENT channel
-    getLastClient(gateway.clients)?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        { channel_id: "some-other-channel-id" },
-        2,
-        "MESSAGE_CREATE",
-      ),
-    );
-
-    await vi.advanceTimersByTimeAsync(0);
+    await dispatch("MESSAGE_CREATE", { channel_id: "some-other-channel-id" });
 
     expect(callback).not.toHaveBeenCalled();
   });
 
   it("should stop notifying after unsubscribe", async () => {
-    const { subscribe } = await import("./gateway");
-    server.use(createHandshakeHandler());
+    const { callback, unsubscribe } = await subscribed();
 
-    const callback = vi.fn();
-    const unsubscribe = await subscribe(callback);
-    callback.mockClear();
-    const client = getLastClient(gateway.clients);
+    await dispatch("MESSAGE_CREATE", chatMessage("msg-1", "first"));
+    expect(callback).toHaveBeenCalledOnce();
 
-    // First message should trigger callback
-    client?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        {
-          type: 0,
-          id: "msg-1",
-          channel_id: "test-discord-channel-id",
-          author: { id: "user-123" },
-          content: "first",
-          timestamp: "2025-01-01T00:00:00.000000+00:00",
-          edited_timestamp: null,
-        },
-        2,
-        "MESSAGE_CREATE",
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-    expect(callback).toHaveBeenCalledTimes(1);
-
-    // Unsubscribe
     unsubscribe();
-
-    // Second message should NOT trigger callback
-    client?.send(
-      createPayload(
-        GatewayOpcode.DISPATCH,
-        {
-          type: 0,
-          id: "msg-2",
-          channel_id: "test-discord-channel-id",
-          author: { id: "user-123" },
-          content: "second",
-          timestamp: "2025-01-01T00:00:00.000000+00:00",
-          edited_timestamp: null,
-        },
-        3,
-        "MESSAGE_CREATE",
-      ),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-    expect(callback).toHaveBeenCalledTimes(1); // Still 1, not 2
+    await dispatch("MESSAGE_CREATE", chatMessage("msg-2", "second"), 3);
+    expect(callback).toHaveBeenCalledOnce();
   });
 
   it("should notify subscribers of a new session", async () => {
-    const { getBotUserId, subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
 
     expect(getBotUserId()).toBeNull();
 
     const callback = vi.fn();
-    await subscribe(callback);
+    const unsubscribe = await subscribe(callback);
 
+    expect(unsubscribe).toBeTypeOf("function");
     expect(callback).toHaveBeenCalledExactlyOnceWith({ t: "READY" });
     expect(getBotUserId()).toBe("bot-user-id");
   });
 
   it("should connect without a subscriber", async () => {
-    const { connect } = await import("./gateway");
     server.use(createHandshakeHandler());
 
     await connect();
@@ -428,7 +303,6 @@ describe("subscribe", () => {
   });
 
   it("should share one connection between concurrent subscribers", async () => {
-    const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
 
     await Promise.all([subscribe(vi.fn()), subscribe(vi.fn())]);
@@ -438,9 +312,7 @@ describe("subscribe", () => {
 
   it("should share one gateway across module instances", async () => {
     server.use(createHandshakeHandler());
-
-    const first = await import("./gateway");
-    await first.subscribe(vi.fn());
+    await subscribe(vi.fn());
 
     vi.resetModules();
     const second = await import("./gateway");
@@ -450,48 +322,19 @@ describe("subscribe", () => {
   });
 
   it("should resolve after a reconnect when the socket drops before READY", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-
-    server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-        if (connectionCount === 1) {
-          client.close(4000, "Dropped");
-          return;
-        }
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          if (PayloadSchema.parse(event.data).op === GatewayOpcode.IDENTIFY) {
-            client.send(
-              createPayload(
-                GatewayOpcode.DISPATCH,
-                DEFAULT_SESSION,
-                1,
-                "READY",
-              ),
-            );
-          }
-        });
-      }),
-    );
+    server.use(createHandshakeHandler({ dropFirst: true }));
 
     const subscribed = subscribe(vi.fn());
     await vi.advanceTimersByTimeAsync(0);
-    expect(connectionCount).toBe(1);
+    expect(connections).toBe(1);
 
-    // Wait for exponential backoff (2^1 * 1000 = 2000ms)
     await vi.advanceTimersByTimeAsync(2000);
 
     await expect(subscribed).resolves.toBeTypeOf("function");
-    expect(connectionCount).toBe(2);
+    expect(connections).toBe(2);
   });
 
   it("should reject when the socket closes with a fatal code before READY", async () => {
-    const { subscribe } = await import("./gateway");
-
     server.use(
       gateway.addEventListener("connection", ({ client }) => {
         client.close(4004, "Authentication failed");
@@ -504,8 +347,6 @@ describe("subscribe", () => {
   });
 
   it("should log WebSocket errors", async () => {
-    const { subscribe } = await import("./gateway");
-    const { log } = await import("@/lib/log");
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     // msw surfaces a throwing connection handler as an error event on the client
@@ -525,9 +366,6 @@ describe("subscribe", () => {
   });
 
   it("should keep waiting for READY after an unparseable message", async () => {
-    const { subscribe } = await import("./gateway");
-    const { log } = await import("@/lib/log");
-
     server.use(
       gateway.addEventListener("connection", ({ client }) => {
         client.send("not json");
@@ -543,9 +381,6 @@ describe("subscribe", () => {
   });
 
   it("should reject waiting subscribers when a reconnect cannot open a socket", async () => {
-    const { subscribe } = await import("./gateway");
-    const { log } = await import("@/lib/log");
-
     server.use(
       createHandshakeHandler({
         session: { ...DEFAULT_SESSION, resume_gateway_url: "nope" },
@@ -558,7 +393,7 @@ describe("subscribe", () => {
     );
     await vi.advanceTimersByTimeAsync(0);
 
-    const rejected = expect(subscribe(vi.fn())).rejects.toThrow();
+    const rejected = expect(subscribe(vi.fn())).rejects.toThrow("Invalid URL");
     await vi.advanceTimersByTimeAsync(2000);
 
     await rejected;
@@ -568,26 +403,7 @@ describe("subscribe", () => {
     );
   });
 
-  it("should reject when the socket cannot be opened", async () => {
-    const { subscribe } = await import("./gateway");
-
-    server.use(
-      createHandshakeHandler({
-        session: { ...DEFAULT_SESSION, resume_gateway_url: "nope" },
-      }),
-    );
-
-    await subscribe(vi.fn());
-    getLastClient(gateway.clients)?.send(
-      createPayload(GatewayOpcode.RECONNECT, null),
-    );
-    await vi.advanceTimersByTimeAsync(2000);
-
-    await expect(subscribe(vi.fn())).rejects.toThrow("Invalid URL");
-  });
-
   it("should drop the callback of a subscribe that failed to connect", async () => {
-    const { subscribe } = await import("./gateway");
     server.use(createHandshakeHandler());
     const failed = vi.fn();
     vi.stubGlobal(
@@ -607,15 +423,7 @@ describe("subscribe", () => {
   });
 
   it("should reject every connect after a fatal close without opening a socket", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-
-    server.use(
-      gateway.addEventListener("connection", () => {
-        connectionCount++;
-      }),
-      createHandshakeHandler(),
-    );
+    server.use(createHandshakeHandler());
 
     await subscribe(vi.fn());
     getLastClient(gateway.clients)?.close(4004, "Authentication failed");
@@ -624,33 +432,22 @@ describe("subscribe", () => {
     await expect(subscribe(vi.fn())).rejects.toThrow(
       "Gateway closed with fatal code 4004: Authentication failed",
     );
-    expect(connectionCount).toBe(1);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(connections).toBe(1);
   });
 
   it("should close the socket and latch when READY cannot be parsed", async () => {
-    const { subscribe } = await import("./gateway");
-    const { log } = await import("@/lib/log");
-    let connectionCount = 0;
     let closeCode: number | undefined;
-
     server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          if (PayloadSchema.parse(event.data).op === GatewayOpcode.IDENTIFY) {
-            client.send(createPayload(GatewayOpcode.DISPATCH, {}, 1, "READY"));
-          }
-        });
-        client.addEventListener("close", (event) => {
+      createHandshakeHandler({
+        session: {},
+        onClose: (event) => {
           closeCode = event.code;
-        });
+        },
       }),
     );
 
-    await expect(subscribe(vi.fn())).rejects.toThrow();
+    await expect(subscribe(vi.fn())).rejects.toBeInstanceOf(z.ZodError);
     expect(log.error).toHaveBeenCalledWith(
       { err: expect.any(Error), data: {} },
       "Invalid READY payload",
@@ -659,36 +456,12 @@ describe("subscribe", () => {
     await vi.advanceTimersByTimeAsync(60000);
     expect(closeCode).toBe(4000);
 
-    await expect(subscribe(vi.fn())).rejects.toThrow();
-    expect(connectionCount).toBe(1);
+    await expect(subscribe(vi.fn())).rejects.toBeInstanceOf(z.ZodError);
+    expect(connections).toBe(1);
   });
 
   it("should tell status subscribers when the gateway drops and recovers", async () => {
-    const { subscribe, subscribeToStatus } = await import("./gateway");
-    server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          const { op } = PayloadSchema.parse(event.data);
-          if (op === GatewayOpcode.IDENTIFY) {
-            client.send(
-              createPayload(
-                GatewayOpcode.DISPATCH,
-                DEFAULT_SESSION,
-                1,
-                "READY",
-              ),
-            );
-          } else if (op === GatewayOpcode.RESUME) {
-            client.send(
-              createPayload(GatewayOpcode.DISPATCH, null, 2, "RESUMED"),
-            );
-          }
-        });
-      }),
-    );
+    server.use(createHandshakeHandler());
     await subscribe(vi.fn());
     const onStatus = vi.fn();
     const unsubscribe = subscribeToStatus(onStatus);
@@ -708,8 +481,6 @@ describe("subscribe", () => {
   });
 
   it("should log a throwing status subscriber and still notify the rest", async () => {
-    const { subscribe, subscribeToStatus } = await import("./gateway");
-    const { log } = await import("@/lib/log");
     server.use(createHandshakeHandler());
     await subscribe(vi.fn());
     const onStatus = vi.fn();
@@ -729,34 +500,7 @@ describe("subscribe", () => {
   });
 
   it("should let subscribers wait out a reconnect backoff instead of opening a second socket", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-
-    server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          const { op } = PayloadSchema.parse(event.data);
-          if (op === GatewayOpcode.IDENTIFY) {
-            client.send(
-              createPayload(
-                GatewayOpcode.DISPATCH,
-                DEFAULT_SESSION,
-                1,
-                "READY",
-              ),
-            );
-          } else if (op === GatewayOpcode.RESUME) {
-            client.send(
-              createPayload(GatewayOpcode.DISPATCH, null, 2, "RESUMED"),
-            );
-          }
-        });
-      }),
-    );
+    server.use(createHandshakeHandler());
 
     await subscribe(vi.fn());
     getLastClient(gateway.clients)?.close(4000, "Dropped");
@@ -764,63 +508,26 @@ describe("subscribe", () => {
 
     const subscribed = subscribe(vi.fn());
     await vi.advanceTimersByTimeAsync(0);
-    expect(connectionCount).toBe(1);
+    expect(connections).toBe(1);
 
     await vi.advanceTimersByTimeAsync(2000);
 
     await expect(subscribed).resolves.toBeTypeOf("function");
-    expect(connectionCount).toBe(2);
+    expect(connections).toBe(2);
   });
 
   it("should send RESUME instead of IDENTIFY on reconnect", async () => {
-    const { subscribe } = await import("./gateway");
-    const RESUME_URL = "wss://resume.discord.gg/?v=10&encoding=json";
-    const resumeGateway = ws.link(RESUME_URL);
-    const resumeMessages: Payload[] = [];
-
-    // Initial connection handler
-    server.use(
-      createHandshakeHandler({
-        session: {
-          ...DEFAULT_SESSION,
-          resume_gateway_url: "wss://resume.discord.gg",
-        },
-      }),
-    );
-
-    // Resume connection handler
-    server.use(
-      resumeGateway.addEventListener("connection", ({ client }) => {
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-
-        client.addEventListener("message", (event) => {
-          const payload = PayloadSchema.parse(event.data);
-          resumeMessages.push(payload);
-
-          if (payload.op === GatewayOpcode.RESUME) {
-            client.send(
-              createPayload(GatewayOpcode.DISPATCH, null, 1, "RESUMED"),
-            );
-          }
-        });
-      }),
-    );
+    server.use(createHandshakeHandler({ session: RESUME_SESSION }));
+    const resumes = recordResumes();
 
     await subscribe(vi.fn());
-
-    // Trigger reconnect via RECONNECT opcode
     getLastClient(gateway.clients)?.send(
       createPayload(GatewayOpcode.RECONNECT, null),
     );
     await vi.advanceTimersByTimeAsync(0);
-
-    // Wait for exponential backoff (2^1 * 1000 = 2000ms)
     await vi.advanceTimersByTimeAsync(2000);
 
-    // Should have sent RESUME (not IDENTIFY)
-    expect(resumeMessages).toMatchObject([
+    expect(resumes).toMatchObject([
       {
         op: GatewayOpcode.RESUME,
         d: {
@@ -832,130 +539,57 @@ describe("subscribe", () => {
     ]);
   });
 
-  it("should re-identify after non-resumable INVALID_SESSION", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-    const secondConnectionMessages: Payload[] = [];
-
+  it.each([
+    [
+      "a non-resumable INVALID_SESSION",
+      (client: Client) =>
+        client.send(createPayload(GatewayOpcode.INVALID_SESSION, false)),
+    ],
+    [
+      "a close with a re-identify code",
+      (client: Client) => client.close(4007, "Invalid seq"),
+    ],
+  ])("should re-identify after %s", async (_, end) => {
+    const sent: Payload[] = [];
     server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-
-        client.addEventListener("message", (event) => {
-          const payload = PayloadSchema.parse(event.data);
-
-          if (connectionCount === 1) {
-            if (payload.op === GatewayOpcode.IDENTIFY) {
-              client.send(
-                createPayload(
-                  GatewayOpcode.DISPATCH,
-                  {
-                    ...DEFAULT_SESSION,
-                    resume_gateway_url: "wss://resume.discord.gg",
-                  },
-                  1,
-                  "READY",
-                ),
-              );
-            }
-          } else {
-            // Second connection - record messages to verify IDENTIFY
-            secondConnectionMessages.push(payload);
-            if (payload.op === GatewayOpcode.IDENTIFY) {
-              client.send(
-                createPayload(
-                  GatewayOpcode.DISPATCH,
-                  { ...DEFAULT_SESSION, session_id: "new-session-id" },
-                  1,
-                  "READY",
-                ),
-              );
-            }
-          }
-        });
+      createHandshakeHandler({
+        session: RESUME_SESSION,
+        onMessage: (payload) => sent.push(payload),
       }),
     );
 
     await subscribe(vi.fn());
-    const initialClient = getLastClient(gateway.clients);
-
-    // Send INVALID_SESSION with resumable=false
-    initialClient?.send(createPayload(GatewayOpcode.INVALID_SESSION, false));
+    const first = getLastClient(gateway.clients);
+    if (first) end(first);
     await vi.advanceTimersByTimeAsync(0);
-
-    // Wait for backoff
     await vi.advanceTimersByTimeAsync(2000);
 
-    // Should have sent IDENTIFY (not RESUME) on second connection
-    expect(secondConnectionMessages).toMatchObject([
-      { op: GatewayOpcode.IDENTIFY },
-    ]);
+    expect(
+      sent.flatMap(({ op }) => (op === GatewayOpcode.HEARTBEAT ? [] : [op])),
+    ).toEqual([GatewayOpcode.IDENTIFY, GatewayOpcode.IDENTIFY]);
+    expect(connections).toBe(2);
   });
 
   it("should resume a session that followed a non-resumable INVALID_SESSION", async () => {
-    const { subscribe } = await import("./gateway");
-    const resumeGateway = ws.link(
-      "wss://resume.discord.gg/?v=10&encoding=json",
-    );
-    const resumeMessages: Payload[] = [];
-
-    server.use(
-      createHandshakeHandler({
-        session: {
-          ...DEFAULT_SESSION,
-          resume_gateway_url: "wss://resume.discord.gg",
-        },
-      }),
-      resumeGateway.addEventListener("connection", ({ client }) => {
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          resumeMessages.push(PayloadSchema.parse(event.data));
-        });
-      }),
-    );
+    server.use(createHandshakeHandler({ session: RESUME_SESSION }));
+    const resumes = recordResumes();
 
     await subscribe(vi.fn());
     getLastClient(gateway.clients)?.send(
       createPayload(GatewayOpcode.INVALID_SESSION, false),
     );
     await vi.advanceTimersByTimeAsync(2000);
-    expect(resumeMessages).toEqual([]);
+    expect(resumes).toEqual([]);
 
     getLastClient(gateway.clients)?.close(4000, "Dropped");
     await vi.advanceTimersByTimeAsync(2000);
 
-    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+    expect(resumes).toMatchObject([{ op: GatewayOpcode.RESUME }]);
   });
 
   it("should resume after a resumable INVALID_SESSION", async () => {
-    const { subscribe } = await import("./gateway");
-    const resumeGateway = ws.link(
-      "wss://resume.discord.gg/?v=10&encoding=json",
-    );
-    const resumeMessages: Payload[] = [];
-
-    server.use(
-      createHandshakeHandler({
-        session: {
-          ...DEFAULT_SESSION,
-          resume_gateway_url: "wss://resume.discord.gg",
-        },
-      }),
-      resumeGateway.addEventListener("connection", ({ client }) => {
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-        client.addEventListener("message", (event) => {
-          resumeMessages.push(PayloadSchema.parse(event.data));
-        });
-      }),
-    );
+    server.use(createHandshakeHandler({ session: RESUME_SESSION }));
+    const resumes = recordResumes();
 
     await subscribe(vi.fn());
     getLastClient(gateway.clients)?.send(
@@ -963,7 +597,7 @@ describe("subscribe", () => {
     );
     await vi.advanceTimersByTimeAsync(2000);
 
-    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+    expect(resumes).toMatchObject([{ op: GatewayOpcode.RESUME }]);
   });
 
   describe("dead sockets", () => {
@@ -990,7 +624,6 @@ describe("subscribe", () => {
     });
 
     it("should reconnect after a heartbeat timeout and ignore the old socket", async () => {
-      const { subscribe } = await import("./gateway");
       const callback = vi.fn();
 
       const subscribed = subscribe(callback);
@@ -1006,7 +639,7 @@ describe("subscribe", () => {
       callback.mockClear();
       socket?.receive(
         GatewayOpcode.DISPATCH,
-        { id: "late", channel_id: "test-discord-channel-id" },
+        { id: "late", channel_id: CHANNEL },
         2,
         "MESSAGE_DELETE",
       );
@@ -1014,8 +647,6 @@ describe("subscribe", () => {
     });
 
     it("should reconnect when HELLO never arrives", async () => {
-      const { subscribe } = await import("./gateway");
-
       void subscribe(vi.fn());
       await vi.advanceTimersByTimeAsync(10_000);
       await vi.advanceTimersByTimeAsync(2000);
@@ -1024,9 +655,6 @@ describe("subscribe", () => {
     });
 
     it("should reconnect when HELLO cannot be parsed", async () => {
-      const { subscribe } = await import("./gateway");
-      const { log } = await import("@/lib/log");
-
       void subscribe(vi.fn());
       DeadSocket.instances[0]?.receive(GatewayOpcode.HELLO, {});
       await vi.advanceTimersByTimeAsync(10_000);
@@ -1040,8 +668,6 @@ describe("subscribe", () => {
     });
 
     it("should stop the HELLO watchdog once HELLO arrives", async () => {
-      const { subscribe } = await import("./gateway");
-
       const subscribed = subscribe(vi.fn());
       const [socket] = DeadSocket.instances;
       socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
@@ -1053,9 +679,6 @@ describe("subscribe", () => {
     });
 
     it("should close at once on an invalid READY without waiting for the socket", async () => {
-      const { subscribe } = await import("./gateway");
-      const { log } = await import("@/lib/log");
-
       const subscribed = subscribe(vi.fn());
       const [socket] = DeadSocket.instances;
       socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
@@ -1071,215 +694,65 @@ describe("subscribe", () => {
     });
   });
 
-  it("should not reconnect on fatal close codes", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-
-    server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-
-        client.addEventListener("message", (event) => {
-          const payload = PayloadSchema.parse(event.data);
-
-          if (payload.op === GatewayOpcode.IDENTIFY) {
-            client.send(
-              createPayload(
-                GatewayOpcode.DISPATCH,
-                DEFAULT_SESSION,
-                1,
-                "READY",
-              ),
-            );
-          }
-        });
-      }),
-    );
-
-    await subscribe(vi.fn());
-
-    // Close with fatal code after handshake is complete
-    getLastClient(gateway.clients)?.close(4004, "Authentication failed");
-    await vi.advanceTimersByTimeAsync(0);
-
-    // Advance time past any backoff period
-    await vi.advanceTimersByTimeAsync(60000);
-
-    // Should only have one connection attempt - no reconnect
-    expect(connectionCount).toBe(1);
-  });
-
-  it("should re-identify after close with re-identify codes", async () => {
-    const { subscribe } = await import("./gateway");
-    let connectionCount = 0;
-    const secondConnectionMessages: Payload[] = [];
-
-    server.use(
-      gateway.addEventListener("connection", ({ client }) => {
-        connectionCount++;
-
-        client.send(
-          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
-        );
-
-        client.addEventListener("message", (event) => {
-          const payload = PayloadSchema.parse(event.data);
-
-          if (connectionCount === 1) {
-            if (payload.op === GatewayOpcode.IDENTIFY) {
-              client.send(
-                createPayload(
-                  GatewayOpcode.DISPATCH,
-                  {
-                    ...DEFAULT_SESSION,
-                    resume_gateway_url: "wss://resume.discord.gg",
-                  },
-                  1,
-                  "READY",
-                ),
-              );
-            }
-          } else {
-            // Second connection - record messages
-            secondConnectionMessages.push(payload);
-            if (payload.op === GatewayOpcode.IDENTIFY) {
-              client.send(
-                createPayload(
-                  GatewayOpcode.DISPATCH,
-                  { ...DEFAULT_SESSION, session_id: "new-session-id" },
-                  1,
-                  "READY",
-                ),
-              );
-            }
-          }
-        });
-      }),
-    );
-
-    await subscribe(vi.fn());
-    const initialClient = getLastClient(gateway.clients);
-
-    // Close with re-identify code 4007 (Invalid seq)
-    initialClient?.close(4007, "Invalid seq");
-    await vi.advanceTimersByTimeAsync(0);
-
-    // Wait for backoff
-    await vi.advanceTimersByTimeAsync(2000);
-
-    // Should have sent IDENTIFY (not RESUME) and used default URL
-    expect(secondConnectionMessages).toMatchObject([
-      { op: GatewayOpcode.IDENTIFY },
-    ]);
-    expect(connectionCount).toBe(2);
-  });
-
   describe("events", () => {
-    async function dispatch(event: string, data: unknown) {
-      getLastClient(gateway.clients)?.send(
-        createPayload(GatewayOpcode.DISPATCH, data, 2, event),
-      );
-      await vi.advanceTimersByTimeAsync(0);
-    }
-
     it("should pass the parsed message on MESSAGE_CREATE", async () => {
-      const { subscribe } = await import("./gateway");
-      server.use(createHandshakeHandler());
+      const { callback } = await subscribed();
 
-      const callback = vi.fn();
-      await subscribe(callback);
-      callback.mockClear();
       await dispatch("MESSAGE_CREATE", {
-        type: 0,
-        id: "msg-123",
-        channel_id: "test-discord-channel-id",
-        author: { id: "user-123" },
-        content: "hello world",
-        timestamp: "2025-01-01T00:00:00.000000+00:00",
-        edited_timestamp: null,
+        ...chatMessage("msg-123"),
         nonce: "ignored",
       });
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({
         t: "MESSAGE_CREATE",
-        d: {
-          type: 0,
-          id: "msg-123",
-          channel_id: "test-discord-channel-id",
-          author: { id: "user-123" },
-          content: "hello world",
-          timestamp: "2025-01-01T00:00:00.000000+00:00",
-          edited_timestamp: null,
-        },
+        d: chatMessage("msg-123"),
       });
     });
 
     it("should pass a MESSAGE_UPDATE that carries only some fields", async () => {
-      const { subscribe } = await import("./gateway");
-      server.use(createHandshakeHandler());
+      const { callback } = await subscribed();
 
-      const callback = vi.fn();
-      await subscribe(callback);
-      callback.mockClear();
-      await dispatch("MESSAGE_UPDATE", {
-        id: "msg-123",
-        channel_id: "test-discord-channel-id",
-      });
+      await dispatch("MESSAGE_UPDATE", { id: "msg-123", channel_id: CHANNEL });
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({
         t: "MESSAGE_UPDATE",
-        d: { id: "msg-123", channel_id: "test-discord-channel-id" },
+        d: { id: "msg-123", channel_id: CHANNEL },
       });
     });
 
+    const thumbsUp = { id: null, name: "👍" };
+    const userReaction = {
+      message_id: "msg-1",
+      channel_id: CHANNEL,
+      user_id: "user-123",
+      emoji: thumbsUp,
+    };
+
     it.each([
-      [
-        "MESSAGE_DELETE",
-        { id: "msg-1", channel_id: "test-discord-channel-id" },
-      ],
-      [
-        "MESSAGE_DELETE_BULK",
-        { ids: ["msg-1", "msg-2"], channel_id: "test-discord-channel-id" },
-      ],
+      ["MESSAGE_DELETE", { id: "msg-1", channel_id: CHANNEL }],
+      ["MESSAGE_DELETE_BULK", { ids: ["msg-1", "msg-2"], channel_id: CHANNEL }],
+      ["MESSAGE_REACTION_ADD", userReaction],
+      ["MESSAGE_REACTION_REMOVE", userReaction],
       [
         "MESSAGE_REACTION_REMOVE_ALL",
-        { message_id: "msg-1", channel_id: "test-discord-channel-id" },
+        { message_id: "msg-1", channel_id: CHANNEL },
       ],
       [
         "MESSAGE_REACTION_REMOVE_EMOJI",
-        {
-          message_id: "msg-1",
-          channel_id: "test-discord-channel-id",
-          emoji: { id: null, name: "👍" },
-        },
+        { message_id: "msg-1", channel_id: CHANNEL, emoji: thumbsUp },
       ],
     ])("should pass %s", async (event, data) => {
-      const { subscribe } = await import("./gateway");
-      server.use(createHandshakeHandler());
+      const { callback } = await subscribed();
 
-      const callback = vi.fn();
-      await subscribe(callback);
-      callback.mockClear();
       await dispatch(event, data);
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({ t: event, d: data });
     });
 
     it("should log and skip an event for our channel that doesn't parse", async () => {
-      const { subscribe } = await import("./gateway");
-      const { log } = await import("@/lib/log");
-      server.use(createHandshakeHandler());
+      const { callback } = await subscribed();
 
-      const callback = vi.fn();
-      await subscribe(callback);
-      callback.mockClear();
-      await dispatch("MESSAGE_DELETE", {
-        channel_id: "test-discord-channel-id",
-      });
+      await dispatch("MESSAGE_DELETE", { channel_id: CHANNEL });
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({ t: "MISSED" });
       expect(log.warn).toHaveBeenCalledWith(
@@ -1289,13 +762,9 @@ describe("subscribe", () => {
     });
 
     it("should ignore events the site doesn't use", async () => {
-      const { subscribe } = await import("./gateway");
-      server.use(createHandshakeHandler());
+      const { callback } = await subscribed();
 
-      const callback = vi.fn();
-      await subscribe(callback);
-      callback.mockClear();
-      await dispatch("TYPING_START", { channel_id: "test-discord-channel-id" });
+      await dispatch("TYPING_START", { channel_id: CHANNEL });
 
       expect(callback).not.toHaveBeenCalled();
     });
