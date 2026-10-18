@@ -7,7 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import type { Message, Reaction } from "@/lib/discord/api";
@@ -30,10 +30,14 @@ describe("Chat", () => {
     );
   });
 
-  const chatElement = (result: ChatHistoryResult, dismissed = false) => (
+  afterEach(() => {
+    document.cookie = "chatTipDismissed=; max-age=0";
+  });
+
+  const chatElement = (result: ChatHistoryResult) => (
     <Chat
       history={Promise.resolve(result)}
-      tipDismissed={Promise.resolve(dismissed)}
+      tipDismissed={Promise.resolve(false)}
     />
   );
 
@@ -56,10 +60,22 @@ describe("Chat", () => {
     ).toBeInTheDocument();
   });
 
-  it("hides the simon-bot tip once it has been dismissed", async () => {
-    await act(async () =>
-      render(chatElement({ status: "ok", messages: [] }, true)),
-    );
+  it("hides the simon-bot tip once its cookie is set", async () => {
+    document.cookie = "chatTipDismissed=true";
+    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+
+    expect(
+      screen.queryByRole("button", { name: "Dismiss tip" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the simon-bot tip when the cookie is newer than the render", async () => {
+    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+
+    document.cookie = "chatTipDismissed=true";
+    act(() => {
+      window.dispatchEvent(new Event("pageshow"));
+    });
 
     expect(
       screen.queryByRole("button", { name: "Dismiss tip" }),

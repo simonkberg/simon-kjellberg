@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 
-const COOKIE_NAME = "chatTipDismissed";
+import { CHAT_TIP_COOKIE } from "./chatTipCookie";
 
 /**
  * Whether the "mention simon bot" tip has been dismissed, either by sending a
@@ -10,7 +10,7 @@ const COOKIE_NAME = "chatTipDismissed";
 export async function getChatTipDismissed() {
   const cookieJar = await cookies();
 
-  return cookieJar.get(COOKIE_NAME)?.value === "true";
+  return cookieJar.get(CHAT_TIP_COOKIE)?.value === "true";
 }
 
 /** Dismisses the tip, leaving an already-dismissed cookie untouched. */
@@ -21,5 +21,5 @@ export async function setChatTipDismissed() {
 
   const cookieJar = await cookies();
 
-  cookieJar.set(COOKIE_NAME, "true");
+  cookieJar.set(CHAT_TIP_COOKIE, "true");
 }
