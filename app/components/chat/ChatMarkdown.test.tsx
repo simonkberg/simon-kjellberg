@@ -19,10 +19,6 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("leaves a * that doesn't flank a word as text", () => {
-    expect(html("2 * 3 * 4 and *d *")).toBe("2 * 3 * 4 and *d *");
-  });
-
   it("renders underline, strikethrough and inline code", () => {
     expect(html("`code` and ~~del~~ and __u__")).toBe(
       "<code>code</code> and <del>del</del> and <u>u</u>",

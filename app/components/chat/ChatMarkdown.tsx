@@ -46,21 +46,6 @@ const extensions = [
     attributes: {},
     children: context.parseInline(match.slice(2, -2)),
   })),
-  // simple-markdown's (and Discord's) `em`: CommonMark's flanking rules differ.
-  rule(
-    "emphasis",
-    "*_",
-    /_(?:__|\\[\s\S]|[^\\_])+?_(?!\w)|\*(?=\S)(?:\*\*|\\[\s\S]|\s+(?:\\[\s\S]|[^\s*\\]|\*\*)|[^\s*\\])+?\*(?!\*)/y,
-    ([match], context) => ({
-      type: "emphasis",
-      children: context.parseInline(match.slice(1, -1)),
-    }),
-  ),
-  // Keeps CommonMark from reading a delimiter `emphasis` rejected.
-  rule("delimiter", "*_", /\*(?!\*)|_(?!_)/y, ([match]) => ({
-    type: "text",
-    value: match,
-  })),
   rule("hardBreak", " ", / {2,}\n/y, () => ({ type: "break" })),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
