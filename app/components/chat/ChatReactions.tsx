@@ -12,10 +12,11 @@ import {
 
 import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
-import { REACTION_EMOJI } from "@/lib/emoji";
+import { REACTION_EMOJI, SKIN_TONES, withSkinTone } from "@/lib/emoji";
 
-import { arrowFocus, gridColumns } from "./arrowFocus";
+import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
+import { setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -27,14 +28,93 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
+const HAND = "✋";
+
+// One function for every option, so it runs once as the row opens, not when the tone changes.
+const focusPressed = (button: HTMLButtonElement | null) => {
+  if (button?.getAttribute("aria-pressed") === "true") button.focus();
+};
+
+const SkinTonePicker = ({ picker }: { picker: string }) => {
+  const tone = useSkinTone();
+  const [choosing, setChoosing] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+
+  return (
+    <div className="skin-tones" role="group" aria-label="Skin tone">
+      {choosing &&
+        SKIN_TONES.map((option) => (
+          <TooltipButton
+            key={option.name}
+            ref={focusPressed}
+            tooltip={option.name}
+            anchor={picker}
+            aria-pressed={option === tone}
+            onClick={() => {
+              setSkinTone(option);
+              setChoosing(false);
+              toggle.current?.focus();
+            }}
+          >
+            {withSkinTone(HAND, option.modifier)}
+          </TooltipButton>
+        ))}
+      <TooltipButton
+        ref={toggle}
+        tooltip={`Skin tone: ${tone.name}`}
+        anchor={picker}
+        aria-expanded={choosing}
+        onClick={() => setChoosing(!choosing)}
+      >
+        {withSkinTone(HAND, tone.modifier)}
+      </TooltipButton>
+    </div>
+  );
+};
+
+const ReactionEmoji = ({
+  messageId,
+  reactions,
+  picker,
+}: {
+  messageId: string;
+  reactions: Reaction[];
+  picker: string;
+}) => {
+  const { react } = use(ChatReactionsContext);
+  const { modifier } = useSkinTone();
+
+  return REACTION_EMOJI.map(({ emoji, name }) => {
+    const toned = withSkinTone(emoji, modifier);
+    return (
+      <EmojiButton
+        key={name}
+        emoji={toned}
+        name={name}
+        picker={picker}
+        popoverTarget={picker}
+        popoverTargetAction="hide"
+        // Only adds, as on Discord and Slack: the reaction's own pill takes it back.
+        onClick={() => {
+          if (!reactions.some((r) => r.mine && r.emoji === toned)) {
+            react(messageId, toned);
+          }
+        }}
+      />
+    );
+  });
+};
+
 export const ChatReactionPicker = ({
   messageId,
+  reactions,
   glyph = "☺",
 }: {
   messageId: string;
+  reactions: Reaction[];
   glyph?: string;
 }) => {
-  const { reacting, react } = use(ChatReactionsContext);
+  const { reacting } = use(ChatReactionsContext);
   const pickerId = useId();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
   const [open, setOpen] = useState(false);
@@ -77,9 +157,33 @@ export const ChatReactionPicker = ({
       if (event.shiftKey) event.preventDefault();
       return;
     }
-    const buttons = [...picker.querySelectorAll("button")];
+    const grid = [
+      ...picker.querySelectorAll<HTMLButtonElement>(":scope > button"),
+    ];
+    const tones = [
+      ...picker.querySelectorAll<HTMLButtonElement>(".skin-tones > button"),
+    ];
+    const columns = gridColumns(grid);
+    const current = grid.findIndex((button) => button === event.target);
+    // The tone row sits under the grid, its toggle under the last emoji.
+    const below =
+      event.key === "ArrowDown" &&
+      (arrowIndex(event, current, grid.length - 1, columns) ?? -1) >=
+        grid.length;
+    const above =
+      event.key === "ArrowUp" &&
+      tones.some((button) => button === event.target);
+    const across = below ? tones.at(-1) : above ? grid.at(-1) : undefined;
+    if (across) {
+      event.preventDefault();
+      across.focus();
+      return;
+    }
     // Also at its edges, where the key would scroll the chat behind the picker.
-    if (arrowFocus(event, buttons, gridColumns(buttons)))
+    if (
+      arrowFocus(event, grid, columns) ||
+      arrowFocus(event, tones, tones.length)
+    )
       event.preventDefault();
   };
 
@@ -105,18 +209,16 @@ export const ChatReactionPicker = ({
         onToggle={focusFirst}
         onKeyDown={navigate}
       >
-        {open &&
-          REACTION_EMOJI.map(({ emoji, name }) => (
-            <EmojiButton
-              key={name}
-              emoji={emoji}
-              name={name}
+        {open && (
+          <>
+            <ReactionEmoji
+              messageId={messageId}
+              reactions={reactions}
               picker={pickerId}
-              popoverTarget={pickerId}
-              popoverTargetAction="hide"
-              onClick={() => react(messageId, emoji)}
             />
-          ))}
+            <SkinTonePicker picker={pickerId} />
+          </>
+        )}
       </div>
     </>
   );
@@ -155,7 +257,11 @@ export const ChatReactionList = ({
           {reaction.emoji} <span className="count">{reaction.count}</span>
         </TooltipButton>
       ))}
-      <ChatReactionPicker messageId={messageId} glyph="+" />
+      <ChatReactionPicker
+        messageId={messageId}
+        reactions={reactions}
+        glyph="+"
+      />
     </div>
   );
 };

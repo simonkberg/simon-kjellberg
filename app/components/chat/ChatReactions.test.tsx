@@ -31,23 +31,38 @@ function openPicker() {
 }
 
 function renderOpenPicker() {
-  const context = renderWithContext(<ChatReactionPicker messageId="1" />);
+  const context = renderWithContext(
+    <ChatReactionPicker messageId="1" reactions={[]} />,
+  );
   getPicker().showPopover();
   openPicker();
   return context;
 }
 
-function getEmoji(name: string) {
+function getEmoji(name: string | RegExp) {
   return within(getPicker()).getByRole("button", { name, hidden: true });
 }
 
 function getEmojis() {
-  return within(getPicker()).getAllByRole("button", { hidden: true });
+  return within(getPicker())
+    .getAllByRole("button", { hidden: true })
+    .slice(0, REACTION_EMOJI.length);
+}
+
+// happy-dom has no layout, so each emoji gets the row it would sit in.
+function layOutGrid(columns: number) {
+  const items = getEmojis();
+  for (const [index, item] of items.entries()) {
+    Object.defineProperty(item, "offsetTop", {
+      value: Math.floor(index / columns) * 40,
+    });
+  }
+  return items;
 }
 
 describe("ChatReactionPicker", () => {
   it("renders no emoji until opened", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
+    renderWithContext(<ChatReactionPicker messageId="1" reactions={[]} />);
 
     expect(
       within(getPicker()).queryAllByRole("button", { hidden: true }),
@@ -73,6 +88,45 @@ describe("ChatReactionPicker", () => {
     expect(react).toHaveBeenCalledWith("1", "🎉");
   });
 
+  it("reacts in the picked skin tone, and keeps it", async () => {
+    const user = userEvent.setup();
+    const { react } = renderOpenPicker();
+    const toggle = getEmoji(/^Skin tone/);
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(getEmoji("Default")).toHaveFocus();
+    await user.click(getEmoji("Medium-light"));
+
+    expect(toggle).toHaveTextContent("✋🏼");
+    expect(toggle).toHaveAccessibleName("Skin tone: Medium-light");
+    expect(toggle).toHaveFocus();
+    expect(
+      within(getPicker()).queryByRole("button", {
+        name: "Default",
+        hidden: true,
+      }),
+    ).toBeNull();
+    expect(getEmoji("tada")).toHaveTextContent("🎉");
+    await user.click(getEmoji("thumbsup"));
+    expect(react).toHaveBeenCalledWith("1", "👍🏼");
+    expect(localStorage.getItem("skin-tone")).toBe("2");
+  });
+
+  it("leaves a reaction the visitor already has to its pill", async () => {
+    const { react } = renderWithContext(
+      <ChatReactionList
+        messageId="1"
+        reactions={[{ emoji: "🎉", count: 1, users: [], mine: true }]}
+      />,
+    );
+    openPicker();
+
+    await userEvent.click(getEmoji("tada"));
+
+    expect(react).not.toHaveBeenCalled();
+  });
+
   it("focuses the first emoji once open", () => {
     renderOpenPicker();
     sendToggle(getPicker(), "toggle", "open");
@@ -83,12 +137,7 @@ describe("ChatReactionPicker", () => {
   it("moves a row at a time, counting the columns from the layout", async () => {
     const user = userEvent.setup();
     renderOpenPicker();
-    const items = getEmojis();
-    for (const [index, item] of items.entries()) {
-      Object.defineProperty(item, "offsetTop", {
-        value: Math.floor(index / 8) * 40,
-      });
-    }
+    const items = layOutGrid(8);
     items[0]?.focus();
 
     await user.keyboard("{ArrowDown}");
@@ -97,6 +146,23 @@ describe("ChatReactionPicker", () => {
     expect(items.at(-1)).toHaveFocus();
     await user.keyboard("{Home}");
     expect(items[0]).toHaveFocus();
+  });
+
+  it("moves between the last row and the tone row below it", async () => {
+    const user = userEvent.setup();
+    renderOpenPicker();
+    const items = layOutGrid(8);
+    items.at(-1)?.focus();
+
+    await user.keyboard("{ArrowRight}{Shift>}{ArrowDown}{/Shift}");
+    expect(items.at(-1)).toHaveFocus();
+    items.at(-8)?.focus();
+    await user.keyboard("{ArrowDown}");
+    expect(getEmoji(/^Skin tone/)).toHaveFocus();
+    await user.keyboard("{Enter}{ArrowRight}");
+    expect(getEmoji("Light")).toHaveFocus();
+    await user.keyboard("{ArrowUp}");
+    expect(items.at(-1)).toHaveFocus();
   });
 
   it("keeps arrows at its edges from scrolling the page", () => {
@@ -154,7 +220,7 @@ describe("ChatReactionPicker", () => {
   it("returns focus to its message when a pick has disabled its button", () => {
     renderWithContext(
       <article className="chat-message" tabIndex={-1}>
-        <ChatReactionPicker messageId="1" />
+        <ChatReactionPicker messageId="1" reactions={[]} />
       </article>,
       { reacting: new Set(["1"]) },
     );
@@ -169,8 +235,8 @@ describe("ChatReactionPicker", () => {
   it("disables the button only while its own message's reaction is pending", () => {
     renderWithContext(
       <>
-        <ChatReactionPicker messageId="1" />
-        <ChatReactionPicker messageId="2" />
+        <ChatReactionPicker messageId="1" reactions={[]} />
+        <ChatReactionPicker messageId="2" reactions={[]} />
       </>,
       { reacting: new Set(["1"]) },
     );

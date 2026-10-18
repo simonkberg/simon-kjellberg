@@ -42,6 +42,30 @@ export const REACTION_EMOJI = [
   { emoji: "🤖", name: "robot" },
 ] as const;
 
+/** Discord's tones, in the order :skin-tone-1: to :skin-tone-5: name them, after the default. */
+export const SKIN_TONES = [
+  { name: "Default", modifier: "" },
+  { name: "Light", modifier: "\u{1F3FB}" },
+  { name: "Medium-light", modifier: "\u{1F3FC}" },
+  { name: "Medium", modifier: "\u{1F3FD}" },
+  { name: "Medium-dark", modifier: "\u{1F3FE}" },
+  { name: "Dark", modifier: "\u{1F3FF}" },
+] as const;
+
+export type SkinTone = (typeof SKIN_TONES)[number];
+
+const TONEABLE = /^\p{Emoji_Modifier_Base}\uFE0F?$/u;
+
+/** A single emoji in a tone, if it takes one; the tone replaces any U+FE0F. */
+export const withSkinTone = (emoji: string, modifier: string) =>
+  modifier && TONEABLE.test(emoji)
+    ? emoji.replace("\uFE0F", "") + modifier
+    : emoji;
+
+/** The emoji without its tones, as the shortcode set names it; a tone stands where a text-style base takes U+FE0F. */
+export const withoutSkinTone = (emoji: string) =>
+  qualified(emoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "\uFE0F"));
+
 // Emojibase adds U+FE0F to emoji like 👍 that have a text style but already default to emoji.
 export const qualified = (emoji: string) =>
   emoji.replace(/(\p{Emoji_Presentation})\uFE0F/gu, "$1");

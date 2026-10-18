@@ -56,7 +56,9 @@ export const ChatMessage = ({
           >
             ↩
           </TooltipButton>
-          {reactions.length === 0 && <ChatReactionPicker messageId={id} />}
+          {reactions.length === 0 && (
+            <ChatReactionPicker messageId={id} reactions={reactions} />
+          )}
         </span>
         {reactions.length > 0 && (
           <ChatReactionList messageId={id} reactions={reactions} />

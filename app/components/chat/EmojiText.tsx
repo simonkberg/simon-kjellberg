@@ -3,18 +3,14 @@
 import { Suspense, use } from "react";
 
 import { TooltipText } from "@/components/Tooltip";
-import { qualified } from "@/lib/emoji";
+import { withoutSkinTone } from "@/lib/emoji";
 
 import { loadShortcodes } from "./shortcodes";
 
 const EMOJI = /(\p{RGI_Emoji})/v;
 
-// The set names each emoji without skin tones; a tone stands where a text-style base takes U+FE0F.
-const baseEmoji = (emoji: string) =>
-  qualified(emoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "\uFE0F"));
-
 const Shortcode = ({ emoji }: { emoji: string }) => {
-  const base = baseEmoji(emoji);
+  const base = withoutSkinTone(emoji);
   const name = use(loadShortcodes()).find(([known]) => known === base)?.[1];
   return name && `:${name}:`;
 };

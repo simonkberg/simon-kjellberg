@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type EmojiShortcodes, searchEmoji } from "./emoji";
+import { type EmojiShortcodes, searchEmoji, withSkinTone } from "./emoji";
 
 const EMOJI: EmojiShortcodes[] = [
   ["🧑‍🚒", "firefighter"],
@@ -36,5 +36,16 @@ describe("searchEmoji", () => {
 
   it("finds nothing for an unknown shortcode", () => {
     expect(search("zzz")).toBe("");
+  });
+});
+
+describe("withSkinTone", () => {
+  it.each([
+    ["👍", "\u{1F3FC}", "👍🏼"],
+    ["☝️", "\u{1F3FC}", "☝🏼"],
+    ["🔥", "\u{1F3FC}", "🔥"],
+    ["👍", "", "👍"],
+  ])("tones %s with %j as %s", (emoji, modifier, toned) => {
+    expect(withSkinTone(emoji, modifier)).toBe(toned);
   });
 });
