@@ -164,10 +164,10 @@ describe("markOwnReactions", () => {
 
 describe("withSiteReactions", () => {
   it("adds the site's reactions to Discord's, replies included", async () => {
-    await query(
-      `INSERT INTO reactions (message_id, emoji, username) VALUES
-        ('1', '😂', 'alice'), ('1', '👍', 'alice'), ('1', '👍', 'bob'), ('2', '🎉', 'bob')`,
-    );
+    await toggleReaction("1", "😂", alice);
+    await toggleReaction("1", "👍", alice);
+    await toggleReaction("1", "👍", bob);
+    await toggleReaction("2", "🎉", bob);
 
     const messages = await withSiteReactions([
       message("1", {
