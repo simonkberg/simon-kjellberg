@@ -43,9 +43,9 @@ const EMOJI_BY_NAME = new Map(
   ].flatMap(([emoji, names]) => names.map((name) => [name, emoji] as const)),
 );
 
-// Code spans, escapes, URLs and Discord's own <:emoji:id> tokens pass through whole.
+// Code spans, escapes, URLs and Discord's own <tokens>, like <:emoji:id> and <t:time:R>, pass through whole.
 const SHORTCODE =
-  /(`+)[\s\S]*?[^`]\1(?!`)|\\.|https?:\/\/\S+|<a?:\w+:\d+>|:([\w+-]+):/g;
+  /(`+)[\s\S]*?[^`]\1(?!`)|\\.|https?:\/\/\S+|<[^\s>]+>|:([\w+-]+):/g;
 
 /** Replaces each known `:shortcode:` with its emoji, outside code, as Discord does. */
 export function emojify(text: string): string {

@@ -10,7 +10,7 @@ describe("emojify", () => {
     ["inline code", "`:book:` :book:", "`:book:` 📖"],
     ["a code block", "```\n:book:\n```", "```\n:book:\n```"],
     ["an escaped colon", "\\:book:", "\\:book:"],
-    ["a Discord emoji", "<:book:123>", "<:book:123>"],
+    ["a Discord token", "<t:100:R>", "<t:100:R>"],
     ["a URL", "https://example.com/:book:/", "https://example.com/:book:/"],
   ])("handles %s", (_, text, expected) => {
     expect(emojify(text)).toBe(expected);
