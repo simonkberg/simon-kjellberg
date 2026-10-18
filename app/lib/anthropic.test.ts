@@ -567,7 +567,7 @@ describe("createMessage", () => {
         if (callCount === 1) {
           return new HttpResponse(null, {
             status: 429,
-            headers: { "retry-after": "2" },
+            headers: { "retry-after": "8" },
           });
         }
         return HttpResponse.json({ content: [], stop_reason: "end_turn" });
@@ -580,7 +580,7 @@ describe("createMessage", () => {
       ]),
     );
 
-    expect(vi.mocked(sleep).mock.calls).toEqual([[2000]]);
+    expect(vi.mocked(sleep).mock.calls).toEqual([[8000]]);
   });
 
   it.each([
@@ -792,7 +792,7 @@ describe("createMessage", () => {
         callCount++;
         return new HttpResponse("slow down", {
           status: 429,
-          headers: { "retry-after": "3" },
+          headers: { "retry-after": "11" },
         });
       }),
     );

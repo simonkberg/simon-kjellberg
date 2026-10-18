@@ -30,13 +30,16 @@ export const categorySchema = z
     "Use lowercase letters, digits, hyphens and underscores, with at most one slash",
   );
 
+const LINE_BREAK_CLASS = String.raw`\r\n\v\f\u0085\u2028\u2029`;
+const LINE_BREAKS = new RegExp(`[${LINE_BREAK_CLASS}]+`, "g");
+
 // One line, so a note can't start a section of its own in the <memory> block.
 export const contentSchema = z
   .string()
   .trim()
   .min(1)
   .max(MAX_CONTENT_LENGTH)
-  .regex(/^[^\r\n\v\f\u0085\u2028\u2029]*$/, "Keep a note to one line");
+  .regex(new RegExp(`^[^${LINE_BREAK_CLASS}]*$`), "Keep a note to one line");
 
 const memoryRowSchema = z.object({
   id: z.number(),
@@ -217,7 +220,10 @@ export async function forget(input: {
 }
 
 function renderCategory(category: string, memories: Memory[]): string {
-  const lines = memories.map((memory) => `- #${memory.id} ${memory.content}`);
+  // Notes saved before the one-line rule could still open a section of their own.
+  const lines = memories.map(
+    (memory) => `- #${memory.id} ${memory.content.replace(LINE_BREAKS, " ")}`,
+  );
   return [
     `## ${category}`,
     ...(lines.length > 0 ? lines : ["(nothing yet)"]),
