@@ -20,12 +20,16 @@ function read(): SkinTone {
 }
 
 function subscribe(onChange: () => void) {
+  // Another tab's pick, which wins over this one's unsaved pick.
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === KEY) unsaved = undefined;
+    onChange();
+  };
   listeners.add(onChange);
-  // Another tab's pick.
-  window.addEventListener("storage", onChange);
+  window.addEventListener("storage", onStorage);
   return () => {
     listeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
+    window.removeEventListener("storage", onStorage);
   };
 }
 
