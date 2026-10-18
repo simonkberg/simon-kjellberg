@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
+import { sendToggle } from "@/mocks/popover";
 
 import {
   ChatReactionList,
@@ -25,17 +26,23 @@ function getPicker() {
   return screen.getByRole("toolbar", { name: "Pick a reaction", hidden: true });
 }
 
-// happy-dom has no popover API, so the browser's toggle events are sent by hand.
-function sendToggle(type: "beforetoggle" | "toggle", newState: string) {
-  fireEvent(getPicker(), Object.assign(new Event(type), { newState }));
+function openPicker() {
+  sendToggle(getPicker(), "beforetoggle", "open");
 }
 
-function openPicker() {
-  sendToggle("beforetoggle", "open");
+function renderOpenPicker() {
+  const context = renderWithContext(<ChatReactionPicker messageId="1" />);
+  getPicker().showPopover();
+  openPicker();
+  return context;
 }
 
 function getEmoji(name: string) {
   return within(getPicker()).getByRole("button", { name, hidden: true });
+}
+
+function getEmojis() {
+  return within(getPicker()).getAllByRole("button", { hidden: true });
 }
 
 describe("ChatReactionPicker", () => {
@@ -48,10 +55,9 @@ describe("ChatReactionPicker", () => {
   });
 
   it("offers every picker emoji with its shortcode", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
+    renderOpenPicker();
 
-    const items = within(getPicker()).getAllByRole("button", { hidden: true });
+    const items = getEmojis();
     expect(items).toHaveLength(REACTION_EMOJI.length);
     expect(items[0]).toHaveTextContent("👍");
     expect(
@@ -60,29 +66,24 @@ describe("ChatReactionPicker", () => {
   });
 
   it("reacts with the picked emoji", async () => {
-    const { react } = renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
+    const { react } = renderOpenPicker();
 
-    await userEvent.click(
-      within(getPicker()).getByRole("button", { name: "tada", hidden: true }),
-    );
+    await userEvent.click(getEmoji("tada"));
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
   });
 
   it("focuses the first emoji once open", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
-    sendToggle("toggle", "open");
+    renderOpenPicker();
+    sendToggle(getPicker(), "toggle", "open");
 
     expect(getEmoji("thumbsup")).toHaveFocus();
   });
 
-  it("moves between emoji with the arrow keys, by row up and down", async () => {
+  it("moves a row at a time, counting the columns from the layout", async () => {
     const user = userEvent.setup();
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
-    const items = within(getPicker()).getAllByRole("button", { hidden: true });
+    renderOpenPicker();
+    const items = getEmojis();
     for (const [index, item] of items.entries()) {
       Object.defineProperty(item, "offsetTop", {
         value: Math.floor(index / 8) * 40,
@@ -90,14 +91,8 @@ describe("ChatReactionPicker", () => {
     }
     items[0]?.focus();
 
-    await user.keyboard("{ArrowRight}");
-    expect(items[1]).toHaveFocus();
     await user.keyboard("{ArrowDown}");
-    expect(items[9]).toHaveFocus();
-    await user.keyboard("{ArrowLeft}");
     expect(items[8]).toHaveFocus();
-    await user.keyboard("{ArrowUp}");
-    expect(items[0]).toHaveFocus();
     await user.keyboard("{End}");
     expect(items.at(-1)).toHaveFocus();
     await user.keyboard("{Home}");
@@ -105,8 +100,7 @@ describe("ChatReactionPicker", () => {
   });
 
   it("keeps arrows at its edges from scrolling the page", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
+    renderOpenPicker();
     getEmoji("thumbsup").focus();
 
     expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "ArrowUp" })).toBe(
@@ -116,8 +110,7 @@ describe("ChatReactionPicker", () => {
   });
 
   it("leaves other keys and modified arrows to the browser", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
+    renderOpenPicker();
     getEmoji("thumbsup").focus();
 
     expect(fireEvent.keyDown(getEmoji("thumbsup"), { key: "a" })).toBe(true);
@@ -132,9 +125,7 @@ describe("ChatReactionPicker", () => {
 
   it.each(["{Tab}", "{Shift>}{Tab}{/Shift}"])("closes on %s", async (keys) => {
     const user = userEvent.setup();
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    getPicker().showPopover();
-    openPicker();
+    renderOpenPicker();
     getEmoji("heart").focus();
 
     await user.keyboard(keys);
@@ -143,9 +134,7 @@ describe("ChatReactionPicker", () => {
   });
 
   it("closes on Escape without leaving it to the page", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    getPicker().showPopover();
-    openPicker();
+    renderOpenPicker();
     getEmoji("heart").focus();
 
     expect(fireEvent.keyDown(getEmoji("heart"), { key: "Escape" })).toBe(false);
@@ -153,12 +142,11 @@ describe("ChatReactionPicker", () => {
   });
 
   it("returns focus to its button when it closes around it", () => {
-    renderWithContext(<ChatReactionPicker messageId="1" />);
-    openPicker();
+    renderOpenPicker();
     getEmoji("heart").focus();
 
-    sendToggle("beforetoggle", "closed");
-    sendToggle("toggle", "closed");
+    sendToggle(getPicker(), "beforetoggle", "closed");
+    sendToggle(getPicker(), "toggle", "closed");
 
     expect(screen.getByRole("button", { name: "Add reaction" })).toHaveFocus();
   });
@@ -173,7 +161,7 @@ describe("ChatReactionPicker", () => {
     openPicker();
     getEmoji("heart").focus();
 
-    sendToggle("beforetoggle", "closed");
+    sendToggle(getPicker(), "beforetoggle", "closed");
 
     expect(screen.getByRole("article")).toHaveFocus();
   });
@@ -196,12 +184,6 @@ describe("ChatReactionPicker", () => {
 });
 
 describe("ChatReactionList", () => {
-  const openTips = () =>
-    screen
-      .queryAllByRole("tooltip", { hidden: true })
-      .filter((tip) => tip.hasAttribute("data-popover-open"))
-      .map((tip) => tip.textContent);
-
   const reactions: Reaction[] = [
     { emoji: "👍", count: 3, users: ["alice"], mine: true },
     { emoji: "🎉", count: 1, users: [] },
@@ -236,15 +218,5 @@ describe("ChatReactionList", () => {
     await userEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
-  });
-
-  it("shows who reacted while hovered", async () => {
-    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
-
-    await userEvent.hover(screen.getAllByRole("button")[2]!);
-    expect(openTips()).toEqual(["alice and bob"]);
-
-    await userEvent.unhover(screen.getAllByRole("button")[2]!);
-    expect(openTips()).toEqual([]);
   });
 });

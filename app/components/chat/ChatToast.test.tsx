@@ -1,10 +1,12 @@
 import {
+  act,
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ChatToast } from "./ChatToast";
 
@@ -14,35 +16,16 @@ describe("ChatToast", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders message when provided", () => {
-    render(<ChatToast message="Test message" />);
-    expect(screen.getByText("Test message")).toBeInTheDocument();
-  });
-
-  it("has correct accessibility attributes for default variant", () => {
-    render(<ChatToast message="Test message" variant="default" />);
+  it.each([
+    { variant: "default", live: "polite" },
+    { variant: "error", live: "assertive" },
+  ] as const)("announces the $variant variant $live", ({ variant, live }) => {
+    render(<ChatToast message="Test message" variant={variant} />);
     const toast = screen.getByRole("status");
 
-    expect(toast).toHaveAttribute("aria-live", "polite");
+    expect(toast).toHaveAttribute("aria-live", live);
     expect(toast).toHaveAttribute("aria-atomic", "true");
-  });
-
-  it("has correct accessibility attributes for error variant", () => {
-    render(<ChatToast message="Error message" variant="error" />);
-    const toast = screen.getByRole("status");
-
-    expect(toast).toHaveAttribute("aria-live", "assertive");
-    expect(toast).toHaveAttribute("aria-atomic", "true");
-  });
-
-  it("renders close button with accessible label", () => {
-    render(<ChatToast message="Test message" />);
-    const closeButton = screen.getByRole("button", {
-      name: "Close notification",
-    });
-
-    expect(closeButton).toBeInTheDocument();
-    expect(closeButton).toHaveAttribute("type", "button");
+    expect(toast).toHaveClass("chat-toast", variant);
   });
 
   it("hides toast when close button is clicked", async () => {
@@ -52,34 +35,11 @@ describe("ChatToast", () => {
     const closeButton = screen.getByRole("button", {
       name: "Close notification",
     });
+    expect(closeButton).toHaveAttribute("type", "button");
 
     await user.click(closeButton);
 
     expect(screen.queryByText("Test message")).not.toBeInTheDocument();
-  });
-
-  it("hides toast after duration expires", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-
-    render(<ChatToast message="Test message" duration={3000} />);
-    expect(screen.getByText("Test message")).toBeInTheDocument();
-
-    vi.advanceTimersByTime(3000);
-
-    await waitForElementToBeRemoved(() => screen.queryByText("Test message"));
-  });
-
-  it("shows toast for custom duration", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    render(<ChatToast message="Test message" duration={10000} />);
-    expect(screen.getByText("Test message")).toBeInTheDocument();
-
-    vi.advanceTimersByTime(5000);
-    expect(screen.getByText("Test message")).toBeInTheDocument();
-
-    vi.advanceTimersByTime(5000);
-
-    await waitForElementToBeRemoved(() => screen.getByText("Test message"));
   });
 
   it("shows new message when message prop changes", async () => {
@@ -100,36 +60,42 @@ describe("ChatToast", () => {
     expect(screen.queryByText("Test message")).not.toBeInTheDocument();
   });
 
-  it("resets timer when message changes", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+  describe("timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
 
-    const { rerender } = render(
-      <ChatToast message="First message" duration={5000} />,
-    );
-    expect(screen.getByText("First message")).toBeInTheDocument();
+    it("hides the toast once its duration expires, not before", async () => {
+      render(<ChatToast message="Test message" duration={10000} />);
+      expect(screen.getByText("Test message")).toBeInTheDocument();
 
-    vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(5000);
+      expect(screen.getByText("Test message")).toBeInTheDocument();
 
-    rerender(<ChatToast message="Second message" duration={5000} />);
+      vi.advanceTimersByTime(5000);
 
-    expect(screen.getByText("Second message")).toBeInTheDocument();
+      await waitForElementToBeRemoved(() => screen.getByText("Test message"));
+    });
 
-    vi.advanceTimersByTime(3000);
-    expect(screen.getByText("Second message")).toBeInTheDocument();
+    it("resets timer when message changes", async () => {
+      const { rerender } = render(
+        <ChatToast message="First message" duration={5000} />,
+      );
+      expect(screen.getByText("First message")).toBeInTheDocument();
+      await act(() => vi.advanceTimersByTimeAsync(3000));
 
-    vi.advanceTimersByTime(2000);
-    vi.runAllTimers();
+      rerender(<ChatToast message="Second message" duration={5000} />);
+      await waitFor(() =>
+        expect(screen.getByText("Second message")).toBeInTheDocument(),
+      );
+      await act(() => vi.advanceTimersByTimeAsync(3000));
+      expect(screen.getByText("Second message")).toBeInTheDocument();
 
-    await waitForElementToBeRemoved(() => screen.queryByText("Second message"));
-  });
+      vi.advanceTimersByTime(2000);
 
-  it("applies correct variant class", () => {
-    const { rerender } = render(
-      <ChatToast message="Test message" variant="default" />,
-    );
-    expect(screen.getByRole("status")).toHaveClass("chat-toast", "default");
-
-    rerender(<ChatToast message="Test message" variant="error" />);
-    expect(screen.getByRole("status")).toHaveClass("chat-toast", "error");
+      await waitForElementToBeRemoved(() =>
+        screen.queryByText("Second message"),
+      );
+    });
   });
 });
