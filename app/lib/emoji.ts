@@ -60,6 +60,10 @@ export const withSkinTone = (emoji: string, modifier: string) =>
     ? emoji.replace("\uFE0F", "") + modifier
     : emoji;
 
+/** The emoji without its tones, as the shortcode set names it; a tone stands where a text-style base takes U+FE0F. */
+export const withoutSkinTone = (emoji: string) =>
+  qualified(emoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "\uFE0F"));
+
 // Emojibase adds U+FE0F to emoji like 👍 that have a text style but already default to emoji.
 export const qualified = (emoji: string) =>
   emoji.replace(/(\p{Emoji_Presentation})\uFE0F/gu, "$1");
