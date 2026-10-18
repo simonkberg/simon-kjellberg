@@ -73,9 +73,8 @@ function retryAfterHeaderMs(value: string | null): number | undefined {
   if (/^\d+$/.test(header)) return Number(header) * 1000;
   // An HTTP-date starts with its weekday, which keeps Date.parse off forms like "-5".
   if (!/^[a-z]{3,9},/i.test(header)) return undefined;
-  // A date already past says more about clock skew than the limit, so it falls back too.
-  const waitMs = Date.parse(header) - Date.now();
-  return waitMs > 0 ? waitMs : undefined;
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? undefined : date - Date.now();
 }
 
 function gateUntil(route: string): number {
@@ -177,10 +176,14 @@ async function call<T extends z.ZodType>(
       retries++;
 
       const rateLimit = RateLimitResponseSchema.safeParse(json);
-      const retryAfterMs = rateLimit.success
+      const reportedMs = rateLimit.success
         ? rateLimit.data.retry_after * 1000
-        : (retryAfterHeaderMs(response.headers.get("retry-after")) ??
-          1000 * 2 ** (retries - 1));
+        : retryAfterHeaderMs(response.headers.get("retry-after"));
+      // A delay of zero or less, or a date already past, would retry back to back.
+      const retryAfterMs =
+        reportedMs !== undefined && reportedMs > 0
+          ? reportedMs
+          : 1000 * 2 ** (retries - 1);
       const global =
         (rateLimit.success && rateLimit.data.global) ||
         response.headers.get("x-ratelimit-global") === "true";

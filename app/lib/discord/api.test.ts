@@ -1647,7 +1647,7 @@ describe("rate limiting", () => {
 
   it.each([
     ["an HTTP-date", () => new Date(Date.now() + 3000).toUTCString(), 3000],
-    ["0", () => "0", 0],
+    ["0", () => "0", 1000],
     ["invalid", () => "soon", 1000],
     ["negative", () => "-5", 1000],
     ["exponent", () => "1e3", 1000],
@@ -1712,6 +1712,32 @@ describe("rate limiting", () => {
     await vi.advanceTimersByTimeAsync(1);
     await Promise.all([reaction, messages]);
     expect(messageRequests).toHaveBeenCalledOnce();
+  });
+
+  it("should back off on a 429 whose retry_after is 0", async () => {
+    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        ++attempts === 1
+          ? HttpResponse.json(
+              { message: "Rate limited", retry_after: 0, global: false },
+              { status: 429 },
+            )
+          : HttpResponse.json([]),
+      ),
+    );
+
+    const promise = getChannelMessages();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(attempts).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await promise;
+
+    expect(logWarnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ retryAfterMs: 1000 }),
+      "Discord rate limited, retrying",
+    );
   });
 
   it("should back off on 429s with no Retry-After", async () => {
