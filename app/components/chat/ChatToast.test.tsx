@@ -1,6 +1,8 @@
 import {
+  act,
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -80,14 +82,13 @@ describe("ChatToast", () => {
         <ChatToast message="First message" duration={5000} />,
       );
       expect(screen.getByText("First message")).toBeInTheDocument();
-
-      vi.advanceTimersByTime(3000);
+      await act(() => vi.advanceTimersByTimeAsync(3000));
 
       rerender(<ChatToast message="Second message" duration={5000} />);
-
-      expect(screen.getByText("Second message")).toBeInTheDocument();
-
-      vi.advanceTimersByTime(3000);
+      await waitFor(() =>
+        expect(screen.getByText("Second message")).toBeInTheDocument(),
+      );
+      await act(() => vi.advanceTimersByTimeAsync(3000));
       expect(screen.getByText("Second message")).toBeInTheDocument();
 
       vi.advanceTimersByTime(2000);

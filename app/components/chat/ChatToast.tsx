@@ -23,13 +23,14 @@ export const ChatToast = ({
     setIsVisible(!!message);
   }
 
+  // message is unread here: it restarts the timer for each new message.
   useEffect(() => {
     if (!isVisible) return;
 
     const timer = setTimeout(() => setIsVisible(false), duration);
 
     return () => clearTimeout(timer);
-  }, [duration, isVisible]);
+  }, [duration, isVisible, message]);
 
   if (!deferredIsVisible) return null;
 
