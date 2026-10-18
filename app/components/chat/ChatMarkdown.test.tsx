@@ -80,14 +80,8 @@ describe("ChatMarkdown", () => {
     });
   });
 
-  describe("reference links without a definition", () => {
-    it("renders the label as plain text", () => {
-      expect(html("[undefined-ref][9]")).toBe("undefined-ref");
-    });
-
-    it("renders an image as its alt text", () => {
-      expect(html("![undefined-ref][9]")).toBe("undefined-ref");
-    });
+  it("leaves reference links as typed, as Discord does", () => {
+    expect(html("[ref][9] ![ref][9]")).toBe("[ref][9] ![ref][9]");
   });
 
   describe("url sanitisation", () => {

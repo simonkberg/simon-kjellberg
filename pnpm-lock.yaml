@@ -166,15 +166,15 @@ importers:
 
   .:
     dependencies:
-      '@khanacademy/simple-markdown':
-        specifier: 4.0.1
-        version: 4.0.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@next/third-parties':
         specifier: 16.4.1
         version: 16.4.1(next@16.4.1(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@react-spring/web':
         specifier: 10.1.2
         version: 10.1.2(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tanstack/markdown':
+        specifier: 1.0.0
+        version: 1.0.0(react@19.3.1)
       comparator.ts:
         specifier: 2.0.0
         version: 2.0.0
@@ -540,15 +540,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
-
-  '@khanacademy/perseus-utils@3.0.1':
-    resolution: {integrity: sha512-TKQ3WoZT6JV5Sh1GfZXi+JVXjjLZmOc0sr9id4YI/PzepXP7DZUEYpoOxxDYM5Od6LHpKe7i3mChcJQChmk1XA==}
-
-  '@khanacademy/simple-markdown@4.0.1':
-    resolution: {integrity: sha512-iLZtQWDcxjiISRudChCrSfGQcLqx7hTQrh+UIHBXUr6WJX/BQjh5HvaPA53zhBjcgjGnO9PDR7akRn4nXgCjcQ==}
-    peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
 
   '@msw/url@0.1.2':
     resolution: {integrity: sha512-DdeBLQxQ+ZrtmwEmaj7GQ7lbzPCgbbbyAqOz/I4ulo68hwBpfdNvQJ5bmihJUkAAKOeCmqCIG3OFZGosqFN4mA==}
@@ -1159,6 +1150,17 @@ packages:
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
+
+  '@tanstack/markdown@1.0.0':
+    resolution: {integrity: sha512-zE07RepFMbSQlHdnE82twgiVOKy50rP6a/X9UPOOBt8Z8x9lzaPvGpn2zioCnjXMvNt/IQkW5sSalXQ25C/FKw==}
+    peerDependencies:
+      octane: '>=0.1.12'
+      react: '>=18'
+    peerDependenciesMeta:
+      octane:
+        optional: true
+      react:
+        optional: true
 
   '@testing-library/dom@10.4.2':
     resolution: {integrity: sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q==}
@@ -2477,14 +2479,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@khanacademy/perseus-utils@3.0.1': {}
-
-  '@khanacademy/simple-markdown@4.0.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
-    dependencies:
-      '@khanacademy/perseus-utils': 3.0.1
-      react: 19.3.1
-      react-dom: 19.3.1(react@19.3.1)
-
   '@msw/url@0.1.2': {}
 
   '@mswjs/interceptors@0.45.7(supports-color@10.2.2)':
@@ -2815,6 +2809,10 @@ snapshots:
   '@swc/helpers@0.5.23':
     dependencies:
       tslib: 2.8.1
+
+  '@tanstack/markdown@1.0.0(react@19.3.1)':
+    optionalDependencies:
+      react: 19.3.1
 
   '@testing-library/dom@10.4.2':
     dependencies:

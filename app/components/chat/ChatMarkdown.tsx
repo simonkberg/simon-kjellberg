@@ -1,28 +1,67 @@
-import SimpleMarkdown from "@khanacademy/simple-markdown";
-import { Fragment, type ReactNode } from "react";
+import { parseInline } from "@tanstack/markdown";
+import type {
+  InlineNode,
+  InlineParseContext,
+  MarkdownExtension,
+} from "@tanstack/markdown";
+import { type ReactNode } from "react";
 
 import { EmojiText } from "./EmojiText";
 
-/**
- * Renders inline markdown. We use simple-markdown's parser but not its React
- * output, which builds React 18 elements that React 19 rejects.
- */
+const link = (href: string, text = href): InlineNode => ({
+  type: "link",
+  href,
+  children: [{ type: "text", value: text }],
+});
 
-/**
- * What `defaultInlineParse()` produces — the library types every node as
- * `{ type: string; [key: string]: any }`. `target` is absent on a `reflink`
- * whose definition never appears.
- */
-type InlineNode =
-  | { type: "text" | "inlineCode"; content: string }
-  | { type: "br" }
-  | { type: "em" | "strong" | "u" | "del"; content: InlineNode[] }
-  | { type: "link"; content: InlineNode[]; target?: string; title?: string }
-  | { type: "image"; alt: string };
+/** An inline parser for the text matching `pattern` at the current index. */
+const rule = (
+  name: string,
+  markers: string,
+  pattern: RegExp,
+  toNode: (
+    match: RegExpExecArray,
+    context: InlineParseContext,
+  ) => InlineNode | undefined,
+): MarkdownExtension => ({
+  name,
+  inlineParser: {
+    markers,
+    parse: (context) => {
+      const match = pattern.exec(context.source.slice(context.index));
+      if (!match) return;
+      const node = toNode(match, context);
+      return node && { node, length: match[0].length };
+    },
+  },
+});
 
-/** Strips `javascript:`, `vbscript:` and `data:` targets. */
-const sanitizeUrl = (target?: string): string | undefined =>
-  SimpleMarkdown.sanitizeUrl(target) ?? undefined;
+/** The Discord syntax CommonMark lacks or reads differently. */
+const extensions = [
+  // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
+  rule(
+    "underline",
+    "_",
+    /^__([\s\S]+?)__(?!_)/,
+    ([, content = ""], context) => ({
+      type: "inlineComponent",
+      name: "u",
+      attributes: {},
+      children: context.parseInline(content),
+    }),
+  ),
+  rule("hardBreak", " ", /^ {2,}\n/, () => ({ type: "break" })),
+  // Only http(s) and mailto, so these never need the parser's URL sanitising.
+  rule("autolink", "<", /^<(https?:\/\/[^\s<>]+)>/, ([, url = ""]) =>
+    link(url),
+  ),
+  rule("mailto", "<", /^<([^\s<>@]+@[^\s<>]+)>/, ([, address = ""]) =>
+    link(`mailto:${address}`, address),
+  ),
+  rule("url", "h", /^https?:\/\/[^\s<]+[^<.,:;"')\]\s]/, ([url], { inLink }) =>
+    inLink ? undefined : link(url),
+  ),
+] satisfies MarkdownExtension[];
 
 const renderNodes = (nodes: InlineNode[]): ReactNode[] =>
   nodes.map((node, index) => renderNode(node, index));
@@ -34,34 +73,34 @@ const renderNode = (
 ): Exclude<ReactNode, undefined> => {
   switch (node.type) {
     case "text":
-      return <EmojiText key={key} text={node.content} />;
-    case "br":
+      return <EmojiText key={key} text={node.value} />;
+    case "break":
       return <br key={key} />;
-    case "em":
-      return <em key={key}>{renderNodes(node.content)}</em>;
+    case "emphasis":
+      return <em key={key}>{renderNodes(node.children)}</em>;
     case "strong":
-      return <strong key={key}>{renderNodes(node.content)}</strong>;
-    case "u":
-      return <u key={key}>{renderNodes(node.content)}</u>;
-    case "del":
-      return <del key={key}>{renderNodes(node.content)}</del>;
+      return <strong key={key}>{renderNodes(node.children)}</strong>;
+    case "inlineComponent":
+      return <u key={key}>{renderNodes(node.children)}</u>;
+    case "strike":
+      return <del key={key}>{renderNodes(node.children)}</del>;
     case "inlineCode":
-      return <code key={key}>{node.content}</code>;
-    case "link": {
-      const href = sanitizeUrl(node.target);
-      // Not a link: an href-less `<a>` looks like one but has no link role.
-      return href === undefined ? (
-        <Fragment key={key}>{renderNodes(node.content)}</Fragment>
-      ) : (
-        <a key={key} href={href} title={node.title}>
-          {renderNodes(node.content)}
+      return <code key={key}>{node.value}</code>;
+    // The parser turns a link with an unsafe target into its text.
+    case "link":
+      return (
+        <a key={key} href={node.href} title={node.title}>
+          {renderNodes(node.children)}
         </a>
       );
-    }
     // Never an `<img>`: message authors choose the URL (tracking pixel, IP
     // logger). Discord doesn't render markdown images either.
     case "image":
       return node.alt;
+    // Only parsed with the `footnotes` and `allowHtml` options.
+    case "footnoteReference":
+    case "inlineHtml":
+      return null;
   }
 };
 
@@ -70,5 +109,5 @@ export interface ChatMarkdownProps {
 }
 
 export const ChatMarkdown = ({ source }: ChatMarkdownProps) => (
-  <>{renderNodes(SimpleMarkdown.defaultInlineParse(source) as InlineNode[])}</>
+  <>{renderNodes(parseInline(source, { extensions }))}</>
 );
