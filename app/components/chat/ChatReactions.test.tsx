@@ -125,9 +125,28 @@ describe("ChatReactionPicker", () => {
     await user.keyboard("{ArrowDown}");
     expect(items[8]).toHaveFocus();
     await user.keyboard("{End}");
-    expect(getEmoji(/^Skin tone/)).toHaveFocus();
+    expect(items.at(-1)).toHaveFocus();
     await user.keyboard("{Home}");
     expect(items[0]).toHaveFocus();
+  });
+
+  it("moves between the last row and the tone row below it", async () => {
+    const user = userEvent.setup();
+    renderOpenPicker();
+    const items = getEmojis();
+    for (const [index, item] of items.entries()) {
+      Object.defineProperty(item, "offsetTop", {
+        value: Math.floor(index / 8) * 40,
+      });
+    }
+    items.at(-8)?.focus();
+
+    await user.keyboard("{ArrowDown}");
+    expect(getEmoji(/^Skin tone/)).toHaveFocus();
+    await user.keyboard("{Enter}{ArrowRight}");
+    expect(getEmoji("Light")).toHaveFocus();
+    await user.keyboard("{ArrowUp}");
+    expect(items.at(-1)).toHaveFocus();
   });
 
   it("keeps arrows at its edges from scrolling the page", () => {

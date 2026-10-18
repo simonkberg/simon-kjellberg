@@ -1530,7 +1530,7 @@ ul {
     display: grid;
   }
 
-  > button {
+  button {
     padding-block: 0.25em;
     font-size: 1.25rem;
     line-height: 1;
@@ -1570,13 +1570,20 @@ ul {
   }
 }
 
-.chat-reaction-picker {
-  > button[aria-pressed="true"] {
-    background: var(--pressed);
-  }
+.chat-reaction-picker > .skin-tones {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5ch;
+  padding-top: 0.5ch;
+  border-top: 1px solid var(--rule);
 
-  > .skin-tone {
-    grid-column-start: 1;
+  > button {
+    width: 2.25em;
+
+    &[aria-pressed="true"] {
+      background: var(--pressed);
+    }
   }
 }
 

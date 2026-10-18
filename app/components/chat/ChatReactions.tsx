@@ -14,7 +14,7 @@ import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI, SKIN_TONES, withSkinTone } from "@/lib/emoji";
 
-import { arrowFocus, gridColumns } from "./arrowFocus";
+import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
 import { setSkinTone, useSkinTone } from "./skinTone";
 
@@ -38,17 +38,7 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
   const toggle = useRef<HTMLButtonElement>(null);
 
   return (
-    <>
-      <TooltipButton
-        ref={toggle}
-        tooltip={`Skin tone: ${tone.name}`}
-        anchor={picker}
-        className="skin-tone"
-        aria-expanded={choosing}
-        onClick={() => setChoosing(!choosing)}
-      >
-        {withSkinTone(HAND, tone.modifier)}
-      </TooltipButton>
+    <div className="skin-tones" role="group" aria-label="Skin tone">
       {choosing &&
         SKIN_TONES.map((option) => (
           <TooltipButton
@@ -66,7 +56,16 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
             {withSkinTone(HAND, option.modifier)}
           </TooltipButton>
         ))}
-    </>
+      <TooltipButton
+        ref={toggle}
+        tooltip={`Skin tone: ${tone.name}`}
+        anchor={picker}
+        aria-expanded={choosing}
+        onClick={() => setChoosing(!choosing)}
+      >
+        {withSkinTone(HAND, tone.modifier)}
+      </TooltipButton>
+    </div>
   );
 };
 
@@ -146,9 +145,32 @@ export const ChatReactionPicker = ({
       if (event.shiftKey) event.preventDefault();
       return;
     }
-    const buttons = [...picker.querySelectorAll("button")];
+    const grid = [
+      ...picker.querySelectorAll<HTMLButtonElement>(":scope > button"),
+    ];
+    const tones = [
+      ...picker.querySelectorAll<HTMLButtonElement>(".skin-tones > button"),
+    ];
+    const columns = gridColumns(grid);
+    const current = grid.findIndex((button) => button === event.target);
+    // The tone row sits under the grid, its toggle under the last emoji.
+    const across =
+      (arrowIndex(event, current, grid.length - 1, columns) ?? 0) >= grid.length
+        ? tones.at(-1)
+        : event.key === "ArrowUp" &&
+            tones.some((button) => button === event.target)
+          ? grid.at(-1)
+          : undefined;
+    if (across) {
+      event.preventDefault();
+      across.focus();
+      return;
+    }
     // Also at its edges, where the key would scroll the chat behind the picker.
-    if (arrowFocus(event, buttons, gridColumns(buttons)))
+    if (
+      arrowFocus(event, grid, columns) ||
+      arrowFocus(event, tones, tones.length)
+    )
       event.preventDefault();
   };
 
