@@ -69,7 +69,7 @@ describe("generateStaticParams", () => {
   it("should return params for all periods, overall as the base path", () => {
     expect(generateStaticParams()).toEqual(
       periods.map((period) => ({
-        period: period === "overall" ? undefined : [period],
+        period: period === "overall" ? [] : [period],
       })),
     );
   });
