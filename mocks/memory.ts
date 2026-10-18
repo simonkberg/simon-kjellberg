@@ -20,11 +20,3 @@ export async function fillCategory(category: string, count = MAX_PER_CATEGORY) {
     await seedMemory(100 + i, category, `note ${i}`);
   }
 }
-
-export async function storedMemory(id: number) {
-  const { rows } = await query(
-    "SELECT category, content FROM memories WHERE id = ?",
-    [id],
-  );
-  return rows[0];
-}
