@@ -1,9 +1,27 @@
 "use client";
 
-import { startTransition } from "react";
+import { startTransition, useSyncExternalStore } from "react";
 
 import { dismissChatTip } from "@/actions/chat";
 import { TooltipButton } from "@/components/Tooltip";
+import { CHAT_TIP_COOKIE } from "@/lib/chatTipCookie";
+
+// A restored or backgrounded page keeps the tip it rendered with, so the cookie is read again on return.
+function subscribe(onChange: () => void) {
+  window.addEventListener("pageshow", onChange);
+  document.addEventListener("visibilitychange", onChange);
+  return () => {
+    window.removeEventListener("pageshow", onChange);
+    document.removeEventListener("visibilitychange", onChange);
+  };
+}
+
+const readCookie = () =>
+  document.cookie.split("; ").includes(`${CHAT_TIP_COOKIE}=true`);
+
+/** The server's answer until hydration, then the browser's cookie. */
+export const useChatTipDismissed = (serverDismissed: boolean) =>
+  useSyncExternalStore(subscribe, readCookie, () => serverDismissed);
 
 export const ChatTip = () => (
   <p className="chat-tip">

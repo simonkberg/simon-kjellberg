@@ -11,7 +11,7 @@ import type { Message, Reaction } from "@/lib/discord/api";
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
 import { ChatReactionsContext } from "./ChatReactions";
-import { ChatTip } from "./ChatTip";
+import { ChatTip, useChatTipDismissed } from "./ChatTip";
 import { ChatToast } from "./ChatToast";
 
 const findMessageById = (messages: Message[], id: string): Message | null => {
@@ -73,7 +73,7 @@ export interface ChatProps {
 
 export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const result = use(history);
-  const dismissed = use(tipDismissed);
+  const dismissed = useChatTipDismissed(use(tipDismissed));
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [, startReacting] = useTransition();
   // Per message, so a slow toggle (Discord's rate limit can hold it 30s) blocks only its own.
