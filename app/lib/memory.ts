@@ -30,7 +30,18 @@ export const categorySchema = z
     "Use lowercase letters, digits, hyphens and underscores, with at most one slash",
   );
 
-export const contentSchema = z.string().trim().min(1).max(MAX_CONTENT_LENGTH);
+const LINE_BREAKS = /\r\n|[\r\n\v\f\u0085\u2028\u2029]/g;
+
+// One line, so a note can't start a section of its own in the <memory> block.
+function toOneLine(text: string): string {
+  return text.replace(LINE_BREAKS, " ").trim();
+}
+
+export const contentSchema = z
+  .string()
+  .overwrite(toOneLine)
+  .min(1)
+  .max(MAX_CONTENT_LENGTH);
 
 const memoryRowSchema = z.object({
   id: z.number(),
@@ -154,8 +165,9 @@ const LISTING_PREFIX = /^(?:-\s*)?#(\d+)\s+/;
 
 // The listing shows notes as "- #id text"; a copy that kept the decoration
 // should still match, and so should a note whose own text starts with "#id".
+// Line breaks read as the spaces a write turns them into.
 function asRead(id: number, text: string): [string, string] {
-  const trimmed = text.trim();
+  const trimmed = toOneLine(text);
   const prefix = LISTING_PREFIX.exec(trimmed);
   const bare =
     prefix?.[1] === String(id) ? trimmed.slice(prefix[0].length) : trimmed;

@@ -65,6 +65,12 @@ export const ChatReactionPicker = ({
 
   const navigate = (event: KeyboardEvent<HTMLDivElement>) => {
     const picker = event.currentTarget;
+    if (event.key === "Escape") {
+      // Prevented, so the input's Escape doesn't also cancel a reply.
+      event.preventDefault();
+      picker.hidePopover();
+      return;
+    }
     if (event.key === "Tab") {
       // Closing moves focus to the button, so Tab moves on past it and Shift+Tab lands on it.
       picker.hidePopover();

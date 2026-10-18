@@ -15,6 +15,8 @@ export const ChatStream = () => {
   useEffect(() => {
     let eventSource: EventSource | null = null;
     let reconnectAttempts = 0;
+    let connected = false;
+    let gatewayDown = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const disconnect = () => {
@@ -26,14 +28,23 @@ export const ChatStream = () => {
 
     const connect = () => {
       disconnect();
+      // Every stream after the first missed what changed while none was open.
+      const reconnecting = connected;
+      connected = true;
       eventSource = new EventSource("/api/chat/sse");
       eventSource.onopen = () => {
         reconnectAttempts = 0;
         setStatus("live");
+        if (reconnecting) void refreshChatHistory();
+        gatewayDown = false;
       };
       eventSource.onmessage = () => void refreshChatHistory();
       eventSource.addEventListener("status", (event) => {
-        setStatus(event.data === "live" ? "live" : "connecting");
+        const live = event.data === "live";
+        // The store missed changes while the gateway was down.
+        if (live && gatewayDown) void refreshChatHistory();
+        gatewayDown = !live;
+        setStatus(live ? "live" : "connecting");
       });
       eventSource.onerror = () => {
         disconnect();

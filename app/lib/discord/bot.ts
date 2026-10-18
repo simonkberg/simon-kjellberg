@@ -7,7 +7,7 @@ import { query } from "@/lib/turso";
 
 import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
 import { subscribe } from "./gateway";
-import { type DiscordMessage, isShown } from "./schemas";
+import { type DiscordMessage, isShown, parentId } from "./schemas";
 
 const BOT_PREFIX = `${BOT_USERNAME}: `;
 const BOT_MENTION_PATTERN = /\bsimon[- ]?bot\b/i;
@@ -64,7 +64,7 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
     if (isBotMessage(message.content)) return;
 
     // A message that isn't a reply can only involve the bot by mentioning it
-    if (!message.message_reference && !mentionsBot(message.content)) return;
+    if (!parentId(message) && !mentionsBot(message.content)) return;
 
     const isNew = await markSeen(messageId);
     if (!isNew) {

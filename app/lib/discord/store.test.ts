@@ -461,6 +461,23 @@ describe("ChannelStore", () => {
     expect(await stored(store, "old")).toBeUndefined();
   });
 
+  it("should drop an older message when its reactions change", async () => {
+    const { store, source } = await seeded();
+    await store.find("old");
+
+    for (const event of [
+      react("MESSAGE_REACTION_ADD", "u1", { messageId: "old" }),
+      react("MESSAGE_REACTION_REMOVE", "u1", { messageId: "old" }),
+      clear("old", SMILE as Emoji),
+      clear("old"),
+    ]) {
+      store.apply(event);
+      await store.find("old");
+    }
+
+    expect(source.fetchMessage).toHaveBeenCalledTimes(5);
+  });
+
   it("should fetch an older message again after a failure, keeping a newer fetch", async () => {
     const { store, source } = createStore();
     const first = defer(source.fetchMessage);

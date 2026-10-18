@@ -1,3 +1,5 @@
+import { setTimeout as sleep } from "node:timers/promises";
+
 import { http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,9 +23,15 @@ import {
   type ChatMessage,
   createMessage,
   formatConversation,
+  MEMORY_TOOLS,
+  runAgentLoop,
 } from "./anthropic";
 
 vi.mock(import("server-only"), () => ({}));
+vi.mock(import("node:timers/promises"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, setTimeout: vi.fn() };
+});
 vi.mock(import("@/lib/discord/api"), () => ({
   getChannelMessages: vi.fn(),
   searchChannelMessages: vi.fn(),
@@ -51,6 +59,24 @@ vi.mock(import("@/lib/lastfm"), async (importOriginal) => {
 const ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1/messages";
 const TEST_USERNAME = "test-user";
 const CREATED_AT = "2025-01-01T00:00:00.000Z";
+const EPHEMERAL = { type: "ephemeral" };
+
+type RequestBody = {
+  tool_choice?: unknown;
+  cache_control?: unknown;
+  system: Array<{ text: string }>;
+  messages: Array<{
+    role: string;
+    content: string | Array<{ type: string; content?: string }>;
+  }>;
+  tools: Array<{ name: string }>;
+};
+
+let requests: RequestBody[] = [];
+
+beforeEach(() => {
+  requests = [];
+});
 
 async function seed(id: number, category: string, content: string) {
   await query(
@@ -71,40 +97,86 @@ function conversation(author: string, text: string): string {
   return `<conversation>\n<message author="${author}">${text}</message>\n</conversation>`;
 }
 
-async function collectResponses(
-  generator: AsyncGenerator<string, void, unknown>,
+function reply(content: unknown[], stop_reason = "end_turn") {
+  return HttpResponse.json({ content, stop_reason });
+}
+
+function text(value: string) {
+  return { type: "text", text: value };
+}
+
+function toolUse(name: string, input: object = {}, id = "tool_1") {
+  return { type: "tool_use", id, name, input };
+}
+
+/** Answers each request with the next response; the last one repeats. */
+function respond(...responses: Array<() => Response>) {
+  server.use(
+    http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
+      requests.push((await request.json()) as RequestBody);
+      const next = responses[Math.min(requests.length, responses.length) - 1];
+      return next?.() ?? reply([]);
+    }),
+  );
+}
+
+function failOnce(failure: () => Response) {
+  respond(failure, () => reply([]));
+}
+
+function ask(
+  chat: [ChatMessage, ...ChatMessage[]] = [
+    { role: "user", username: TEST_USERNAME, content: "Test" },
+  ],
 ): Promise<string[]> {
-  const results: string[] = [];
-  for await (const text of generator) {
-    results.push(text);
-  }
-  return results;
+  return Array.fromAsync(createMessage(chat));
+}
+
+/** Runs one tool call through a reply and returns what the model got back. */
+async function runTool(
+  name: string,
+  input: object,
+  chat?: [ChatMessage, ...ChatMessage[]],
+): Promise<string> {
+  respond(
+    () => reply([toolUse(name, input)], "tool_use"),
+    () => reply([text("done")]),
+  );
+  await ask(chat);
+  const content = requests.at(-1)?.messages.at(-1)?.content;
+  return Array.isArray(content) ? (content[0]?.content ?? "") : "";
 }
 
 describe("createMessage", () => {
   beforeEach(() => {
+    vi.mocked(sleep).mockClear();
     vi.spyOn(log, "info").mockImplementation(() => {});
+    vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it("should create message and yield text content", async () => {
     server.use(
       http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        expect(await request.json()).toMatchObject({
+        const body = await request.json();
+        expect(body).not.toHaveProperty("tool_choice");
+        expect(body).toMatchObject({
           model: "claude-haiku-5-5",
           thinking: { type: "adaptive", display: "summarized" },
           output_config: { effort: "medium" },
           max_tokens: 2048,
+          cache_control: EPHEMERAL,
           system: [
             {
               type: "text",
               text: expect.stringContaining("simon-bot"),
-              cache_control: { type: "ephemeral" },
+              cache_control: EPHEMERAL,
             },
             { type: "text", text: expect.stringContaining("<memory>") },
           ],
@@ -131,49 +203,44 @@ describe("createMessage", () => {
         });
         expect(request.headers.get("x-api-key")).toBe("test-anthropic-api-key");
         expect(request.headers.get("anthropic-version")).toBe("2023-06-01");
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "Hello! How can I help you?" }],
-          stop_reason: "end_turn",
-        });
+        return reply([text("Hello! How can I help you?")]);
       }),
     );
 
-    const responses = await collectResponses(
-      createMessage([
+    expect(
+      await ask([
         { role: "user", username: TEST_USERNAME, content: "Hello, bot!" },
       ]),
-    );
-
-    expect(responses).toEqual(["Hello! How can I help you?"]);
+    ).toEqual(["Hello! How can I help you?"]);
   });
 
-  it("should build memory context from the user participants only", async () => {
+  it("should send the whole conversation and build memory for its users only", async () => {
     await seed(1, "people/alice", "likes cats");
     await seed(2, "people/bob", "likes dogs");
     await seed(3, "people/simon-bot", "that's me");
-    let memory = "";
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = (await request.json()) as {
-          system: Array<{ text: string }>;
-        };
-        memory = body.system[1]?.text ?? "";
-        return HttpResponse.json({
-          content: [{ type: "text", text: "ok" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
+    respond(() => reply([text("I'm good!")]));
 
-    await collectResponses(
-      createMessage([
+    expect(
+      await ask([
         { role: "user", username: "Alice", content: "Hello" },
         { role: "assistant", username: "simon-bot", content: "Hi there!" },
         { role: "user", username: "Bob", content: "How are you?" },
       ]),
-    );
+    ).toEqual(["I'm good!"]);
 
+    expect(requests[0]?.messages).toEqual([
+      {
+        role: "user",
+        content: [
+          "<conversation>",
+          '<message author="Alice">Hello</message>',
+          '<message author="simon-bot">Hi there!</message>',
+          '<message author="Bob">How are you?</message>',
+          "</conversation>",
+        ].join("\n"),
+      },
+    ]);
+    const memory = requests[0]?.system[1]?.text;
     expect(memory).toContain("## people/alice\n- #1 likes cats");
     expect(memory).toContain("## people/bob\n- #2 likes dogs");
     expect(memory).toContain("people/simon-bot (1)");
@@ -182,25 +249,10 @@ describe("createMessage", () => {
   it("should omit the memory block when memory can't be read", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValue(new Error("db down"));
+    respond(() => reply([text("ok")]));
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = (await request.json()) as { system: unknown[] };
-        expect(body.system).toHaveLength(1);
-        return HttpResponse.json({
-          content: [{ type: "text", text: "ok" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Hello, bot!" },
-      ]),
-    );
-
-    expect(responses).toEqual(["ok"]);
+    expect(await ask()).toEqual(["ok"]);
+    expect(requests[0]?.system).toHaveLength(1);
   });
 
   describe("memory tools", () => {
@@ -208,55 +260,30 @@ describe("createMessage", () => {
       vi.clearAllMocks();
     });
 
-    async function runTool(
-      name: string,
-      input: Record<string, unknown>,
-    ): Promise<string> {
-      let toolResult = "";
-      let callCount = 0;
+    const changed = (content: string) => ({
+      error:
+        "Note #3 has changed since you read it - work from its current text",
+      current: { id: 3, category: "self", content, createdAt: CREATED_AT },
+    });
+    const full = (category: string) => ({
+      error: `Category "${category}" is full (25 memories). Forget something first.`,
+    });
 
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [{ type: "tool_use", id: "tool_1", name, input }],
-              stop_reason: "tool_use",
-            });
-          }
-
-          const body = (await request.json()) as {
-            messages: Array<{ content: Array<{ content: string }> }>;
-          };
-          toolResult = body.messages[2]?.content[0]?.content ?? "";
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
+    it("should save notes with remember", async () => {
+      const result = JSON.parse(
+        await runTool("remember", {
+          category: "self",
+          content: "i like trains",
         }),
       );
 
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "hi" },
-        ]),
-      );
-      return toolResult;
-    }
-
-    it("should save notes with remember", async () => {
-      const result = await runTool("remember", {
-        category: "self",
-        content: "i like trains",
-      });
-
-      expect(JSON.parse(result)).toEqual({
+      expect(result).toEqual({
         id: expect.any(Number),
         category: "self",
         content: "i like trains",
         createdAt: expect.any(String),
       });
-      expect(await stored(JSON.parse(result).id)).toEqual({
+      expect(await stored(result.id)).toEqual({
         category: "self",
         content: "i like trains",
       });
@@ -270,9 +297,7 @@ describe("createMessage", () => {
         content: "one more",
       });
 
-      expect(JSON.parse(result)).toEqual({
-        error: 'Category "self" is full (25 memories). Forget something first.',
-      });
+      expect(JSON.parse(result)).toEqual(full("self"));
     });
 
     it("should read notes with recall", async () => {
@@ -333,16 +358,7 @@ describe("createMessage", () => {
         new_content: "i like trains",
       });
 
-      expect(JSON.parse(result)).toEqual({
-        error:
-          "Note #3 has changed since you read it - work from its current text",
-        current: {
-          id: 3,
-          category: "self",
-          content: "i like dogs",
-          createdAt: CREATED_AT,
-        },
-      });
+      expect(JSON.parse(result)).toEqual(changed("i like dogs"));
     });
 
     it("should say when a move would overfill a category", async () => {
@@ -356,10 +372,7 @@ describe("createMessage", () => {
         category: "context",
       });
 
-      expect(JSON.parse(result)).toEqual({
-        error:
-          'Category "context" is full (25 memories). Forget something first.',
-      });
+      expect(JSON.parse(result)).toEqual(full("context"));
     });
 
     it("should delete notes with forget", async () => {
@@ -376,16 +389,7 @@ describe("createMessage", () => {
 
       const result = await runTool("forget", { id: 3, content: "i like cats" });
 
-      expect(JSON.parse(result)).toEqual({
-        error:
-          "Note #3 has changed since you read it - work from its current text",
-        current: {
-          id: 3,
-          category: "self",
-          content: "i like dogs",
-          createdAt: CREATED_AT,
-        },
-      });
+      expect(JSON.parse(result)).toEqual(changed("i like dogs"));
       expect(await stored(3)).toBeDefined();
     });
 
@@ -410,131 +414,190 @@ describe("createMessage", () => {
     });
   });
 
-  it("should accept array of chat messages", async () => {
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = (await request.json()) as {
-          messages: Array<{ role: string; content: string }>;
-        };
-        expect(body).toMatchObject({
-          messages: [
-            {
-              role: "user",
-              content: [
-                "<conversation>",
-                '<message author="Alice">Hello</message>',
-                '<message author="simon-bot">Hi there!</message>',
-                '<message author="Bob">How are you?</message>',
-                "</conversation>",
-              ].join("\n"),
-            },
-          ],
-        });
-        return HttpResponse.json({
-          content: [{ type: "text", text: "I'm good!" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: "Alice", content: "Hello" },
-        { role: "assistant", username: "simon-bot", content: "Hi there!" },
-        { role: "user", username: "Bob", content: "How are you?" },
-      ]),
-    );
-
-    expect(responses).toEqual(["I'm good!"]);
-  });
-
   it("should configure fetch with 15 second timeout", async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
+    respond(() => reply([]));
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [{ type: "text", text: "Response" }],
-          stop_reason: "end_turn",
-        }),
-      ),
-    );
-
-    await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
+    await ask();
 
     expect(timeoutSpy).toHaveBeenCalledWith(15_000);
-    timeoutSpy.mockRestore();
   });
 
   it.each([
     { status: 400, statusText: "Bad Request" },
     { status: 401, statusText: "Unauthorized" },
-    { status: 429, statusText: "Too Many Requests" },
-    { status: 500, statusText: "Internal Server Error" },
-  ])("should handle HTTP $status error", async ({ status, statusText }) => {
-    server.use(
-      http.post(
-        ANTHROPIC_BASE_URL,
-        () => new HttpResponse(null, { status, statusText }),
-      ),
+  ])(
+    "should throw HTTP $status with its body and no retry",
+    async ({ status, statusText }) => {
+      respond(
+        () => new HttpResponse('{"error":"nope"}', { status, statusText }),
+      );
+
+      await expect(ask()).rejects.toThrow(
+        `Anthropic API error: ${status} ${statusText}: {"error":"nope"}`,
+      );
+      expect(requests).toHaveLength(1);
+      expect(sleep).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([408, 429, 500, 529])(
+    "should retry HTTP %i twice with backoff, then give up",
+    async (status) => {
+      respond(() => new HttpResponse("busy", { status }));
+
+      await expect(ask()).rejects.toThrow(
+        new RegExp(`^Anthropic API error: ${status} .*: busy$`),
+      );
+      expect(requests).toHaveLength(3);
+      expect(vi.mocked(sleep).mock.calls).toEqual([[500], [1000]]);
+    },
+  );
+
+  it.each([
+    { case: "retry-after seconds", retryAfter: "8", sleep: 8000 },
+    {
+      case: "a retry-after date",
+      retryAfter: new Date(Date.parse(CREATED_AT) + 2000).toUTCString(),
+      sleep: 2000,
+    },
+    { case: "no retry-after", retryAfter: undefined, sleep: 500 },
+    { case: "an empty retry-after", retryAfter: "", sleep: 500 },
+    { case: "a zero retry-after", retryAfter: "0", sleep: 500 },
+    { case: "a retry-after of neither kind", retryAfter: "soon", sleep: 500 },
+    {
+      case: "a retry-after date already past",
+      retryAfter: "Wed, 21 Oct 2015 07:28:00 GMT",
+      sleep: 500,
+    },
+  ])("should wait for $case", async ({ retryAfter, sleep: expected }) => {
+    vi.useFakeTimers({ now: new Date(CREATED_AT), toFake: ["Date"] });
+    failOnce(
+      () =>
+        new HttpResponse(null, {
+          status: 429,
+          headers:
+            retryAfter === undefined ? {} : { "retry-after": retryAfter },
+        }),
     );
 
-    await expect(
-      collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      ),
-    ).rejects.toThrow(`Anthropic API error: ${status} ${statusText}`);
+    await ask();
+
+    expect(vi.mocked(sleep).mock.calls).toEqual([[expected]]);
+  });
+
+  it("should not sleep past the retry limit per request", async () => {
+    respond(
+      () =>
+        new HttpResponse("slow down", {
+          status: 429,
+          headers: { "retry-after": "11" },
+        }),
+    );
+
+    await expect(ask()).rejects.toThrow(
+      "Anthropic API error: 429 Too Many Requests: slow down",
+    );
+    expect(requests).toHaveLength(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("should fail a body that times out, naming its status", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Object.assign(new Response(null, { status: 503 }), {
+        text: () =>
+          Promise.reject(new DOMException("timed out", "TimeoutError")),
+      }),
+    );
+
+    await expect(ask()).rejects.toThrow(
+      "Anthropic API error: could not read the body of a 503 response",
+    );
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("should retry a connection dropped mid-body", async () => {
+    // Node's body read rejects with this; happy-dom's would wrap it in an EncodingError.
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Object.assign(new Response(), {
+        json: () => Promise.reject(new TypeError("terminated")),
+      }),
+    );
+    respond(() => reply([text("whole this time")]));
+
+    expect(await ask()).toEqual(["whole this time"]);
+    expect(log.warn).toHaveBeenCalledWith(
+      {
+        loop: "reply",
+        err: expect.objectContaining({
+          message:
+            "Anthropic API error: could not read the body of a 200 response",
+          cause: new TypeError("terminated"),
+        }),
+        delayMs: 500,
+      },
+      "simon-bot retrying request",
+    );
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should cut a long error body short", async () => {
+    respond(() => new HttpResponse("x".repeat(1000), { status: 400 }));
+
+    await expect(ask()).rejects.toThrow(/: x{500}$/);
+  });
+
+  it("should retry a request that never connected", async () => {
+    const failure = new TypeError("fetch failed");
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(failure);
+    respond(() => reply([text("connected")]));
+
+    expect(await ask()).toEqual(["connected"]);
+    expect(log.warn).toHaveBeenCalledWith(
+      { loop: "reply", err: failure, delayMs: 500 },
+      "simon-bot retrying request",
+    );
+    expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
+  });
+
+  it("should not retry a timeout", async () => {
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(
+      AbortSignal.abort(new DOMException("timed out", "TimeoutError")),
+    );
+    respond(() => reply([]));
+
+    await expect(ask()).rejects.toMatchObject({ name: "TimeoutError" });
+    expect(requests).toHaveLength(0);
+    expect(sleep).not.toHaveBeenCalled();
   });
 
   it("should handle invalid response schema", async () => {
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({ invalid: "data" }),
-      ),
-    );
+    respond(() => HttpResponse.json({ invalid: "data" }));
 
-    await expect(
-      collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      ),
-    ).rejects.toThrow();
+    await expect(ask()).rejects.toThrow();
   });
 
   it("should log every turn with its stop reason, blocks and usage", async () => {
-    const info = vi.spyOn(log, "info").mockImplementation(() => {});
     const usage = {
       input_tokens: 1200,
       output_tokens: 40,
       cache_read_input_tokens: 1000,
       cache_creation_input_tokens: 0,
     };
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [
-            { type: "thinking", thinking: "they just said hi", signature: "s" },
-            { type: "text", text: "hi" },
-          ],
-          stop_reason: "end_turn",
-          usage,
-        }),
-      ),
+    respond(() =>
+      HttpResponse.json({
+        content: [
+          { type: "thinking", thinking: "they just said hi", signature: "s" },
+          text("hi"),
+        ],
+        stop_reason: "end_turn",
+        usage,
+      }),
     );
 
-    await collectResponses(
-      createMessage([{ role: "user", username: TEST_USERNAME, content: "hi" }]),
-    );
+    await ask();
 
-    expect(info).toHaveBeenCalledWith(
+    expect(log.info).toHaveBeenCalledWith(
       {
         loop: "reply",
         stopReason: "end_turn",
@@ -543,426 +606,206 @@ describe("createMessage", () => {
       },
       "simon-bot turn",
     );
-    expect(info).toHaveBeenCalledWith(
+    expect(log.info).toHaveBeenCalledWith(
       { loop: "reply", thinking: "they just said hi" },
       "simon-bot thinking",
     );
   });
 
   it("should not log a thinking block the API left empty", async () => {
-    const info = vi.spyOn(log, "info").mockImplementation(() => {});
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [
-            { type: "thinking", thinking: "", signature: "s" },
-            { type: "text", text: "hi" },
-          ],
-          stop_reason: "end_turn",
-        }),
-      ),
+    respond(() =>
+      reply([{ type: "thinking", thinking: "", signature: "s" }, text("hi")]),
     );
 
-    await collectResponses(
-      createMessage([{ role: "user", username: TEST_USERNAME, content: "hi" }]),
-    );
+    await ask();
 
-    expect(info).not.toHaveBeenCalledWith(
-      expect.objectContaining({ thinking: expect.anything() }),
+    expect(log.info).not.toHaveBeenCalledWith(
+      expect.anything(),
       "simon-bot thinking",
     );
   });
 
   it("should handle response with no content blocks", async () => {
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({ content: [], stop_reason: "end_turn" }),
-      ),
-    );
+    respond(() => reply([]));
 
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-    expect(responses).toEqual([]);
+    expect(await ask()).toEqual([]);
   });
 
-  it("should handle a refused response", async () => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
+  it("should yield only the fallback when a response is refused", async () => {
+    respond(() => reply([text("here's how you do it")], "refusal"));
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({ content: [], stop_reason: "refusal" }),
-      ),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["yeah I'm not touching that one, sorry"]);
-    expect(warn).toHaveBeenCalledWith(
+    expect(await ask()).toEqual(["yeah I'm not touching that one, sorry"]);
+    expect(log.warn).toHaveBeenCalledWith(
       { loop: "reply" },
       "simon-bot response was refused",
     );
   });
 
-  it("should yield only the fallback when a refusal carries text", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
+  it.each([
+    {
+      case: "after its text",
+      content: [text("so anyway I was thinking abo")],
+      expected: ["so anyway I was thinking abo"],
+    },
+    {
+      case: "when the limit leaves no text",
+      content: [{ type: "thinking", thinking: "...", signature: "sig" }],
+      expected: [],
+    },
+  ])("should say it ran out of words $case", async ({ content, expected }) => {
+    respond(() => reply(content, "max_tokens"));
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [{ type: "text", text: "here's how you do it" }],
-          stop_reason: "refusal",
-        }),
-      ),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["yeah I'm not touching that one, sorry"]);
-  });
-
-  it("should warn when the response hits the token limit", async () => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [{ type: "text", text: "so anyway I was thinking abo" }],
-          stop_reason: "max_tokens",
-        }),
-      ),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual([
-      "so anyway I was thinking abo",
+    expect(await ask()).toEqual([
+      ...expected,
       "...welp, ran out of words there",
     ]);
-    expect(warn).toHaveBeenCalledWith(
+    expect(log.warn).toHaveBeenCalledWith(
       { loop: "reply" },
       "simon-bot response hit the token limit",
     );
   });
 
-  it("should still say something when the limit leaves no text", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
+  it("should execute tools, keeping every block in the history", async () => {
+    vi.mocked(getStats).mockResolvedValue([]);
+    const thinking = { type: "thinking", thinking: "hmm", signature: "sig" };
+    const use = toolUse("get_wakatime_stats");
+    respond(
+      () => reply([thinking, text("let me check..."), use], "tool_use"),
+      () => reply([text("mostly typescript!")]),
+    );
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [{ type: "thinking", thinking: "...", signature: "sig" }],
-          stop_reason: "max_tokens",
-        }),
+    expect(await ask()).toEqual(["let me check...", "mostly typescript!"]);
+    expect(requests).toHaveLength(2);
+    expect(requests[1]?.messages).toEqual([
+      { role: "user", content: conversation(TEST_USERNAME, "Test") },
+      { role: "assistant", content: [thinking, text("let me check..."), use] },
+      {
+        role: "user",
+        content: [
+          { type: "tool_result", tool_use_id: "tool_1", content: "[]" },
+        ],
+      },
+    ]);
+  });
+
+  it("should rule out tools on the last iteration, say so, and cache only what is read", async () => {
+    respond(
+      ...Array.from(
+        { length: 4 },
+        (_, i) => () =>
+          reply([toolUse("get_wakatime_stats", {}, `tool_${i}`)], "tool_use"),
       ),
+      () => reply([text("here's what I found")]),
     );
 
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["...welp, ran out of words there"]);
-  });
-
-  it("should preserve all content blocks in assistant message history", async () => {
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const thinkingBlock = {
-          type: "thinking",
-          thinking: "hmm, they want stats",
-          signature: "sig_abc123",
-        };
-        const textBlock = { type: "text", text: "let me check..." };
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_123",
-          name: "get_wakatime_stats",
-          input: {},
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [thinkingBlock, textBlock, toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            { role: "assistant", content: [thinkingBlock, textBlock, toolUse] },
-            {
-              role: "user",
-              content: [{ type: "tool_result", tool_use_id: toolUse.id }],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "done!" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["let me check...", "done!"]);
-    expect(callCount).toBe(2);
-  });
-
-  it("should execute tools and yield results", async () => {
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const textBlock = { type: "text", text: "let me check..." };
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_123",
-          name: "get_wakatime_stats",
-          input: {},
-        };
-
-        if (callCount === 1) {
-          expect(await request.json()).toMatchObject({
-            messages: [
-              {
-                role: "user",
-                content: conversation(
-                  TEST_USERNAME,
-                  "what languages has simon been using?",
-                ),
-              },
-            ],
-          });
-          return HttpResponse.json({
-            content: [textBlock, toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            {
-              role: "user",
-              content: conversation(
-                TEST_USERNAME,
-                "what languages has simon been using?",
-              ),
-            },
-            { role: "assistant", content: [textBlock, toolUse] },
-            {
-              role: "user",
-              content: [{ type: "tool_result", tool_use_id: toolUse.id }],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [
-            {
-              type: "text",
-              text: "simon has been coding mostly in typescript!",
-            },
-          ],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        {
-          role: "user",
-          username: TEST_USERNAME,
-          content: "what languages has simon been using?",
-        },
-      ]),
-    );
-
-    expect(responses).toEqual([
-      "let me check...",
-      "simon has been coding mostly in typescript!",
+    expect(await ask()).toEqual(["here's what I found"]);
+    expect(requests.map((body) => body.tool_choice)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { type: "none" },
     ]);
-    expect(callCount).toBe(2);
+    expect(requests.map((body) => body.cache_control)).toEqual([
+      EPHEMERAL,
+      EPHEMERAL,
+      EPHEMERAL,
+      undefined,
+      undefined,
+    ]);
+    const lastBlocks = requests.map(({ messages }) => {
+      const content = messages.at(-1)?.content;
+      return Array.isArray(content) ? content.at(-1) : content;
+    });
+    expect(lastBlocks.slice(1, 4)).toEqual([
+      expect.objectContaining({ type: "tool_result" }),
+      expect.objectContaining({ type: "tool_result" }),
+      expect.objectContaining({ type: "tool_result" }),
+    ]);
+    expect(lastBlocks[4]).toEqual({
+      type: "text",
+      text: expect.stringContaining("Tools are off"),
+    });
   });
 
-  it("should stop after max tool iterations and log warning", async () => {
-    const warnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let callCount = 0;
+  it("should keep tools on the last iteration when the loop opts out of ending in text", async () => {
+    respond(() => reply([toolUse("recall")], "tool_use"));
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () => {
-        callCount++;
-        return HttpResponse.json({
-          content: [
-            {
-              type: "tool_use",
-              id: `tool_${callCount}`,
-              name: "get_wakatime_stats",
-              input: {},
-            },
-          ],
-          stop_reason: "tool_use",
-        });
-      }),
-    );
+    const loop = runAgentLoop({
+      system: [],
+      messages: [{ role: "user", content: "reflect" }],
+      tools: MEMORY_TOOLS,
+      effort: "high",
+      maxTokens: 8192,
+      timeoutMs: 60_000,
+      maxRetrySleepMs: 30_000,
+      maxIterations: 2,
+      endInText: false,
+      loop: "reflection",
+    });
+    let next = await loop.next();
+    while (next.done !== true) next = await loop.next();
 
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual([
-      "sorry, I got stuck in a loop and couldn't finish my thought...",
+    expect(next.value).toBe("max_iterations");
+    expect(requests.map((body) => body.tool_choice)).toEqual([
+      undefined,
+      undefined,
     ]);
-    expect(callCount).toBe(5);
-    expect(warnSpy).toHaveBeenCalledWith(
-      { loop: "reply", iterations: 5 },
+    expect(requests.map((body) => body.cache_control)).toEqual([
+      EPHEMERAL,
+      undefined,
+    ]);
+    expect(log.warn).toHaveBeenCalledWith(
+      { loop: "reflection", iterations: 2 },
       "simon-bot reached max tool iterations",
     );
   });
 
-  it("should handle unknown tool gracefully", async () => {
-    let callCount = 0;
+  it.each([
+    {
+      case: "an unknown tool",
+      use: toolUse("unknown_tool"),
+      rejection: undefined,
+      result: JSON.stringify({ error: "Unknown tool: unknown_tool" }),
+    },
+    {
+      case: "invalid input",
+      use: toolUse("get_recent_tracks", { limit: 999 }),
+      rejection: undefined,
+      result: expect.stringContaining("limit"),
+    },
+    {
+      case: "a tool that throws",
+      use: toolUse("get_wakatime_stats"),
+      rejection: new Error("Network failure"),
+      result: JSON.stringify({ error: "Network failure" }),
+    },
+    {
+      case: "a tool that throws a non-Error",
+      use: toolUse("get_wakatime_stats"),
+      rejection: "string error",
+      result: JSON.stringify({ error: "Unknown error" }),
+    },
+  ])(
+    "should hand the model an error for $case",
+    async ({ use, rejection, result }) => {
+      if (rejection !== undefined) {
+        vi.mocked(getStats).mockRejectedValue(rejection);
+      }
+      respond(
+        () => reply([use], "tool_use"),
+        () => reply([text("handled")]),
+      );
 
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_1",
-          name: "unknown_tool",
-          input: {},
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            { role: "assistant", content: [toolUse] },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: toolUse.id,
-                  content: JSON.stringify({
-                    error: "Unknown tool: unknown_tool",
-                  }),
-                },
-              ],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "handled unknown tool" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["handled unknown tool"]);
-    expect(callCount).toBe(2);
-  });
-
-  it("should handle tool input validation errors", async () => {
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_1",
-          name: "get_recent_tracks",
-          input: { limit: 999 },
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            { role: "assistant", content: [toolUse] },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: toolUse.id,
-                  content: expect.stringContaining("limit"),
-                },
-              ],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "validation failed" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["validation failed"]);
-    expect(callCount).toBe(2);
-  });
+      expect(await ask()).toEqual(["handled"]);
+      expect(requests[1]?.messages.at(-1)).toEqual({
+        role: "user",
+        content: [
+          { type: "tool_result", tool_use_id: "tool_1", content: result },
+        ],
+      });
+    },
+  );
 
   it("should execute multiple tools in parallel", async () => {
     const mockStats = [{ name: "TypeScript", percent: 80 }];
@@ -978,210 +821,40 @@ describe("createMessage", () => {
     ];
     vi.mocked(getStats).mockResolvedValue(mockStats);
     vi.mocked(userGetRecentTracks).mockResolvedValue(mockTracks);
-
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const wakatimeToolUse = {
-          type: "tool_use",
-          id: "tool_1",
-          name: "get_wakatime_stats",
-          input: {},
-        };
-        const recentTracksToolUse = {
-          type: "tool_use",
-          id: "tool_2",
-          name: "get_recent_tracks",
-          input: { limit: 5 },
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [wakatimeToolUse, recentTracksToolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            {
-              role: "assistant",
-              content: [wakatimeToolUse, recentTracksToolUse],
-            },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: wakatimeToolUse.id,
-                  content: JSON.stringify(mockStats),
-                },
-                {
-                  type: "tool_result",
-                  tool_use_id: recentTracksToolUse.id,
-                  content: JSON.stringify(mockTracks),
-                },
-              ],
-            },
+    respond(
+      () =>
+        reply(
+          [
+            toolUse("get_wakatime_stats", {}, "tool_1"),
+            toolUse("get_recent_tracks", { limit: 5 }, "tool_2"),
           ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "got both results" }],
-          stop_reason: "end_turn",
-        });
-      }),
+          "tool_use",
+        ),
+      () => reply([text("got both results")]),
     );
 
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["got both results"]);
-    expect(getStats).toHaveBeenCalled();
+    expect(await ask()).toEqual(["got both results"]);
+    expect(requests[1]?.messages.at(-1)?.content).toEqual([
+      {
+        type: "tool_result",
+        tool_use_id: "tool_1",
+        content: JSON.stringify(mockStats),
+      },
+      {
+        type: "tool_result",
+        tool_use_id: "tool_2",
+        content: JSON.stringify(mockTracks),
+      },
+    ]);
     expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
       limit: 5,
     });
   });
 
   it("should yield multiple text blocks from single response", async () => {
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, () =>
-        HttpResponse.json({
-          content: [
-            { type: "text", text: "First part. " },
-            { type: "text", text: "Second part." },
-          ],
-          stop_reason: "end_turn",
-        }),
-      ),
-    );
+    respond(() => reply([text("First part. "), text("Second part.")]));
 
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["First part. ", "Second part."]);
-  });
-
-  it("should handle tool throwing generic error", async () => {
-    vi.mocked(getStats).mockRejectedValue(new Error("Network failure"));
-
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_1",
-          name: "get_wakatime_stats",
-          input: {},
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            { role: "assistant", content: [toolUse] },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: toolUse.id,
-                  content: JSON.stringify({ error: "Network failure" }),
-                },
-              ],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "handled error" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["handled error"]);
-  });
-
-  it("should handle tool throwing non-Error value", async () => {
-    vi.mocked(getStats).mockRejectedValue("string error");
-
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-
-        const toolUse = {
-          type: "tool_use",
-          id: "tool_1",
-          name: "get_wakatime_stats",
-          input: {},
-        };
-
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [toolUse],
-            stop_reason: "tool_use",
-          });
-        }
-
-        expect(await request.json()).toMatchObject({
-          messages: [
-            { role: "user", content: conversation(TEST_USERNAME, "Test") },
-            { role: "assistant", content: [toolUse] },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: toolUse.id,
-                  content: JSON.stringify({ error: "Unknown error" }),
-                },
-              ],
-            },
-          ],
-        });
-
-        return HttpResponse.json({
-          content: [{ type: "text", text: "handled unknown error" }],
-          stop_reason: "end_turn",
-        });
-      }),
-    );
-
-    const responses = await collectResponses(
-      createMessage([
-        { role: "user", username: TEST_USERNAME, content: "Test" },
-      ]),
-    );
-
-    expect(responses).toEqual(["handled unknown error"]);
+    expect(await ask()).toEqual(["First part. ", "Second part."]);
   });
 
   describe("tool execution", () => {
@@ -1196,128 +869,24 @@ describe("createMessage", () => {
           reactions: [],
           replies: [],
         },
-        {
-          id: "2",
-          user: { name: "User2", color: "hsl(120 50% 50%)" as const },
-          content: "World",
-          edited: false,
-          timestamp: new Date("2025-01-01T00:01:00.000000+00:00"),
-          reactions: [],
-          replies: [],
-        },
       ];
       vi.mocked(getChannelMessages).mockResolvedValue(mockMessages);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_chat_history",
-            input: { limit: 5 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockMessages),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
+      expect(await runTool("get_chat_history", { limit: 5 })).toBe(
+        JSON.stringify(mockMessages),
       );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
       expect(getChannelMessages).toHaveBeenCalledWith(5);
     });
 
     it("should call userGetTopTracks for get_top_tracks tool", async () => {
       const mockTracks = [
         { name: "Track 1", artist: "Artist 1", playcount: 100, rank: 1 },
-        { name: "Track 2", artist: "Artist 2", playcount: 50, rank: 2 },
       ];
       vi.mocked(userGetTopTracks).mockResolvedValue(mockTracks);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_top_tracks",
-            input: { period: "3month", limit: 10 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockTracks),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
+      expect(
+        await runTool("get_top_tracks", { period: "3month", limit: 10 }),
+      ).toBe(JSON.stringify(mockTracks));
       expect(userGetTopTracks).toHaveBeenCalledWith(config.lastfmUsername, {
         period: "3month",
         limit: 10,
@@ -1325,62 +894,12 @@ describe("createMessage", () => {
     });
 
     it("should call userGetTopArtists for get_top_artists tool", async () => {
-      const mockArtists = [
-        { name: "Artist 1", playcount: 200, rank: 1 },
-        { name: "Artist 2", playcount: 150, rank: 2 },
-      ];
+      const mockArtists = [{ name: "Artist 1", playcount: 200, rank: 1 }];
       vi.mocked(userGetTopArtists).mockResolvedValue(mockArtists);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_top_artists",
-            input: { period: "6month", limit: 3 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockArtists),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
+      expect(
+        await runTool("get_top_artists", { period: "6month", limit: 3 }),
+      ).toBe(JSON.stringify(mockArtists));
       expect(userGetTopArtists).toHaveBeenCalledWith(config.lastfmUsername, {
         period: "6month",
         limit: 3,
@@ -1390,60 +909,12 @@ describe("createMessage", () => {
     it("should call userGetTopAlbums for get_top_albums tool", async () => {
       const mockAlbums = [
         { name: "Album 1", artist: "Artist 1", playcount: 80, rank: 1 },
-        { name: "Album 2", artist: "Artist 2", playcount: 60, rank: 2 },
       ];
       vi.mocked(userGetTopAlbums).mockResolvedValue(mockAlbums);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_top_albums",
-            input: { period: "12month", limit: 7 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockAlbums),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
+      expect(
+        await runTool("get_top_albums", { period: "12month", limit: 7 }),
+      ).toBe(JSON.stringify(mockAlbums));
       expect(userGetTopAlbums).toHaveBeenCalledWith(config.lastfmUsername, {
         period: "12month",
         limit: 7,
@@ -1451,62 +922,15 @@ describe("createMessage", () => {
     });
 
     it("should call getStats for get_wakatime_stats tool", async () => {
-      const mockStats = [
-        { name: "TypeScript", percent: 80 },
-        { name: "JavaScript", percent: 15 },
-      ];
+      const mockStats = [{ name: "TypeScript", percent: 80 }];
       vi.mocked(getStats).mockResolvedValue(mockStats);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_wakatime_stats",
-            input: { period: "last_30_days", limit: 10 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockStats),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
+      expect(
+        await runTool("get_wakatime_stats", {
+          period: "last_30_days",
+          limit: 10,
         }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
+      ).toBe(JSON.stringify(mockStats));
       expect(getStats).toHaveBeenCalledWith("last_30_days", 10);
     });
 
@@ -1523,221 +947,10 @@ describe("createMessage", () => {
       ];
       vi.mocked(userGetRecentTracks).mockResolvedValue(mockTracks);
 
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "get_recent_tracks",
-            input: { limit: 10 },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockTracks),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
+      expect(await runTool("get_recent_tracks", { limit: 10 })).toBe(
+        JSON.stringify(mockTracks),
       );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
       expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-        limit: 10,
-      });
-    });
-
-    it("should use default values when tool inputs are empty", async () => {
-      vi.mocked(getChannelMessages).mockResolvedValue([]);
-      vi.mocked(getStats).mockResolvedValue([]);
-      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopArtists).mockResolvedValue([]);
-      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
-
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, () => {
-          callCount++;
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [
-                {
-                  type: "tool_use",
-                  id: "tool_1",
-                  name: "get_chat_history",
-                  input: {},
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_2",
-                  name: "get_wakatime_stats",
-                  input: {},
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_3",
-                  name: "get_recent_tracks",
-                  input: {},
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_4",
-                  name: "get_top_tracks",
-                  input: {},
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_5",
-                  name: "get_top_artists",
-                  input: {},
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_6",
-                  name: "get_top_albums",
-                  input: {},
-                },
-              ],
-              stop_reason: "tool_use",
-            });
-          }
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
-      expect(getChannelMessages).toHaveBeenCalledWith(50);
-      expect(getStats).toHaveBeenCalledWith("last_30_days", 10);
-      expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-        limit: 5,
-      });
-      expect(userGetTopTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "1month",
-        limit: 10,
-      });
-      expect(userGetTopArtists).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "1month",
-        limit: 10,
-      });
-      expect(userGetTopAlbums).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "1month",
-        limit: 10,
-      });
-    });
-
-    it("should pass custom username to Last.fm tools", async () => {
-      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopArtists).mockResolvedValue([]);
-      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
-
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, () => {
-          callCount++;
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [
-                {
-                  type: "tool_use",
-                  id: "tool_1",
-                  name: "get_recent_tracks",
-                  input: { username: "customuser", limit: 3 },
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_2",
-                  name: "get_top_tracks",
-                  input: { username: "customuser", period: "7day", limit: 5 },
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_3",
-                  name: "get_top_artists",
-                  input: { username: "customuser", period: "overall" },
-                },
-                {
-                  type: "tool_use",
-                  id: "tool_4",
-                  name: "get_top_albums",
-                  input: { username: "anotheruser" },
-                },
-              ],
-              stop_reason: "tool_use",
-            });
-          }
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "done" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
-      expect(userGetRecentTracks).toHaveBeenCalledWith("customuser", {
-        limit: 3,
-      });
-      expect(userGetTopTracks).toHaveBeenCalledWith("customuser", {
-        period: "7day",
-        limit: 5,
-      });
-      expect(userGetTopArtists).toHaveBeenCalledWith("customuser", {
-        period: "overall",
-        limit: 10,
-      });
-      expect(userGetTopAlbums).toHaveBeenCalledWith("anotheruser", {
-        period: "1month",
         limit: 10,
       });
     });
@@ -1758,68 +971,112 @@ describe("createMessage", () => {
         ],
       };
       vi.mocked(searchChannelMessages).mockResolvedValue(mockSearchResult);
-
-      let callCount = 0;
-
-      server.use(
-        http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-          callCount++;
-
-          const toolUse = {
-            type: "tool_use",
-            id: "tool_1",
-            name: "search_messages",
-            input: {
-              content: "hello",
-              limit: 10,
-              sort_by: "timestamp",
-              sort_order: "asc",
-            },
-          };
-
-          if (callCount === 1) {
-            return HttpResponse.json({
-              content: [toolUse],
-              stop_reason: "tool_use",
-            });
-          }
-
-          expect(await request.json()).toMatchObject({
-            messages: [
-              { role: "user", content: conversation(TEST_USERNAME, "Test") },
-              { role: "assistant", content: [toolUse] },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUse.id,
-                    content: JSON.stringify(mockSearchResult),
-                  },
-                ],
-              },
-            ],
-          });
-
-          return HttpResponse.json({
-            content: [{ type: "text", text: "found it" }],
-            stop_reason: "end_turn",
-          });
-        }),
-      );
-
-      const responses = await collectResponses(
-        createMessage([
-          { role: "user", username: TEST_USERNAME, content: "Test" },
-        ]),
-      );
-
-      expect(responses).toEqual(["found it"]);
-      expect(searchChannelMessages).toHaveBeenCalledWith({
+      const input = {
         content: "hello",
         limit: 10,
         sort_by: "timestamp",
         sort_order: "asc",
+      };
+
+      expect(await runTool("search_messages", input)).toBe(
+        JSON.stringify(mockSearchResult),
+      );
+      expect(searchChannelMessages).toHaveBeenCalledWith(input);
+    });
+
+    it("should use default values when tool inputs are empty", async () => {
+      vi.mocked(getChannelMessages).mockResolvedValue([]);
+      vi.mocked(getStats).mockResolvedValue([]);
+      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
+      vi.mocked(userGetTopTracks).mockResolvedValue([]);
+      vi.mocked(userGetTopArtists).mockResolvedValue([]);
+      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
+      const names = [
+        "get_chat_history",
+        "get_wakatime_stats",
+        "get_recent_tracks",
+        "get_top_tracks",
+        "get_top_artists",
+        "get_top_albums",
+      ];
+      respond(
+        () =>
+          reply(
+            names.map((name, i) => toolUse(name, {}, `tool_${i}`)),
+            "tool_use",
+          ),
+        () => reply([]),
+      );
+
+      await ask();
+
+      const defaults = { period: "1month", limit: 10 };
+      expect(getChannelMessages).toHaveBeenCalledWith(50);
+      expect(getStats).toHaveBeenCalledWith("last_30_days", 10);
+      expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
+        limit: 5,
+      });
+      expect(userGetTopTracks).toHaveBeenCalledWith(
+        config.lastfmUsername,
+        defaults,
+      );
+      expect(userGetTopArtists).toHaveBeenCalledWith(
+        config.lastfmUsername,
+        defaults,
+      );
+      expect(userGetTopAlbums).toHaveBeenCalledWith(
+        config.lastfmUsername,
+        defaults,
+      );
+    });
+
+    it("should pass custom username to Last.fm tools", async () => {
+      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
+      vi.mocked(userGetTopTracks).mockResolvedValue([]);
+      vi.mocked(userGetTopArtists).mockResolvedValue([]);
+      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
+      respond(
+        () =>
+          reply(
+            [
+              toolUse(
+                "get_recent_tracks",
+                { username: "customuser", limit: 3 },
+                "tool_1",
+              ),
+              toolUse(
+                "get_top_tracks",
+                { username: "customuser", period: "7day", limit: 5 },
+                "tool_2",
+              ),
+              toolUse(
+                "get_top_artists",
+                { username: "customuser", period: "overall" },
+                "tool_3",
+              ),
+              toolUse("get_top_albums", { username: "anotheruser" }, "tool_4"),
+            ],
+            "tool_use",
+          ),
+        () => reply([]),
+      );
+
+      await ask();
+
+      expect(userGetRecentTracks).toHaveBeenCalledWith("customuser", {
+        limit: 3,
+      });
+      expect(userGetTopTracks).toHaveBeenCalledWith("customuser", {
+        period: "7day",
+        limit: 5,
+      });
+      expect(userGetTopArtists).toHaveBeenCalledWith("customuser", {
+        period: "overall",
+        limit: 10,
+      });
+      expect(userGetTopAlbums).toHaveBeenCalledWith("anotheruser", {
+        period: "1month",
+        limit: 10,
       });
     });
   });
@@ -1879,29 +1136,7 @@ describe("react tool", () => {
       { role: "user", id: "42", username: TEST_USERNAME, content: "lol" },
     ],
   ): Promise<unknown> {
-    let toolResult = "";
-    let callCount = 0;
-
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        callCount++;
-        if (callCount === 1) {
-          return HttpResponse.json({
-            content: [{ type: "tool_use", id: "tool_1", name: "react", input }],
-            stop_reason: "tool_use",
-          });
-        }
-
-        const body = (await request.json()) as {
-          messages: Array<{ content: Array<{ content: string }> }>;
-        };
-        toolResult = body.messages.at(-1)?.content[0]?.content ?? "";
-        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
-      }),
-    );
-
-    await collectResponses(createMessage(chat));
-    return JSON.parse(toolResult);
+    return JSON.parse(await runTool("react", input, chat));
   }
 
   it("reacts to the message it is answering", async () => {
@@ -1925,19 +1160,11 @@ describe("react tool", () => {
   });
 
   it("offers a schema without the emoji pattern", async () => {
-    let tool: unknown;
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = (await request.json()) as { tools: { name: string }[] };
-        tool = body.tools.find(({ name }) => name === "react");
-        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
-      }),
-    );
+    respond(() => reply([]));
 
-    await collectResponses(
-      createMessage([{ role: "user", username: TEST_USERNAME, content: "hi" }]),
-    );
+    await ask();
 
+    const tool = requests[0]?.tools.find(({ name }) => name === "react");
     expect(JSON.stringify(tool)).not.toContain("RGI_Emoji");
   });
 

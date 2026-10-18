@@ -270,6 +270,16 @@ describe("postChatMessage", () => {
     expect(result.status).toBe("error");
   });
 
+  it("rejects text over the length limit", async () => {
+    expect(await post("x".repeat(500))).toEqual({ status: "ok" });
+
+    expect(await post("x".repeat(501))).toEqual({
+      status: "error",
+      error: "Messages can be at most 500 characters long.",
+    });
+    expect(postChannelMessage).toHaveBeenCalledOnce();
+  });
+
   it("returns error when text is only whitespace", async () => {
     const formData = new FormData();
     formData.set("text", "   ");
