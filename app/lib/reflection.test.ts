@@ -58,7 +58,7 @@ describe("reflect", () => {
       effort: "high",
       maxTokens: 8192,
       timeoutMs: 60_000,
-      retryBudgetMs: 30_000,
+      maxRetrySleepMs: 30_000,
       maxIterations: 10,
       endInText: false,
       loop: "reflection",

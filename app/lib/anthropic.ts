@@ -41,7 +41,7 @@ const BASE_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-5-5" as const;
 const MAX_TOKENS = 2048;
 const TIMEOUT_MS = 15_000;
-const RETRY_BUDGET_MS = 2_000;
+const MAX_RETRY_SLEEP_MS = 2_000;
 const MAX_RETRIES = 2;
 const RETRY_BASE_MS = 500;
 const MAX_ERROR_BODY_LENGTH = 500;
@@ -416,8 +416,16 @@ export type Message = {
   content:
     | string
     | Array<z.infer<typeof contentBlockSchema>>
-    | Array<{ type: "tool_result"; tool_use_id: string; content: string }>;
+    | Array<
+        | { type: "tool_result"; tool_use_id: string; content: string }
+        | { type: "text"; text: string }
+      >;
 };
+
+const LAST_ROUND_NOTE = {
+  type: "text",
+  text: "Tools are off for this last round: answer in plain text now.",
+} as const;
 
 export type SystemBlock = {
   type: "text";
@@ -494,9 +502,9 @@ export type AgentLoopOptions = {
   maxTokens: number;
   timeoutMs: number;
   /** The most each API request may sleep between its retries; attempts themselves don't count. */
-  retryBudgetMs: number;
+  maxRetrySleepMs: number;
   maxIterations?: number;
-  /** Rules out tools on the last iteration, so the loop ends in text instead of running out; with one iteration, no tools at all. */
+  /** Rules out tools on the last iteration and tells the model, so the loop ends in text instead of running out; with one iteration, no tools at all. */
   endInText?: boolean;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
@@ -513,10 +521,13 @@ function backoffMs(attempt: number): number {
   return RETRY_BASE_MS * 2 ** attempt;
 }
 
-// Missing, empty or date-valued headers read as 0, so the backoff floor applies.
+/** Seconds or an HTTP date; anything else reads as 0, so the backoff floor applies. */
 function retryAfterMs(response: Response): number {
-  const seconds = Number(response.headers.get("retry-after"));
-  return Number.isFinite(seconds) ? seconds * 1000 : 0;
+  const header = response.headers.get("retry-after") ?? "";
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return seconds * 1000;
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? 0 : date - Date.now();
 }
 
 async function send(
@@ -524,8 +535,9 @@ async function send(
   timeoutMs: number,
   attempt: number,
 ): Promise<{ json: unknown } | Failure> {
+  let response: Response;
   try {
-    const response = await fetch(BASE_URL, {
+    response = await fetch(BASE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -535,6 +547,13 @@ async function send(
       body,
       signal: AbortSignal.timeout(timeoutMs),
     });
+  } catch (err) {
+    // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
+    if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
+    return { error: err, retryable: true, delayMs: backoffMs(attempt) };
+  }
+
+  try {
     if (response.ok) return { json: await response.json() };
     const text = (await response.text()).slice(0, MAX_ERROR_BODY_LENGTH);
     return {
@@ -545,9 +564,13 @@ async function send(
       delayMs: Math.max(retryAfterMs(response), backoffMs(attempt)),
     };
   } catch (err) {
-    // Undici gives network failures a cause; a timeout already took a whole attempt, so retrying would multiply it.
-    if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
-    return { error: err, retryable: true, delayMs: backoffMs(attempt) };
+    const error = new Error(
+      `Anthropic API error: ${response.status} ${response.statusText}: reading the body failed`,
+      { cause: err },
+    );
+    // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
+    if (!(err instanceof TypeError)) throw error;
+    return { error, retryable: true, delayMs: backoffMs(attempt) };
   }
 }
 
@@ -555,9 +578,9 @@ async function postMessages(
   body: string,
   {
     timeoutMs,
-    retryBudgetMs,
+    maxRetrySleepMs,
     loop,
-  }: Pick<AgentLoopOptions, "timeoutMs" | "retryBudgetMs" | "loop">,
+  }: Pick<AgentLoopOptions, "timeoutMs" | "maxRetrySleepMs" | "loop">,
 ): Promise<unknown> {
   let waitedMs = 0;
   for (let attempt = 0; ; attempt++) {
@@ -568,14 +591,11 @@ async function postMessages(
     if (
       attempt >= MAX_RETRIES ||
       !retryable ||
-      waitedMs + delayMs > retryBudgetMs
+      waitedMs + delayMs > maxRetrySleepMs
     ) {
       throw error;
     }
-    log.warn(
-      { loop, error: error.message, delayMs },
-      "simon-bot retrying request",
-    );
+    log.warn({ loop, err: error, delayMs }, "simon-bot retrying request");
     await sleep(delayMs);
     waitedMs += delayMs;
   }
@@ -588,7 +608,7 @@ export async function* runAgentLoop({
   effort,
   maxTokens,
   timeoutMs,
-  retryBudgetMs,
+  maxRetrySleepMs,
   maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
   endInText = true,
   loop,
@@ -608,7 +628,7 @@ export async function* runAgentLoop({
       tools,
       ...(textOnly && { tool_choice: { type: "none" } }),
     });
-    const json = await postMessages(body, { timeoutMs, retryBudgetMs, loop });
+    const json = await postMessages(body, { timeoutMs, maxRetrySleepMs, loop });
 
     const result = createMessageResponseSchema.parse(json);
 
@@ -680,8 +700,12 @@ export async function* runAgentLoop({
       }),
     );
 
-    // Add tool results as user message
-    messages.push({ role: "user", content: toolResults });
+    // Told after the tool results, so the cached prefix ahead of them stays intact.
+    const nextTextOnly = endInText && iteration === maxIterations - 2;
+    messages.push({
+      role: "user",
+      content: nextTextOnly ? [...toolResults, LAST_ROUND_NOTE] : toolResults,
+    });
   }
 
   log.warn(
@@ -713,7 +737,7 @@ export async function* createMessage(
     effort: "medium",
     maxTokens: MAX_TOKENS,
     timeoutMs: TIMEOUT_MS,
-    retryBudgetMs: RETRY_BUDGET_MS,
+    maxRetrySleepMs: MAX_RETRY_SLEEP_MS,
     loop: "reply",
     replyingTo: chatMessages.at(-1)?.id,
   });

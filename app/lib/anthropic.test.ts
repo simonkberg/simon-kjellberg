@@ -98,6 +98,7 @@ describe("createMessage", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it("should create message and yield text content", async () => {
@@ -585,7 +586,11 @@ describe("createMessage", () => {
   it.each([
     { case: "empty", retryAfter: "" },
     { case: "zero", retryAfter: "0" },
-    { case: "not seconds", retryAfter: "Wed, 21 Oct 2026 07:28:00 GMT" },
+    { case: "neither seconds nor a date", retryAfter: "soon" },
+    {
+      case: "a date already past",
+      retryAfter: "Wed, 21 Oct 2015 07:28:00 GMT",
+    },
   ])("should back off when retry-after is $case", async ({ retryAfter }) => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     let callCount = 0;
@@ -611,17 +616,58 @@ describe("createMessage", () => {
     expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
   });
 
+  it("should wait until a retry-after date", async () => {
+    vi.useFakeTimers({ now: new Date(CREATED_AT), toFake: ["Date"] });
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    let callCount = 0;
+    server.use(
+      http.post(ANTHROPIC_BASE_URL, () => {
+        callCount++;
+        if (callCount === 1) {
+          return new HttpResponse(null, {
+            status: 429,
+            headers: {
+              "retry-after": new Date(Date.now() + 2000).toUTCString(),
+            },
+          });
+        }
+        return HttpResponse.json({ content: [], stop_reason: "end_turn" });
+      }),
+    );
+
+    await collectResponses(
+      createMessage([
+        { role: "user", username: TEST_USERNAME, content: "Test" },
+      ]),
+    );
+
+    expect(vi.mocked(sleep).mock.calls).toEqual([[2000]]);
+  });
+
+  it("should fail a body that times out, naming its status", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      Object.assign(new Response(null, { status: 503 }), {
+        text: () =>
+          Promise.reject(new DOMException("timed out", "TimeoutError")),
+      }),
+    );
+
+    await expect(
+      collectResponses(
+        createMessage([
+          { role: "user", username: TEST_USERNAME, content: "Test" },
+        ]),
+      ),
+    ).rejects.toThrow(/^Anthropic API error: 503 .*reading the body failed$/);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
   it("should retry a connection dropped mid-body", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     // Node's body read rejects with this; happy-dom's would wrap it in an EncodingError.
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       Object.assign(new Response(), {
-        json: () =>
-          Promise.reject(
-            new TypeError("terminated", {
-              cause: new Error("other side closed"),
-            }),
-          ),
+        json: () => Promise.reject(new TypeError("terminated")),
       }),
     );
     server.use(
@@ -640,6 +686,17 @@ describe("createMessage", () => {
     );
 
     expect(responses).toEqual(["whole this time"]);
+    expect(log.warn).toHaveBeenCalledWith(
+      {
+        loop: "reply",
+        err: expect.objectContaining({
+          message: expect.stringContaining("reading the body failed"),
+          cause: new TypeError("terminated"),
+        }),
+        delayMs: 500,
+      },
+      "simon-bot retrying request",
+    );
     expect(vi.mocked(sleep).mock.calls).toEqual([[500]]);
   });
 
@@ -728,7 +785,7 @@ describe("createMessage", () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
-  it("should not wait past the retry budget per request", async () => {
+  it("should not sleep past the retry limit per request", async () => {
     let callCount = 0;
     server.use(
       http.post(ANTHROPIC_BASE_URL, () => {
@@ -1074,13 +1131,19 @@ describe("createMessage", () => {
     expect(callCount).toBe(2);
   });
 
-  it("should rule out tools on the last iteration", async () => {
+  it("should rule out tools on the last iteration and say so", async () => {
     const toolChoices: unknown[] = [];
+    const lastBlocks: unknown[] = [];
 
     server.use(
       http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = (await request.json()) as { tool_choice?: unknown };
+        const body = (await request.json()) as {
+          tool_choice?: unknown;
+          messages: { content: unknown }[];
+        };
         toolChoices.push(body.tool_choice);
+        const last = body.messages.at(-1)?.content;
+        lastBlocks.push(Array.isArray(last) ? last.at(-1) : last);
         if (toolChoices.length < 5) {
           return HttpResponse.json({
             content: [
@@ -1115,6 +1178,15 @@ describe("createMessage", () => {
       undefined,
       { type: "none" },
     ]);
+    expect(lastBlocks.slice(1, 4)).toEqual([
+      expect.objectContaining({ type: "tool_result" }),
+      expect.objectContaining({ type: "tool_result" }),
+      expect.objectContaining({ type: "tool_result" }),
+    ]);
+    expect(lastBlocks[4]).toEqual({
+      type: "text",
+      text: expect.stringContaining("Tools are off"),
+    });
   });
 
   it("should keep tools on the last iteration when the loop opts out of ending in text", async () => {
@@ -1145,7 +1217,7 @@ describe("createMessage", () => {
       effort: "high",
       maxTokens: 8192,
       timeoutMs: 60_000,
-      retryBudgetMs: 30_000,
+      maxRetrySleepMs: 30_000,
       maxIterations: 2,
       endInText: false,
       loop: "reflection",
