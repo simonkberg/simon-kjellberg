@@ -674,6 +674,14 @@ describe("getChannelMessages", () => {
             ...rawMessage([], "3"),
             author: { id: "user2", username: "forwarder" },
             content: "",
+            message_reference: { type: 1, message_id: "1" },
+            message_snapshots: [{ message: { attachments: [] } }],
+          },
+          {
+            ...rawMessage([], "4"),
+            content: "",
+            message_reference: { type: 1, message_id: "1" },
+            message_snapshots: [{ message: { content: "Name: Hi" } }],
           },
         ]),
       ),
@@ -683,6 +691,7 @@ describe("getChannelMessages", () => {
     expect(await getChannelMessages()).toMatchObject([
       { id: "2", content: "Forwarded text" },
       { id: "3", content: "" },
+      { id: "4", content: "Name: Hi" },
     ]);
   });
 
@@ -1689,6 +1698,30 @@ describe("rate limiting", () => {
     expect(messageRequests).toHaveBeenCalledOnce();
   });
 
+  it("should back off on 429s with no Retry-After", async () => {
+    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
+    let attempts = 0;
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        ++attempts <= 3
+          ? HttpResponse.html("<html>Too Many Requests</html>", { status: 429 })
+          : HttpResponse.json([]),
+      ),
+    );
+
+    const promise = getChannelMessages();
+    await vi.advanceTimersByTimeAsync(7000);
+    await promise;
+
+    for (const [i, retryAfterMs] of [1000, 2000, 4000].entries()) {
+      expect(logWarnSpy).toHaveBeenNthCalledWith(
+        i + 1,
+        expect.objectContaining({ retryAfterMs }),
+        "Discord rate limited, retrying",
+      );
+    }
+  });
+
   it("should report the status of an error whose body isn't JSON", async () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
@@ -1714,7 +1747,7 @@ describe("rate limiting", () => {
     );
   });
 
-  it("should keep the gate when a caller gives up, for no longer than anyone waits", async () => {
+  it("should keep a long gate, so callers fail fast instead of re-hitting Discord", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     const messageRequests = vi.fn();
     server.use(
@@ -1733,13 +1766,11 @@ describe("rate limiting", () => {
     await expect(addBotReaction("1", "👍")).rejects.toThrow(
       "Discord rate limit exceeded",
     );
-    const messages = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(29_749);
+    await vi.advanceTimersByTimeAsync(60_000);
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord rate limit exceeded",
+    );
     expect(messageRequests).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
-    await messages;
-    expect(messageRequests).toHaveBeenCalledOnce();
   });
 
   it("should gate each channel separately", async () => {

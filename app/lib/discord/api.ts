@@ -176,16 +176,15 @@ async function call<T extends z.ZodType>(
       const rateLimit = RateLimitResponseSchema.safeParse(json);
       const retryAfterMs = rateLimit.success
         ? rateLimit.data.retry_after * 1000
-        : (retryAfterHeaderMs(response.headers.get("retry-after")) ?? 1000);
+        : (retryAfterHeaderMs(response.headers.get("retry-after")) ??
+          1000 * 2 ** (retries - 1));
       const global =
         (rateLimit.success && rateLimit.data.global) ||
         response.headers.get("x-ratelimit-global") === "true";
 
-      // Outlives a caller that gives up, capped at the longest anyone waits.
+      // The true deadline, so callers that can't wait fail fast rather than re-hit Discord.
       const gate = global ? GLOBAL_GATE : route;
-      const newUntil =
-        Date.now() +
-        Math.min(retryAfterMs, RATE_LIMIT_TIMEOUT_MS - GATE_JITTER_MS);
+      const newUntil = Date.now() + retryAfterMs;
       const existing = rateLimitUntil.get(gate) ?? 0;
       rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
@@ -270,11 +269,11 @@ async function authorName(msg: DiscordMessage): Promise<string> {
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
+  const parsed = msg.author.bot ? parseUsernamePrefix(msg.content) : undefined;
+  const username = parsed ? parsed[0] : await authorName(msg);
   // A forward's own content is empty; what it forwards is in its snapshot.
   const text =
     msg.content || (msg.message_snapshots?.[0]?.message.content ?? "");
-  const parsed = msg.author.bot ? parseUsernamePrefix(text) : undefined;
-  const username = parsed ? parsed[0] : await authorName(msg);
   const content = (parsed?.[1] ?? text).trim();
   return { username, content };
 }

@@ -45,7 +45,7 @@ export const DiscordMessageSchema = z.object({
     .array(z.object({ count: z.number(), me: z.boolean(), emoji: EmojiSchema }))
     .optional(),
   message_snapshots: z
-    .array(z.object({ message: z.object({ content: z.string() }) }))
+    .array(z.object({ message: z.object({ content: z.string().nullish() }) }))
     .optional(),
 });
 
