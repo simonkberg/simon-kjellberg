@@ -10,7 +10,7 @@ import {
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
-import { createSqliteQuery, emptyResult, sqliteBatch } from "@/mocks/sqlite";
+import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -23,7 +23,9 @@ import {
 } from "./reactions";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 vi.mock(import("@/lib/discord/api"), () => ({
   addBotReaction: vi.fn(() => Promise.resolve()),
   removeBotReaction: vi.fn(() => Promise.resolve()),
@@ -48,7 +50,6 @@ function message(id: string, overrides: Partial<Message> = {}): Message {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  vi.mocked(batch).mockImplementation(sqliteBatch(query));
 });
 
 describe("toggleReaction", () => {

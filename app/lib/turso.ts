@@ -187,23 +187,22 @@ export async function batch<const T extends readonly Statement[]>(
   }
 
   const { step_results, step_errors } = response.result;
-  const failed = step_errors
-    .slice(0, commitStep + 1)
-    .findIndex((e) => e !== null);
-  const error = step_errors[failed];
-  if (error) {
-    const step =
-      failed === 0
-        ? "BEGIN"
-        : failed === commitStep
-          ? "COMMIT"
-          : `statement ${failed}`;
-    throw new Error(`Turso query error in ${step}: ${error.message}`);
-  }
-  return z
-    .array(stmtResultSchema)
-    .parse(step_results.slice(1, commitStep))
-    .map(decodeResult) as BatchResults<T>;
+  const steps = [
+    "BEGIN",
+    ...statements.map((_, index) => `statement ${index + 1}`),
+    "COMMIT",
+  ];
+  const results = steps.map((step, index) => {
+    const result = step_results[index];
+    const error = step_errors[index];
+    if (error || !result) {
+      throw new Error(
+        `Turso query error in ${step}: ${error?.message ?? "no result"}`,
+      );
+    }
+    return decodeResult(result);
+  });
+  return results.slice(1, -1) as BatchResults<T>;
 }
 
 export function keepWarm(): void {

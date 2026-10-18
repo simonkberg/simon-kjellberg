@@ -1,5 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 
+import { vi } from "vitest";
+
 import type { batch, BatchResults, query, QueryResult, Row } from "@/lib/turso";
 
 export const emptyResult: QueryResult = {
@@ -26,6 +28,13 @@ export function createSqliteQuery(setup: readonly string[] = []): typeof query {
     }
     return { rows, rowsAffected: changes() - before, lastInsertRowId: null };
   };
+}
+
+// Turso as a mock module: `batch` runs through `query`, so give `query` an implementation.
+export function mockTurso(): { query: typeof query; batch: typeof batch } {
+  const query = vi.fn<typeof import("@/lib/turso").query>();
+  // A mock's call signature drops batch's generic, though it runs the same function.
+  return { query, batch: vi.fn(sqliteBatch(query)) as typeof batch };
 }
 
 // Goes through the given query, so failures a test injects there reach batches too.

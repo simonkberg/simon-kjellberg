@@ -11,25 +11,26 @@ vi.mock(import("server-only"), () => ({}));
 
 const PIPELINE_URL = "https://test-db.turso.io/v2/pipeline";
 
-function pipelineResponse(result: Record<string, unknown> = {}) {
+function pipelineBody(response: Record<string, unknown>) {
   return {
     results: [
-      {
-        type: "ok",
-        response: {
-          type: "execute",
-          result: {
-            cols: [],
-            rows: [],
-            affected_row_count: 0,
-            last_insert_rowid: null,
-            ...result,
-          },
-        },
-      },
+      { type: "ok", response },
       { type: "ok", response: { type: "close" } },
     ],
   };
+}
+
+function pipelineResponse(result: Record<string, unknown> = {}) {
+  return pipelineBody({
+    type: "execute",
+    result: {
+      cols: [],
+      rows: [],
+      affected_row_count: 0,
+      last_insert_rowid: null,
+      ...result,
+    },
+  });
 }
 
 describe("query", () => {
@@ -213,18 +214,10 @@ describe("batch", () => {
     stepResults: unknown[],
     stepErrors: unknown[] = stepResults.map(() => null),
   ) {
-    return {
-      results: [
-        {
-          type: "ok",
-          response: {
-            type: "batch",
-            result: { step_results: stepResults, step_errors: stepErrors },
-          },
-        },
-        { type: "ok", response: { type: "close" } },
-      ],
-    };
+    return pipelineBody({
+      type: "batch",
+      result: { step_results: stepResults, step_errors: stepErrors },
+    });
   }
 
   it("should run the statements in one transaction that rolls back on failure", async () => {
@@ -281,43 +274,31 @@ describe("batch", () => {
     });
   });
 
-  it("should name the statement that failed", async () => {
+  it.each([
+    { failed: 0, step: "BEGIN" },
+    { failed: 2, step: "statement 2" },
+    { failed: 3, step: "COMMIT" },
+  ])("should name the step that failed: $step", async ({ failed, step }) => {
+    // BEGIN, two statements, COMMIT and ROLLBACK.
+    const steps = Array.from({ length: 5 }, (_, index) => index);
     server.use(
       http.post(PIPELINE_URL, () =>
         HttpResponse.json(
           batchResponse(
-            [stmtResult(0), stmtResult(1), null, null, stmtResult(0)],
-            [null, null, { message: "no such table: nope" }, null, null],
+            steps.map((index) =>
+              index < failed || index === 4 ? stmtResult(0) : null,
+            ),
+            steps.map((index) =>
+              index === failed ? { message: "database is locked" } : null,
+            ),
           ),
         ),
       ),
     );
 
     await expect(
-      batch([{ sql: "SELECT 1" }, { sql: "SELECT * FROM nope" }]),
-    ).rejects.toThrow("Turso query error in statement 2: no such table: nope");
-  });
-
-  it("should throw when the transaction can't begin", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          batchResponse(
-            [null, null, null, null],
-            [
-              { message: "database is locked" },
-              null,
-              null,
-              { message: "cannot rollback - no transaction is active" },
-            ],
-          ),
-        ),
-      ),
-    );
-
-    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
-      "Turso query error in BEGIN: database is locked",
-    );
+      batch([{ sql: "SELECT 1" }, { sql: "SELECT 2" }]),
+    ).rejects.toThrow(`Turso query error in ${step}: database is locked`);
   });
 
   it("should throw when the result is not a batch result", async () => {
@@ -327,23 +308,6 @@ describe("batch", () => {
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
       "Turso returned unexpected execute result",
-    );
-  });
-
-  it("should throw when the commit fails", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          batchResponse(
-            [stmtResult(0), stmtResult(1), null, stmtResult(0)],
-            [null, null, { message: "database is locked" }, null],
-          ),
-        ),
-      ),
-    );
-
-    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
-      "Turso query error in COMMIT: database is locked",
     );
   });
 });

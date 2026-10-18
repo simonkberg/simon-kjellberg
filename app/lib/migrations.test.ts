@@ -3,8 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
-import { batch, query } from "@/lib/turso";
-import { createSqliteQuery, sqliteBatch } from "@/mocks/sqlite";
+import { query } from "@/lib/turso";
+import { createSqliteQuery } from "@/mocks/sqlite";
 
 import {
   MIGRATIONS,
@@ -13,7 +13,9 @@ import {
 } from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 let sqlite: typeof query;
 
@@ -54,7 +56,6 @@ describe("runMigrations", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
     sqlite = createSqliteQuery();
-    vi.mocked(batch).mockImplementation(sqliteBatch(query));
     vi.mocked(query).mockImplementation(sqlite);
   });
 
@@ -237,7 +238,6 @@ describe("runMigrationsUntilApplied", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "error").mockImplementation(() => {});
     sqlite = createSqliteQuery();
-    vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   afterEach(() => {

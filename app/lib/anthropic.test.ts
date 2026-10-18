@@ -14,10 +14,10 @@ import {
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
 import { addReaction } from "@/lib/reactions";
-import { batch, query } from "@/lib/turso";
+import { query } from "@/lib/turso";
 import { getStats } from "@/lib/wakaTime";
 import { server } from "@/mocks/node";
-import { createSqliteQuery, sqliteBatch } from "@/mocks/sqlite";
+import { createSqliteQuery } from "@/mocks/sqlite";
 
 import {
   type ChatMessage,
@@ -36,7 +36,9 @@ vi.mock(import("@/lib/discord/api"), () => ({
   getChannelMessages: vi.fn(),
   searchChannelMessages: vi.fn(),
 }));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 vi.mock(import("@/lib/reactions"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, addReaction: vi.fn() };
@@ -153,7 +155,6 @@ describe("createMessage", () => {
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-    vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   afterEach(() => {
@@ -1127,7 +1128,6 @@ describe("react tool", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-    vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   async function runReact(
