@@ -705,7 +705,7 @@ export async function* runAgentLoop({
       }),
     );
 
-    // Told after the tool results, so the cached prefix ahead of them stays intact.
+    // After the tool results, the note adds to the prefix rather than changing it; tool_choice on that round still costs the messages cache.
     messages.push({
       role: "user",
       content: isTextOnly(iteration + 1)

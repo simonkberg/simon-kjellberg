@@ -30,14 +30,17 @@ export const categorySchema = z
     "Use lowercase letters, digits, hyphens and underscores, with at most one slash",
   );
 
-// Keep in step with the backfill in MIGRATIONS.
 const LINE_BREAKS = /\r\n|[\r\n\v\f\u0085\u2028\u2029]/g;
 
-// One line, so a note can't start a section of its own in the <memory> block.
+// One line, so a note can't start a section of its own in the <memory> block. The backfill in
+// MIGRATIONS does the same in SQL, whose trim() strips only spaces, so this does too.
+function toOneLine(text: string): string {
+  return text.replace(LINE_BREAKS, " ").replace(/^ +| +$/g, "");
+}
+
 export const contentSchema = z
   .string()
-  .overwrite((text) => text.replace(LINE_BREAKS, " "))
-  .trim()
+  .overwrite(toOneLine)
   .min(1)
   .max(MAX_CONTENT_LENGTH);
 
@@ -165,7 +168,7 @@ const LISTING_PREFIX = /^(?:-\s*)?#(\d+)\s+/;
 // should still match, and so should a note whose own text starts with "#id".
 // Line breaks read as the spaces a write turns them into.
 function asRead(id: number, text: string): [string, string] {
-  const trimmed = text.replace(LINE_BREAKS, " ").trim();
+  const trimmed = toOneLine(text);
   const prefix = LISTING_PREFIX.exec(trimmed);
   const bare =
     prefix?.[1] === String(id) ? trimmed.slice(prefix[0].length) : trimmed;

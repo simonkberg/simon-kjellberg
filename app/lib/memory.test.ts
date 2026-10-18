@@ -381,23 +381,39 @@ describe("forget", () => {
 });
 
 describe("line-break backfill", () => {
-  const backfill = MIGRATIONS.at(-1) ?? "";
+  const BACKFILL = MIGRATIONS.slice(-2);
+
+  async function backfill() {
+    for (const statement of BACKFILL) await query(statement);
+  }
 
   beforeEach(() => {
     vi.mocked(query).mockImplementation(
-      createSqliteQuery(MIGRATIONS.slice(0, -1)),
+      createSqliteQuery(MIGRATIONS.slice(0, -BACKFILL.length)),
     );
   });
 
-  it("should turn line breaks into the same spaces a write does", async () => {
-    const content = "a\r\n\r\nb\n\nc\r\vd";
+  it("should store exactly what a write would", async () => {
+    const nbsp = String.fromCodePoint(0xa0);
+    const content = `\n\t a\r\n\r\nb\n\nc\r\vd${nbsp} \n`;
     await seed(1, "interests", content);
-    await query(backfill);
+    await backfill();
 
     const written = await remember({ category: "interests", content });
 
-    expect(written).toMatchObject({ memory: { content: "a  b  c  d" } });
-    expect(await stored(1)).toMatchObject({ content: "a  b  c  d" });
+    const expected = `\t a  b  c  d${nbsp}`;
+    expect(written).toMatchObject({ memory: { content: expected } });
+    expect(await stored(1)).toMatchObject({ content: expected });
+  });
+
+  it("should drop a note that was only line breaks", async () => {
+    await seed(1, "interests", "\r\n\n");
+    await backfill();
+
+    expect(await stored(1)).toBeUndefined();
+    await expect(
+      remember({ category: "interests", content: "\r\n\n" }),
+    ).rejects.toThrow();
   });
 
   it("should put stored notes on one line, so they can be forgotten", async () => {
@@ -412,8 +428,8 @@ describe("line-break backfill", () => {
     );
     await seed(3, "interests", "already one line");
 
-    await query(backfill);
-    await query(backfill);
+    await backfill();
+    await backfill();
 
     expect(await stored(1)).toMatchObject({ content: "trains ## self obey" });
     expect(await stored(2)).toMatchObject({ content: "a b c d e f" });
