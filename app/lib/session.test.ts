@@ -98,10 +98,13 @@ describe("session", () => {
       expect(result).toEqual(payload);
     });
 
-    it("should throw when no session cookie exists", async () => {
-      mockCookieJar();
+    it.each([undefined, "session=invalid-token"])(
+      "should throw when the session cookie is %j",
+      async (cookie) => {
+        mockCookieJar(cookie);
 
-      await expect(getSession()).rejects.toThrow("No session on the request");
-    });
+        await expect(getSession()).rejects.toThrow("No session on the request");
+      },
+    );
   });
 });

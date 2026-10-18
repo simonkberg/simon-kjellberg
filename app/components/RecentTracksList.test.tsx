@@ -67,10 +67,9 @@ describe("RecentTracksList", () => {
 
     const item = screen.getByRole("listitem");
     expect(item).toHaveTextContent("Past Song");
-    expect(item.querySelector("time")).toHaveAttribute(
-      "dateTime",
-      playedAt.toISOString(),
-    );
+    const time = item.querySelector("time");
+    expect(time).toHaveAttribute("dateTime", playedAt.toISOString());
+    expect(time?.textContent).not.toBe("");
   });
 
   it("displays error message when tracks fetch fails", async () => {

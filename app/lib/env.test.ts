@@ -86,13 +86,16 @@ describe("env", () => {
       );
     });
 
-    it("should throw when DISCORD_BOT_TOKEN is missing", async () => {
-      vi.stubEnv("DISCORD_BOT_TOKEN", undefined);
+    it.each(Object.keys(mockEnv))(
+      "should throw when %s is missing",
+      async (key) => {
+        vi.stubEnv(key, undefined);
 
-      await expect(import("./env")).rejects.toThrow(
-        "Invalid environment variables",
-      );
-    });
+        await expect(import("./env")).rejects.toThrow(
+          "Invalid environment variables",
+        );
+      },
+    );
 
     it("should throw when TURSO_DATABASE_URL is not a valid URL", async () => {
       vi.stubEnv("TURSO_DATABASE_URL", "not-a-url");

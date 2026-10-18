@@ -9,6 +9,7 @@ import {
   getTopTracks,
   type GetTopTracksResult,
 } from "@/actions/lastfm";
+import { periods } from "@/lib/lastfm";
 
 import ListeningPage, { generateMetadata, generateStaticParams } from "./page";
 
@@ -68,14 +69,11 @@ describe("generateMetadata", () => {
 
 describe("generateStaticParams", () => {
   it("should return params for all periods, overall as the base path", () => {
-    expect(generateStaticParams()).toEqual([
-      { period: ["7day"] },
-      { period: ["1month"] },
-      { period: ["3month"] },
-      { period: ["6month"] },
-      { period: ["12month"] },
-      { period: undefined },
-    ]);
+    expect(generateStaticParams()).toEqual(
+      periods.map((period) => ({
+        period: period === "overall" ? undefined : [period],
+      })),
+    );
   });
 });
 
