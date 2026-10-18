@@ -15,13 +15,11 @@ interface TopTableColumn<Key extends string = string> {
 }
 
 export interface TopTableProps<
-  Result,
   Key extends string,
   Row extends Ranked & Record<Key, string>,
 > {
-  result: Promise<Result>;
   // Undefined when the list failed to load.
-  rows: (result: Result) => readonly Row[] | undefined;
+  rows: Promise<readonly Row[] | undefined>;
   noun: string;
   columns: readonly TopTableColumn<Key>[];
 }
@@ -61,16 +59,14 @@ const Head = ({ columns }: { columns: readonly TopTableColumn[] }) => (
 );
 
 export const TopTable = <
-  Result,
   Key extends string,
   Row extends Ranked & Record<Key, string>,
 >({
-  result,
   rows,
   noun,
   columns,
-}: TopTableProps<Result, Key, Row>) => {
-  const items = rows(use(result));
+}: TopTableProps<Key, Row>) => {
+  const items = use(rows);
 
   if (items === undefined) {
     return <p>Top {noun} are temporarily unavailable :(</p>;

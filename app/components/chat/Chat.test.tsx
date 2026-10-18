@@ -7,12 +7,10 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import type { Message, Reaction } from "@/lib/discord/api";
-import { server } from "@/mocks/node";
 
 import { Chat } from "./Chat";
 
@@ -21,7 +19,6 @@ vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
 
 describe("Chat", () => {
   beforeEach(() => {
-    server.use(http.get("*/api/emoji", () => HttpResponse.json([])));
     vi.stubGlobal(
       "EventSource",
       class MockEventSource {

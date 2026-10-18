@@ -5,12 +5,13 @@ import { headers } from "next/headers";
 
 export async function identifiers() {
   const headersList = await headers();
+  const ip =
+    headersList.get("cf-connecting-ip") ??
+    headersList.get("x-forwarded-for")?.split(",")[0] ??
+    headersList.get("x-real-ip") ??
+    undefined;
   return {
-    ip:
-      headersList.get("cf-connecting-ip") ??
-      headersList.get("x-forwarded-for")?.split(",")[0] ??
-      headersList.get("x-real-ip") ??
-      undefined,
+    ip: ip === undefined ? undefined : plainIp(ip),
     userAgent: headersList.get("user-agent") ?? undefined,
   } as const;
 }
@@ -37,10 +38,11 @@ function expand(ip: string): number[] {
   return [...left, ...elided, ...right];
 }
 
-// One IPv6 client usually holds a whole /64, so it could rotate addresses past a per-IP limit.
-export function networkOf(ip: string): string {
+// An IPv4-mapped address is its IPv4 client, which the IPv4-only deny list must see.
+function plainIp(ip: string): string {
   if (!isIPv6(ip)) return ip;
-  const groups = expand(ip.replace(/%.*/, ""));
+  const unzoned = ip.replace(/%.*/, "");
+  const groups = expand(unzoned);
   if (
     groups.slice(0, 5).every((group) => group === 0) &&
     groups[5] === 0xffff
@@ -50,6 +52,14 @@ export function networkOf(ip: string): string {
       .flatMap((group) => [group >> 8, group & 0xff])
       .join(".");
   }
-  const prefix = groups.slice(0, 4).map((group) => group.toString(16));
+  return unzoned;
+}
+
+// One IPv6 client usually holds a whole /64, so it could rotate addresses past a per-IP limit.
+export function networkOf(ip: string): string {
+  if (!isIPv6(ip)) return ip;
+  const prefix = expand(ip)
+    .slice(0, 4)
+    .map((group) => group.toString(16));
   return `${prefix.join(":")}::/64`;
 }

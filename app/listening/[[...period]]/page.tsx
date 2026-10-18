@@ -2,14 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense, use } from "react";
 
-import {
-  getTopAlbums,
-  type GetTopAlbumsResult,
-  getTopArtists,
-  type GetTopArtistsResult,
-  getTopTracks,
-  type GetTopTracksResult,
-} from "@/actions/lastfm";
+import { getTopAlbums, getTopArtists, getTopTracks } from "@/actions/lastfm";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
 import { Page } from "@/components/Page";
@@ -37,13 +30,6 @@ const albumColumns = [
   { label: "Album", key: "name" },
   { label: "Artist", key: "artist" },
 ] as const;
-
-const trackRows = (result: GetTopTracksResult) =>
-  result.status === "ok" ? result.tracks : undefined;
-const artistRows = (result: GetTopArtistsResult) =>
-  result.status === "ok" ? result.artists : undefined;
-const albumRows = (result: GetTopAlbumsResult) =>
-  result.status === "ok" ? result.albums : undefined;
 
 type ListeningPageProps = PageProps<"/listening/[[...period]]">;
 
@@ -80,9 +66,15 @@ export function generateStaticParams(): Awaited<
 
 export default function ListeningPage({ params }: ListeningPageProps) {
   const period = toPeriod(use(params).period);
-  const topTracks = getTopTracks(period);
-  const topArtists = getTopArtists(period);
-  const topAlbums = getTopAlbums(period);
+  const topTracks = getTopTracks(period).then((result) =>
+    result.status === "ok" ? result.tracks : undefined,
+  );
+  const topArtists = getTopArtists(period).then((result) =>
+    result.status === "ok" ? result.artists : undefined,
+  );
+  const topAlbums = getTopAlbums(period).then((result) =>
+    result.status === "ok" ? result.albums : undefined,
+  );
 
   return (
     <Page section="Listening">
@@ -103,12 +95,7 @@ export default function ListeningPage({ params }: ListeningPageProps) {
           Top Tracks <Subtitle>(Top 10)</Subtitle>
         </Heading>
         <Suspense fallback={<TopTableSkeleton columns={trackColumns} />}>
-          <TopTable
-            result={topTracks}
-            rows={trackRows}
-            noun="tracks"
-            columns={trackColumns}
-          />
+          <TopTable rows={topTracks} noun="tracks" columns={trackColumns} />
         </Suspense>
       </section>
 
@@ -117,12 +104,7 @@ export default function ListeningPage({ params }: ListeningPageProps) {
           Top Artists <Subtitle>(Top 10)</Subtitle>
         </Heading>
         <Suspense fallback={<TopTableSkeleton columns={artistColumns} />}>
-          <TopTable
-            result={topArtists}
-            rows={artistRows}
-            noun="artists"
-            columns={artistColumns}
-          />
+          <TopTable rows={topArtists} noun="artists" columns={artistColumns} />
         </Suspense>
       </section>
 
@@ -131,12 +113,7 @@ export default function ListeningPage({ params }: ListeningPageProps) {
           Top Albums <Subtitle>(Top 10)</Subtitle>
         </Heading>
         <Suspense fallback={<TopTableSkeleton columns={albumColumns} />}>
-          <TopTable
-            result={topAlbums}
-            rows={albumRows}
-            noun="albums"
-            columns={albumColumns}
-          />
+          <TopTable rows={topAlbums} noun="albums" columns={albumColumns} />
         </Suspense>
       </section>
     </Page>
