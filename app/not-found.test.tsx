@@ -4,10 +4,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import NotFound, { metadata } from "./not-found";
 
 describe("metadata", () => {
-  it("should have title and description", () => {
+  it("should have title and description, and no canonical", () => {
     expect(metadata).toEqual({
       title: "Not Found",
       description: "The page you are looking for does not exist.",
+      alternates: { canonical: null },
     });
   });
 });
