@@ -13,6 +13,7 @@
   --surface: var(--ground);
   --wash: var(--ground);
   --heat: transparent;
+  --pressed: color-mix(in oklch, var(--accent) 22%, transparent);
 
   --leading: 1.5;
   --p-gap: 0.75lh;
@@ -1501,7 +1502,7 @@ ul {
       }
 
       &[aria-pressed="true"] {
-        background: color-mix(in oklch, var(--accent) 22%, transparent);
+        background: var(--pressed);
         color: var(--ink);
 
         /* Touch keeps :hover after a tap, so a hovered pill must still read as yours. */
@@ -1540,14 +1541,6 @@ ul {
     &[aria-selected="true"] {
       background: var(--wash);
     }
-
-    &[aria-pressed="true"] {
-      background: color-mix(in oklch, var(--accent) 22%, transparent);
-    }
-  }
-
-  > .skin-tone {
-    grid-column-start: 1;
   }
 
   > .name {
@@ -1574,6 +1567,16 @@ ul {
       flip-block,
       flip-inline,
       flip-block flip-inline;
+  }
+}
+
+.chat-reaction-picker {
+  > button[aria-pressed="true"] {
+    background: var(--pressed);
+  }
+
+  > .skin-tone {
+    grid-column-start: 1;
   }
 }
 
