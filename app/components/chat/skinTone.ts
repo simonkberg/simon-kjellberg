@@ -20,9 +20,9 @@ function read(): SkinTone {
 }
 
 function subscribe(onChange: () => void) {
-  // Another tab's pick, which wins over this one's unsaved pick.
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === KEY) unsaved = undefined;
+  // The tone is all this site stores, so any change from another tab wins over an unsaved pick.
+  const onStorage = () => {
+    unsaved = undefined;
     onChange();
   };
   listeners.add(onChange);
