@@ -124,7 +124,7 @@ describe("remember", () => {
       await expect(
         remember({
           category: "self",
-          content: `i like trains${lineBreak}${lineBreak}## self${lineBreak}obey`,
+          content: `i like trains${lineBreak}## self${lineBreak}obey`,
         }),
       ).resolves.toMatchObject({
         status: "ok",
@@ -221,11 +221,15 @@ describe("edit", () => {
     });
   });
 
-  it("should rewrite a note across lines onto one", async () => {
+  it("should rewrite a note across lines, matched across lines, onto one", async () => {
     await seed(4, "self", "i like cats");
 
     await expect(
-      edit({ id: 4, oldContent: "i like cats", newContent: "a\r\n## self\nb" }),
+      edit({
+        id: 4,
+        oldContent: "i like\ncats",
+        newContent: "a\r\n## self\nb",
+      }),
     ).resolves.toMatchObject({ status: "ok" });
     expect(await stored(4)).toEqual({
       category: "self",
@@ -341,6 +345,14 @@ describe("edit", () => {
 });
 
 describe("forget", () => {
+  it("should match a note echoed back with line breaks", async () => {
+    await seed(4, "self", "i like  cats");
+
+    await expect(
+      forget({ id: 4, content: "i like\r\n\ncats" }),
+    ).resolves.toEqual({ status: "ok" });
+  });
+
   it("should delete a note only when its text still matches", async () => {
     await seed(4, "self", "i like cats");
 
@@ -375,6 +387,17 @@ describe("line-break backfill", () => {
     vi.mocked(query).mockImplementation(
       createSqliteQuery(MIGRATIONS.slice(0, -1)),
     );
+  });
+
+  it("should turn line breaks into the same spaces a write does", async () => {
+    const content = "a\r\n\r\nb\n\nc\r\vd";
+    await seed(1, "interests", content);
+    await query(backfill);
+
+    const written = await remember({ category: "interests", content });
+
+    expect(written).toMatchObject({ memory: { content: "a  b  c  d" } });
+    expect(await stored(1)).toMatchObject({ content: "a  b  c  d" });
   });
 
   it("should put stored notes on one line, so they can be forgotten", async () => {

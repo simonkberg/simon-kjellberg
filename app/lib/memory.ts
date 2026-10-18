@@ -31,7 +31,7 @@ export const categorySchema = z
   );
 
 // Keep in step with the backfill in MIGRATIONS.
-const LINE_BREAKS = /[\r\n\v\f\u0085\u2028\u2029]+/g;
+const LINE_BREAKS = /\r\n|[\r\n\v\f\u0085\u2028\u2029]/g;
 
 // One line, so a note can't start a section of its own in the <memory> block.
 export const contentSchema = z
@@ -163,8 +163,9 @@ const LISTING_PREFIX = /^(?:-\s*)?#(\d+)\s+/;
 
 // The listing shows notes as "- #id text"; a copy that kept the decoration
 // should still match, and so should a note whose own text starts with "#id".
+// Line breaks read as the spaces a write turns them into.
 function asRead(id: number, text: string): [string, string] {
-  const trimmed = text.trim();
+  const trimmed = text.replace(LINE_BREAKS, " ").trim();
   const prefix = LISTING_PREFIX.exec(trimmed);
   const bare =
     prefix?.[1] === String(id) ? trimmed.slice(prefix[0].length) : trimmed;

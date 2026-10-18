@@ -618,8 +618,9 @@ export async function* runAgentLoop({
   loop,
   replyingTo,
 }: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
+  const isTextOnly = (iteration: number) =>
+    endInText && iteration === maxIterations - 1;
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const textOnly = endInText && iteration === maxIterations - 1;
     const body = JSON.stringify({
       model: MODEL,
       max_tokens: maxTokens,
@@ -630,7 +631,7 @@ export async function* runAgentLoop({
       system,
       messages,
       tools,
-      ...(textOnly && { tool_choice: { type: "none" } }),
+      ...(isTextOnly(iteration) && { tool_choice: { type: "none" } }),
     });
     const json = await postMessages(body, { timeoutMs, maxRetrySleepMs, loop });
 
@@ -705,10 +706,11 @@ export async function* runAgentLoop({
     );
 
     // Told after the tool results, so the cached prefix ahead of them stays intact.
-    const nextTextOnly = endInText && iteration === maxIterations - 2;
     messages.push({
       role: "user",
-      content: nextTextOnly ? [...toolResults, LAST_ROUND_NOTE] : toolResults,
+      content: isTextOnly(iteration + 1)
+        ? [...toolResults, LAST_ROUND_NOTE]
+        : toolResults,
     });
   }
 
