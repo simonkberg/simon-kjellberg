@@ -154,13 +154,14 @@ export const ChatReactionPicker = ({
     const columns = gridColumns(grid);
     const current = grid.findIndex((button) => button === event.target);
     // The tone row sits under the grid, its toggle under the last emoji.
-    const across =
-      (arrowIndex(event, current, grid.length - 1, columns) ?? 0) >= grid.length
-        ? tones.at(-1)
-        : event.key === "ArrowUp" &&
-            tones.some((button) => button === event.target)
-          ? grid.at(-1)
-          : undefined;
+    const below =
+      event.key === "ArrowDown" &&
+      (arrowIndex(event, current, grid.length - 1, columns) ?? -1) >=
+        grid.length;
+    const above =
+      event.key === "ArrowUp" &&
+      tones.some((button) => button === event.target);
+    const across = below ? tones.at(-1) : above ? grid.at(-1) : undefined;
     if (across) {
       event.preventDefault();
       across.focus();

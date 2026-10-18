@@ -139,8 +139,11 @@ describe("ChatReactionPicker", () => {
         value: Math.floor(index / 8) * 40,
       });
     }
-    items.at(-8)?.focus();
+    items.at(-1)?.focus();
 
+    await user.keyboard("{ArrowRight}{Shift>}{ArrowDown}{/Shift}");
+    expect(items.at(-1)).toHaveFocus();
+    items.at(-8)?.focus();
     await user.keyboard("{ArrowDown}");
     expect(getEmoji(/^Skin tone/)).toHaveFocus();
     await user.keyboard("{Enter}{ArrowRight}");
