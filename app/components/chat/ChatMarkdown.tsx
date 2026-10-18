@@ -37,7 +37,11 @@ const rule = (
   },
 });
 
-/** The Discord syntax CommonMark lacks or reads differently. */
+const literal = ([value]: RegExpExecArray): InlineNode => ({
+  type: "text",
+  value,
+});
+
 const extensions = [
   // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
   rule("underline", "_", /__[\s\S]+?__(?!_)/y, ([match], context) => ({
@@ -47,27 +51,19 @@ const extensions = [
     children: context.parseInline(match.slice(2, -2)),
   })),
   // Discord breaks every line; CommonMark only after two spaces.
-  rule("break", " \n", / *\n/y, () => ({ type: "break" })),
-  // CommonMark opens emphasis before a space; Discord doesn't (but closes after one).
-  rule("looseEmphasis", "*_", /[*_](?=\s)/y, ([match]) => ({
-    type: "text",
-    value: match,
-  })),
-  // Discord leaves a link without a target as typed.
-  rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, ([match]) => ({
-    type: "text",
-    value: match,
-  })),
+  rule("break", "\n", /\n/y, () => ({ type: "break" })),
+  // CommonMark opens `*` emphasis before a space; Discord doesn't (but closes after one).
+  rule("looseEmphasis", "*", /\*(?=\s)/y, literal),
+  // Discord leaves `[x]()` as typed.
+  rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, literal),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
     link(match.slice(1, -1)),
   ),
-  rule("mailto", "<", /<(?:mailto:)?[^\s<>@:]+@[^\s<>]+>/iy, ([match]) =>
-    link(
-      `mailto:${match.slice(1, -1).replace(/^mailto:/i, "")}`,
-      match.slice(1, -1),
-    ),
-  ),
+  rule("mailto", "<", /<(?:mailto:)?[^\s<>@:]+@[^\s<>]+>/iy, ([match]) => {
+    const text = match.slice(1, -1);
+    return link(`mailto:${text.replace(/^mailto:/i, "")}`, text);
+  }),
   rule(
     "url",
     "h",

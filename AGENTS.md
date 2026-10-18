@@ -346,7 +346,7 @@ rendered fallbacks, and `PreferenceSwitch` retints them.
 
 ### Markdown Rendering
 
-Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx` from TanStack Markdown's `parseInline()`, so block syntax stays text. It is CommonMark, so small inline parsers add what Discord reads differently: `__underline__` (an `inlineComponent` node, since the AST has no underline), bare and `<…>` autolinks, a break on every newline, no emphasis opened before a space, and `[x]()` as typed. Discord itself is the reference, not simple-markdown: it has diverged.
+Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx` from TanStack Markdown's `parseInline()`, so block syntax stays text. It is CommonMark, so small inline parsers add what Discord reads differently. Discord itself is the reference, not simple-markdown: it has diverged.
 
 Two rules the tests pin: the parser drops unsafe link targets (the link renders as plain text; our autolinks only make `http(s)` and `mailto`), and `image` renders as alt text — never an `<img>`, since message authors choose the URL.
 

@@ -27,7 +27,7 @@ describe("ChatMarkdown", () => {
 
   it("renders line breaks", () => {
     expect(html("line one\nline two  \nline three")).toBe(
-      "line one<br>line two<br>line three",
+      "line one<br>line two  <br>line three",
     );
   });
 
