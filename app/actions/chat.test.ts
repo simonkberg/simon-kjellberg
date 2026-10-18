@@ -212,6 +212,10 @@ describe("postChatMessage", () => {
     nextFromIp("2001:db8:1:2:ffff::1");
 
     expect(await post()).toMatchObject({ status: "error" });
+
+    nextFromIp("2001:db8:1:3::1");
+
+    expect(await post()).toEqual({ status: "ok" });
   });
 
   it("limits by username when the IP is unavailable", async () => {
@@ -281,9 +285,9 @@ describe("reactToChatMessage", () => {
   it("toggles the visitor's reaction and refreshes", async () => {
     expect(await reactToChatMessage("123", "👍")).toEqual({ status: "ok" });
 
-    expect((await query("SELECT username FROM reactions")).rows).toEqual([
-      { username: "test-user" },
-    ]);
+    expect(
+      (await query("SELECT message_id, emoji, username FROM reactions")).rows,
+    ).toEqual([{ message_id: "123", emoji: "👍", username: "test-user" }]);
     expect(updateTag).toHaveBeenCalledWith("getChatHistory");
     expect(refresh).toHaveBeenCalled();
   });

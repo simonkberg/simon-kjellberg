@@ -26,12 +26,10 @@ describe("PeriodSelector", () => {
   });
 
   it.each([
-    ["7 days", "/listening/7day"],
-    ["all time", "/listening"],
-  ])("should link %s to %s", (label, href) => {
-    render(
-      <PeriodSelector current={label === "7 days" ? "overall" : "7day"} />,
-    );
+    ["overall", "7 days", "/listening/7day"],
+    ["7day", "all time", "/listening"],
+  ] as const)("on %s, should link %s to %s", (current, label, href) => {
+    render(<PeriodSelector current={current} />);
 
     expect(screen.getByRole("link", { name: label })).toHaveAttribute(
       "href",

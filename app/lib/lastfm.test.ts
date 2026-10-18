@@ -183,6 +183,7 @@ describe("userGetTopTracks", () => {
 
     expect(params()).toMatchObject({
       method: "user.gettoptracks",
+      api_key: "test-last-fm-api-key",
       user: "testuser",
       period: "7day",
       limit: "10",
@@ -215,7 +216,12 @@ describe("userGetTopArtists", () => {
       limit: 10,
     });
 
-    expect(params()).toMatchObject({ method: "user.gettopartists" });
+    expect(params()).toMatchObject({
+      method: "user.gettopartists",
+      user: "testuser",
+      period: "1month",
+      limit: "10",
+    });
     expect(artists).toEqual([
       { name: "Test Artist", playcount: 500, rank: 1 },
       { name: "Another Artist", playcount: 300, rank: 2 },
@@ -249,7 +255,12 @@ describe("userGetTopAlbums", () => {
       limit: 10,
     });
 
-    expect(params()).toMatchObject({ method: "user.gettopalbums" });
+    expect(params()).toMatchObject({
+      method: "user.gettopalbums",
+      user: "testuser",
+      period: "3month",
+      limit: "10",
+    });
     expect(albums).toEqual([
       { name: "Test Album", artist: "Test Artist", playcount: 200, rank: 1 },
       {
