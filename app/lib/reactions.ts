@@ -9,19 +9,15 @@ import {
 } from "@/lib/discord/api";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
-import { query } from "@/lib/turso";
+import { batch, query } from "@/lib/turso";
 
 /** One emoji as Discord stores a reaction's name. */
 export const EmojiSchema = z.string().regex(/^\p{RGI_Emoji}$/v);
 // Discord snowflakes, at most 20 digits.
 export const MessageIdSchema = z.string().max(20).regex(/^\d+$/);
 
-function deleteRow(messageId: string, emoji: string, username: Username) {
-  return query(
-    "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?",
-    [messageId, emoji, username],
-  );
-}
+const DELETE_ROW =
+  "DELETE FROM reactions WHERE message_id = ? AND emoji = ? AND username = ?";
 
 /** Adds the visitor's reaction, or takes it back if they already reacted with that emoji. */
 export async function toggleReaction(
@@ -29,13 +25,22 @@ export async function toggleReaction(
   emoji: string,
   username: Username,
 ): Promise<"added" | "removed"> {
-  const { rowsAffected } = await deleteRow(messageId, emoji, username);
+  // The count rides along when nothing was deleted too, saving a removal a round trip.
+  const [{ rowsAffected }, { rows: remaining }] = await batch([
+    { sql: DELETE_ROW, args: [messageId, emoji, username] },
+    {
+      sql: "SELECT 1 FROM reactions WHERE message_id = ? AND emoji = ? LIMIT 1",
+      args: [messageId, emoji],
+    },
+  ]);
 
   if (rowsAffected > 0) {
-    // The site counts from Turso, so a stale mirror only shows on Discord.
-    await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
-      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-    });
+    if (remaining.length === 0) {
+      // The site counts from Turso, so a stale mirror only shows on Discord.
+      await removeBotReaction(messageId, emoji).catch((err: unknown) => {
+        log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+      });
+    }
     return "removed";
   }
 
@@ -60,22 +65,15 @@ export async function addReaction(
     await addBotReaction(messageId, emoji);
   } catch (err) {
     // Discord's error is the one the visitor needs, so a failed rollback only logs.
-    await deleteRow(messageId, emoji, username).catch((rollbackErr: unknown) =>
-      log.warn(
-        { err: rollbackErr, messageId, emoji },
-        "Failed to roll back reaction",
-      ),
+    await query(DELETE_ROW, [messageId, emoji, username]).catch(
+      (rollbackErr: unknown) =>
+        log.warn(
+          { err: rollbackErr, messageId, emoji },
+          "Failed to roll back reaction",
+        ),
     );
     throw err;
   }
-}
-
-async function dropMirrorIfUnused(messageId: string, emoji: string) {
-  const { rows } = await query(
-    "SELECT 1 FROM reactions WHERE message_id = ? AND emoji = ? LIMIT 1",
-    [messageId, emoji],
-  );
-  if (rows.length === 0) await removeBotReaction(messageId, emoji);
 }
 
 type Reactable<T> = { id: string; reactions: Reaction[]; replies?: T[] };

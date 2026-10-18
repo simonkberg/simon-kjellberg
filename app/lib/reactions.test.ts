@@ -9,8 +9,8 @@ import {
 } from "@/lib/discord/api";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
-import { query } from "@/lib/turso";
-import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
+import { batch, query } from "@/lib/turso";
+import { createSqliteQuery, emptyResult, sqliteBatch } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -23,7 +23,7 @@ import {
 } from "./reactions";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
 vi.mock(import("@/lib/discord/api"), () => ({
   addBotReaction: vi.fn(() => Promise.resolve()),
   removeBotReaction: vi.fn(() => Promise.resolve()),
@@ -48,6 +48,7 @@ function message(id: string, overrides: Partial<Message> = {}): Message {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  vi.mocked(batch).mockImplementation(sqliteBatch(query));
 });
 
 describe("toggleReaction", () => {
@@ -77,16 +78,18 @@ describe("toggleReaction", () => {
     expect(log.warn).toHaveBeenCalledOnce();
   });
 
-  it("still removes the reaction when counting the rest fails", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
+  it("removes nothing when counting the rest fails", async () => {
     await toggleReaction("1", "👍", alice);
     const sqlite = vi.mocked(query).getMockImplementation()!;
-    vi.mocked(query)
-      .mockImplementationOnce(sqlite)
-      .mockRejectedValueOnce(new Error("blip"));
+    vi.mocked(query).mockImplementation((sql, args) =>
+      sql.startsWith("SELECT 1")
+        ? Promise.reject(new Error("blip"))
+        : sqlite(sql, args),
+    );
 
-    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
-    expect(log.warn).toHaveBeenCalledOnce();
+    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("blip");
+    vi.mocked(query).mockImplementation(sqlite);
+    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
     expect(removeBotReaction).not.toHaveBeenCalled();
   });
 
@@ -124,9 +127,8 @@ describe("toggleReaction", () => {
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",
     );
     // The concurrent request's row lands between this one's DELETE and INSERT.
-    vi.mocked(query)
-      .mockResolvedValueOnce(emptyResult)
-      .mockResolvedValueOnce(emptyResult);
+    vi.mocked(batch).mockResolvedValueOnce([emptyResult, emptyResult]);
+    vi.mocked(query).mockResolvedValueOnce(emptyResult);
 
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
     expect(addBotReaction).not.toHaveBeenCalled();

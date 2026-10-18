@@ -187,9 +187,18 @@ export async function batch<const T extends readonly Statement[]>(
   }
 
   const { step_results, step_errors } = response.result;
-  const error = step_errors.slice(0, commitStep + 1).find((e) => e !== null);
+  const failed = step_errors
+    .slice(0, commitStep + 1)
+    .findIndex((e) => e !== null);
+  const error = step_errors[failed];
   if (error) {
-    throw new Error(`Turso query error: ${error.message}`);
+    const step =
+      failed === 0
+        ? "BEGIN"
+        : failed === commitStep
+          ? "COMMIT"
+          : `statement ${failed}`;
+    throw new Error(`Turso query error in ${step}: ${error.message}`);
   }
   return z
     .array(stmtResultSchema)

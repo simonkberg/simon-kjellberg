@@ -29,18 +29,24 @@ export function createSqliteQuery(setup: readonly string[] = []): typeof query {
 }
 
 // Goes through the given query, so failures a test injects there reach batches too.
+// Queued, since overlapping batches would nest BEGIN on the one shared connection.
 export function sqliteBatch(run: typeof query): typeof batch {
-  return async (statements) => {
-    await run("BEGIN");
-    try {
-      const results: QueryResult[] = [];
-      for (const { sql, args } of statements)
-        results.push(await run(sql, args));
-      await run("COMMIT");
-      return results as BatchResults<typeof statements>;
-    } catch (err) {
-      await run("ROLLBACK").catch(() => {});
-      throw err;
-    }
+  let queue: Promise<unknown> = Promise.resolve();
+  return (statements) => {
+    const done = queue.then(async () => {
+      await run("BEGIN");
+      try {
+        const results: QueryResult[] = [];
+        for (const { sql, args } of statements)
+          results.push(await run(sql, args));
+        await run("COMMIT");
+        return results as BatchResults<typeof statements>;
+      } catch (err) {
+        await run("ROLLBACK").catch(() => {});
+        throw err;
+      }
+    });
+    queue = done.catch(() => {});
+    return done;
   };
 }

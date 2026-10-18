@@ -281,21 +281,43 @@ describe("batch", () => {
     });
   });
 
-  it("should throw the error of the statement that failed", async () => {
+  it("should name the statement that failed", async () => {
     server.use(
       http.post(PIPELINE_URL, () =>
         HttpResponse.json(
           batchResponse(
-            [stmtResult(0), null, null, null, stmtResult(0)],
-            [null, { message: "no such table: nope" }, null, null, null],
+            [stmtResult(0), stmtResult(1), null, null, stmtResult(0)],
+            [null, null, { message: "no such table: nope" }, null, null],
           ),
         ),
       ),
     );
 
     await expect(
-      batch([{ sql: "SELECT * FROM nope" }, { sql: "SELECT 2" }]),
-    ).rejects.toThrow("Turso query error: no such table: nope");
+      batch([{ sql: "SELECT 1" }, { sql: "SELECT * FROM nope" }]),
+    ).rejects.toThrow("Turso query error in statement 2: no such table: nope");
+  });
+
+  it("should throw when the transaction can't begin", async () => {
+    server.use(
+      http.post(PIPELINE_URL, () =>
+        HttpResponse.json(
+          batchResponse(
+            [null, null, null, null],
+            [
+              { message: "database is locked" },
+              null,
+              null,
+              { message: "cannot rollback - no transaction is active" },
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
+      "Turso query error in BEGIN: database is locked",
+    );
   });
 
   it("should throw when the result is not a batch result", async () => {
@@ -321,7 +343,7 @@ describe("batch", () => {
     );
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
-      "Turso query error: database is locked",
+      "Turso query error in COMMIT: database is locked",
     );
   });
 });

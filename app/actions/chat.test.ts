@@ -12,6 +12,7 @@ import {
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
   addBotReaction,
+  removeBotReaction,
   DiscordApiError,
   getChannelMessages,
   type Message,
@@ -23,9 +24,9 @@ import { IP_DENY_LIST_URL, refreshIpDenyList } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
 import type { Username } from "@/lib/session";
-import { query } from "@/lib/turso";
+import { batch, query } from "@/lib/turso";
 import { server } from "@/mocks/node";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { createSqliteQuery, sqliteBatch } from "@/mocks/sqlite";
 
 vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/cache"), () => ({
@@ -46,7 +47,7 @@ vi.mock(import("@/lib/session"), () => ({
 }));
 vi.mock(import("@/lib/chatTip"), () => ({ setChatTipDismissed: vi.fn() }));
 vi.mock(import("@/lib/discord/api"));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), () => ({ query: vi.fn(), batch: vi.fn() }));
 
 function createMockMessage(overrides: Partial<Message> = {}): Message {
   return {
@@ -80,6 +81,7 @@ afterEach(() => {
 describe("getChatHistory", () => {
   beforeEach(() => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(batch).mockImplementation(sqliteBatch(query));
   });
 
   it("returns messages on success", async () => {
@@ -152,6 +154,7 @@ describe("postChatMessage", () => {
     server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(batch).mockImplementation(sqliteBatch(query));
     vi.mocked(postChannelMessage).mockResolvedValue("msg-123");
   });
 
@@ -287,7 +290,9 @@ describe("reactToChatMessage", () => {
     server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+    vi.mocked(batch).mockImplementation(sqliteBatch(query));
     vi.mocked(addBotReaction).mockResolvedValue();
+    vi.mocked(removeBotReaction).mockResolvedValue();
   });
 
   afterEach(() => {
