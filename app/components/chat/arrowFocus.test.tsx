@@ -61,4 +61,25 @@ describe("arrowFocus", () => {
     expect(fireEvent.keyDown(button("a"), { key: "Home" })).toBe(true);
     expect(button("a")).toHaveFocus();
   });
+
+  it("leaves modified arrows to the browser", () => {
+    render(<Buttons />);
+    button("b").focus();
+
+    for (const modifier of ["altKey", "ctrlKey", "metaKey", "shiftKey"]) {
+      expect(
+        fireEvent.keyDown(button("b"), { key: "ArrowDown", [modifier]: true }),
+      ).toBe(true);
+    }
+    expect(button("b")).toHaveFocus();
+  });
+
+  it("ignores keys from outside its elements", () => {
+    render(<Buttons />);
+    const toolbar = screen.getByRole("toolbar");
+    toolbar.focus();
+
+    expect(fireEvent.keyDown(toolbar, { key: "ArrowDown" })).toBe(true);
+    expect(toolbar).toHaveFocus();
+  });
 });

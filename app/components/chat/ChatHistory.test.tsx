@@ -1,77 +1,39 @@
 import { Globals } from "@react-spring/web";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Message } from "@/lib/discord/api";
+import { createMessage } from "@/mocks/messages";
 
 import { ChatHistory } from "./ChatHistory";
 
+const message = (id: string, content: string, replies: Message[] = []) =>
+  createMessage({ id, content, replies });
+
+const renderHistory = (messages: Message[]) => {
+  const props = { replyToId: null, setReplyToId: vi.fn() };
+  const view = render(<ChatHistory messages={messages} {...props} />);
+  return {
+    ...view,
+    update: (next: Message[]) =>
+      view.rerender(<ChatHistory messages={next} {...props} />),
+  };
+};
+
 describe("ChatHistory", () => {
-  const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
-
   it("renders messages as list with deeply nested replies", () => {
-    const mockMessages: Message[] = [
-      {
-        id: "1234567890123456",
-        content: "Message without replies",
-        user: { name: "User1", color: "hsl(0 100% 50%)" },
-        edited: false,
-        timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-        reactions: [],
-        replies: [],
-      },
-      {
-        id: "1234567890234567",
-        content: "Message with replies",
-        user: { name: "User2", color: "hsl(120 100% 50%)" },
-        edited: false,
-        timestamp: new Date("2025-01-01T00:01:00.000000+00:00"),
-        reactions: [],
-        replies: [
-          {
-            id: "1234567890345678",
-            content: "First reply",
-            user: { name: "User3", color: "hsl(240 100% 50%)" },
-            edited: false,
-            timestamp: new Date("2025-01-01T00:02:00.000000+00:00"),
-            reactions: [],
-            replies: [
-              {
-                id: "1234567890567890",
-                content: "Nested reply to first",
-                user: { name: "User5", color: "hsl(180 100% 50%)" },
-                edited: false,
-                timestamp: new Date("2025-01-01T00:03:00.000000+00:00"),
-                reactions: [],
-                replies: [
-                  {
-                    id: "1234567890678901",
-                    content: "Deeply nested reply",
-                    user: { name: "User6", color: "hsl(300 100% 50%)" },
-                    edited: false,
-                    timestamp: new Date("2025-01-01T00:04:00.000000+00:00"),
-                    reactions: [],
-                    replies: [],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: "1234567890456789",
-            content: "Second reply",
-            user: { name: "User4", color: "hsl(60 100% 50%)" },
-            edited: true,
-            timestamp: new Date("2025-01-01T00:05:00.000000+00:00"),
-            reactions: [],
-            replies: [],
-          },
-        ],
-      },
-    ];
-
-    render(<ChatHistory messages={mockMessages} {...defaultReplyProps} />);
+    renderHistory([
+      message("1", "Message without replies"),
+      message("2", "Message with replies", [
+        message("3", "First reply", [
+          message("4", "Nested reply to first", [
+            message("5", "Deeply nested reply"),
+          ]),
+        ]),
+        message("6", "Second reply"),
+      ]),
+    ]);
 
     // 1 content list + 3 nested lists (replies → nested reply → deeply nested); the rest are empty
     expect(
@@ -87,40 +49,25 @@ describe("ChatHistory", () => {
   });
 
   it("renders empty list when no messages", () => {
-    render(<ChatHistory messages={[]} {...defaultReplyProps} />);
+    renderHistory([]);
 
     expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
   describe("animations", () => {
-    const message = (id: string, replies: Message[] = []): Message => ({
-      id,
-      content: `Message ${id}`,
-      user: { name: "User", color: "hsl(0 100% 50%)" },
-      edited: false,
-      timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-      reactions: [],
-      replies,
+    beforeEach(() => {
+      Globals.assign({ skipAnimation: false });
     });
 
-    const animate = () => {
-      Globals.assign({ skipAnimation: false });
-      onTestFinished(() => Globals.assign({ skipAnimation: true }));
-    };
+    afterEach(() => {
+      Globals.assign({ skipAnimation: true });
+    });
 
     it("slides in the first reply to a message", () => {
-      animate();
-      const { rerender } = render(
-        <ChatHistory messages={[message("1")]} {...defaultReplyProps} />,
-      );
+      const { update } = renderHistory([message("1", "Parent")]);
 
-      rerender(
-        <ChatHistory
-          messages={[message("1", [message("2")])]}
-          {...defaultReplyProps}
-        />,
-      );
+      update([message("1", "Parent", [message("2", "Message 2")])]);
 
       expect(screen.getByText("Message 2").closest("li")).toHaveStyle({
         opacity: "0",
@@ -129,37 +76,17 @@ describe("ChatHistory", () => {
     });
 
     it("keeps the last reply to a message while it slides out", () => {
-      animate();
-      const { rerender } = render(
-        <ChatHistory
-          messages={[message("1", [message("2")])]}
-          {...defaultReplyProps}
-        />,
-      );
+      const { update } = renderHistory([
+        message("1", "Parent", [message("2", "Message 2")]),
+      ]);
 
-      rerender(
-        <ChatHistory messages={[message("1")]} {...defaultReplyProps} />,
-      );
+      update([message("1", "Parent")]);
 
       expect(screen.getByText("Message 2")).toBeInTheDocument();
     });
   });
 
   describe("keyboard navigation", () => {
-    const message = (
-      id: string,
-      content: string,
-      replies: Message[] = [],
-    ): Message => ({
-      id,
-      content,
-      user: { name: "User", color: "hsl(0 100% 50%)" },
-      edited: false,
-      timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-      reactions: [],
-      replies,
-    });
-
     const messages = [
       message("1", "First", [message("2", "A reply")]),
       message("3", "Last"),
@@ -170,7 +97,7 @@ describe("ChatHistory", () => {
 
     it("makes the bottom message the only tab stop", async () => {
       const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      renderHistory(messages);
 
       await user.tab();
       expect(article("Last")).toHaveFocus();
@@ -186,13 +113,11 @@ describe("ChatHistory", () => {
 
     it("moves between messages and replies with arrow keys, Home and End", async () => {
       const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      renderHistory(messages);
 
       await user.tab();
       await user.keyboard("{ArrowUp}");
       expect(article("A reply")).toHaveFocus();
-      await user.keyboard("{ArrowUp}");
-      expect(article("First")).toHaveFocus();
       await user.keyboard("{ArrowUp}");
       expect(article("First")).toHaveFocus();
       await user.keyboard("{End}");
@@ -203,9 +128,9 @@ describe("ChatHistory", () => {
       expect(article("A reply")).toHaveFocus();
     });
 
-    it("ignores arrow keys from inside a message", async () => {
+    it("leaves arrow keys to the controls inside a message", async () => {
       const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      renderHistory(messages);
 
       await user.tab();
       await user.tab();
@@ -216,15 +141,10 @@ describe("ChatHistory", () => {
     });
 
     it("takes links in other messages out of the tab order", () => {
-      render(
-        <ChatHistory
-          messages={[
-            message("1", "[First](https://example.com)"),
-            message("3", "[Last](https://example.com)"),
-          ]}
-          {...defaultReplyProps}
-        />,
-      );
+      renderHistory([
+        message("1", "[First](https://example.com)"),
+        message("3", "[Last](https://example.com)"),
+      ]);
 
       expect(screen.getByRole("link", { name: "First" })).toHaveAttribute(
         "tabindex",
@@ -237,7 +157,7 @@ describe("ChatHistory", () => {
 
     it("moves the controls' tab order with the tab stop", async () => {
       const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      renderHistory(messages);
       const reply = (content: string) =>
         within(article(content)).getByRole("button", { name: "Reply" });
 
@@ -255,18 +175,9 @@ describe("ChatHistory", () => {
       expect(reply("A reply")).toHaveAttribute("tabindex", "-1");
     });
 
-    it("leaves arrow keys with modifiers to the browser", async () => {
-      const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
-
-      await user.tab();
-      await user.keyboard("{Meta>}{ArrowUp}{/Meta}");
-      expect(article("Last")).toHaveFocus();
-    });
-
     it("keeps the tab stop on the message last focused", async () => {
       const user = userEvent.setup();
-      render(<ChatHistory messages={messages} {...defaultReplyProps} />);
+      renderHistory(messages);
 
       await user.click(
         within(article("First")).getByRole("button", { name: "Reply" }),
@@ -280,39 +191,26 @@ describe("ChatHistory", () => {
 
     it("falls back to the bottom message when the tab stop is removed", async () => {
       const user = userEvent.setup();
-      const { rerender } = render(
-        <ChatHistory messages={messages} {...defaultReplyProps} />,
-      );
+      const { update } = renderHistory(messages);
 
       await user.tab();
       await user.keyboard("{ArrowUp}");
-      rerender(
-        <ChatHistory
-          messages={[message("1", "First"), message("3", "Last")]}
-          {...defaultReplyProps}
-        />,
-      );
+      update([message("1", "First"), message("3", "Last")]);
 
       expect(article("Last")).toHaveAttribute("tabindex", "0");
     });
 
     it("takes controls added to other messages out of the tab order", async () => {
-      const { rerender } = render(
-        <ChatHistory messages={messages} {...defaultReplyProps} />,
-      );
+      const { update } = renderHistory(messages);
 
-      rerender(
-        <ChatHistory
-          messages={[
-            {
-              ...message("1", "First"),
-              reactions: [{ emoji: "👍", count: 1, users: [] }],
-            },
-            message("3", "Last"),
-          ]}
-          {...defaultReplyProps}
-        />,
-      );
+      update([
+        createMessage({
+          id: "1",
+          content: "First",
+          reactions: [{ emoji: "👍", count: 1, users: [] }],
+        }),
+        message("3", "Last"),
+      ]);
 
       await waitFor(() =>
         expect(

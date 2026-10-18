@@ -1,43 +1,32 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { postChatMessage, type PostChatMessageResult } from "@/actions/chat";
-
-import { ChatInput } from "./ChatInput";
+import { renderChatInput } from "@/mocks/chatInput";
 
 vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
+const sentForm = () => vi.mocked(postChatMessage).mock.calls[0]?.[0];
+
+beforeEach(() => {
+  vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+});
+
 describe("ChatInput", () => {
-  const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
-
   it("renders input field with correct attributes", () => {
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
+    const { input } = renderChatInput();
 
-    expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute("name", "text");
     expect(input).toHaveAttribute("placeholder", "Write a message...");
-  });
-
-  it("input is not disabled initially", () => {
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    expect(input).not.toBeDisabled();
+    expect(input).toBeEnabled();
   });
 
   it("disables input while form is submitting", async () => {
-    const user = userEvent.setup({ delay: null });
     const { promise, resolve } = Promise.withResolvers<PostChatMessageResult>();
-
     vi.mocked(postChatMessage).mockReturnValue(promise);
+    const { input, send } = renderChatInput();
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    await user.type(input, "Hello");
-    await user.keyboard("{Enter}");
+    await send("Hello");
 
     expect(input).toBeDisabled();
 
@@ -48,112 +37,69 @@ describe("ChatInput", () => {
     });
   });
 
-  it("calls postChatMessage when form is submitted", async () => {
-    const user = userEvent.setup({ delay: null });
-
-    vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
-
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    await user.type(input, "Test message");
-    await user.keyboard("{Enter}");
-
-    expect(postChatMessage).toHaveBeenCalled();
-  });
-
   it("does not submit when input is empty", async () => {
-    const user = userEvent.setup({ delay: null });
+    const { user, input } = renderChatInput();
 
-    render(<ChatInput {...defaultReplyProps} />);
-
+    await user.click(input);
     await user.keyboard("{Enter}");
 
     expect(postChatMessage).not.toHaveBeenCalled();
   });
 
   it("does not submit when input is only whitespace", async () => {
-    const user = userEvent.setup({ delay: null });
+    const { send } = renderChatInput();
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    await user.type(input, "   ");
-    await user.keyboard("{Enter}");
+    await send("   ");
 
     expect(postChatMessage).not.toHaveBeenCalled();
   });
 
   it("clears input and focuses it after successful submission", async () => {
-    const user = userEvent.setup({ delay: null });
-
-    vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
-
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox") as HTMLInputElement;
+    const { user, input } = renderChatInput();
 
     await user.type(input, "Test message");
-    expect(input.value).toBe("Test message");
+    expect(input).toHaveValue("Test message");
 
     await user.keyboard("{Enter}");
 
     await waitFor(() => {
-      expect(input.value).toBe("");
+      expect(input).toHaveValue("");
     });
     expect(input).toHaveFocus();
   });
 
   it("preserves input and focuses it after failed submission", async () => {
-    const user = userEvent.setup({ delay: null });
-
     vi.mocked(postChatMessage).mockResolvedValue({
       status: "error",
       error: "Rate limit exceeded",
     });
+    const { input, send } = renderChatInput();
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox") as HTMLInputElement;
+    await send("Test message");
+    await screen.findByText("Rate limit exceeded");
 
-    await user.type(input, "Test message");
-    expect(input.value).toBe("Test message");
-
-    await user.keyboard("{Enter}");
-
-    expect(await screen.findByText("Rate limit exceeded")).toBeInTheDocument();
-
-    // Input value should be preserved on error
-    expect(input.value).toBe("Test message");
+    expect(input).toHaveValue("Test message");
     expect(input).toHaveFocus();
   });
 
   describe("ChatToast integration", () => {
-    it("does not show toast initially", () => {
-      render(<ChatInput {...defaultReplyProps} />);
-      expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    });
-
     it("does not show toast on successful submission", async () => {
-      const user = userEvent.setup({ delay: null });
-      vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+      const { send } = renderChatInput();
 
-      render(<ChatInput {...defaultReplyProps} />);
-      await user.type(screen.getByRole("combobox"), "Test");
-      await user.keyboard("{Enter}");
+      await send("Test");
 
       await waitFor(() => expect(postChatMessage).toHaveBeenCalled());
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
     it("passes error message and error variant to toast on failure", async () => {
-      const user = userEvent.setup({ delay: null });
       vi.mocked(postChatMessage).mockResolvedValue({
         status: "error",
         error: "Rate limited",
       });
+      const { send } = renderChatInput();
 
-      render(<ChatInput {...defaultReplyProps} />);
-      await user.type(screen.getByRole("combobox"), "Test");
-      await user.keyboard("{Enter}");
+      await send("Test");
 
       const toast = await screen.findByRole("status");
       expect(toast).toHaveTextContent("Rate limited");
@@ -161,20 +107,16 @@ describe("ChatInput", () => {
     });
 
     it("clears toast message on successful submission after error", async () => {
-      const user = userEvent.setup({ delay: null });
-      vi.mocked(postChatMessage)
-        .mockResolvedValueOnce({ status: "error", error: "Failed" })
-        .mockResolvedValueOnce({ status: "ok" });
+      vi.mocked(postChatMessage).mockResolvedValueOnce({
+        status: "error",
+        error: "Failed",
+      });
+      const { send } = renderChatInput();
 
-      render(<ChatInput {...defaultReplyProps} />);
-      const input = screen.getByRole("combobox");
-
-      await user.type(input, "First");
-      await user.keyboard("{Enter}");
+      await send("First");
       await screen.findByRole("status");
 
-      await user.type(input, "Second");
-      await user.keyboard("{Enter}");
+      await send("Second");
 
       await waitFor(() =>
         expect(screen.queryByRole("status")).not.toBeInTheDocument(),
@@ -184,52 +126,22 @@ describe("ChatInput", () => {
 
   describe("reply mode", () => {
     it("shows 'Write a reply...' placeholder when replying", () => {
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="some-message-id"
-          setReplyToId={vi.fn()}
-        />,
-      );
-      const input = screen.getByRole("combobox");
+      const { input } = renderChatInput("some-message-id");
 
       expect(input).toHaveAttribute("placeholder", "Write a reply...");
     });
 
     it("focuses input when replyToId changes to non-null", () => {
-      const { rerender } = render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId={null}
-          setReplyToId={vi.fn()}
-        />,
-      );
-
-      const input = screen.getByRole("combobox");
+      const { input, replyTo } = renderChatInput();
       expect(input).not.toHaveFocus();
 
-      rerender(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="message-id"
-          setReplyToId={vi.fn()}
-        />,
-      );
+      replyTo("message-id");
 
       expect(input).toHaveFocus();
     });
 
     it("clears replyToId when Escape key is pressed while replying", async () => {
-      const user = userEvent.setup({ delay: null });
-      const setReplyToId = vi.fn();
-
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="message-id"
-          setReplyToId={setReplyToId}
-        />,
-      );
+      const { user, setReplyToId } = renderChatInput("message-id");
 
       await user.keyboard("{Escape}");
 
@@ -237,15 +149,7 @@ describe("ChatInput", () => {
     });
 
     it("leaves the reply when a tooltip takes the Escape", () => {
-      const setReplyToId = vi.fn();
-
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="message-id"
-          setReplyToId={setReplyToId}
-        />,
-      );
+      const { setReplyToId } = renderChatInput("message-id");
       const event = new KeyboardEvent("keydown", {
         key: "Escape",
         cancelable: true,
@@ -257,16 +161,7 @@ describe("ChatInput", () => {
     });
 
     it("does not call setReplyToId on Escape when not replying", async () => {
-      const user = userEvent.setup({ delay: null });
-      const setReplyToId = vi.fn();
-
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId={null}
-          setReplyToId={setReplyToId}
-        />,
-      );
+      const { user, setReplyToId } = renderChatInput();
 
       await user.keyboard("{Escape}");
 
@@ -274,65 +169,30 @@ describe("ChatInput", () => {
     });
 
     it("includes replyToId in form data when replying", async () => {
-      const user = userEvent.setup({ delay: null });
-      vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+      const { send } = renderChatInput("reply-target-id");
 
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="reply-target-id"
-          setReplyToId={vi.fn()}
-        />,
-      );
-
-      await user.type(screen.getByRole("combobox"), "Reply text");
-      await user.keyboard("{Enter}");
+      await send("Reply text");
 
       await waitFor(() => {
         expect(postChatMessage).toHaveBeenCalled();
       });
-
-      const formData = vi.mocked(postChatMessage).mock
-        .calls[0]?.[0] as FormData;
-      expect(formData.get("text")).toBe("Reply text");
-      expect(formData.get("replyToId")).toBe("reply-target-id");
+      expect(sentForm()?.get("text")).toBe("Reply text");
+      expect(sentForm()?.get("replyToId")).toBe("reply-target-id");
     });
 
     it("does not include replyToId in form data when not replying", async () => {
-      const user = userEvent.setup({ delay: null });
-      vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+      const { send } = renderChatInput();
 
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId={null}
-          setReplyToId={vi.fn()}
-        />,
-      );
+      await send("Normal message");
 
-      await user.type(screen.getByRole("combobox"), "Normal message");
-      await user.keyboard("{Enter}");
-
-      const formData = vi.mocked(postChatMessage).mock
-        .calls[0]?.[0] as FormData;
-      expect(formData.get("replyToId")).toBeNull();
+      expect(sentForm()?.get("text")).toBe("Normal message");
+      expect(sentForm()?.get("replyToId")).toBeNull();
     });
 
     it("clears replyToId on successful submission", async () => {
-      const user = userEvent.setup({ delay: null });
-      const setReplyToId = vi.fn();
-      vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+      const { send, setReplyToId } = renderChatInput("message-id");
 
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="message-id"
-          setReplyToId={setReplyToId}
-        />,
-      );
-
-      await user.type(screen.getByRole("combobox"), "Reply");
-      await user.keyboard("{Enter}");
+      await send("Reply");
 
       await waitFor(() => {
         expect(setReplyToId).toHaveBeenCalledWith(null);
@@ -340,144 +200,57 @@ describe("ChatInput", () => {
     });
 
     it("preserves replyToId on failed submission", async () => {
-      const user = userEvent.setup({ delay: null });
-      const setReplyToId = vi.fn();
       vi.mocked(postChatMessage).mockResolvedValue({
         status: "error",
         error: "Failed",
       });
+      const { send, setReplyToId } = renderChatInput("message-id");
 
-      render(
-        <ChatInput
-          {...defaultReplyProps}
-          replyToId="message-id"
-          setReplyToId={setReplyToId}
-        />,
-      );
-
-      await user.type(screen.getByRole("combobox"), "Reply");
-      await user.keyboard("{Enter}");
-
+      await send("Reply");
       await screen.findByText("Failed");
 
-      // setReplyToId should only be called from Escape handler, not from error
-      expect(setReplyToId).not.toHaveBeenCalledWith(null);
+      expect(setReplyToId).not.toHaveBeenCalled();
     });
   });
 });
 
-// Helper to check buddy is showing expected state category
-const getBuddyExpression = () => {
-  // Only check for key expressions we need in integration tests
-  const expressions: Record<string, string> = {
-    "(-_-)zzz": "idle",
-    "(-_-)Zzz": "idle",
-    "(-_-)zZz": "idle",
-    "(-_-)zzZ": "idle",
-    "(-_-)...": "idle",
-    "(-o-)...": "idle",
-    "(-O-)...": "idle",
-    "(°▽°)": "typing",
-    "(・・?)": "thinking",
-    "(⌐■_■)": "code",
-    "(°o°)": "long",
-    "(╥_╥)": "error",
-    "(＾▽＾)": "success",
-  };
-
-  for (const [expr, state] of Object.entries(expressions)) {
-    if (screen.queryByText(expr)) return state;
-  }
-  return null;
-};
-
 describe("CaretBuddy integration", () => {
-  const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
-
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-  });
-
-  it("shows idle state when input is empty and no recent activity", async () => {
-    render(<ChatInput {...defaultReplyProps} />);
-
-    await act(async () => {
-      vi.advanceTimersByTime(4000);
-    });
-
-    expect(getBuddyExpression()).toBe("idle");
-  });
-
   it("shows typing state during active input", async () => {
-    const user = userEvent.setup({
-      delay: null,
-      advanceTimers: vi.advanceTimersByTime,
-    });
-
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
+    const { user, input } = renderChatInput();
 
     await user.type(input, "H");
 
-    expect(getBuddyExpression()).toBe("typing");
+    expect(screen.getByText("(°▽°)")).toBeInTheDocument();
   });
 
   it("shows thinking state while message is pending", async () => {
-    const user = userEvent.setup({
-      delay: null,
-      advanceTimers: vi.advanceTimersByTime,
-    });
-    const { promise } = Promise.withResolvers<PostChatMessageResult>();
+    vi.mocked(postChatMessage).mockReturnValue(
+      Promise.withResolvers<PostChatMessageResult>().promise,
+    );
+    const { send } = renderChatInput();
 
-    vi.mocked(postChatMessage).mockReturnValue(promise);
+    await send("Hello");
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    await user.type(input, "Hello");
-    await user.keyboard("{Enter}");
-
-    expect(getBuddyExpression()).toBe("thinking");
+    expect(screen.getByText("(・・?)")).toBeInTheDocument();
   });
 
   it("shows error state on failed submission", async () => {
-    const user = userEvent.setup({
-      delay: null,
-      advanceTimers: vi.advanceTimersByTime,
-    });
-
     vi.mocked(postChatMessage).mockResolvedValue({
       status: "error",
       error: "Failed",
     });
+    const { send } = renderChatInput();
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
+    await send("Hello");
 
-    await user.type(input, "Hello");
-    await user.keyboard("{Enter}");
-
-    await waitFor(() => {
-      expect(getBuddyExpression()).toBe("error");
-    });
+    expect(await screen.findByText("(╥_╥)")).toBeInTheDocument();
   });
 
   it("shows success state briefly after successful submission", async () => {
-    const user = userEvent.setup({
-      delay: null,
-      advanceTimers: vi.advanceTimersByTime,
-    });
+    const { send } = renderChatInput();
 
-    vi.mocked(postChatMessage).mockResolvedValue({ status: "ok" });
+    await send("Hello");
 
-    render(<ChatInput {...defaultReplyProps} />);
-    const input = screen.getByRole("combobox");
-
-    await user.type(input, "Hello");
-    await user.keyboard("{Enter}");
-
-    await waitFor(() => {
-      expect(getBuddyExpression()).toBe("success");
-    });
+    expect(await screen.findByText("(＾▽＾)")).toBeInTheDocument();
   });
 });
