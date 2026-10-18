@@ -1,6 +1,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { SKIN_TONES } from "@/lib/emoji";
+
 import { setSkinTone, useSkinTone } from "./skinTone";
 
 afterEach(() => {
@@ -11,7 +13,15 @@ describe("useSkinTone", () => {
   it("starts at the default, ignoring a stored value out of range", () => {
     localStorage.setItem("skin-tone", "9");
 
-    expect(renderHook(useSkinTone).result.current).toBe(0);
+    expect(renderHook(useSkinTone).result.current).toBe(SKIN_TONES[0]);
+  });
+
+  it("starts at the default where storage can't be read", () => {
+    vi.spyOn(localStorage, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+
+    expect(renderHook(useSkinTone).result.current).toBe(SKIN_TONES[0]);
   });
 
   it("follows a tone picked in another tab", () => {
@@ -22,20 +32,19 @@ describe("useSkinTone", () => {
       window.dispatchEvent(new StorageEvent("storage", { key: "skin-tone" }));
     });
 
-    expect(result.current).toBe(4);
+    expect(result.current).toBe(SKIN_TONES[4]);
   });
 
-  it("keeps a tone for the visit when storage throws", () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("blocked");
-    });
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new Error("blocked");
+  // Last: the unsaved pick stays for the rest of the file, as for the visit.
+  it("keeps a pick storage won't save for the visit", () => {
+    localStorage.setItem("skin-tone", "1");
+    vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("full");
     });
     const { result } = renderHook(useSkinTone);
 
-    act(() => setSkinTone(3));
+    act(() => setSkinTone(SKIN_TONES[3]));
 
-    expect(result.current).toBe(3);
+    expect(result.current).toBe(SKIN_TONES[3]);
   });
 });

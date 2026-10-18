@@ -47,23 +47,23 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
         aria-expanded={choosing}
         onClick={() => setChoosing(!choosing)}
       >
-        {withSkinTone(HAND, SKIN_TONES[tone]?.modifier ?? "")}
+        {withSkinTone(HAND, tone.modifier)}
       </TooltipButton>
       {choosing &&
-        SKIN_TONES.map(({ name, modifier }, index) => (
+        SKIN_TONES.map((option) => (
           <TooltipButton
-            key={name}
-            ref={index === tone ? focus : undefined}
-            tooltip={name}
+            key={option.name}
+            ref={option === tone ? focus : undefined}
+            tooltip={option.name}
             anchor={picker}
-            aria-pressed={index === tone}
+            aria-pressed={option === tone}
             onClick={() => {
-              setSkinTone(index);
+              setSkinTone(option);
               setChoosing(false);
               toggle.current?.focus();
             }}
           >
-            {withSkinTone(HAND, modifier)}
+            {withSkinTone(HAND, option.modifier)}
           </TooltipButton>
         ))}
     </>
@@ -78,7 +78,7 @@ const ReactionEmoji = ({
   picker: string;
 }) => {
   const { react } = use(ChatReactionsContext);
-  const modifier = SKIN_TONES[useSkinTone()]?.modifier ?? "";
+  const { modifier } = useSkinTone();
 
   return REACTION_EMOJI.map(({ emoji, name }) => {
     const toned = withSkinTone(emoji, modifier);
