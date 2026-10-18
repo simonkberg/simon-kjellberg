@@ -64,6 +64,15 @@ describe("ChatEmojiInput", () => {
     expect(postChatMessage).not.toHaveBeenCalled();
   });
 
+  it("opens right after an emoji", async () => {
+    const { user, input } = renderChatInput();
+
+    await user.type(input, "🅰️:fire");
+
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+    expect(options()).toBe("🔥🧑‍🚒");
+  });
+
   it("moves the choice with the arrow keys and picks it with Tab", async () => {
     const { user, input } = renderChatInput();
 
@@ -266,7 +275,7 @@ describe("ChatEmojiInput", () => {
     );
   });
 
-  it.each(["12:30", "https://simon.dev", ":)", ":zzz"])(
+  it.each(["12:30", "https://simon.dev", "std::fi", ":)", ":zzz"])(
     "stays closed for %s",
     async (text) => {
       const { user, input } = renderChatInput();

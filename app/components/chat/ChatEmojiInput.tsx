@@ -18,7 +18,8 @@ import { loadShortcodes, reloadShortcodes } from "./shortcodes";
 
 const LIMIT = 24;
 
-const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
+// Not after a letter, digit or colon, so it opens after an emoji but not in "12:30" or "std::fi".
+const SHORTCODE = /(?<![\p{L}\p{N}_:]):([\w+-]*)$/u;
 
 /** The shortcode typed up to the caret, without its colon, and where it starts with its colon. */
 function typedShortcode(input: HTMLInputElement) {
