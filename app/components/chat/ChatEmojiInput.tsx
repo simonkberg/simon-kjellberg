@@ -43,7 +43,7 @@ function completeShortcode(
   byName: Map<string, string>,
 ) {
   // A typed colon leaves the caret right after it.
-  const caret = input.selectionEnd ?? 0;
+  const caret = input.selectionEnd!;
   const before = input.value.slice(0, caret);
   const name = COMPLETED.exec(before)?.[1];
   const glyph = name && byName.get(name);
