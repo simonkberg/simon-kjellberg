@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
     request.headers.get("host");
   if (origin === null || URL.parse(origin)?.host !== host) {
     log.warn({ origin, host, action: "reactToChatMessage" }, "Refused origin");
-    return new NextResponse(null, { status: 403 });
+    return respond(
+      { status: "error", error: "Reactions only come from this site" },
+      403,
+    );
   }
 
   // The proxy doesn't run on /api, so a visitor without a page's session has none.

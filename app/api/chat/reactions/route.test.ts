@@ -137,7 +137,10 @@ describe("POST /api/chat/reactions", () => {
   ])("refuses a request %s", async (_, headers, logged) => {
     const response = await react({ messageId: "123", emoji: "👍" }, headers);
 
-    expect(response.status).toBe(403);
+    expect(await result(response)).toEqual({
+      status: 403,
+      body: { status: "error", error: "Reactions only come from this site" },
+    });
     expect(addBotReaction).not.toHaveBeenCalled();
     expect(log.warn).toHaveBeenCalledWith(
       expect.objectContaining(logged),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { startTransition, use, useState } from "react";
+import { use, useState } from "react";
 
 import type { ChatHistoryResult } from "@/actions/chat";
 import ChatMessage from "@/components/chat/ChatMessage";
@@ -74,42 +74,90 @@ function withOwnReaction(
   });
 }
 
-const REACTION_FAILED: ReactionResult = {
-  status: "error",
-  error: "Failed to react to chat message",
-};
+/** The route's answer, or `unknown` when there was none to read and the toggle may have been saved. */
+type ReactionOutcome = ReactionResult | { status: "unknown"; error: string };
+
+function readResult(body: unknown, ok: boolean): ReactionResult | null {
+  if (typeof body !== "object" || body === null || !("status" in body)) {
+    return null;
+  }
+  if (body.status === "ok" && ok) return { status: "ok" };
+  if (
+    body.status === "error" &&
+    "error" in body &&
+    typeof body.error === "string"
+  ) {
+    return { status: "error", error: body.error };
+  }
+  return null;
+}
 
 async function postReaction(
   messageId: string,
   emoji: string,
-): Promise<ReactionResult> {
+): Promise<ReactionOutcome> {
+  let response: Response;
   try {
-    const response = await fetch("/api/chat/reactions", {
+    response = await fetch("/api/chat/reactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageId, emoji }),
       // Past the rate-limit gate's 30s, so only a hung connection gives up.
       signal: AbortSignal.timeout(45_000),
     });
-    const body: unknown = await response.json();
-    if (typeof body !== "object" || body === null || !("status" in body)) {
-      return REACTION_FAILED;
-    }
-    if (body.status === "ok" && response.ok) return { status: "ok" };
-    if (
-      body.status === "error" &&
-      "error" in body &&
-      typeof body.error === "string"
-    ) {
-      return { status: "error", error: body.error };
-    }
-    return REACTION_FAILED;
   } catch {
-    return REACTION_FAILED;
+    return { status: "unknown", error: "Failed to react to chat message" };
   }
+  const result = readResult(
+    await response.json().catch(() => null),
+    response.ok,
+  );
+  return (
+    result ?? {
+      status: "unknown",
+      error: response.ok
+        ? "Failed to react to chat message"
+        : `Failed to react to chat message (HTTP ${response.status})`,
+    }
+  );
 }
 
-const NOT_REACTING: ReadonlyMap<string, OwnReaction> = new Map();
+interface PendingReaction extends OwnReaction {
+  /** Set once the request settles: how many more histories it shows over, unless one has it. */
+  waits?: number;
+}
+
+const NOT_REACTING: ReadonlyMap<string, PendingReaction> = new Map();
+
+function hasOwnReaction(
+  messages: Message[],
+  messageId: string,
+  { emoji, mine }: OwnReaction,
+) {
+  const reaction = findMessageById(messages, messageId)?.reactions.find(
+    (candidate) => candidate.emoji === emoji,
+  );
+  return Boolean(reaction?.mine) === mine;
+}
+
+/** Drops settled reactions the new history shows, or that have waited out their histories. */
+function afterHistory(
+  pending: ReadonlyMap<string, PendingReaction>,
+  messages: Message[],
+): ReadonlyMap<string, PendingReaction> {
+  const next = new Map<string, PendingReaction>();
+  for (const [messageId, reaction] of pending) {
+    if (reaction.waits === undefined) {
+      next.set(messageId, reaction);
+    } else if (
+      reaction.waits > 1 &&
+      !hasOwnReaction(messages, messageId, reaction)
+    ) {
+      next.set(messageId, { ...reaction, waits: reaction.waits - 1 });
+    }
+  }
+  return next;
+}
 
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
@@ -129,7 +177,13 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     message: string;
     count: number;
   }>();
-  let messages = result.status === "ok" ? result.messages : [];
+  const [shownResult, setShownResult] = useState(result);
+  const serverMessages = result.status === "ok" ? result.messages : [];
+  if (shownResult !== result) {
+    setShownResult(result);
+    setPending((current) => afterHistory(current, serverMessages));
+  }
+  let messages = serverMessages;
   for (const [messageId, own] of pending) {
     messages = withOwnReaction(messages, messageId, own);
   }
@@ -142,21 +196,25 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     )?.mine;
     setPending((current) => new Map(current).set(messageId, { emoji, mine }));
     void postReaction(messageId, emoji).then((reaction) => {
-      // One transition, so the toggle shows until the refreshed history replaces it.
-      startTransition(() => {
-        setPending((current) => {
-          const next = new Map(current);
+      setPending((current) => {
+        const next = new Map(current);
+        // A rejected toggle changed nothing; any other shows until a history has it.
+        if (reaction.status === "error") {
           next.delete(messageId);
-          return next;
-        });
-        setReactionError((previous) =>
-          reaction.status === "error"
-            ? { message: reaction.error, count: (previous?.count ?? 0) + 1 }
-            : undefined,
-        );
-        // Even on failure: a timeout or dropped connection may follow a saved toggle.
-        router.refresh();
+        } else {
+          // A history already on its way when a saved toggle settles can still lack it.
+          const waits = reaction.status === "ok" ? 2 : 1;
+          next.set(messageId, { emoji, mine, waits });
+        }
+        return next;
       });
+      setReactionError((previous) =>
+        reaction.status === "ok"
+          ? undefined
+          : { message: reaction.error, count: (previous?.count ?? 0) + 1 },
+      );
+      // Even on failure: a timeout or dropped connection may follow a saved toggle.
+      router.refresh();
     });
   };
 

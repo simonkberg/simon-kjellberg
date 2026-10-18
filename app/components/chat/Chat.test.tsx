@@ -198,6 +198,23 @@ describe("Chat", () => {
 
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
+    const saved: Reaction[] = [
+      { emoji: "👍", count: 2, users: [], mine: true },
+    ];
+
+    // A new history, as router.refresh would bring.
+    const refreshWith = (
+      rerender: (ui: React.ReactNode) => void,
+      reactions: Reaction[],
+    ) =>
+      act(async () =>
+        rerender(
+          chatElement({
+            status: "ok",
+            messages: [createMessage({ reactions })],
+          }),
+        ),
+      );
 
     const renderReactions = (reactions: Reaction[]) =>
       act(async () =>
@@ -410,18 +427,13 @@ describe("Chat", () => {
         if (messageId === "msg-1") await promise;
         return ok();
       });
-      await act(async () =>
+      const other = (reactions: Reaction[]) =>
+        createMessage({ id: "msg-2", content: "Other", reactions });
+      const { rerender } = await act(async () =>
         render(
           chatElement({
             status: "ok",
-            messages: [
-              createMessage({ reactions: thumbs }),
-              createMessage({
-                id: "msg-2",
-                content: "Other",
-                reactions: thumbs,
-              }),
-            ],
+            messages: [createMessage({ reactions: thumbs }), other(thumbs)],
           }),
         ),
       );
@@ -429,45 +441,92 @@ describe("Chat", () => {
       const [slow, quick] = screen.getAllByRole("button", { name: "👍 1" });
       await userEvent.click(slow!);
       await userEvent.click(quick!);
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      await act(async () =>
+        rerender(
+          chatElement({
+            status: "ok",
+            messages: [createMessage({ reactions: thumbs }), other(saved)],
+          }),
+        ),
+      );
 
       const [busy, free] = screen.getAllByRole("button", {
         name: "Add reaction",
       });
-      await waitFor(() => expect(free).toBeEnabled());
       expect(busy).toBeDisabled();
-      expect(router.refresh).toHaveBeenCalledOnce();
+      expect(free).toBeEnabled();
       await act(async () => resolve());
     });
 
-    it("sends the toggle and refreshes the history once it is taken", async () => {
+    it("keeps a saved reaction until the refreshed history has it", async () => {
       answer(ok);
-      await renderReactions(thumbs);
+      const { rerender } = await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
 
-      await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Add reaction" }),
-        ).toBeEnabled(),
-      );
-      expect(router.refresh).toHaveBeenCalledOnce();
       expect(requests).toEqual([{ messageId: "msg-1", emoji: "👍" }]);
+      expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
+      await refreshWith(rerender, saved);
+      const pill = screen.getByRole("button", { name: "👍 2" });
+      expect(pill).toBeEnabled();
+      expect(pill).toHaveAttribute("aria-pressed", "true");
+    });
+
+    it("keeps a saved reaction over a history requested before it", async () => {
+      answer(ok);
+      const { rerender } = await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      await refreshWith(rerender, thumbs);
+
+      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      // One more without it means the history really lacks it, as when another tab took it back.
+      await refreshWith(rerender, thumbs);
+      expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled();
     });
 
     it.each([
       {
         failure: "the server turns it away",
-        respond: () =>
-          HttpResponse.json<ReactionResult>(
-            { status: "error", error: "Rate limit exceeded." },
-            { status: 429 },
-          ),
+        status: 429,
         error: "Rate limit exceeded.",
       },
       {
-        failure: "the response isn't a result",
-        respond: () => new HttpResponse(null, { status: 403 }),
-        error: "Failed to react to chat message",
+        failure: "Discord has too many emoji on it",
+        status: 400,
+        error: "Discord allows 20 emoji per message",
+      },
+    ])(
+      "puts the reaction back at once and says why when $failure",
+      async ({ status, error }) => {
+        answer(() =>
+          HttpResponse.json<ReactionResult>(
+            { status: "error", error },
+            { status },
+          ),
+        );
+        await renderReactions(thumbs);
+
+        await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+        expect(await screen.findByText(error)).toBeInTheDocument();
+        const pill = screen.getByRole("button", { name: "👍 1" });
+        expect(pill).toHaveAttribute("aria-pressed", "false");
+        expect(pill).toBeEnabled();
+      },
+    );
+
+    it.each([
+      {
+        failure: "a proxy answers without a result",
+        respond: () => new HttpResponse("<html>", { status: 502 }),
+        error: "Failed to react to chat message (HTTP 502)",
       },
       {
         failure: "the result isn't one it knows",
@@ -482,13 +541,13 @@ describe("Chat", () => {
       {
         failure: "the error has no message",
         respond: () => HttpResponse.json({ status: "error" }, { status: 500 }),
-        error: "Failed to react to chat message",
+        error: "Failed to react to chat message (HTTP 500)",
       },
       {
         failure: "the status says it failed",
         respond: () =>
           HttpResponse.json<ReactionResult>({ status: "ok" }, { status: 500 }),
-        error: "Failed to react to chat message",
+        error: "Failed to react to chat message (HTTP 500)",
       },
       {
         failure: "the request itself fails",
@@ -496,20 +555,21 @@ describe("Chat", () => {
         error: "Failed to react to chat message",
       },
     ])(
-      "puts the reaction back and says why when $failure",
+      "says why and leaves the outcome to the refreshed history when $failure",
       async ({ respond, error }) => {
         answer(respond);
-        await renderReactions(thumbs);
+        const { rerender } = await renderReactions(thumbs);
 
         await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
         expect(await screen.findByText(error)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
-          "aria-pressed",
-          "false",
-        );
-        // The toggle may have been saved before it failed, so the history is reloaded.
+        // The toggle may have been saved before it failed, so the history decides.
         expect(router.refresh).toHaveBeenCalledOnce();
+        expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
+        await refreshWith(rerender, thumbs);
+        const pill = screen.getByRole("button", { name: "👍 1" });
+        expect(pill).toHaveAttribute("aria-pressed", "false");
+        expect(pill).toBeEnabled();
       },
     );
 

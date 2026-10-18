@@ -157,7 +157,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
   A toggle POSTs to `app/api/chat/reactions/`, not a server action: the mirror can wait 30s
   on Discord's rate limit, and a pending action or async transition holds every other one.
-  The route checks Origin against Host itself, as Next does for actions.
+  The route checks Origin against Host itself, as Next does for actions. The client shows a
+  toggle until a refreshed history has it, unless the route rejected it.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
