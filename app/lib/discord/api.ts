@@ -585,8 +585,10 @@ export async function postChannelMessage(
   username: Username,
   replyToMessageId?: string,
 ): Promise<string> {
+  // Loaded on first post, so pages that only read chat don't bundle the emoji data.
+  const { emojify } = await import("@/lib/shortcodes");
   const body = {
-    content: `${username}: ${text}`,
+    content: `${username}: ${emojify(text)}`,
     // A reply to a message deleted meanwhile goes out as a plain message.
     message_reference: replyToMessageId
       ? { message_id: replyToMessageId, fail_if_not_exists: false }
