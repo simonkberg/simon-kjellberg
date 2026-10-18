@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import emojibase from "emojibase-data/en/data.json" with { type: "json" };
 import { expect, it } from "vitest";
 
 const value = /prop: "unicode-range",\s*value:\s*"([^"]*)"/.exec(
-  readFileSync("app/assets/fonts.ts", "utf8"),
+  readFileSync(join(import.meta.dirname, "fonts.ts"), "utf8"),
 )?.[1];
 if (value === undefined) throw new Error("No unicode-range in fonts.ts");
 

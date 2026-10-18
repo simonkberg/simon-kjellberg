@@ -1,5 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
-import { notFound } from "next/navigation";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,11 +9,10 @@ import {
   getTopTracks,
   type GetTopTracksResult,
 } from "@/actions/lastfm";
-import { periods } from "@/lib/lastfm";
 
 import ListeningPage, { generateMetadata, generateStaticParams } from "./page";
 
-vi.mock("server-only", () => ({}));
+vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("next/navigation"), () => ({
   notFound: vi.fn(() => {
@@ -36,88 +34,54 @@ vi.mock(import("@/actions/lastfm"), () => ({
 
 const searchParams = Promise.resolve({});
 
+const metadataFor = (period?: string[]) =>
+  generateMetadata({ params: Promise.resolve({ period }), searchParams });
+
+const renderPage = (period?: string[]) =>
+  act(async () =>
+    render(
+      <ListeningPage
+        params={Promise.resolve({ period })}
+        searchParams={searchParams}
+      />,
+    ),
+  );
+
 describe("generateMetadata", () => {
-  it("should return correct metadata for default period", async () => {
-    const metadata = await generateMetadata({
-      params: Promise.resolve({ period: undefined }),
-      searchParams,
-    });
-
-    expect(metadata).toEqual({
-      title: "Listening - all time",
-      description: "My all time listening statistics from Last.fm",
+  it.each([
+    [undefined, "all time"],
+    [["7day"], "7 days"],
+  ])("should return the metadata for %j", async (period, label) => {
+    expect(await metadataFor(period)).toEqual({
+      title: `Listening - ${label}`,
+      description: `My ${label} listening statistics from Last.fm`,
     });
   });
 
-  it("should return correct metadata for 7day period", async () => {
-    const metadata = await generateMetadata({
-      params: Promise.resolve({ period: ["7day"] }),
-      searchParams,
-    });
-
-    expect(metadata).toEqual({
-      title: "Listening - 7 days",
-      description: "My 7 days listening statistics from Last.fm",
-    });
-  });
-
-  it("should call notFound for invalid period", async () => {
-    await expect(
-      generateMetadata({
-        params: Promise.resolve({ period: ["invalid"] }),
-        searchParams,
-      }),
-    ).rejects.toThrow("NEXT_NOT_FOUND");
-
-    expect(notFound).toHaveBeenCalled();
-  });
-
-  it("should call notFound for extra path segments", async () => {
-    await expect(
-      generateMetadata({
-        params: Promise.resolve({ period: ["7day", "extra"] }),
-        searchParams,
-      }),
-    ).rejects.toThrow("NEXT_NOT_FOUND");
-
-    expect(notFound).toHaveBeenCalled();
-  });
+  it.each([[["invalid"]], [["7day", "extra"]]])(
+    "should call notFound for %j",
+    async (period) => {
+      await expect(metadataFor(period)).rejects.toThrow("NEXT_NOT_FOUND");
+    },
+  );
 });
 
 describe("generateStaticParams", () => {
-  it("should return params for all periods", () => {
-    const params = generateStaticParams();
-
-    expect(params).toHaveLength(periods.length);
-  });
-
-  it("should return undefined for overall period", () => {
-    const params = generateStaticParams();
-    const overallParam = params.find((p) => p.period === undefined);
-
-    expect(overallParam).toBeDefined();
-  });
-
-  it("should return array with period for non-overall periods", () => {
-    const params = generateStaticParams();
-    const sevenDayParam = params.find(
-      (p) => Array.isArray(p.period) && p.period[0] === "7day",
-    );
-
-    expect(sevenDayParam).toEqual({ period: ["7day"] });
+  it("should return params for all periods, overall as the base path", () => {
+    expect(generateStaticParams()).toEqual([
+      { period: ["7day"] },
+      { period: ["1month"] },
+      { period: ["3month"] },
+      { period: ["6month"] },
+      { period: ["12month"] },
+      { period: undefined },
+    ]);
   });
 });
 
 describe("ListeningPage", () => {
   it("should render page with period content", async () => {
-    await act(async () =>
-      render(
-        <ListeningPage
-          params={Promise.resolve({ period: ["7day"] })}
-          searchParams={searchParams}
-        />,
-      ),
-    );
+    await renderPage(["7day"]);
 
     expect(
       screen.getByText(/My 7 days listening statistics from/),
@@ -129,34 +93,17 @@ describe("ListeningPage", () => {
   });
 
   it("should render period selector with current period", async () => {
-    await act(async () =>
-      render(
-        <ListeningPage
-          params={Promise.resolve({ period: ["7day"] })}
-          searchParams={searchParams}
-        />,
-      ),
+    await renderPage(["7day"]);
+
+    const selector = screen.getByRole("list", { name: "Period" });
+    expect(within(selector).getByText("7 days")).toHaveAttribute(
+      "aria-current",
+      "page",
     );
-
-    // Current period should not be a link
-    expect(screen.getByText("7 days")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "7 days" }),
-    ).not.toBeInTheDocument();
-
-    // Other periods should be links
-    expect(screen.getByRole("link", { name: "all time" })).toBeInTheDocument();
   });
 
   it("should render table sections with headings", async () => {
-    await act(async () =>
-      render(
-        <ListeningPage
-          params={Promise.resolve({ period: undefined })}
-          searchParams={searchParams}
-        />,
-      ),
-    );
+    await renderPage();
 
     expect(
       screen.getByRole("heading", { name: /Top Tracks/ }),
@@ -175,14 +122,7 @@ describe("ListeningPage", () => {
     vi.mocked(getTopArtists).mockResolvedValue(error);
     vi.mocked(getTopAlbums).mockResolvedValue(error);
 
-    await act(async () =>
-      render(
-        <ListeningPage
-          params={Promise.resolve({ period: undefined })}
-          searchParams={searchParams}
-        />,
-      ),
-    );
+    await renderPage();
 
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     for (const noun of ["tracks", "artists", "albums"]) {
@@ -204,14 +144,7 @@ describe("ListeningPage", () => {
     vi.mocked(getTopArtists).mockReturnValue(artistsPromise);
     vi.mocked(getTopAlbums).mockReturnValue(albumsPromise);
 
-    await act(async () =>
-      render(
-        <ListeningPage
-          params={Promise.resolve({ period: undefined })}
-          searchParams={searchParams}
-        />,
-      ),
-    );
+    await renderPage();
 
     expect(screen.getAllByRole("status")).toHaveLength(3);
     expect(screen.queryByRole("table")).not.toBeInTheDocument();

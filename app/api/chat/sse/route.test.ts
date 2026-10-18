@@ -1,5 +1,13 @@
 import { connection, NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
 
 import { subscribeToChannel } from "@/lib/discord/api";
 import { subscribeToStatus } from "@/lib/discord/gateway";
@@ -18,25 +26,45 @@ vi.mock(import("@/lib/discord/gateway"), () => ({
   subscribeToStatus: vi.fn(),
 }));
 
-function createRequest(signal: AbortSignal) {
-  return new NextRequest("http://localhost/api/chat/sse", { signal });
+const decoder = new TextDecoder();
+
+async function readText(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  return decoder.decode((await reader.read()).value);
 }
 
 describe("GET /api/chat/sse", () => {
+  let controller: AbortController;
   let mockUnsubscribe: Mock;
   let mockUnsubscribeStatus: Mock;
 
+  function open() {
+    return GET(
+      new NextRequest("http://localhost/api/chat/sse", {
+        signal: controller.signal,
+      }),
+    );
+  }
+
+  async function openReader() {
+    const response = await open();
+    return response.body!.getReader();
+  }
+
   beforeEach(() => {
     vi.useFakeTimers();
+    controller = new AbortController();
     mockUnsubscribe = vi.fn();
     mockUnsubscribeStatus = vi.fn();
     vi.mocked(subscribeToChannel).mockResolvedValue(mockUnsubscribe);
     vi.mocked(subscribeToStatus).mockReturnValue(mockUnsubscribeStatus);
   });
 
+  afterEach(() => {
+    controller.abort();
+  });
+
   it("should return SSE response with correct headers", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
+    const response = await open();
 
     expect(response.headers.get("Content-Type")).toBe("text/event-stream");
     expect(response.headers.get("Connection")).toBe("keep-alive");
@@ -44,99 +72,44 @@ describe("GET /api/chat/sse", () => {
       "no-cache, no-transform",
     );
     expect(connection).toHaveBeenCalledOnce();
-
-    controller.abort();
   });
 
   it("should send initial ping on connection", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
+    const reader = await openReader();
 
-    const reader = response.body!.getReader();
-    const { value } = await reader.read();
-    const text = new TextDecoder().decode(value);
-
-    expect(text).toBe(": ping\n\n");
-
-    controller.abort();
-    reader.releaseLock();
-  });
-
-  it("should subscribe to channel changes", async () => {
-    const controller = new AbortController();
-    await GET(createRequest(controller.signal));
-
-    expect(subscribeToChannel).toHaveBeenCalledOnce();
-    expect(subscribeToChannel).toHaveBeenCalledWith(expect.any(Function));
-
-    controller.abort();
+    expect(await readText(reader)).toBe(": ping\n\n");
   });
 
   it("should send refresh event when gateway notifies", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
-
-    // Get the callback passed to subscribe
+    const reader = await openReader();
+    expect(subscribeToChannel).toHaveBeenCalledOnce();
     const onMessage = vi.mocked(subscribeToChannel).mock.calls[0]![0];
-
-    const reader = response.body!.getReader();
-
-    // Read initial ping
     await reader.read();
 
-    // Trigger gateway notification
     onMessage();
 
-    const { value } = await reader.read();
-    const text = new TextDecoder().decode(value);
-
-    expect(text).toBe("data: refresh\n\n");
-
-    controller.abort();
-    reader.releaseLock();
+    expect(await readText(reader)).toBe("data: refresh\n\n");
   });
 
   it("should send status events when the gateway drops and recovers", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
+    const reader = await openReader();
     const onStatus = vi.mocked(subscribeToStatus).mock.calls[0]![0];
-    const reader = response.body!.getReader();
-    const decoder = new TextDecoder();
     await reader.read();
 
     onStatus(false);
-    expect(decoder.decode((await reader.read()).value)).toBe(
-      "event: status\ndata: connecting\n\n",
-    );
+    expect(await readText(reader)).toBe("event: status\ndata: connecting\n\n");
 
     onStatus(true);
-    expect(decoder.decode((await reader.read()).value)).toBe(
-      "event: status\ndata: live\n\n",
-    );
-
-    controller.abort();
-    reader.releaseLock();
+    expect(await readText(reader)).toBe("event: status\ndata: live\n\n");
   });
 
   it("should send periodic pings every 30 seconds", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
-
-    const reader = response.body!.getReader();
-
-    // Read initial ping
+    const reader = await openReader();
     await reader.read();
 
-    // Advance 30 seconds
     await vi.advanceTimersByTimeAsync(30_000);
 
-    const { value } = await reader.read();
-    const text = new TextDecoder().decode(value);
-
-    expect(text).toBe(": ping\n\n");
-
-    controller.abort();
-    reader.releaseLock();
+    expect(await readText(reader)).toBe(": ping\n\n");
   });
 
   it("should return 503 without a ping interval when subscribing fails", async () => {
@@ -144,22 +117,20 @@ describe("GET /api/chat/sse", () => {
     vi.mocked(subscribeToChannel).mockRejectedValue(
       new Error("Gateway closed"),
     );
-    const controller = new AbortController();
 
-    const response = await GET(createRequest(controller.signal));
+    const response = await open();
 
     expect(response.status).toBe(503);
     expect(vi.getTimerCount()).toBe(0);
   });
 
   it("should unsubscribe when the client left while subscribing", async () => {
-    const controller = new AbortController();
     vi.mocked(subscribeToChannel).mockImplementation(async () => {
       controller.abort();
       return mockUnsubscribe;
     });
 
-    const response = await GET(createRequest(controller.signal));
+    const response = await open();
 
     expect(response.status).toBe(499);
     expect(mockUnsubscribe).toHaveBeenCalledOnce();
@@ -168,8 +139,7 @@ describe("GET /api/chat/sse", () => {
   });
 
   it("should cleanup on abort", async () => {
-    const controller = new AbortController();
-    await GET(createRequest(controller.signal));
+    await open();
 
     expect(mockUnsubscribe).not.toHaveBeenCalled();
     expect(mockUnsubscribeStatus).not.toHaveBeenCalled();
@@ -181,27 +151,16 @@ describe("GET /api/chat/sse", () => {
   });
 
   it("should not write after abort", async () => {
-    const controller = new AbortController();
-    const response = await GET(createRequest(controller.signal));
-
+    const reader = await openReader();
     const onMessage = vi.mocked(subscribeToChannel).mock.calls[0]![0];
     const onStatus = vi.mocked(subscribeToStatus).mock.calls[0]![0];
 
     controller.abort();
-
-    // These should be no-ops after abort
     onMessage();
     onStatus(false);
     await vi.advanceTimersByTimeAsync(30_000);
 
-    // Stream should be closed, reading should complete
-    const reader = response.body!.getReader();
-    // Read initial ping that was sent before abort
-    await reader.read();
-    // Stream should be done
-    const { done } = await reader.read();
-    expect(done).toBe(true);
-
-    reader.releaseLock();
+    expect(await readText(reader)).toBe(": ping\n\n");
+    expect((await reader.read()).done).toBe(true);
   });
 });

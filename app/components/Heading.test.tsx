@@ -13,12 +13,9 @@ describe("Heading", () => {
     { level: 6 },
   ] as const)("renders h$level element when level is $level", ({ level }) => {
     render(<Heading level={level}>Test</Heading>);
-    expect(screen.getByRole("heading", { level })).toBeInTheDocument();
-  });
-
-  it("renders children content", () => {
-    render(<Heading level={2}>Test Heading</Heading>);
-    expect(screen.getByText("Test Heading")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level, name: "Test" }),
+    ).toBeInTheDocument();
   });
 
   it("renders with id when provided", () => {

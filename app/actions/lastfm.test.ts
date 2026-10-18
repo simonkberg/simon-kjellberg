@@ -1,5 +1,5 @@
 import { cacheLife, refresh } from "next/cache";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   userGetRecentTracks,
@@ -30,6 +30,10 @@ vi.mock(import("@/lib/lastfm"), () => ({
 
 vi.mock(import("next/cache"), () => ({ cacheLife: vi.fn(), refresh: vi.fn() }));
 
+beforeEach(() => {
+  vi.spyOn(log, "error").mockImplementation(() => {});
+});
+
 describe("getRecentTracks", () => {
   it("should return success status with tracks when userGetRecentTracks succeeds", async () => {
     const mockTracks: UserGetRecentTracksResponse = [
@@ -55,14 +59,12 @@ describe("getRecentTracks", () => {
 
     const result = await getRecentTracks();
 
-    expect(cacheLife).toHaveBeenCalledWith("minutes");
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("minutes");
     expect(userGetRecentTracks).toHaveBeenCalledWith("magijo", { limit: 5 });
     expect(result).toEqual({ status: "ok", tracks: mockTracks });
   });
 
   it("should return error status when userGetRecentTracks fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
     const mockError = new Error("API error");
     vi.mocked(userGetRecentTracks).mockRejectedValue(mockError);
 
@@ -73,7 +75,8 @@ describe("getRecentTracks", () => {
       error: "Failed to fetch recent tracks",
     });
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
+    expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getRecentTracks" },
       "Error fetching recent tracks",
     );
@@ -103,12 +106,11 @@ describe("getTopTracks", () => {
       period: "7day",
       limit: 10,
     });
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
     expect(result).toEqual({ status: "ok", tracks: mockTracks });
   });
 
   it("should return error status when fetch fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
     const mockError = new Error("API error");
     vi.mocked(userGetTopTracks).mockRejectedValue(mockError);
 
@@ -119,7 +121,8 @@ describe("getTopTracks", () => {
       error: "Failed to fetch top tracks",
     });
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
+    expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getTopTracks" },
       "Error fetching top tracks",
     );
@@ -141,12 +144,11 @@ describe("getTopArtists", () => {
       period: "1month",
       limit: 10,
     });
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
     expect(result).toEqual({ status: "ok", artists: mockArtists });
   });
 
   it("should return error status when fetch fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
     const mockError = new Error("API error");
     vi.mocked(userGetTopArtists).mockRejectedValue(mockError);
 
@@ -157,7 +159,8 @@ describe("getTopArtists", () => {
       error: "Failed to fetch top artists",
     });
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
+    expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getTopArtists" },
       "Error fetching top artists",
     );
@@ -179,12 +182,11 @@ describe("getTopAlbums", () => {
       period: "3month",
       limit: 10,
     });
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
     expect(result).toEqual({ status: "ok", albums: mockAlbums });
   });
 
   it("should return error status when fetch fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
     const mockError = new Error("API error");
     vi.mocked(userGetTopAlbums).mockRejectedValue(mockError);
 
@@ -195,7 +197,8 @@ describe("getTopAlbums", () => {
       error: "Failed to fetch top albums",
     });
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
+    expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getTopAlbums" },
       "Error fetching top albums",
     );

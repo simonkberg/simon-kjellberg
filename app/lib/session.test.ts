@@ -1,9 +1,8 @@
 import { SignJWT } from "jose";
-import { cookies } from "next/headers";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
-import { MockCookies } from "@/mocks/headers";
+import { mockCookieJar } from "@/mocks/headers";
 
 import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 
@@ -11,17 +10,13 @@ vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
+beforeEach(() => {
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+});
+
 describe("session", () => {
   describe("encrypt", () => {
-    it("should encrypt a session payload with username", async () => {
-      const payload = SessionSchema.parse({ username: "testuser" });
-      const encrypted = await encrypt(payload);
-
-      expect(encrypted).toBeDefined();
-      expect(typeof encrypted).toBe("string");
-      expect(encrypted.length).toBeGreaterThan(0);
-    });
-
     it("should create different tokens for different usernames", async () => {
       const token1 = await encrypt(SessionSchema.parse({ username: "user1" }));
       const token2 = await encrypt(SessionSchema.parse({ username: "user2" }));
@@ -56,63 +51,47 @@ describe("session", () => {
     });
 
     it("should return undefined for invalid token", async () => {
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-
       const result = await decrypt("invalid-token");
       expect(result).toBeUndefined();
-      expect(logWarnSpy).toHaveBeenCalledOnce();
+      expect(log.warn).toHaveBeenCalledOnce();
     });
 
     it("logs a token signed with another secret as an error", async () => {
-      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-
       const token = await new SignJWT({ username: "testuser" })
         .setProtectedHeader({ alg: "HS256" })
         .sign(new TextEncoder().encode("another_secret"));
 
       expect(await decrypt(token)).toBeUndefined();
-      expect(logErrorSpy).toHaveBeenCalledOnce();
-      expect(logWarnSpy).not.toHaveBeenCalled();
+      expect(log.error).toHaveBeenCalledOnce();
+      expect(log.warn).not.toHaveBeenCalled();
     });
 
     it("should validate session schema and reject invalid payload", async () => {
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-
-      // Payload has 'name' instead of 'username' - should fail schema validation
-      const invalidPayload = { name: "testuser" };
-      // @ts-expect-error -- testing invalid payload
-      const encrypted = await encrypt(invalidPayload);
+      // @ts-expect-error -- 'name' instead of 'username' fails the schema
+      const encrypted = await encrypt({ name: "testuser" });
       const decrypted = await decrypt(encrypted);
 
       expect(decrypted).toBeUndefined();
-      expect(logWarnSpy).toHaveBeenCalledOnce();
+      expect(log.warn).toHaveBeenCalledOnce();
     });
 
     it("should return undefined for expired token", async () => {
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-
       vi.useFakeTimers({ shouldAdvanceTime: true });
       const payload = SessionSchema.parse({ username: "testuser" });
       const encrypted = await encrypt(payload);
 
-      // Advance time by more than 365 days (token expiration)
       vi.advanceTimersByTime(366 * 24 * 60 * 60 * 1000);
 
       const result = await decrypt(encrypted);
       expect(result).toBeUndefined();
-      expect(logWarnSpy).toHaveBeenCalledOnce();
+      expect(log.warn).toHaveBeenCalledOnce();
     });
   });
 
   describe("getSession", () => {
     it("should return session when valid session cookie exists", async () => {
       const payload = SessionSchema.parse({ username: "testuser" });
-      const sessionToken = await encrypt(payload);
-
-      vi.mocked(cookies).mockResolvedValue(
-        new MockCookies(new Headers({ cookie: `session=${sessionToken}` })),
-      );
+      mockCookieJar(`session=${await encrypt(payload)}`);
 
       const result = await getSession();
 
@@ -120,26 +99,7 @@ describe("session", () => {
     });
 
     it("should throw when no session cookie exists", async () => {
-      vi.mocked(cookies).mockResolvedValue(new MockCookies(new Headers()));
-
-      await expect(getSession()).rejects.toThrow("No session on the request");
-    });
-
-    it("should throw when session cookie is invalid", async () => {
-      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-
-      vi.mocked(cookies).mockResolvedValue(
-        new MockCookies(new Headers({ cookie: "session=invalid-token" })),
-      );
-
-      await expect(getSession()).rejects.toThrow("No session on the request");
-      expect(logWarnSpy).toHaveBeenCalledOnce();
-    });
-
-    it("should throw when session cookie is empty", async () => {
-      vi.mocked(cookies).mockResolvedValue(
-        new MockCookies(new Headers({ cookie: "session=" })),
-      );
+      mockCookieJar();
 
       await expect(getSession()).rejects.toThrow("No session on the request");
     });

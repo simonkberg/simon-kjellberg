@@ -5,21 +5,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Terminal } from "./Terminal";
 
 describe("Terminal", () => {
-  const mockRequestFullscreen = vi.fn();
-  const mockExitFullscreen = vi.fn();
+  let fullscreenElement: Element | null;
+  const exitFullscreen = vi.fn();
+  const requestFullscreen = vi.fn();
 
+  // happy-dom has no fullscreen API, so each test adds one and removes it after.
   beforeEach(() => {
-    Object.defineProperty(document, "fullscreenElement", {
-      writable: true,
-      value: null,
+    fullscreenElement = null;
+    Object.defineProperties(document, {
+      fullscreenElement: { configurable: true, get: () => fullscreenElement },
+      exitFullscreen: { configurable: true, value: exitFullscreen },
     });
-    document.exitFullscreen = mockExitFullscreen;
-    HTMLElement.prototype.requestFullscreen = mockRequestFullscreen;
+    Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
+      configurable: true,
+      value: requestFullscreen,
+    });
   });
 
   afterEach(() => {
-    mockRequestFullscreen.mockClear();
-    mockExitFullscreen.mockClear();
+    Reflect.deleteProperty(document, "fullscreenElement");
+    Reflect.deleteProperty(document, "exitFullscreen");
+    Reflect.deleteProperty(HTMLElement.prototype, "requestFullscreen");
   });
 
   it("renders children content", () => {
@@ -33,30 +39,22 @@ describe("Terminal", () => {
   });
 
   it("calls requestFullscreen when maximize button is clicked and not in fullscreen", async () => {
-    const user = userEvent.setup();
     render(<Terminal>Content</Terminal>);
-    const maximizeButton = screen.getByRole("button", { name: "Maximize" });
 
-    await user.click(maximizeButton);
+    await userEvent.click(screen.getByRole("button", { name: "Maximize" }));
 
-    expect(mockRequestFullscreen).toHaveBeenCalledTimes(1);
-    expect(mockExitFullscreen).not.toHaveBeenCalled();
+    expect(requestFullscreen).toHaveBeenCalledOnce();
+    expect(exitFullscreen).not.toHaveBeenCalled();
   });
 
   it("calls exitFullscreen when maximize button is clicked and already in fullscreen", async () => {
-    const user = userEvent.setup();
-    Object.defineProperty(document, "fullscreenElement", {
-      writable: true,
-      value: document.createElement("div"),
-    });
-
+    fullscreenElement = document.createElement("div");
     render(<Terminal>Content</Terminal>);
-    const maximizeButton = screen.getByRole("button", { name: "Maximize" });
 
-    await user.click(maximizeButton);
+    await userEvent.click(screen.getByRole("button", { name: "Maximize" }));
 
-    expect(mockExitFullscreen).toHaveBeenCalledTimes(1);
-    expect(mockRequestFullscreen).not.toHaveBeenCalled();
+    expect(exitFullscreen).toHaveBeenCalledOnce();
+    expect(requestFullscreen).not.toHaveBeenCalled();
   });
 
   it("renders the status in the top bar", () => {

@@ -4,6 +4,8 @@ import {
   type ResponseCookie,
   ResponseCookies,
 } from "@edge-runtime/cookies";
+import { cookies } from "next/headers";
+import { vi } from "vitest";
 
 // Next.js doesn't export ReadonlyRequestCookies, so we recreate it here
 // to match the interface returned by next/headers cookies()
@@ -19,9 +21,7 @@ export type ReadonlyRequestCookies = Omit<
  *
  * @example
  * ```typescript
- * const headers = new Headers({ cookie: "session=abc123" });
- * const mockCookies = new MockCookies(headers);
- * vi.mocked(cookies).mockResolvedValue(mockCookies);
+ * const headers = mockCookieJar("session=abc123");
  * ```
  */
 export class MockCookies implements ReadonlyRequestCookies {
@@ -68,4 +68,14 @@ export class MockCookies implements ReadonlyRequestCookies {
   ): ResponseCookies {
     return this.#responseCookies.delete(...args);
   }
+}
+
+/**
+ * Serves `cookie` from a mocked `cookies()` (the test mocks `next/headers`), and returns
+ * the headers so the test can read back what was set.
+ */
+export function mockCookieJar(cookie?: string): Headers {
+  const headers = new Headers(cookie ? { cookie } : undefined);
+  vi.mocked(cookies).mockResolvedValue(new MockCookies(headers));
+  return headers;
 }

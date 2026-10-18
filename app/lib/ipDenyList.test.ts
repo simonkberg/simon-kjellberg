@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
+import { loadDenyList } from "@/mocks/ipDenyList";
 import { server } from "@/mocks/node";
 
 import { IP_DENY_LIST_URL, isDeniedIp, refreshIpDenyList } from "./ipDenyList";
@@ -23,7 +24,7 @@ function serveList(body: string, status = 200) {
   return () => requests;
 }
 
-describe("isDeniedIp", () => {
+describe("ipDenyList", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/ip-deny-list");
     vi.useFakeTimers({ now: 0, toFake: ["Date"] });
@@ -43,19 +44,24 @@ describe("isDeniedIp", () => {
     expect(isDeniedIp("<html>")).toBe(false);
   });
 
-  it("should keep the last list when a refresh comes back without IPs", async () => {
-    serveList("1.2.3.4\n");
-    await refreshIpDenyList();
-    serveList("<html>not a list</html>");
+  it.each([
+    ["<html>not a list</html>", 200],
+    ["", 503],
+  ])(
+    "should keep the last list when a refresh gets %j (%i)",
+    async (body, status) => {
+      await loadDenyList("1.2.3.4");
+      serveList(body, status);
 
-    await refreshIpDenyList();
+      await refreshIpDenyList();
 
-    expect(isDeniedIp("1.2.3.4")).toBe(true);
-    expect(log.warn).toHaveBeenCalledWith(
-      { err: expect.any(Error) },
-      "Failed to load the IP deny list",
-    );
-  });
+      expect(isDeniedIp("1.2.3.4")).toBe(true);
+      expect(log.warn).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        "Failed to load the IP deny list",
+      );
+    },
+  );
 
   it("should let everyone through until the list has loaded, then load it", async () => {
     serveList("1.2.3.4\n");
@@ -73,8 +79,7 @@ describe("isDeniedIp", () => {
   });
 
   it("should refresh the list a day after loading it", async () => {
-    serveList("1.2.3.4\n");
-    await refreshIpDenyList();
+    await loadDenyList("1.2.3.4");
     serveList("5.6.7.8\n");
     const fetches = vi.spyOn(globalThis, "fetch");
 
@@ -89,20 +94,6 @@ describe("isDeniedIp", () => {
     await refreshIpDenyList();
     expect(isDeniedIp("1.2.3.4")).toBe(false);
     expect(isDeniedIp("5.6.7.8")).toBe(true);
-  });
-
-  it("should keep the last list when a refresh fails", async () => {
-    serveList("1.2.3.4\n");
-    await refreshIpDenyList();
-    serveList("", 503);
-
-    await refreshIpDenyList();
-
-    expect(isDeniedIp("1.2.3.4")).toBe(true);
-    expect(log.warn).toHaveBeenCalledWith(
-      { err: expect.any(Error) },
-      "Failed to load the IP deny list",
-    );
   });
 
   it("should back off failed refreshes from a minute to an hour, then reset", async () => {

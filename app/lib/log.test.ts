@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { bridgeConsole } from "./log";
 
-function createLogger() {
+function bridged() {
   const lines: Array<Record<string, unknown>> = [];
   const stream = new Writable({
     write(chunk, _encoding, callback) {
@@ -19,24 +19,20 @@ function createLogger() {
     { level: "debug", formatters: { level: (label) => ({ level: label }) } },
     stream,
   );
-  return { logger, lines };
-}
-
-function createConsole() {
-  return {
+  const target = {
     error: () => {},
     warn: () => {},
     info: () => {},
     log: () => {},
     debug: () => {},
   } as unknown as Console;
+  bridgeConsole(target, logger);
+  return { target, lines };
 }
 
 describe("bridgeConsole", () => {
   it("maps console methods to pino levels", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.error("e");
     target.warn("w");
@@ -54,9 +50,7 @@ describe("bridgeConsole", () => {
   });
 
   it("formats arguments like console does", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.log("use-cache: entry %s", "found", { tags: ["a"] }, 42);
 
@@ -66,9 +60,7 @@ describe("bridgeConsole", () => {
   });
 
   it("keeps literal undefined arguments", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.log("value:", undefined);
     target.log("%s and %s", undefined, "x");
@@ -80,9 +72,7 @@ describe("bridgeConsole", () => {
   });
 
   it("serializes an Error argument as err and keeps its extra fields", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     const error = Object.assign(
       new SyntaxError("Unexpected end of JSON input"),
@@ -103,9 +93,7 @@ describe("bridgeConsole", () => {
   });
 
   it("substitutes the error message into a placeholder", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.error("Request failed: %s", new Error("boom"));
 
@@ -116,9 +104,7 @@ describe("bridgeConsole", () => {
   });
 
   it("does not parse a leading error message as a template", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.error(new Error("Invalid config: %s"), "server.json");
 
@@ -126,9 +112,7 @@ describe("bridgeConsole", () => {
   });
 
   it("attaches the first error and prints the others' messages", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.error("failed both", new Error("one"), new Error("two"));
 
@@ -139,9 +123,7 @@ describe("bridgeConsole", () => {
   });
 
   it("logs an empty message for a call without arguments", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.log();
 
@@ -149,9 +131,7 @@ describe("bridgeConsole", () => {
   });
 
   it("uses the error message when nothing else was printed", () => {
-    const { logger, lines } = createLogger();
-    const target = createConsole();
-    bridgeConsole(target, logger);
+    const { target, lines } = bridged();
 
     target.error(new Error("boom"));
 

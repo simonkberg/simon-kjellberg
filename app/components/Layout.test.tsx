@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Layout } from "@/components/Layout";
@@ -13,34 +14,37 @@ vi.mock(import("@/assets/fonts"), () => ({
   },
 }));
 
+const renderLayout = (children?: ReactNode) =>
+  render(<Layout>{children}</Layout>, { container: document });
+
 describe("Layout", () => {
   it("should render children content", () => {
-    render(<Layout>Test Content</Layout>, { container: document });
+    renderLayout("Test Content");
 
     expect(screen.getByText("Test Content")).toBeInTheDocument();
   });
 
   it("should set lang attribute to en on html element", () => {
-    render(<Layout />, { container: document });
+    renderLayout();
 
     expect(document.documentElement).toHaveAttribute("lang", "en");
   });
 
   it("should apply font class to html element", () => {
-    render(<Layout />, { container: document });
+    renderLayout();
 
     expect(document.documentElement).toHaveClass("iosevka-mock-variable");
   });
 
   it("should default to the panes variant and the system theme", () => {
-    render(<Layout />, { container: document });
+    renderLayout();
 
     expect(document.documentElement).toHaveAttribute("data-variant", "panes");
     expect(document.documentElement).toHaveAttribute("data-theme", "system");
   });
 
   it("should colour the browser with the fallback variant's ground", () => {
-    render(<Layout />, { container: document });
+    renderLayout();
 
     const tags = document.head.querySelectorAll<HTMLMetaElement>(
       'meta[name="theme-color"]',
@@ -54,15 +58,15 @@ describe("Layout", () => {
   });
 
   it("should apply the saved preferences from the head", () => {
-    render(<Layout />, { container: document });
+    renderLayout();
 
     expect(document.head.querySelector("script")?.textContent).toBe(
       preferencesScript,
     );
   });
 
-  it("should include Google Tag Manager with correct ID", async () => {
-    render(<Layout />, { container: document });
+  it("should include Google Tag Manager with correct ID", () => {
+    renderLayout();
 
     expect(
       document.body.querySelector("script[id=_next-gtm-init]"),
