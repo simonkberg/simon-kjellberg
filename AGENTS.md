@@ -178,6 +178,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   instances don't double-reply. Without Turso it doesn't reply at all, rather than twice.
   The reply chain reaches it as one user turn of escaped `<message>` elements, its own
   included, so ids, authors and reactions sit outside the text people can type.
+  A reply's last round rules out tools, so it ends in text rather than running out of rounds.
 - **Turso:** the only datastore. `app/lib/turso.ts` calls its HTTP pipeline endpoint with raw
   `fetch`; once migrations apply, `instrumentation.ts` runs `keepWarm()`, a `SELECT 1` each
   minute, since idle Turso stalls the next query past its timeout. `app/lib/migrations.ts`
@@ -191,7 +192,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **simon-bot memory:** `app/lib/memory.ts` owns the `memories` table and renders the
   `<memory>` system-prompt block: `self`, `style`, `interests`, `context` and `people/<username>` for
   the current participants in full, every other category as a name and count the bot reads
-  with `recall`. `edit` and `forget` are compare-and-swap on the note's text. Memory
+  with `recall`. Notes are one line. `edit` and `forget` are compare-and-swap on the note's text. Memory
   failures degrade to a reply without memory, never to no reply.
 - **simon-bot self:** the bot's `self` and `style` notes are its personality and voice; the
   base prompt in `app/lib/anthropic.ts` carries a starting point they take precedence over.

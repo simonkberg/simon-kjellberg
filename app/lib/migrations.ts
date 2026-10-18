@@ -25,8 +25,7 @@ export const MIGRATIONS: readonly string[] = [
     username TEXT NOT NULL,
     UNIQUE (message_id, emoji, username)
   )`,
-  // Backfills toOneLine in memory.ts. Notes were already trimmed in JS, which keeps U+0085, so
-  // trim() only has the spaces an edge U+0085 becomes to strip.
+  // Backfills toOneLine in memory.ts; trim() strips the space an edge U+0085 becomes.
   `UPDATE memories SET content = trim(
     replace(replace(replace(replace(replace(replace(replace(replace(content,
       char(13, 10), ' '), char(13), ' '), char(10), ' '), char(11), ' '),
