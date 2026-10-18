@@ -58,12 +58,13 @@ const RGI_EMOJI = /^\p{RGI_Emoji}$/v;
 
 /** An emoji in a tone, if it takes one: the tone follows its first code point, replacing a U+FE0F there. */
 export function withSkinTone(emoji: string, modifier: string): string {
+  if (!modifier) return emoji;
   const toned = emoji.replace(
     /^(.)\uFE0F?/u,
     (_, base: string) => base + modifier,
   );
   // Unicode lists every sequence that takes a tone, so families and pairs, which need one per person, stay as they are.
-  return modifier && RGI_EMOJI.test(toned) ? toned : emoji;
+  return RGI_EMOJI.test(toned) ? toned : emoji;
 }
 
 /** The emoji without its tones, as the shortcode set names it; a tone stands where a text-style base takes U+FE0F. */

@@ -79,7 +79,7 @@ export const ChatEmojiInput = ({
       : query
         ? searchEmoji(emoji, query, LIMIT)
         : REACTION_EMOJI
-  ).map(({ emoji, name }) => ({ emoji: withSkinTone(emoji, modifier), name }));
+  ).map((match) => ({ ...match, emoji: withSkinTone(match.emoji, modifier) }));
   const open = matches.length > 0;
   const chosen = active === null ? undefined : matches[active];
 
