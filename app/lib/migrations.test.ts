@@ -222,8 +222,11 @@ describe("runMigrations", () => {
 });
 
 describe("runMigrationsUntilApplied", () => {
-  it("should retry with capped backoff until Turso answers", async () => {
+  beforeEach(() => {
     vi.useFakeTimers();
+  });
+
+  it("should retry with capped backoff until Turso answers", async () => {
     const outage = new Error("The operation was aborted due to timeout");
     const failures = 6;
     for (let i = 0; i < failures; i++) {

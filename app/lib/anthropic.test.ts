@@ -427,6 +427,7 @@ describe("createMessage", () => {
       sleep: 2000,
     },
     { case: "no retry-after", retryAfter: undefined, sleep: 500 },
+    { case: "a zero retry-after", retryAfter: "0", sleep: 500 },
     { case: "a retry-after of neither kind", retryAfter: "soon", sleep: 500 },
     {
       case: "a retry-after date already past",

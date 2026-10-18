@@ -44,16 +44,17 @@ export function sqliteBeforeEach(
 }
 
 // Rejects statements starting with prefix and runs the rest. afterRunning
-// rejects after the statement ran, like a response lost on the way back.
+// rejects once, after the statement ran, like a response lost on the way back.
 export function failQuery(
   run: typeof query,
   prefix: string,
   { error = new Error("boom"), once = false, afterRunning = false } = {},
 ): typeof query {
+  const onlyOnce = once || afterRunning;
   let failed = false;
   return async (sql, args) => {
-    if (!sql.startsWith(prefix) || (once && failed)) return run(sql, args);
-    if (once) failed = true;
+    if (!sql.startsWith(prefix) || (onlyOnce && failed)) return run(sql, args);
+    if (onlyOnce) failed = true;
     if (afterRunning) await run(sql, args);
     throw error;
   };

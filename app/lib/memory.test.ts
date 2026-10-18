@@ -362,14 +362,11 @@ describe("line-break backfill", () => {
   const BACKFILL = MIGRATIONS.slice(start, start + 2);
 
   async function backfill() {
+    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
     for (const statement of BACKFILL) await query(statement);
   }
 
   sqliteBeforeEach(query, MIGRATIONS.slice(0, start));
-
-  it("should find the backfill migrations", () => {
-    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
-  });
 
   const nel = String.fromCodePoint(0x85);
   const nbsp = String.fromCodePoint(0xa0);
