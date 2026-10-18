@@ -18,7 +18,12 @@ import { MIGRATIONS } from "@/lib/migrations";
 import { addReaction } from "@/lib/reactions";
 import { query } from "@/lib/turso";
 import { getStats } from "@/lib/wakaTime";
-import { CREATED_AT, fillCategory, seedMemory as seed } from "@/mocks/memory";
+import {
+  CREATED_AT,
+  fillCategory,
+  seedMemory as seed,
+  storedMemory as stored,
+} from "@/mocks/memory";
 import { server } from "@/mocks/node";
 import { sqliteBeforeEach } from "@/mocks/sqlite";
 
@@ -213,8 +218,8 @@ describe("createMessage", () => {
       { role: "user", content: formatConversation(chat) },
     ]);
     const memory = requests[0]?.system[1]?.text;
-    expect(memory).toContain("## people/alice\n");
-    expect(memory).toContain("## people/bob\n");
+    expect(memory).toContain("## people/alice\n- #1 likes cats");
+    expect(memory).toContain("## people/bob\n- #2 likes dogs");
     expect(memory).toContain("people/simon-bot (1)");
   });
 
@@ -233,11 +238,16 @@ describe("createMessage", () => {
         content: "i like trains",
       });
 
-      expect(JSON.parse(result)).toEqual({
+      const memory = JSON.parse(result);
+      expect(memory).toEqual({
         id: expect.any(Number),
         category: "self",
         content: "i like trains",
         createdAt: expect.any(String),
+      });
+      expect(await stored(memory.id)).toEqual({
+        category: "self",
+        content: "i like trains",
       });
     });
 
@@ -298,6 +308,10 @@ describe("createMessage", () => {
       });
 
       expect(JSON.parse(result)).toMatchObject({ id: 3, category: "context" });
+      expect(await stored(3)).toEqual({
+        category: "context",
+        content: "this chat gets spam",
+      });
     });
 
     it("should hand a changed note back instead of editing it", async () => {
@@ -328,6 +342,7 @@ describe("createMessage", () => {
       const result = await runTool("forget", { id: 3, content: "i like cats" });
 
       expect(JSON.parse(result)).toEqual({ forgotten: true });
+      expect(await stored(3)).toBeUndefined();
     });
 
     it("should say when a note to forget is already gone", async () => {
@@ -348,7 +363,10 @@ describe("createMessage", () => {
     expect(timeoutSpy).toHaveBeenCalledWith(15_000);
   });
 
-  it.each([{ status: 400, statusText: "Bad Request" }])(
+  it.each([
+    { status: 400, statusText: "Bad Request" },
+    { status: 401, statusText: "Unauthorized" },
+  ])(
     "should throw HTTP $status with its body and no retry",
     async ({ status, statusText }) => {
       respond(
@@ -363,7 +381,7 @@ describe("createMessage", () => {
     },
   );
 
-  it.each([408, 429, 500])(
+  it.each([408, 429, 500, 529])(
     "should retry HTTP %i twice with backoff, then give up",
     async (status) => {
       respond(() => new HttpResponse("busy", { status }));

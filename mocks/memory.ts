@@ -3,6 +3,8 @@ import { query } from "@/lib/turso";
 
 export const CREATED_AT = "2025-01-01T00:00:00.000Z";
 
+// These go through @/lib/turso, so the test file must mock it and call sqliteBeforeEach.
+
 export async function seedMemory(
   id: number,
   category: string,
@@ -19,4 +21,12 @@ export async function fillCategory(category: string, count = MAX_PER_CATEGORY) {
   for (let i = 0; i < count; i++) {
     await seedMemory(100 + i, category, `note ${i}`);
   }
+}
+
+export async function storedMemory(id: number) {
+  const { rows } = await query(
+    "SELECT category, content FROM memories WHERE id = ?",
+    [id],
+  );
+  return rows[0];
 }

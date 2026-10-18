@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
-import { CREATED_AT, fillCategory, seedMemory as seed } from "@/mocks/memory";
+import {
+  CREATED_AT,
+  fillCategory,
+  seedMemory as seed,
+  storedMemory as stored,
+} from "@/mocks/memory";
 import { sqliteBeforeEach } from "@/mocks/sqlite";
 
 import {
@@ -25,14 +30,6 @@ vi.mock(import("@/lib/turso"), async () =>
 );
 
 sqliteBeforeEach(query, MIGRATIONS);
-
-async function stored(id: number) {
-  const { rows } = await query(
-    "SELECT category, content FROM memories WHERE id = ?",
-    [id],
-  );
-  return rows[0];
-}
 
 describe("peopleCategory", () => {
   it("should slugify usernames under the people prefix", () => {

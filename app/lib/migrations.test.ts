@@ -71,6 +71,7 @@ describe("runMigrations", () => {
     await expect(runMigrations()).rejects.toThrow(
       "Applied migrations were edited: 1, 3",
     );
+    expect((await query("SELECT * FROM locks")).rows).toEqual([]);
   });
 
   it("should run on a database migrated by newer code, as after a rollback", async () => {
