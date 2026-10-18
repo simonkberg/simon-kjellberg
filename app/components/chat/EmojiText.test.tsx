@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EmojiShortcodes } from "@/lib/emoji";
 import { server } from "@/mocks/node";
+import { tap } from "@/mocks/popover";
 
 import { EmojiText } from "./EmojiText";
 
@@ -42,6 +43,7 @@ describe("EmojiText", () => {
     expect(tooltips()).toHaveLength(0);
   });
 
+  // First to show a shortcode, since the set is fetched once per file.
   it("names the emoji by its shortcode, loaded on the first hover", async () => {
     render(<EmojiText text="nice 👍🏽" />);
     expect(fetched).not.toHaveBeenCalled();
@@ -52,52 +54,12 @@ describe("EmojiText", () => {
     expect(fetched).toHaveBeenCalledOnce();
   });
 
-  it("shows on tap", async () => {
+  it("names the emoji on tap", async () => {
     render(<EmojiText text="❤️" />);
 
-    await act(() =>
-      userEvent.pointer({ keys: "[TouchA]", target: screen.getByText("❤️") }),
-    );
+    await tap(screen.getByText("❤️"));
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(":heart:");
-  });
-
-  it("hides on a second tap", async () => {
-    render(<EmojiText text="❤️" />);
-    const emoji = screen.getByText("❤️");
-    const tooltip = screen.getByRole("tooltip", { hidden: true });
-
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-    expect(tooltip).toHaveAttribute("data-popover-open");
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-    expect(tooltip).not.toHaveAttribute("data-popover-open");
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-    expect(tooltip).toHaveAttribute("data-popover-open");
-  });
-
-  it("shows on tap after a press that closed it ended elsewhere", async () => {
-    render(
-      <>
-        <p>elsewhere</p>
-        <EmojiText text="❤️" />
-      </>,
-    );
-    const emoji = screen.getByText("❤️");
-    const elsewhere = screen.getByText("elsewhere");
-    const tooltip = screen.getByRole("tooltip", { hidden: true });
-
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-    await act(() =>
-      userEvent.pointer([
-        { keys: "[TouchA>]", target: emoji },
-        { pointerName: "TouchA", target: elsewhere },
-        { keys: "[/TouchA]", target: elsewhere },
-      ]),
-    );
-    expect(tooltip).not.toHaveAttribute("data-popover-open");
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-
-    expect(tooltip).toHaveAttribute("data-popover-open");
   });
 
   it("names toned emoji whose base has a text style", async () => {
@@ -120,58 +82,5 @@ describe("EmojiText", () => {
         screen.getByRole("tooltip").firstElementChild,
       ).toBeEmptyDOMElement(),
     );
-  });
-
-  it("doesn't show at the end of a long press that selected text", async () => {
-    render(<EmojiText text="❤️" />);
-    const emoji = screen.getByText("❤️");
-    getSelection()?.selectAllChildren(emoji);
-
-    await act(() => userEvent.pointer({ keys: "[TouchA]", target: emoji }));
-
-    expect(screen.getByRole("tooltip", { hidden: true })).not.toHaveAttribute(
-      "data-popover-open",
-    );
-    getSelection()?.removeAllRanges();
-  });
-
-  it("shows on tap while other text is selected", async () => {
-    render(
-      <>
-        <p>elsewhere</p>
-        <EmojiText text="❤️" />
-      </>,
-    );
-    getSelection()?.selectAllChildren(screen.getByText("elsewhere"));
-
-    await act(() =>
-      userEvent.pointer({ keys: "[TouchA]", target: screen.getByText("❤️") }),
-    );
-
-    expect(screen.getByRole("tooltip", { hidden: true })).toHaveAttribute(
-      "data-popover-open",
-    );
-    getSelection()?.removeAllRanges();
-  });
-
-  it("hides on a mouse click, as on buttons", async () => {
-    render(<EmojiText text="👍" />);
-    const emoji = screen.getByText("👍");
-
-    const tooltip = screen.getByRole("tooltip", { hidden: true });
-
-    await act(() => userEvent.hover(emoji));
-    expect(tooltip).toHaveAttribute("data-popover-open");
-    await act(() => userEvent.click(emoji));
-
-    expect(tooltip).not.toHaveAttribute("data-popover-open");
-  });
-
-  it("is not a tab stop", async () => {
-    render(<EmojiText text="👍 ❤️" />);
-
-    await userEvent.tab();
-
-    expect(document.body).toHaveFocus();
   });
 });

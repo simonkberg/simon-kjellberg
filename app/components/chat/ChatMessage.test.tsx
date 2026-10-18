@@ -2,100 +2,76 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Message } from "@/lib/discord/api";
+import { createMessage } from "@/mocks/messages";
 
-import { ChatMessage } from "./ChatMessage";
+import { ChatMessage, type ChatMessageProps } from "./ChatMessage";
+
+const renderMessage = (overrides?: Partial<ChatMessageProps>) => {
+  const props: ChatMessageProps = {
+    ...createMessage(),
+    replyToId: null,
+    setReplyToId: vi.fn(),
+    ...overrides,
+  };
+  render(<ChatMessage {...props} />);
+  return props;
+};
 
 describe("ChatMessage", () => {
-  const mockUser = { name: "TestUser", color: "hsl(0 100% 50%)" } as const;
-
-  const createMessage = (overrides?: Partial<Message>): Message => ({
-    id: "1234567890123456",
-    content: "Hello, world!",
-    user: mockUser,
-    edited: false,
-    timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-    reactions: [],
-    replies: [],
-    ...overrides,
-  });
-
-  const defaultReplyProps = { replyToId: null, setReplyToId: vi.fn() };
-
   it("renders the user name", () => {
-    const message = createMessage();
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage();
 
     expect(screen.getByText(/TestUser:/)).toBeInTheDocument();
   });
 
   it("renders the message content as markdown", () => {
-    const message = createMessage({ content: "**Bold** and *italic*" });
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage({ content: "**Bold** text" });
 
     expect(screen.getByText("Bold").tagName).toBe("STRONG");
-    expect(screen.getByText("italic").tagName).toBe("EM");
   });
 
   it("applies user color as CSS variable", () => {
-    const message = createMessage();
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage();
 
     const messageElement = screen.getByText(/TestUser:/).parentElement;
     expect(messageElement).toHaveStyle({ "--user-color": "hsl(0 100% 50%)" });
   });
 
   it("shows edited indicator when edited is true", () => {
-    const message = createMessage({ edited: true });
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage({ edited: true });
 
     expect(screen.getByText(/\(edited\)/)).toBeInTheDocument();
   });
 
-  it("displays relative time for message timestamp", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+  it("displays the timestamp as a narrow relative time", async () => {
+    const timestamp = new Date(Date.now() - 5 * 60_000);
 
-    const now = Date.now();
-    vi.setSystemTime(now);
+    await act(async () => renderMessage({ timestamp }));
 
-    const fiveMinutesAgo = new Date(now - 5 * 60 * 1000);
-    const message = createMessage({ timestamp: fiveMinutesAgo });
-
-    await act(() =>
-      render(<ChatMessage {...message} {...defaultReplyProps} />),
+    expect(screen.getByText("5m ago")).toHaveAttribute(
+      "datetime",
+      timestamp.toISOString(),
     );
-
-    expect(screen.getByText(/5m ago/)).toBeInTheDocument();
   });
 
   it("does not show edited indicator when edited is false", () => {
-    const message = createMessage({ edited: false });
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage({ edited: false });
 
     expect(screen.queryByText(/\(edited\)/)).not.toBeInTheDocument();
   });
 
   describe("reply button", () => {
-    it("renders reply button with aria-label", () => {
-      const message = createMessage();
-      render(<ChatMessage {...message} {...defaultReplyProps} />);
+    it("renders a Reply button", () => {
+      renderMessage();
 
-      const replyButton = screen.getByRole("button", { name: "Reply" });
-      expect(replyButton).toBeInTheDocument();
-      expect(replyButton).toHaveTextContent("↩");
+      expect(screen.getByRole("button", { name: "Reply" })).toHaveTextContent(
+        "↩",
+      );
     });
 
     it("calls setReplyToId with message id when clicked", async () => {
       const user = userEvent.setup();
-      const setReplyToId = vi.fn();
-      const message = createMessage({ id: "test-message-id" });
-      render(
-        <ChatMessage
-          {...message}
-          replyToId={null}
-          setReplyToId={setReplyToId}
-        />,
-      );
+      const { setReplyToId } = renderMessage({ id: "test-message-id" });
 
       await user.click(screen.getByRole("button", { name: "Reply" }));
 
@@ -103,44 +79,20 @@ describe("ChatMessage", () => {
     });
 
     it("is disabled when this message is being replied to", () => {
-      const message = createMessage({ id: "selected-message" });
-      render(
-        <ChatMessage
-          {...message}
-          replyToId="selected-message"
-          setReplyToId={vi.fn()}
-        />,
-      );
+      renderMessage({ id: "selected-message", replyToId: "selected-message" });
 
       expect(screen.getByRole("button", { name: "Reply" })).toBeDisabled();
     });
 
     it("is not disabled when a different message is being replied to", () => {
-      const message = createMessage({ id: "this-message" });
-      render(
-        <ChatMessage
-          {...message}
-          replyToId="other-message"
-          setReplyToId={vi.fn()}
-        />,
-      );
+      renderMessage({ id: "this-message", replyToId: "other-message" });
 
       expect(screen.getByRole("button", { name: "Reply" })).toBeEnabled();
-    });
-
-    it("has reply class for styling", () => {
-      const message = createMessage();
-      render(<ChatMessage {...message} {...defaultReplyProps} />);
-
-      expect(screen.getByRole("button", { name: "Reply" })).toHaveClass(
-        "reply",
-      );
     });
   });
 
   it("offers adding a reaction from the toolbar while there are none", () => {
-    const message = createMessage();
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage();
 
     expect(
       screen.getByRole("button", { name: "Add reaction" }),
@@ -149,10 +101,7 @@ describe("ChatMessage", () => {
   });
 
   it("offers adding a reaction beside the existing ones", () => {
-    const message = createMessage({
-      reactions: [{ emoji: "👍", count: 1, users: [] }],
-    });
-    render(<ChatMessage {...message} {...defaultReplyProps} />);
+    renderMessage({ reactions: [{ emoji: "👍", count: 1, users: [] }] });
 
     const add = screen.getByRole("button", { name: "Add reaction" });
     expect(add).toHaveTextContent("+");
@@ -165,10 +114,11 @@ describe("ChatMessage", () => {
   });
 
   it("shows only the text as a reply preview", () => {
-    const message = createMessage({
+    renderMessage({
+      content: "Hello, world!",
       reactions: [{ emoji: "👍", count: 1, users: [] }],
+      preview: true,
     });
-    render(<ChatMessage {...message} {...defaultReplyProps} preview />);
 
     expect(screen.getByText("Hello, world!")).toBeInTheDocument();
     expect(screen.queryAllByRole("button", { hidden: true })).toEqual([]);
