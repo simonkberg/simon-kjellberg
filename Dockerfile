@@ -26,23 +26,17 @@ ARG ANTHROPIC_API_KEY
 ARG TURSO_DATABASE_URL
 ARG TURSO_AUTH_TOKEN
 ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
-ARG RAILWAY_ENVIRONMENT_ID=local
+ARG RAILWAY_ENVIRONMENT_ID
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Use cache mount for Next.js build cache, then copy it out of the
 # mount so it's available in the layer for the runner stage. The
 # Turbopack cache is build-only and would just bloat the image.
-# Railway keys cache mounts by service, which all environments share, and the id can't
-# take a variable, so each environment builds in its own directory of the mount. PR
-# environments come and go, so directories unused for a week are pruned.
-RUN --mount=type=cache,id=s/ef8993ce-cfd2-4811-8cd1-005564b52ee4-/app/.next/cache,target=/next-cache \
-    find /next-cache -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} + && \
-    mkdir -p "/next-cache/$RAILWAY_ENVIRONMENT_ID" /app/.next && \
-    touch "/next-cache/$RAILWAY_ENVIRONMENT_ID" && \
-    ln -s "/next-cache/$RAILWAY_ENVIRONMENT_ID" /app/.next/cache && \
+# Keyed by environment, since PR previews building into one cache corrupt it.
+RUN --mount=type=cache,id=s/ef8993ce-cfd2-4811-8cd1-005564b52ee4-${RAILWAY_ENVIRONMENT_ID}-/app/.next/cache,target=/app/.next/cache \
     node --run build && \
-    cp -rL /app/.next/cache /app/.next/build-cache && \
+    cp -r /app/.next/cache /app/.next/build-cache && \
     rm -rf /app/.next/build-cache/turbopack
 
 # Production server
