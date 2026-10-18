@@ -36,6 +36,7 @@ export const useSkinTone = () =>
 export function setSkinTone(tone: SkinTone) {
   try {
     localStorage.setItem(KEY, String(SKIN_TONES.indexOf(tone)));
+    unsaved = undefined;
   } catch {
     unsaved = tone;
   }

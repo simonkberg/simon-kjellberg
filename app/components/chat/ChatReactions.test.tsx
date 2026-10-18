@@ -37,7 +37,7 @@ function renderOpenPicker() {
   return context;
 }
 
-function getEmoji(name: string) {
+function getEmoji(name: string | RegExp) {
   return within(getPicker()).getByRole("button", { name, hidden: true });
 }
 
@@ -82,7 +82,7 @@ describe("ChatReactionPicker", () => {
   it("reacts in the picked skin tone, and keeps it", async () => {
     const user = userEvent.setup();
     const { react } = renderOpenPicker();
-    const toggle = getEmoji("Skin tone");
+    const toggle = getEmoji(/^Skin tone/);
 
     await user.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
@@ -90,6 +90,7 @@ describe("ChatReactionPicker", () => {
     await user.click(getEmoji("Medium-light"));
 
     expect(toggle).toHaveTextContent("✋🏼");
+    expect(toggle).toHaveAccessibleName("Skin tone: Medium-light");
     expect(toggle).toHaveFocus();
     expect(
       within(getPicker()).queryByRole("button", {
@@ -124,7 +125,7 @@ describe("ChatReactionPicker", () => {
     await user.keyboard("{ArrowDown}");
     expect(items[8]).toHaveFocus();
     await user.keyboard("{End}");
-    expect(getEmoji("Skin tone")).toHaveFocus();
+    expect(getEmoji(/^Skin tone/)).toHaveFocus();
     await user.keyboard("{Home}");
     expect(items[0]).toHaveFocus();
   });

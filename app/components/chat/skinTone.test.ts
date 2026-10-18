@@ -35,10 +35,9 @@ describe("useSkinTone", () => {
     expect(result.current).toBe(SKIN_TONES[4]);
   });
 
-  // Last: the unsaved pick stays for the rest of the file, as for the visit.
-  it("keeps a pick storage won't save for the visit", () => {
+  it("keeps a pick storage won't save, until one saves", () => {
     localStorage.setItem("skin-tone", "1");
-    vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+    const setItem = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
       throw new Error("full");
     });
     const { result } = renderHook(useSkinTone);
@@ -46,5 +45,14 @@ describe("useSkinTone", () => {
     act(() => setSkinTone(SKIN_TONES[3]));
 
     expect(result.current).toBe(SKIN_TONES[3]);
+
+    setItem.mockRestore();
+    act(() => setSkinTone(SKIN_TONES[5]));
+    act(() => {
+      localStorage.setItem("skin-tone", "2");
+      window.dispatchEvent(new StorageEvent("storage", { key: "skin-tone" }));
+    });
+
+    expect(result.current).toBe(SKIN_TONES[2]);
   });
 });

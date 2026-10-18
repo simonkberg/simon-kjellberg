@@ -41,7 +41,7 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
     <>
       <TooltipButton
         ref={toggle}
-        tooltip="Skin tone"
+        tooltip={`Skin tone: ${tone.name}`}
         anchor={picker}
         className="skin-tone"
         aria-expanded={choosing}
