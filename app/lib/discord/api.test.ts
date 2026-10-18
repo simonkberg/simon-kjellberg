@@ -32,7 +32,11 @@ beforeEach(() => {
 });
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
-const REACTIONS_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages/:messageId/reactions/:emoji`;
+const MESSAGES_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages`;
+const REACTIONS_URL = `${MESSAGES_URL}/:messageId/reactions/:emoji`;
+const BOT_REACTION_URL = `${REACTIONS_URL}/@me`;
+const BOT_REACTION_ROUTE =
+  "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me";
 const MEMBER_URL = `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`;
 
 function member(username: string, nick: string | null = null) {
@@ -44,6 +48,31 @@ function goneMember() {
     { message: "Unknown Member", code: 10007 },
     { status: 404 },
   );
+}
+
+function rateLimited(retryAfter: number, global = false) {
+  return HttpResponse.json(
+    { message: "Rate limited", retry_after: retryAfter, global },
+    { status: 429 },
+  );
+}
+
+function htmlRateLimited(headers?: Record<string, string>) {
+  return HttpResponse.html("<html>Too Many Requests</html>", {
+    status: 429,
+    headers,
+  });
+}
+
+const noContent = () => new HttpResponse(null, { status: 204 });
+const emptyList = () => HttpResponse.json([]);
+
+// Answers the first `times` requests with `first`, and every later one with `rest`.
+function onceThen(first: () => Response, rest: () => Response, times = 1) {
+  const handler = vi.fn(() =>
+    handler.mock.calls.length <= times ? first() : rest(),
+  );
+  return handler;
 }
 
 function rawMessage(
@@ -64,7 +93,7 @@ function rawMessage(
 describe("getChannelMessages", () => {
   it("should fetch and parse messages successfully", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -92,7 +121,7 @@ describe("getChannelMessages", () => {
 
   it("should parse prefixed message with empty content", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -115,7 +144,7 @@ describe("getChannelMessages", () => {
 
   it("should leave markdown in content untouched", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -136,7 +165,7 @@ describe("getChannelMessages", () => {
 
   it("should not parse username prefix from non-bot messages", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -173,7 +202,7 @@ describe("getChannelMessages", () => {
 
   it("should lookup user via guild member API when no prefix", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -206,7 +235,7 @@ describe("getChannelMessages", () => {
 
   it("should use global_name when nick is null", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -233,7 +262,7 @@ describe("getChannelMessages", () => {
 
   it("should use username when nick and global_name are null", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -260,7 +289,7 @@ describe("getChannelMessages", () => {
 
   it("should handle edited messages", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -281,7 +310,7 @@ describe("getChannelMessages", () => {
 
   it("should count Discord reactions other than the bot's own mirror", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage([
             { count: 3, me: true, emoji: { id: null, name: "👍" } },
@@ -323,7 +352,7 @@ describe("getChannelMessages", () => {
   it("should page through every Discord reactor", async () => {
     const page = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}` }));
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage(
             [{ count: 101, me: false, emoji: { id: null, name: "😂" } }],
@@ -349,7 +378,7 @@ describe("getChannelMessages", () => {
 
   it("should skip Discord reactors who left the server", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage(
             [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
@@ -375,7 +404,7 @@ describe("getChannelMessages", () => {
   it("should keep the reactors it could name when one lookup fails", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage(
             [{ count: 2, me: false, emoji: { id: null, name: "😂" } }],
@@ -402,7 +431,7 @@ describe("getChannelMessages", () => {
 
   it("should name an author who left the server by their Discord name, or else their id", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([], "1"),
@@ -423,7 +452,7 @@ describe("getChannelMessages", () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     let attempts = 0;
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([]),
@@ -449,9 +478,7 @@ describe("getChannelMessages", () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(subscribe).mockRejectedValueOnce(new Error("fatal"));
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json([rawMessage([])]),
-      ),
+      http.get(MESSAGES_URL, () => HttpResponse.json([rawMessage([])])),
     );
 
     expect(await getChannelMessages()).toHaveLength(1);
@@ -464,7 +491,7 @@ describe("getChannelMessages", () => {
   it("should look up Discord reactors once, leaving changes to the gateway", async () => {
     const lookups = vi.fn(() => HttpResponse.json([]));
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage(
             [{ count: 1, me: false, emoji: { id: null, name: "😂" } }],
@@ -484,7 +511,7 @@ describe("getChannelMessages", () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     const lookups = vi.fn(() => new HttpResponse(null, { status: 500 }));
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage([
             { count: 1, me: false, emoji: { id: null, name: "😂" } },
@@ -507,7 +534,7 @@ describe("getChannelMessages", () => {
 
   it("should handle replies as nested messages with multiple levels", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -568,7 +595,7 @@ describe("getChannelMessages", () => {
 
   it("should exclude replies that reference missing parent messages", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -609,7 +636,7 @@ describe("getChannelMessages", () => {
     const memberLookups = vi.fn();
     const reactorLookups = vi.fn();
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([
@@ -632,15 +659,13 @@ describe("getChannelMessages", () => {
     );
 
     expect(await getChannelMessages()).toEqual([]);
-    // Lets any request already started reach its handler.
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(memberLookups).not.toHaveBeenCalled();
     expect(reactorLookups).not.toHaveBeenCalled();
   });
 
   it("should show a forward as a message of its own", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           rawMessage([], "1"),
           {
@@ -659,7 +684,7 @@ describe("getChannelMessages", () => {
 
   it("should show what a forward forwards", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([], "2"),
@@ -695,7 +720,7 @@ describe("getChannelMessages", () => {
 
   it("should filter out non-standard message types", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -732,7 +757,7 @@ describe("getChannelMessages", () => {
 
   it("should sort messages by ID", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             type: 0,
@@ -770,11 +795,7 @@ describe("getChannelMessages", () => {
   it("should configure fetch with 5 second timeout", async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
 
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
 
     await getChannelMessages();
 
@@ -792,7 +813,7 @@ describe("getChannelMessages", () => {
 
     server.use(
       http.get(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
+        MESSAGES_URL,
         () => new HttpResponse(JSON.stringify({}), { status, statusText }),
       ),
     );
@@ -804,9 +825,7 @@ describe("getChannelMessages", () => {
 
   it("should handle invalid response schema", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json({ invalid: "data" }),
-      ),
+      http.get(MESSAGES_URL, () => HttpResponse.json({ invalid: "data" })),
     );
 
     await expect(getChannelMessages()).rejects.toThrow();
@@ -815,11 +834,7 @@ describe("getChannelMessages", () => {
 
 describe("subscribeToChannel", () => {
   it("should call back once the store has seeded", async () => {
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
     const callback = vi.fn();
 
     await subscribeToChannel(callback);
@@ -832,11 +847,7 @@ describe("subscribeToChannel", () => {
     const callback = vi.fn();
 
     await expect(subscribeToChannel(callback)).rejects.toThrow("fatal");
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, () => HttpResponse.json([])));
     await getChannelMessages();
 
     expect(callback).not.toHaveBeenCalled();
@@ -869,7 +880,7 @@ describe("getMessageChain", () => {
   it("should read messages in the window from the store", async () => {
     const single = vi.fn(() => HttpResponse.json({}, { status: 500 }));
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([], "stored-2"),
@@ -1018,7 +1029,7 @@ describe("getMessageChain", () => {
 
   it("should stop at a forward", async () => {
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+      http.get(MESSAGES_URL, () =>
         HttpResponse.json([
           {
             ...rawMessage([], "2"),
@@ -1123,17 +1134,14 @@ describe("getMessageChain", () => {
 describe("postChannelMessage", () => {
   it("should post message with username prefix", async () => {
     server.use(
-      http.post(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
-        async ({ request }) => {
-          const body = (await request.json()) as { content: string };
-          expect(body.content).toBe("TestUser: Hello world");
-          expect(request.headers.get("Authorization")).toBe(
-            "Bot test-discord-bot-token",
-          );
-          return HttpResponse.json({ id: "123" });
-        },
-      ),
+      http.post(MESSAGES_URL, async ({ request }) => {
+        const body = (await request.json()) as { content: string };
+        expect(body.content).toBe("TestUser: Hello world");
+        expect(request.headers.get("Authorization")).toBe(
+          "Bot test-discord-bot-token",
+        );
+        return HttpResponse.json({ id: "123" });
+      }),
     );
 
     await postChannelMessage("Hello world", "TestUser" as Username);
@@ -1141,14 +1149,11 @@ describe("postChannelMessage", () => {
 
   it("should return the message ID from Discord", async () => {
     server.use(
-      http.post(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
-        async ({ request }) => {
-          const body = (await request.json()) as { content: string };
-          expect(body.content).toBe("TestUser: Hello");
-          return HttpResponse.json({ id: "message-123" });
-        },
-      ),
+      http.post(MESSAGES_URL, async ({ request }) => {
+        const body = (await request.json()) as { content: string };
+        expect(body.content).toBe("TestUser: Hello");
+        return HttpResponse.json({ id: "message-123" });
+      }),
     );
 
     const messageId = await postChannelMessage("Hello", "TestUser" as Username);
@@ -1158,20 +1163,15 @@ describe("postChannelMessage", () => {
 
   it("should include message_reference when replyToMessageId is provided", async () => {
     server.use(
-      http.post(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
-        async ({ request }) => {
-          const body = (await request.json()) as {
-            content: string;
-            message_reference?: { message_id: string };
-          };
-          expect(body.content).toBe("simon-bot: This is a reply");
-          expect(body.message_reference).toEqual({
-            message_id: "original-123",
-          });
-          return HttpResponse.json({ id: "reply-456" });
-        },
-      ),
+      http.post(MESSAGES_URL, async ({ request }) => {
+        const body = (await request.json()) as {
+          content: string;
+          message_reference?: { message_id: string };
+        };
+        expect(body.content).toBe("simon-bot: This is a reply");
+        expect(body.message_reference).toEqual({ message_id: "original-123" });
+        return HttpResponse.json({ id: "reply-456" });
+      }),
     );
 
     const messageId = await postChannelMessage(
@@ -1185,17 +1185,14 @@ describe("postChannelMessage", () => {
 
   it("should not include message_reference when replyToMessageId is undefined", async () => {
     server.use(
-      http.post(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
-        async ({ request }) => {
-          const body = (await request.json()) as {
-            content: string;
-            message_reference?: { message_id: string };
-          };
-          expect(body.message_reference).toBeUndefined();
-          return HttpResponse.json({ id: "msg-789" });
-        },
-      ),
+      http.post(MESSAGES_URL, async ({ request }) => {
+        const body = (await request.json()) as {
+          content: string;
+          message_reference?: { message_id: string };
+        };
+        expect(body.message_reference).toBeUndefined();
+        return HttpResponse.json({ id: "msg-789" });
+      }),
     );
 
     await postChannelMessage("No reply", "TestUser" as Username);
@@ -1210,7 +1207,7 @@ describe("postChannelMessage", () => {
 
     server.use(
       http.post(
-        `${DISCORD_BASE_URL}/channels/:channelId/messages`,
+        MESSAGES_URL,
         () => new HttpResponse(JSON.stringify({}), { status, statusText }),
       ),
     );
@@ -1235,7 +1232,7 @@ describe("bot reactions", () => {
     async ({ method, call, emoji }) => {
       const onRequest = vi.fn();
       server.use(
-        method(`${REACTIONS_URL}/@me`, ({ params }) => {
+        method(BOT_REACTION_URL, ({ params }) => {
           onRequest(params);
           return new HttpResponse(null, { status: 204 });
         }),
@@ -1251,21 +1248,10 @@ describe("bot reactions", () => {
     },
   );
 
-  it("should accept a success with an empty body", async () => {
-    server.use(
-      http.put(
-        `${REACTIONS_URL}/@me`,
-        () => new HttpResponse(null, { status: 200 }),
-      ),
-    );
-
-    await expect(addBotReaction("1", "👍")).resolves.toBeUndefined();
-  });
-
   it("should carry Discord's error code", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
     server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
+      http.put(BOT_REACTION_URL, () =>
         HttpResponse.json(
           { message: "Maximum number of reactions reached (20)", code: 30010 },
           { status: 400 },
@@ -1277,6 +1263,70 @@ describe("bot reactions", () => {
       name: "DiscordApiError",
       code: 30010,
     });
+  });
+});
+
+describe("response bodies", () => {
+  it("should accept a success with an empty body", async () => {
+    server.use(
+      http.put(BOT_REACTION_URL, () => new HttpResponse(null, { status: 200 })),
+    );
+
+    await expect(addBotReaction("1", "👍")).resolves.toBeUndefined();
+  });
+
+  it.each([
+    {
+      status: 502,
+      statusText: "Bad Gateway",
+      error: "502 Bad Gateway",
+      logged: "Discord API call failed",
+    },
+    {
+      status: 200,
+      statusText: "OK",
+      error: "200 body isn't JSON",
+      logged: "Discord API body isn't JSON",
+    },
+  ])(
+    "should report the status of a $status whose body isn't JSON",
+    async ({ status, statusText, error, logged }) => {
+      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      server.use(
+        http.put(BOT_REACTION_URL, () =>
+          HttpResponse.html("<html>Not JSON</html>", { status, statusText }),
+        ),
+      );
+
+      await expect(addBotReaction("1", "👍")).rejects.toMatchObject({
+        name: "DiscordApiError",
+        message: `Discord API error: ${error}`,
+        code: undefined,
+      });
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status, body: "<html>Not JSON</html>" }),
+        logged,
+      );
+    },
+  );
+
+  it("should not mistake a failed body read for a body that isn't JSON", async () => {
+    const timeout = new DOMException(
+      "The operation timed out.",
+      "TimeoutError",
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.error(timeout);
+          },
+        }),
+        { status: 429 },
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toBe(timeout);
   });
 });
 
@@ -1292,44 +1342,29 @@ describe("rate limiting", () => {
     _resetRateLimitState();
   });
 
-  it("should retry after 429 and succeed", async () => {
+  it("should retry after 429s and count the retries in the logs", async () => {
     const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        attempts++;
-        if (attempts <= 2) {
-          return HttpResponse.json(
-            { message: "Rate limited", retry_after: 1, global: false },
-            { status: 429 },
-          );
-        }
-        return HttpResponse.json([]);
-      }),
-    );
+    const requests = onceThen(() => rateLimited(1), emptyList, 3);
+    server.use(http.get(MESSAGES_URL, requests));
 
     const promise = getChannelMessages();
-
-    await vi.advanceTimersByTimeAsync(2000);
-
+    await vi.advanceTimersByTimeAsync(3000);
     await promise;
 
-    expect(attempts).toBe(3);
-    expect(logWarnSpy).toHaveBeenCalledTimes(2);
+    expect(requests).toHaveBeenCalledTimes(4);
+    expect(logWarnSpy).toHaveBeenCalledTimes(3);
+    for (const retries of [1, 2, 3]) {
+      expect(logWarnSpy).toHaveBeenNthCalledWith(
+        retries,
+        expect.objectContaining({ retries }),
+        "Discord rate limited, retrying",
+      );
+    }
   });
 
   it("should throw when elapsed + retry_after exceeds timeout", async () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json(
-          { message: "Rate limited", retry_after: 35, global: true },
-          { status: 429 },
-        ),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, () => rateLimited(35, true)));
 
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
@@ -1347,58 +1382,14 @@ describe("rate limiting", () => {
     );
   });
 
-  it("should use 1 second fallback when response lacks retry_after", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        attempts++;
-        if (attempts === 1) {
-          return HttpResponse.json({ invalid: "response" }, { status: 429 });
-        }
-        return HttpResponse.json([]);
-      }),
-    );
-
-    const promise = getChannelMessages();
-
-    await vi.advanceTimersByTimeAsync(1000);
-
-    await promise;
-
-    expect(attempts).toBe(2);
-    expect(logWarnSpy).toHaveBeenCalledWith(
-      {
-        endpoint: expect.any(String),
-        retryAfterMs: 1000,
-        global: false,
-        retries: 1,
-      },
-      "Discord rate limited, retrying",
-    );
-  });
-
   it("should account for elapsed time in timeout calculation", async () => {
     const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    let attempts = 0;
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        attempts++;
-        if (attempts === 1) {
-          return HttpResponse.json(
-            { message: "Rate limited", retry_after: 15, global: false },
-            { status: 429 },
-          );
-        }
-        return HttpResponse.json(
-          { message: "Rate limited", retry_after: 16, global: false },
-          { status: 429 },
-        );
-      }),
+    const requests = onceThen(
+      () => rateLimited(15),
+      () => rateLimited(16),
     );
+    server.use(http.get(MESSAGES_URL, requests));
 
     const promise = getChannelMessages();
     // Set up rejection expectation before advancing time to avoid unhandled rejection
@@ -1409,7 +1400,7 @@ describe("rate limiting", () => {
     await vi.advanceTimersByTimeAsync(15000);
     await assertion;
 
-    expect(attempts).toBe(2);
+    expect(requests).toHaveBeenCalledTimes(2);
     expect(logWarnSpy).toHaveBeenCalledWith(
       {
         endpoint: expect.any(String),
@@ -1434,17 +1425,8 @@ describe("rate limiting", () => {
   it("should throw when max retries exceeded", async () => {
     const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    let attempts = 0;
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        attempts++;
-        return HttpResponse.json(
-          { message: "Rate limited", retry_after: 1, global: false },
-          { status: 429 },
-        );
-      }),
-    );
+    const requests = vi.fn(() => rateLimited(1));
+    server.use(http.get(MESSAGES_URL, requests));
 
     const promise = getChannelMessages();
     const assertion = expect(promise).rejects.toThrow(
@@ -1455,7 +1437,7 @@ describe("rate limiting", () => {
     await assertion;
 
     // 1 initial + 5 retries = 6 total attempts
-    expect(attempts).toBe(6);
+    expect(requests).toHaveBeenCalledTimes(6);
     expect(logWarnSpy).toHaveBeenCalledTimes(5);
     expect(logErrorSpy).toHaveBeenCalledWith(
       expect.objectContaining({ retries: 6 }),
@@ -1463,204 +1445,124 @@ describe("rate limiting", () => {
     );
   });
 
-  it("should share rate limit state across concurrent requests", async () => {
+  it.each([
+    [
+      "another message on the same route",
+      () => rateLimited(2),
+      () => addBotReaction("2", "🎉"),
+      true,
+    ],
+    [
+      "each method on a route separately",
+      () => rateLimited(2),
+      () => removeBotReaction("2", "🎉"),
+      false,
+    ],
+    [
+      "every route after a global 429",
+      () => rateLimited(2, true),
+      getChannelMessages,
+      true,
+    ],
+    [
+      "every route on a 429 whose header says it's global",
+      () =>
+        htmlRateLimited({ "Retry-After": "2", "X-RateLimit-Global": "true" }),
+      getChannelMessages,
+      true,
+    ],
+  ])("should gate %s", async (_, response, secondCall, heldBack) => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
-    let fetchCount = 0;
-
     server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        fetchCount++;
-        if (fetchCount === 1) {
-          return HttpResponse.json(
-            { message: "Rate limited", retry_after: 2, global: false },
-            { status: 429 },
-          );
-        }
-        return HttpResponse.json([]);
-      }),
-    );
-
-    // First request gets 429 and sets the shared gate
-    const promise1 = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(0);
-
-    // Second request, from a fresh store, arrives while rate limit gate is active
-    resetGlobal("simon.dev/discord-store");
-    const promise2 = getChannelMessages();
-
-    // Advance past the 2-second rate limit window
-    await vi.advanceTimersByTimeAsync(2000);
-
-    await Promise.all([promise1, promise2]);
-
-    // Without shared state: 4 fetches (both hit 429 independently, both retry)
-    // With shared state: 3 fetches (first gets 429, second waits on gate, both succeed after delay)
-    expect(fetchCount).toBe(3);
-  });
-
-  it("should throw when shared gate wait exceeds timeout", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
-    // Directly set a gate 31 seconds in the future — exceeds RATE_LIMIT_TIMEOUT_MS (30s)
-    _setRateLimitGate(
-      "GET",
-      "/channels/{channel.id}/messages",
-      Date.now() + 31_000,
-    );
-
-    // A fresh request checks the gate: waitMs=31000, elapsedMs≈0, 0+31000 > 30000 → throws
-    await expect(getChannelMessages()).rejects.toThrow(
-      "Discord rate limit exceeded",
-    );
-
-    expect(logErrorSpy).toHaveBeenCalledWith(
-      {
-        endpoint: "/channels/test-discord-channel-id/messages",
-        elapsedMs: expect.any(Number),
-        waitMs: 31_000,
-        retries: 0,
-      },
-      "Discord rate limit exceeded max wait time",
-    );
-  });
-
-  it("should hold back other messages on the same route after a 429", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    const requests = vi.fn();
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () => {
-        requests();
-        return requests.mock.calls.length === 1
-          ? HttpResponse.json(
-              { message: "Rate limited", retry_after: 2, global: false },
-              { status: 429 },
-            )
-          : new HttpResponse(null, { status: 204 });
-      }),
+      http.put(BOT_REACTION_URL, onceThen(response, noContent)),
+      http.delete(BOT_REACTION_URL, noContent),
+      http.get(MESSAGES_URL, emptyList),
     );
 
     const first = addBotReaction("1", "👍");
     await vi.advanceTimersByTimeAsync(0);
-    const second = addBotReaction("2", "🎉");
+    let settled = false;
+    const second = secondCall().then(() => {
+      settled = true;
+    });
     await vi.advanceTimersByTimeAsync(1999);
-    expect(requests).toHaveBeenCalledOnce();
+    expect(settled).toBe(!heldBack);
 
     await vi.advanceTimersByTimeAsync(1);
     await Promise.all([first, second]);
-    expect(requests).toHaveBeenCalledTimes(3);
-  });
-
-  it("should hold back every route after a global 429", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    const messageRequests = vi.fn();
-    let reactionRequests = 0;
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        ++reactionRequests === 1
-          ? HttpResponse.json(
-              { message: "Rate limited", retry_after: 2, global: true },
-              { status: 429 },
-            )
-          : new HttpResponse(null, { status: 204 }),
-      ),
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        messageRequests();
-        return HttpResponse.json([]);
-      }),
-    );
-
-    const reaction = addBotReaction("1", "👍");
-    await vi.advanceTimersByTimeAsync(0);
-    const messages = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(1999);
-    expect(messageRequests).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
-    await Promise.all([reaction, messages]);
-    expect(messageRequests).toHaveBeenCalledOnce();
-  });
-
-  it("should retry a 429 whose body isn't JSON after 1 second", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        ++attempts === 1
-          ? HttpResponse.html("<html>Too Many Requests</html>", { status: 429 })
-          : HttpResponse.json([]),
-      ),
-    );
-
-    const promise = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(1000);
-    await promise;
-
-    expect(attempts).toBe(2);
-    expect(logWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ retryAfterMs: 1000, global: false }),
-      "Discord rate limited, retrying",
-    );
-  });
-
-  it("should read Retry-After on a 429 whose body isn't JSON", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        ++attempts === 1
-          ? HttpResponse.html("<html>Too Many Requests</html>", {
-              status: 429,
-              headers: { "Retry-After": "3" },
-            })
-          : HttpResponse.json([]),
-      ),
-    );
-
-    const promise = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(2999);
-    expect(attempts).toBe(1);
-    await vi.advanceTimersByTimeAsync(1);
-    await promise;
-
-    expect(attempts).toBe(2);
-    expect(logWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ retryAfterMs: 3000 }),
-      "Discord rate limited, retrying",
-    );
   });
 
   it.each([
-    ["an HTTP-date", () => new Date(Date.now() + 3000).toUTCString(), 3000],
-    ["0", () => "0", 1000],
-    ["invalid", () => "soon", 1000],
-    ["negative", () => "-5", 1000],
-    ["exponent", () => "1e3", 1000],
-    ["fraction", () => "1.5", 1000],
-    ["a malformed date", () => "Sun, 99 Foo 2026 00:00:00 GMT", 1000],
-    ["a past date", () => new Date(Date.now() - 3000).toUTCString(), 1000],
-    ["empty", () => "", 1000],
+    ["retry_after 0", () => rateLimited(0), 1000],
+    [
+      "a JSON body without retry_after",
+      () => HttpResponse.json({ invalid: "response" }, { status: 429 }),
+      1000,
+    ],
+    ["a body that isn't JSON", () => htmlRateLimited(), 1000],
+    ["Retry-After 3", () => htmlRateLimited({ "Retry-After": "3" }), 3000],
+    [
+      "Retry-After as an HTTP-date",
+      () =>
+        htmlRateLimited({
+          "Retry-After": new Date(Date.now() + 3000).toUTCString(),
+        }),
+      3000,
+    ],
+    ["Retry-After 0", () => htmlRateLimited({ "Retry-After": "0" }), 1000],
+    [
+      "an invalid Retry-After",
+      () => htmlRateLimited({ "Retry-After": "soon" }),
+      1000,
+    ],
+    [
+      "a negative Retry-After",
+      () => htmlRateLimited({ "Retry-After": "-5" }),
+      1000,
+    ],
+    [
+      "an exponent Retry-After",
+      () => htmlRateLimited({ "Retry-After": "1e3" }),
+      1000,
+    ],
+    [
+      "a fractional Retry-After",
+      () => htmlRateLimited({ "Retry-After": "1.5" }),
+      1000,
+    ],
+    [
+      "a malformed date Retry-After",
+      () => htmlRateLimited({ "Retry-After": "Sun, 99 Foo 2026 00:00:00 GMT" }),
+      1000,
+    ],
+    [
+      "a past date Retry-After",
+      () =>
+        htmlRateLimited({
+          "Retry-After": new Date(Date.now() - 3000).toUTCString(),
+        }),
+      1000,
+    ],
+    [
+      "an empty Retry-After",
+      () => htmlRateLimited({ "Retry-After": "" }),
+      1000,
+    ],
   ])(
-    "should read a Retry-After given as %s",
-    async (_, header, retryAfterMs) => {
+    "should wait the right delay after a 429 with %s",
+    async (_, response, retryAfterMs) => {
       vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
       const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-      let attempts = 0;
-      server.use(
-        http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-          ++attempts === 1
-            ? HttpResponse.html("<html>Too Many Requests</html>", {
-                status: 429,
-                headers: { "Retry-After": header() },
-              })
-            : HttpResponse.json([]),
-        ),
-      );
+      const requests = onceThen(response, emptyList);
+      server.use(http.get(MESSAGES_URL, requests));
 
       const promise = getChannelMessages();
-      await vi.advanceTimersByTimeAsync(retryAfterMs);
+      await vi.advanceTimersByTimeAsync(retryAfterMs - 1);
+      expect(requests).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(1);
       await promise;
 
-      expect(attempts).toBe(2);
+      expect(requests).toHaveBeenCalledTimes(2);
       expect(logWarnSpy).toHaveBeenCalledWith(
         expect.objectContaining({ retryAfterMs }),
         "Discord rate limited, retrying",
@@ -1668,72 +1570,9 @@ describe("rate limiting", () => {
     },
   );
 
-  it("should gate every route on a 429 whose header says it's global", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    const messageRequests = vi.fn();
-    let reactionRequests = 0;
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        ++reactionRequests === 1
-          ? HttpResponse.html("<html>Too Many Requests</html>", {
-              status: 429,
-              headers: { "Retry-After": "2", "X-RateLimit-Global": "true" },
-            })
-          : new HttpResponse(null, { status: 204 }),
-      ),
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        messageRequests();
-        return HttpResponse.json([]);
-      }),
-    );
-
-    const reaction = addBotReaction("1", "👍");
-    await vi.advanceTimersByTimeAsync(0);
-    const messages = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(1999);
-    expect(messageRequests).not.toHaveBeenCalled();
-
-    await vi.advanceTimersByTimeAsync(1);
-    await Promise.all([reaction, messages]);
-    expect(messageRequests).toHaveBeenCalledOnce();
-  });
-
-  it("should back off on a 429 whose retry_after is 0", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        ++attempts === 1
-          ? HttpResponse.json(
-              { message: "Rate limited", retry_after: 0, global: false },
-              { status: 429 },
-            )
-          : HttpResponse.json([]),
-      ),
-    );
-
-    const promise = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(999);
-    expect(attempts).toBe(1);
-    await vi.advanceTimersByTimeAsync(1);
-    await promise;
-
-    expect(logWarnSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ retryAfterMs: 1000 }),
-      "Discord rate limited, retrying",
-    );
-  });
-
   it("should back off on 429s with no Retry-After", async () => {
     const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        ++attempts <= 3
-          ? HttpResponse.html("<html>Too Many Requests</html>", { status: 429 })
-          : HttpResponse.json([]),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, onceThen(htmlRateLimited, emptyList, 3)));
 
     const promise = getChannelMessages();
     await vi.advanceTimersByTimeAsync(7000);
@@ -1742,51 +1581,18 @@ describe("rate limiting", () => {
     for (const [i, retryAfterMs] of [1000, 2000, 4000].entries()) {
       expect(logWarnSpy).toHaveBeenNthCalledWith(
         i + 1,
-        expect.objectContaining({ retryAfterMs }),
+        expect.objectContaining({ retryAfterMs, global: false }),
         "Discord rate limited, retrying",
       );
     }
   });
 
-  it("should report the status of an error whose body isn't JSON", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        HttpResponse.html("<html>Bad Gateway</html>", {
-          status: 502,
-          statusText: "Bad Gateway",
-        }),
-      ),
-    );
-
-    await expect(addBotReaction("1", "👍")).rejects.toMatchObject({
-      name: "DiscordApiError",
-      message: "Discord API error: 502 Bad Gateway",
-      code: undefined,
-    });
-    expect(logErrorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 502,
-        body: "<html>Bad Gateway</html>",
-      }),
-      "Discord API call failed",
-    );
-  });
-
   it("should keep a long gate, so callers fail fast instead of re-hitting Discord", async () => {
     vi.spyOn(log, "error").mockImplementation(() => {});
-    const messageRequests = vi.fn();
+    const messageRequests = vi.fn(emptyList);
     server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        HttpResponse.json(
-          { message: "Rate limited", retry_after: 3600, global: true },
-          { status: 429 },
-        ),
-      ),
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        messageRequests();
-        return HttpResponse.json([]);
-      }),
+      http.put(BOT_REACTION_URL, () => rateLimited(3600, true)),
+      http.get(MESSAGES_URL, messageRequests),
     );
 
     await expect(addBotReaction("1", "👍")).rejects.toThrow(
@@ -1799,113 +1605,11 @@ describe("rate limiting", () => {
     expect(messageRequests).not.toHaveBeenCalled();
   });
 
-  it("should reject a successful response whose body isn't JSON", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        HttpResponse.html("<html>Hello</html>", { status: 200 }),
-      ),
-    );
-
-    await expect(addBotReaction("1", "👍")).rejects.toMatchObject({
-      name: "DiscordApiError",
-      message: "Discord API error: 200 body isn't JSON",
-    });
-    expect(logErrorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 200 }),
-      "Discord API body isn't JSON",
-    );
-  });
-
-  it("should gate each method on a route separately", async () => {
+  it("should spread out callers on a gate and keep them waiting when it moves", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
-    const removals = vi.fn();
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () =>
-        HttpResponse.json(
-          { message: "Rate limited", retry_after: 2, global: false },
-          { status: 429 },
-        ),
-      ),
-      http.delete(`${REACTIONS_URL}/@me`, () => {
-        removals();
-        return new HttpResponse(null, { status: 204 });
-      }),
-    );
-
-    const adding = addBotReaction("1", "👍").catch(() => {});
-    await vi.advanceTimersByTimeAsync(0);
-    await removeBotReaction("2", "🎉");
-
-    expect(removals).toHaveBeenCalledOnce();
-    await vi.advanceTimersByTimeAsync(30_000);
-    await adding;
-  });
-
-  it("should not mistake a failed body read for a body that isn't JSON", async () => {
-    const timeout = new DOMException(
-      "The operation timed out.",
-      "TimeoutError",
-    );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        new ReadableStream({
-          start(controller) {
-            controller.error(timeout);
-          },
-        }),
-        { status: 429 },
-      ),
-    );
-
-    await expect(getChannelMessages()).rejects.toBe(timeout);
-  });
-
-  it("should keep waiting when the gate moves during the wait", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    const requests = vi.fn();
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () => {
-        requests();
-        return requests.mock.calls.length === 1
-          ? HttpResponse.json(
-              { message: "Rate limited", retry_after: 5, global: false },
-              { status: 429 },
-            )
-          : new HttpResponse(null, { status: 204 });
-      }),
-    );
-    _setRateLimitGate(
-      "PUT",
-      "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me",
-      Date.now() + 1000,
-    );
-
-    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.8);
-    const first = addBotReaction("1", "👍");
-    const second = addBotReaction("2", "🎉");
-
-    await vi.advanceTimersByTimeAsync(1200);
-    expect(requests).toHaveBeenCalledOnce();
-
-    await vi.advanceTimersByTimeAsync(5000);
-    await Promise.all([first, second]);
-    expect(requests).toHaveBeenCalledTimes(3);
-  });
-
-  it("should spread out callers waiting on the same gate", async () => {
-    const requests = vi.fn();
-    server.use(
-      http.put(`${REACTIONS_URL}/@me`, () => {
-        requests();
-        return new HttpResponse(null, { status: 204 });
-      }),
-    );
-    _setRateLimitGate(
-      "PUT",
-      "/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me",
-      Date.now() + 1000,
-    );
+    const requests = onceThen(() => rateLimited(5), noContent);
+    server.use(http.put(BOT_REACTION_URL, requests));
+    _setRateLimitGate("PUT", BOT_REACTION_ROUTE, Date.now() + 1000);
 
     vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.8);
     const first = addBotReaction("1", "👍");
@@ -1913,37 +1617,47 @@ describe("rate limiting", () => {
 
     await vi.advanceTimersByTimeAsync(1000);
     expect(requests).toHaveBeenCalledOnce();
-
     await vi.advanceTimersByTimeAsync(200);
+    expect(requests).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(5000);
     await Promise.all([first, second]);
-    expect(requests).toHaveBeenCalledTimes(2);
+    expect(requests).toHaveBeenCalledTimes(3);
   });
 
-  it("should count the jitter against the wait budget", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    vi.mocked(Math.random).mockReturnValue(0.8);
-    _setRateLimitGate(
-      "GET",
-      "/channels/{channel.id}/messages",
-      Date.now() + 29_900,
-    );
+  it.each([
+    { waitMs: 31_000, jitter: 0 },
+    { waitMs: 29_900, jitter: 0.8 },
+  ])(
+    "should fail fast on a $waitMs ms gate with $jitter jitter",
+    async ({ waitMs, jitter }) => {
+      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+      vi.mocked(Math.random).mockReturnValue(jitter);
+      _setRateLimitGate(
+        "GET",
+        "/channels/{channel.id}/messages",
+        Date.now() + waitMs,
+      );
 
-    await expect(getChannelMessages()).rejects.toThrow(
-      "Discord rate limit exceeded",
-    );
-  });
+      await expect(getChannelMessages()).rejects.toThrow(
+        "Discord rate limit exceeded",
+      );
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        {
+          endpoint: "/channels/test-discord-channel-id/messages",
+          elapsedMs: expect.any(Number),
+          waitMs,
+          retries: 0,
+        },
+        "Discord rate limit exceeded max wait time",
+      );
+    },
+  );
 
   it("should give up on a 429 the gate's wait wouldn't fit", async () => {
     const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
-        HttpResponse.json(
-          { message: "Rate limited", retry_after: 29.9, global: false },
-          { status: 429 },
-        ),
-      ),
-    );
+    server.use(http.get(MESSAGES_URL, () => rateLimited(29.9)));
 
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
@@ -1952,45 +1666,6 @@ describe("rate limiting", () => {
     expect(logErrorSpy).toHaveBeenCalledWith(
       expect.objectContaining({ retryAfterMs: 29_900, retries: 1 }),
       "Discord rate limit exceeded max wait time",
-    );
-  });
-
-  it("should include retry count in log messages", async () => {
-    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
-    let attempts = 0;
-
-    server.use(
-      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
-        attempts++;
-        if (attempts <= 3) {
-          return HttpResponse.json(
-            { message: "Rate limited", retry_after: 1, global: false },
-            { status: 429 },
-          );
-        }
-        return HttpResponse.json([]);
-      }),
-    );
-
-    const promise = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(3000);
-    await promise;
-
-    expect(logWarnSpy).toHaveBeenCalledTimes(3);
-    expect(logWarnSpy).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ retries: 1 }),
-      "Discord rate limited, retrying",
-    );
-    expect(logWarnSpy).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ retries: 2 }),
-      "Discord rate limited, retrying",
-    );
-    expect(logWarnSpy).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining({ retries: 3 }),
-      "Discord rate limited, retrying",
     );
   });
 });

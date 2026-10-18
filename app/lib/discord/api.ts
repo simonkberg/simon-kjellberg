@@ -68,7 +68,7 @@ function fillRoute(route: string, params: Record<string, string>): string {
 }
 
 // Bucket (or GLOBAL_GATE) → when requests may go again. Only a 429 sets a gate; a success
-// leaves it to expire, since clearing it could wipe a newer 429's gate on the same bucket.
+// leaves it to lapse, since clearing it could wipe a newer 429's gate on the same bucket.
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
@@ -83,18 +83,19 @@ export function _setRateLimitGate(
   route: string,
   until: number,
 ): void {
-  rateLimitUntil.set(`${method} ${route}`, until);
+  rateLimitUntil.set(bucketOf(method, route), until);
+}
+
+// Discord buckets by route and channel or guild, and those never vary here.
+function bucketOf(method: Method, route: string): string {
+  return `${method} ${route}`;
 }
 
 function gateUntil(bucket: string): number {
-  let until = 0;
-  for (const gate of [bucket, GLOBAL_GATE]) {
-    const value = rateLimitUntil.get(gate);
-    if (value === undefined) continue;
-    if (value <= Date.now()) rateLimitUntil.delete(gate);
-    else until = Math.max(until, value);
-  }
-  return until;
+  return Math.max(
+    rateLimitUntil.get(bucket) ?? 0,
+    rateLimitUntil.get(GLOBAL_GATE) ?? 0,
+  );
 }
 
 // Counts the most jitter a wait can add, so a 429 and the gate agree on whether to give up.
@@ -126,21 +127,16 @@ async function waitForGate(
   }
 }
 
-function snippet(text: string): string {
-  return text.slice(0, 200);
-}
-
 // An empty body reads as null, and so does a proxy's HTML error page; a success can't.
 async function readBody(response: Response, endpoint: string) {
   const text = await response.text();
-  if (text === "") return { json: null, text };
   try {
-    return { json: JSON.parse(text) as unknown, text };
+    return { json: text === "" ? null : (JSON.parse(text) as unknown), text };
   } catch {
-    const { ok, status } = response;
-    if (!ok) return { json: null, text };
+    if (!response.ok) return { json: null, text };
+    const { status } = response;
     log.error(
-      { endpoint, status, body: snippet(text) },
+      { endpoint, status, body: text.slice(0, 200) },
       "Discord API body isn't JSON",
     );
     throw new DiscordApiError(
@@ -191,8 +187,7 @@ async function call<Route extends string, T extends z.ZodType>(
     }
   }
 
-  // Discord buckets by route and channel or guild, and those never vary here.
-  const bucket = `${method} ${route}`;
+  const bucket = bucketOf(method, route);
   const startTime = performance.now();
   let retries = 0;
 
@@ -230,7 +225,7 @@ async function call<Route extends string, T extends z.ZodType>(
     if (!response.ok) {
       const { status, statusText } = response;
       log.error(
-        { endpoint, status, body: json ?? snippet(text) },
+        { endpoint, status, body: json ?? text.slice(0, 200) },
         "Discord API call failed",
       );
       throw new DiscordApiError(
