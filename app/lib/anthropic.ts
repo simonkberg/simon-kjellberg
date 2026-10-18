@@ -489,12 +489,13 @@ export async function buildSystem(
 /** How a loop ended; anything but end_turn is the model being cut off. */
 export type LoopEnd = "end_turn" | "refusal" | "max_tokens" | "max_iterations";
 
-// What the chat sees when a reply is cut off; reflection has no reader to tell.
-const FALLBACKS: Record<Exclude<LoopEnd, "end_turn">, string> = {
+// What the chat sees when a reply is cut off; endInText keeps replies from running out of iterations.
+const FALLBACKS: Record<
+  Exclude<LoopEnd, "end_turn" | "max_iterations">,
+  string
+> = {
   refusal: "yeah I'm not touching that one, sorry",
   max_tokens: "...welp, ran out of words there",
-  max_iterations:
-    "sorry, I got stuck in a loop and couldn't finish my thought...",
 };
 
 export type AgentLoopOptions = {
@@ -508,14 +509,12 @@ export type AgentLoopOptions = {
   /** The most each API request may sleep between its retries; attempts themselves don't count. */
   maxRetrySleepMs: number;
   maxIterations?: number;
-  /** Rules out tools on the last iteration and tells the model, so the loop ends in text instead of running out; with one iteration, no tools at all. */
+  /** Rules out tools on the last iteration, so the loop ends in text. */
   endInText?: boolean;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
   replyingTo?: string;
 };
-
-type Failure = { error: Error; retryable: boolean; delayMs: number };
 
 function isRetryable(status: number): boolean {
   return status === 408 || status === 429 || status >= 500;
@@ -534,50 +533,6 @@ function retryAfterMs(response: Response): number {
   return Number.isNaN(date) ? 0 : date - Date.now();
 }
 
-async function send(
-  body: string,
-  timeoutMs: number,
-  attempt: number,
-): Promise<{ json: unknown } | Failure> {
-  let response: Response;
-  try {
-    response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body,
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-  } catch (err) {
-    // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
-    if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
-    return { error: err, retryable: true, delayMs: backoffMs(attempt) };
-  }
-
-  try {
-    if (response.ok) return { json: await response.json() };
-    const text = (await response.text()).slice(0, MAX_ERROR_BODY_LENGTH);
-    return {
-      error: new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}: ${text}`,
-      ),
-      retryable: isRetryable(response.status),
-      delayMs: Math.max(retryAfterMs(response), backoffMs(attempt)),
-    };
-  } catch (err) {
-    const error = new Error(
-      `Anthropic API error: could not read the body of a ${response.status} response`,
-      { cause: err },
-    );
-    // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
-    if (!(err instanceof TypeError)) throw error;
-    return { error, retryable: true, delayMs: backoffMs(attempt) };
-  }
-}
-
 async function postMessages(
   body: string,
   {
@@ -588,10 +543,43 @@ async function postMessages(
 ): Promise<unknown> {
   let waitedMs = 0;
   for (let attempt = 0; ; attempt++) {
-    const result = await send(body, timeoutMs, attempt);
-    if ("json" in result) return result.json;
+    let response: Response | undefined;
+    let error: Error;
+    let retryable = true;
+    let delayMs = backoffMs(attempt);
+    try {
+      response = await fetch(BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": env.ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (response.ok) return await response.json();
+      const text = (await response.text()).slice(0, MAX_ERROR_BODY_LENGTH);
+      error = new Error(
+        `Anthropic API error: ${response.status} ${response.statusText}: ${text}`,
+      );
+      retryable = isRetryable(response.status);
+      delayMs = Math.max(retryAfterMs(response), delayMs);
+    } catch (err) {
+      if (response === undefined) {
+        // Undici marks network failures with a cause, unlike bad arguments; a timeout already took a whole attempt.
+        if (!(err instanceof TypeError && err.cause !== undefined)) throw err;
+        error = err;
+      } else {
+        error = new Error(
+          `Anthropic API error: could not read the body of a ${response.status} response`,
+          { cause: err },
+        );
+        // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
+        if (!(err instanceof TypeError)) throw error;
+      }
+    }
 
-    const { error, retryable, delayMs } = result;
     if (
       attempt >= MAX_RETRIES ||
       !retryable ||
@@ -626,8 +614,9 @@ export async function* runAgentLoop({
       max_tokens: maxTokens,
       thinking: { type: "adaptive", display: "summarized" },
       output_config: { effort },
-      // Caches the conversation and tool results so later iterations reuse them.
-      cache_control: { type: "ephemeral" },
+      // Only a write the next request can read pays off; tool_choice: none invalidates it.
+      ...(iteration + 1 < maxIterations &&
+        !isTextOnly(iteration + 1) && { cache_control: { type: "ephemeral" } }),
       system,
       messages,
       tools,
@@ -705,7 +694,6 @@ export async function* runAgentLoop({
       }),
     );
 
-    // After the tool results, the note adds to the prefix rather than changing it; tool_choice on that round still costs the messages cache.
     messages.push({
       role: "user",
       content: isTextOnly(iteration + 1)
@@ -747,5 +735,5 @@ export async function* createMessage(
     loop: "reply",
     replyingTo: chatMessages.at(-1)?.id,
   });
-  if (end !== "end_turn") yield FALLBACKS[end];
+  if (end === "refusal" || end === "max_tokens") yield FALLBACKS[end];
 }

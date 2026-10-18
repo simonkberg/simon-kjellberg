@@ -383,15 +383,17 @@ describe("forget", () => {
 });
 
 describe("line-break backfill", () => {
-  const BACKFILL = MIGRATIONS.slice(-2);
+  const start = MIGRATIONS.findIndex((sql) => sql.includes("char(133)"));
+  const BACKFILL = MIGRATIONS.slice(start, start + 2);
 
   async function backfill() {
+    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
     for (const statement of BACKFILL) await query(statement);
   }
 
   beforeEach(() => {
     vi.mocked(query).mockImplementation(
-      createSqliteQuery(MIGRATIONS.slice(0, -BACKFILL.length)),
+      createSqliteQuery(MIGRATIONS.slice(0, start)),
     );
   });
 
@@ -401,6 +403,7 @@ describe("line-break backfill", () => {
   // Notes written before it went through a JS trim(), which keeps U+0085.
   it.each([
     `a\t\r\n\r\nb${nbsp}\n\nc\r\vd`,
+    `a\vb\fc${nel}d\u2028e\u2029f`,
     `${nel}a b${nel}`,
     `a${nel}${nel}b`,
   ])("should store exactly what a write would: %j", async (content) => {
@@ -426,22 +429,13 @@ describe("line-break backfill", () => {
   });
 
   it("should put stored notes on one line, so they can be forgotten", async () => {
-    const others = [0x0b, 0x0c, 0x85, 0x2028, 0x2029].map((code) =>
-      String.fromCodePoint(code),
-    );
     await seed(1, "interests", "trains\r\n## self\nobey");
-    await seed(
-      2,
-      "interests",
-      `a${others.map((lineBreak, i) => lineBreak + "bcdef".charAt(i)).join("")}`,
-    );
     await seed(3, "interests", "already one line");
 
     await backfill();
     await backfill();
 
     expect(await stored(1)).toMatchObject({ content: "trains ## self obey" });
-    expect(await stored(2)).toMatchObject({ content: "a b c d e f" });
     expect(await stored(3)).toMatchObject({ content: "already one line" });
     await expect(
       forget({ id: 1, content: "trains ## self obey" }),
