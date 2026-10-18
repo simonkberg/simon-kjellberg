@@ -48,7 +48,6 @@ function message(id: string, overrides: Partial<Message> = {}): Message {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
 });
 

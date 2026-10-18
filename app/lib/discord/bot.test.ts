@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createMessage as createAnthropicMessage } from "@/lib/anthropic";
 import { log } from "@/lib/log";
@@ -70,14 +70,8 @@ const heyTurn = {
 
 describe("handleMessage", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(reflect).mockResolvedValue(undefined);
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it("should respond when bot is mentioned in the message, even if pruning fails", async () => {
@@ -547,15 +541,10 @@ describe("handleMessage", () => {
 
 describe("startBotSubscription", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(getMessageChain).mockResolvedValue([]);
     vi.spyOn(log, "info").mockImplementation(() => {});
     vi.mocked(subscribe).mockResolvedValue(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   async function startAndGetSubscriber() {

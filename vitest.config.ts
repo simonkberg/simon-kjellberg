@@ -21,6 +21,10 @@ const config = defineConfig({
     },
     include: ["app/**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],
+    mockReset: true,
+    restoreMocks: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
     coverage: {
       enabled: isCI,
       provider: "v8",

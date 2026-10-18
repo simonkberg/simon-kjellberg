@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { MockCookies } from "@/mocks/headers";
 
@@ -10,10 +10,6 @@ vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
 describe("chatTip", () => {
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
   /** Returns the headers so tests can read back what was set. */
   const mockCookies = (cookie?: string) => {
     const headers = new Headers(cookie ? { cookie } : undefined);

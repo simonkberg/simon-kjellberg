@@ -130,9 +130,6 @@ describe("subscribe", () => {
     gateway.clients.forEach((client) => {
       client.close();
     });
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
   });
 
   it("should complete handshake and resolve", async () => {

@@ -67,8 +67,6 @@ describe("ChatToast", () => {
     vi.advanceTimersByTime(3000);
 
     await waitForElementToBeRemoved(() => screen.queryByText("Test message"));
-
-    vi.useRealTimers();
   });
 
   it("shows toast for custom duration", async () => {
@@ -82,8 +80,6 @@ describe("ChatToast", () => {
     vi.advanceTimersByTime(5000);
 
     await waitForElementToBeRemoved(() => screen.getByText("Test message"));
-
-    vi.useRealTimers();
   });
 
   it("shows new message when message prop changes", async () => {
@@ -125,8 +121,6 @@ describe("ChatToast", () => {
     vi.runAllTimers();
 
     await waitForElementToBeRemoved(() => screen.queryByText("Second message"));
-
-    vi.useRealTimers();
   });
 
   it("applies correct variant class", () => {

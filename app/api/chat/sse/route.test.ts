@@ -1,13 +1,5 @@
 import { connection, NextRequest } from "next/server";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  type Mock,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { subscribeToChannel } from "@/lib/discord/api";
 import { subscribeToStatus } from "@/lib/discord/gateway";
@@ -40,11 +32,6 @@ describe("GET /api/chat/sse", () => {
     mockUnsubscribeStatus = vi.fn();
     vi.mocked(subscribeToChannel).mockResolvedValue(mockUnsubscribe);
     vi.mocked(subscribeToStatus).mockReturnValue(mockUnsubscribeStatus);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.clearAllMocks();
   });
 
   it("should return SSE response with correct headers", async () => {

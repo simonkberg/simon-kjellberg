@@ -1,5 +1,5 @@
 import { cacheLife, refresh } from "next/cache";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   userGetRecentTracks,
@@ -29,10 +29,6 @@ vi.mock(import("@/lib/lastfm"), () => ({
 }));
 
 vi.mock(import("next/cache"), () => ({ cacheLife: vi.fn(), refresh: vi.fn() }));
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("getRecentTracks", () => {
   it("should return success status with tracks when userGetRecentTracks succeeds", async () => {

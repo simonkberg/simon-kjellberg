@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "./global";
 import { log } from "./log";
@@ -10,10 +10,6 @@ describe("readiness", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/readiness");
     vi.spyOn(log, "info").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it("should start with every stage pending", () => {
