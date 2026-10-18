@@ -71,9 +71,11 @@ const SkinTonePicker = ({ picker }: { picker: string }) => {
 
 const ReactionEmoji = ({
   messageId,
+  reactions,
   picker,
 }: {
   messageId: string;
+  reactions: Reaction[];
   picker: string;
 }) => {
   const { react } = use(ChatReactionsContext);
@@ -89,7 +91,12 @@ const ReactionEmoji = ({
         picker={picker}
         popoverTarget={picker}
         popoverTargetAction="hide"
-        onClick={() => react(messageId, toned)}
+        // Only adds, as on Discord and Slack: the reaction's own pill takes it back.
+        onClick={() => {
+          if (!reactions.some((r) => r.mine && r.emoji === toned)) {
+            react(messageId, toned);
+          }
+        }}
       />
     );
   });
@@ -97,9 +104,11 @@ const ReactionEmoji = ({
 
 export const ChatReactionPicker = ({
   messageId,
+  reactions = [],
   glyph = "☺",
 }: {
   messageId: string;
+  reactions?: Reaction[];
   glyph?: string;
 }) => {
   const { reacting } = use(ChatReactionsContext);
@@ -199,7 +208,11 @@ export const ChatReactionPicker = ({
       >
         {open && (
           <>
-            <ReactionEmoji messageId={messageId} picker={pickerId} />
+            <ReactionEmoji
+              messageId={messageId}
+              reactions={reactions}
+              picker={pickerId}
+            />
             <SkinTonePicker picker={pickerId} />
           </>
         )}
@@ -241,7 +254,11 @@ export const ChatReactionList = ({
           {reaction.emoji} <span className="count">{reaction.count}</span>
         </TooltipButton>
       ))}
-      <ChatReactionPicker messageId={messageId} glyph="+" />
+      <ChatReactionPicker
+        messageId={messageId}
+        reactions={reactions}
+        glyph="+"
+      />
     </div>
   );
 };
