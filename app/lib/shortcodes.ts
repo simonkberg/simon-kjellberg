@@ -35,6 +35,22 @@ const EMOJI_BY_NAME = new Map(
   ),
 );
 
+const TONE_MODIFIER = /1F3F[B-F]/g;
+
+// Each emoji's five single-tone variants, light to dark, as :skin-tone-1: to :skin-tone-5: pick them.
+const SKINS = new Map(
+  emoji.flatMap(({ unicode, skins }) => {
+    const tones = skins?.filter(
+      ({ hexcode }) => hexcode.match(TONE_MODIFIER)?.length === 1,
+    );
+    return tones?.length === 5
+      ? [[qualified(unicode), tones.map((skin) => qualified(skin.unicode))]]
+      : [];
+  }),
+);
+
+const SKIN_TONE = /:skin-tone-([1-5]):/y;
+
 // Code spans, escapes, URLs and Discord's own <tokens>, like <:emoji:id> and <t:time:R>, pass through whole.
 // A code span takes its whole backtick run, so an unclosed one can't backtrack into every shorter run.
 const SHORTCODE =
@@ -52,7 +68,11 @@ export function emojify(text: string): string {
       // Its closing colon may open the next one, as in :a::smile:.
       pattern.lastIndex--;
     } else {
-      result += text.slice(last, match.index) + emoji;
+      SKIN_TONE.lastIndex = pattern.lastIndex;
+      const tone = SKIN_TONE.exec(text)?.[1];
+      const toned = tone && SKINS.get(emoji)?.[Number(tone) - 1];
+      if (toned) pattern.lastIndex = SKIN_TONE.lastIndex;
+      result += text.slice(last, match.index) + (toned || emoji);
       last = pattern.lastIndex;
     }
   }

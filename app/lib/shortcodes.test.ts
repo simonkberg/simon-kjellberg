@@ -11,6 +11,12 @@ it("gives each name to one emoji", () => {
 describe("emojify", () => {
   it.each([
     ["any of an emoji's names", ":book: :open_book:", "📖 📖"],
+    [
+      "a skin tone after it",
+      ":+1::skin-tone-2: :handshake::skin-tone-5:",
+      "👍🏼 🤝🏿",
+    ],
+    ["a skin tone on one without", ":book::skin-tone-2:", "📖:skin-tone-2:"],
     ["a name it doesn't know", ":nope::book:", ":nope:📖"],
     ["a name on two emoji, by JoyPixels'", ":dog: :frowning_face:", "🐶 ☹️"],
     ["inline code", "`:book:` :book:", "`:book:` 📖"],
