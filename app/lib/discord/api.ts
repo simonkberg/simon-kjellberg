@@ -92,7 +92,7 @@ export function _resetRateLimitState(): void {
   rateLimitUntil.clear();
 }
 
-/** @internal Exported for testing the gate timeout path */
+/** @internal Exported for testing gates */
 export function _setRateLimitGate(
   method: string,
   endpoint: string,
@@ -183,9 +183,10 @@ async function call<T extends z.ZodType>(
 
       // The true deadline, so callers that can't wait fail fast rather than re-hit Discord.
       const gate = global ? GLOBAL_GATE : route;
-      const newUntil = Date.now() + retryAfterMs;
-      const existing = rateLimitUntil.get(gate) ?? 0;
-      rateLimitUntil.set(gate, Math.max(existing, newUntil));
+      rateLimitUntil.set(
+        gate,
+        Math.max(rateLimitUntil.get(gate) ?? 0, Date.now() + retryAfterMs),
+      );
 
       const elapsedMs = performance.now() - startTime;
 
