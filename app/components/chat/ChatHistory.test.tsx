@@ -8,11 +8,8 @@ import { createMessage } from "@/mocks/messages";
 
 import { ChatHistory } from "./ChatHistory";
 
-const message = (
-  id: string,
-  content = `Message ${id}`,
-  replies: Message[] = [],
-) => createMessage({ id, content, replies });
+const message = (id: string, content: string, replies: Message[] = []) =>
+  createMessage({ id, content, replies });
 
 const renderHistory = (messages: Message[]) => {
   const props = { replyToId: null, setReplyToId: vi.fn() };
@@ -68,9 +65,9 @@ describe("ChatHistory", () => {
     });
 
     it("slides in the first reply to a message", () => {
-      const { update } = renderHistory([message("1")]);
+      const { update } = renderHistory([message("1", "Parent")]);
 
-      update([message("1", undefined, [message("2")])]);
+      update([message("1", "Parent", [message("2", "Message 2")])]);
 
       expect(screen.getByText("Message 2").closest("li")).toHaveStyle({
         opacity: "0",
@@ -80,10 +77,10 @@ describe("ChatHistory", () => {
 
     it("keeps the last reply to a message while it slides out", () => {
       const { update } = renderHistory([
-        message("1", undefined, [message("2")]),
+        message("1", "Parent", [message("2", "Message 2")]),
       ]);
 
-      update([message("1")]);
+      update([message("1", "Parent")]);
 
       expect(screen.getByText("Message 2")).toBeInTheDocument();
     });
