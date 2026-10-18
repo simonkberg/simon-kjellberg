@@ -12,10 +12,11 @@ import {
 
 import { TooltipButton } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
-import { REACTION_EMOJI } from "@/lib/emoji";
+import { REACTION_EMOJI, SKIN_TONES, withSkinTone } from "@/lib/emoji";
 
 import { arrowFocus, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
+import { setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -27,6 +28,74 @@ export const ChatReactionsContext = createContext<ChatReactionsContextValue>({
   react: () => {},
 });
 
+const HAND = "✋";
+
+const focus = (button: HTMLButtonElement | null) => button?.focus();
+
+const SkinTonePicker = ({ picker }: { picker: string }) => {
+  const tone = useSkinTone();
+  const [choosing, setChoosing] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+
+  return (
+    <>
+      <TooltipButton
+        ref={toggle}
+        tooltip="Skin tone"
+        anchor={picker}
+        className="skin-tone"
+        aria-expanded={choosing}
+        onClick={() => setChoosing(!choosing)}
+      >
+        {withSkinTone(HAND, SKIN_TONES[tone]?.modifier ?? "")}
+      </TooltipButton>
+      {choosing &&
+        SKIN_TONES.map(({ name, modifier }, index) => (
+          <TooltipButton
+            key={name}
+            ref={index === tone ? focus : undefined}
+            tooltip={name}
+            anchor={picker}
+            aria-pressed={index === tone}
+            onClick={() => {
+              setSkinTone(index);
+              setChoosing(false);
+              toggle.current?.focus();
+            }}
+          >
+            {withSkinTone(HAND, modifier)}
+          </TooltipButton>
+        ))}
+    </>
+  );
+};
+
+const ReactionEmoji = ({
+  messageId,
+  picker,
+}: {
+  messageId: string;
+  picker: string;
+}) => {
+  const { react } = use(ChatReactionsContext);
+  const modifier = SKIN_TONES[useSkinTone()]?.modifier ?? "";
+
+  return REACTION_EMOJI.map(({ emoji, name }) => {
+    const toned = withSkinTone(emoji, modifier);
+    return (
+      <EmojiButton
+        key={name}
+        emoji={toned}
+        name={name}
+        picker={picker}
+        popoverTarget={picker}
+        popoverTargetAction="hide"
+        onClick={() => react(messageId, toned)}
+      />
+    );
+  });
+};
+
 export const ChatReactionPicker = ({
   messageId,
   glyph = "☺",
@@ -34,7 +103,7 @@ export const ChatReactionPicker = ({
   messageId: string;
   glyph?: string;
 }) => {
-  const { reacting, react } = use(ChatReactionsContext);
+  const { reacting } = use(ChatReactionsContext);
   const pickerId = useId();
   // Rendered only while open: a hundred messages would otherwise hold thousands of buttons.
   const [open, setOpen] = useState(false);
@@ -105,18 +174,12 @@ export const ChatReactionPicker = ({
         onToggle={focusFirst}
         onKeyDown={navigate}
       >
-        {open &&
-          REACTION_EMOJI.map(({ emoji, name }) => (
-            <EmojiButton
-              key={name}
-              emoji={emoji}
-              name={name}
-              picker={pickerId}
-              popoverTarget={pickerId}
-              popoverTargetAction="hide"
-              onClick={() => react(messageId, emoji)}
-            />
-          ))}
+        {open && (
+          <>
+            <ReactionEmoji messageId={messageId} picker={pickerId} />
+            <SkinTonePicker picker={pickerId} />
+          </>
+        )}
       </div>
     </>
   );

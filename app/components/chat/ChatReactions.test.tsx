@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
@@ -42,8 +42,14 @@ function getEmoji(name: string) {
 }
 
 function getEmojis() {
-  return within(getPicker()).getAllByRole("button", { hidden: true });
+  return within(getPicker())
+    .getAllByRole("button", { hidden: true })
+    .slice(0, REACTION_EMOJI.length);
 }
+
+afterEach(() => {
+  localStorage.clear();
+});
 
 describe("ChatReactionPicker", () => {
   it("renders no emoji until opened", () => {
@@ -73,6 +79,30 @@ describe("ChatReactionPicker", () => {
     expect(react).toHaveBeenCalledWith("1", "🎉");
   });
 
+  it("reacts in the picked skin tone, and keeps it", async () => {
+    const user = userEvent.setup();
+    const { react } = renderOpenPicker();
+    const toggle = getEmoji("Skin tone");
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(getEmoji("Default")).toHaveFocus();
+    await user.click(getEmoji("Medium-light"));
+
+    expect(toggle).toHaveTextContent("✋🏼");
+    expect(toggle).toHaveFocus();
+    expect(
+      within(getPicker()).queryByRole("button", {
+        name: "Default",
+        hidden: true,
+      }),
+    ).toBeNull();
+    expect(getEmoji("tada")).toHaveTextContent("🎉");
+    await user.click(getEmoji("thumbsup"));
+    expect(react).toHaveBeenCalledWith("1", "👍🏼");
+    expect(localStorage.getItem("skin-tone")).toBe("2");
+  });
+
   it("focuses the first emoji once open", () => {
     renderOpenPicker();
     sendToggle(getPicker(), "toggle", "open");
@@ -94,7 +124,7 @@ describe("ChatReactionPicker", () => {
     await user.keyboard("{ArrowDown}");
     expect(items[8]).toHaveFocus();
     await user.keyboard("{End}");
-    expect(items.at(-1)).toHaveFocus();
+    expect(getEmoji("Skin tone")).toHaveFocus();
     await user.keyboard("{Home}");
     expect(items[0]).toHaveFocus();
   });

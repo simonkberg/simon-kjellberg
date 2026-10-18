@@ -1540,6 +1540,14 @@ ul {
     &[aria-selected="true"] {
       background: var(--wash);
     }
+
+    &[aria-pressed="true"] {
+      background: color-mix(in oklch, var(--accent) 22%, transparent);
+    }
+  }
+
+  > .skin-tone {
+    grid-column-start: 1;
   }
 
   > .name {
