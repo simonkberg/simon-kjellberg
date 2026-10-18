@@ -88,16 +88,6 @@ describe("ChatEmojiInput", () => {
     expect(input).toHaveValue("💀 later");
   });
 
-  it("swaps a known shortcode for its emoji on its closing colon", async () => {
-    const { user, input } = renderChatInput();
-    await user.type(input, "hot :");
-    await screen.findByRole("listbox");
-
-    await user.type(input, "fire: :nope: `:fire:`");
-
-    expect(input).toHaveValue("hot 🔥 :nope: `:fire:`");
-  });
-
   it("sends a short emoticon like :S unless an emoji is chosen", async () => {
     const { user, input } = renderChatInput();
 

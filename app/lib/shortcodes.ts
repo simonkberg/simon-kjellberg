@@ -3,7 +3,7 @@ import emoji from "emojibase-data/en/compact.json";
 import emojibase from "emojibase-data/en/shortcodes/emojibase.json";
 import joypixels from "emojibase-data/en/shortcodes/joypixels.json";
 
-import { emojiByShortcode, type EmojiShortcodes, qualified } from "@/lib/emoji";
+import { type EmojiShortcodes, qualified } from "@/lib/emoji";
 
 const COMPONENT_GROUP = 2;
 const FLAGS_GROUP = 9;
@@ -31,7 +31,11 @@ export const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
   },
 );
 
-const EMOJI_BY_NAME = emojiByShortcode(SHORTCODES);
+const EMOJI_BY_NAME = new Map(
+  SHORTCODES.flatMap(([emoji, ...names]) =>
+    names.map((name) => [name, emoji] as const),
+  ),
+);
 
 // Code spans, escapes, URLs and Discord's own <tokens>, like <:emoji:id> and <t:time:R>, pass through whole.
 const SHORTCODE =

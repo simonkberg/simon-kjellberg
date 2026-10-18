@@ -10,12 +10,7 @@ import {
   useState,
 } from "react";
 
-import {
-  emojiByShortcode,
-  type EmojiShortcodes,
-  REACTION_EMOJI,
-  searchEmoji,
-} from "@/lib/emoji";
+import { type EmojiShortcodes, REACTION_EMOJI, searchEmoji } from "@/lib/emoji";
 
 import { arrowIndex, gridColumns } from "./arrowFocus";
 import { ChatEmojiSuggestions } from "./ChatEmojiSuggestions";
@@ -33,22 +28,6 @@ function typedShortcode(input: HTMLInputElement) {
   return query === undefined
     ? null
     : { query, start: caret - query.length - 1, end: caret };
-}
-
-const COMPLETED = /(?:^|\s):([\w+-]+):$/;
-
-/** Swaps a known shortcode whose closing colon was just typed for its emoji, unless inside code. */
-function completeShortcode(
-  input: HTMLInputElement,
-  byName: Map<string, string>,
-) {
-  // A typed colon leaves the caret right after it.
-  const caret = input.selectionEnd!;
-  const before = input.value.slice(0, caret);
-  const name = COMPLETED.exec(before)?.[1];
-  const glyph = name && byName.get(name);
-  if (!glyph || before.split("`").length % 2 === 0) return;
-  input.setRangeText(glyph, caret - name.length - 2, caret, "end");
 }
 
 // A short query may be an emoticon like ":D", so Enter only picks once one is chosen.
@@ -94,7 +73,6 @@ export const ChatEmojiInput = ({
         ? searchEmoji(emoji, query, LIMIT)
         : REACTION_EMOJI;
   const open = matches.length > 0;
-  const byName = emoji && emojiByShortcode(emoji);
   const chosen = active === null ? undefined : matches[active];
 
   useEffect(() => {
@@ -180,13 +158,6 @@ export const ChatEmojiInput = ({
         ref={ref}
         value={value}
         onChange={(event) => {
-          const { nativeEvent } = event;
-          if (
-            byName &&
-            nativeEvent instanceof InputEvent &&
-            nativeEvent.data === ":"
-          )
-            completeShortcode(event.target, byName);
           onValueChange(event.target.value);
           track(event.target);
         }}

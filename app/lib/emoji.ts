@@ -49,14 +49,6 @@ export const qualified = (emoji: string) =>
 /** An emoji and its shortcodes, the first being the one it is known by. */
 export type EmojiShortcodes = [emoji: string, ...shortcodes: string[]];
 
-/** Each shortcode's emoji. */
-export const emojiByShortcode = (emoji: EmojiShortcodes[]) =>
-  new Map(
-    emoji.flatMap(([glyph, ...names]) =>
-      names.map((name) => [name, glyph] as const),
-    ),
-  );
-
 export interface EmojiMatch {
   emoji: string;
   name: string;

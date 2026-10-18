@@ -138,16 +138,6 @@ describe("getChannelMessages", () => {
     expect(messages).toMatchObject([{ content: "**Bold** and *italic*" }]);
   });
 
-  it("should turn known shortcodes into emoji outside code", async () => {
-    server.use(
-      history(post("1", { content: "TestUser: :book: `:book:` :nope:" })),
-    );
-
-    const messages = await getChannelMessages();
-
-    expect(messages).toMatchObject([{ content: "📖 `:book:` :nope:" }]);
-  });
-
   it("should name a non-bot author from the guild member and keep their content whole", async () => {
     server.use(
       history(
@@ -587,7 +577,7 @@ describe("getMessageChain", () => {
 });
 
 describe("postChannelMessage", () => {
-  it("should post the message with its author's prefix and return Discord's id", async () => {
+  it("should post the message with its author's prefix and shortcodes as emoji, and return Discord's id", async () => {
     const requests = vi.fn();
     server.use(
       http.post(MESSAGES_URL, async ({ request }) => {
@@ -597,13 +587,13 @@ describe("postChannelMessage", () => {
     );
 
     const messageId = await postChannelMessage(
-      "Hello world",
+      "Hello :book:",
       "TestUser" as Username,
     );
 
     expect(messageId).toBe("message-123");
     expect(requests).toHaveBeenCalledExactlyOnceWith(
-      { content: "TestUser: Hello world" },
+      { content: "TestUser: Hello 📖" },
       "Bot test-discord-bot-token",
     );
   });

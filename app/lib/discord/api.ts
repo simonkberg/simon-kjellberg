@@ -259,13 +259,6 @@ const USERNAME_PREFIX_PATTERN = /^(.+?):(?:\s(.*))?$/s;
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
-  const { username, content } = await splitAuthor(msg);
-  return { username, content: emojify(content) };
-}
-
-async function splitAuthor(
-  msg: DiscordMessage,
-): Promise<{ username: string; content: string }> {
   // Messages the bot posts for the site carry their author as a prefix.
   const prefixed = msg.author.bot
     ? msg.content.match(USERNAME_PREFIX_PATTERN)
@@ -594,7 +587,7 @@ export async function postChannelMessage(
   replyToMessageId?: string,
 ): Promise<string> {
   const body = {
-    content: `${username}: ${text}`,
+    content: `${username}: ${emojify(text)}`,
     // A reply to a message deleted meanwhile goes out as a plain message.
     message_reference: replyToMessageId
       ? { message_id: replyToMessageId, fail_if_not_exists: false }
