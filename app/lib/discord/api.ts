@@ -68,13 +68,12 @@ function exceedsWaitBudget(elapsedMs: number, waitMs: number): boolean {
 
 // Retry-After is either delta-seconds or an HTTP-date.
 function retryAfterHeaderMs(value: string | null): number | undefined {
-  if (value === null || value.trim() === "") return undefined;
-  const seconds = Number(value);
-  if (!Number.isFinite(seconds)) {
-    const date = Date.parse(value);
-    return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
-  }
-  return seconds >= 0 ? seconds * 1000 : undefined;
+  const header = value?.trim() ?? "";
+  if (/^\d+$/.test(header)) return Number(header) * 1000;
+  // An HTTP-date starts with its weekday, which keeps Date.parse off forms like "-5".
+  if (!/^[a-z]{3,9},/i.test(header)) return undefined;
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
 }
 
 function gateUntil(route: string): number {
