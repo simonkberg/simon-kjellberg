@@ -5,6 +5,7 @@ import { z } from "zod";
 import { env } from "@/lib/env";
 import { getGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
+import { emojify } from "@/lib/shortcodes";
 import { stringToColor } from "@/lib/stringToColor";
 
 import type { Username } from "../session";
@@ -256,6 +257,13 @@ function toUser(name: string): User {
 const USERNAME_PREFIX_PATTERN = /^(.+?):(?:\s(.*))?$/s;
 
 async function resolveMessageContent(
+  msg: DiscordMessage,
+): Promise<{ username: string; content: string }> {
+  const { username, content } = await splitAuthor(msg);
+  return { username, content: emojify(content) };
+}
+
+async function splitAuthor(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
   // Messages the bot posts for the site carry their author as a prefix.

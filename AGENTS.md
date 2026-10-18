@@ -161,6 +161,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   fetched when the input takes focus, a shortcode is typed or a message emoji is first hovered,
   which shows its shortcode, so the full set never ships with the page;
   `app/components/chat/shortcodes.ts` holds the one cached request.
+  The server turns known `:shortcodes:` in message content into emoji (`emojify` in
+  `app/lib/shortcodes.ts`), skipping code, escapes and URLs, as Discord renders them.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.

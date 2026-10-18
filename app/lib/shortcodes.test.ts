@@ -1,0 +1,16 @@
+import { describe, expect, it } from "vitest";
+
+import { emojify } from "./shortcodes";
+
+describe("emojify", () => {
+  it.each([
+    ["any of an emoji's names", ":book: :open_book:", "📖 📖"],
+    ["a name it doesn't know", ":doesntexist:", ":doesntexist:"],
+    ["inline code", "`:book:` :book:", "`:book:` 📖"],
+    ["a code block", "```\n:book:\n```", "```\n:book:\n```"],
+    ["an escaped colon", "\\:book:", "\\:book:"],
+    ["a URL", "https://example.com/:book:/", "https://example.com/:book:/"],
+  ])("handles %s", (_, text, expected) => {
+    expect(emojify(text)).toBe(expected);
+  });
+});

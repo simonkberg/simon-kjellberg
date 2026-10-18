@@ -138,6 +138,16 @@ describe("getChannelMessages", () => {
     expect(messages).toMatchObject([{ content: "**Bold** and *italic*" }]);
   });
 
+  it("should turn known shortcodes into emoji outside code", async () => {
+    server.use(
+      history(post("1", { content: "TestUser: :book: `:book:` :nope:" })),
+    );
+
+    const messages = await getChannelMessages();
+
+    expect(messages).toMatchObject([{ content: "📖 `:book:` :nope:" }]);
+  });
+
   it("should name a non-bot author from the guild member and keep their content whole", async () => {
     server.use(
       history(
