@@ -28,7 +28,7 @@ export const ChatStream = () => {
 
     const connect = () => {
       disconnect();
-      // Changes made since the page rendered or the last stream sent no event.
+      // Every stream after the first missed what changed while none was open.
       const reconnecting = connected;
       connected = true;
       eventSource = new EventSource("/api/chat/sse");
