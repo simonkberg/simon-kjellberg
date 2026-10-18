@@ -267,12 +267,12 @@ describe("postChatMessage", () => {
     expect(result.status).toBe("error");
   });
 
-  it("rejects text that wouldn't fit Discord's limit beside the username", async () => {
-    expect(await post("x".repeat(1989))).toEqual({ status: "ok" });
+  it("rejects text over the length limit", async () => {
+    expect(await post("x".repeat(500))).toEqual({ status: "ok" });
 
-    expect(await post("x".repeat(1990))).toEqual({
+    expect(await post("x".repeat(501))).toEqual({
       status: "error",
-      error: "Messages can be at most 1989 characters long.",
+      error: "Messages can be at most 500 characters long.",
     });
     expect(postChannelMessage).toHaveBeenCalledOnce();
   });
