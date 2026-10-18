@@ -69,13 +69,10 @@ function fillRoute(route: string, params: Record<string, string>): string {
 
 // Bucket (or GLOBAL_GATE) → when requests may go again. Only a 429 sets a gate; a success
 // leaves it to lapse, since clearing it could wipe a newer 429's gate on the same bucket.
-const rateLimitUntil = new Map<string, number>();
-const GLOBAL_GATE = "global";
-
-/** @internal Exported for test cleanup only */
-export function _resetRateLimitState(): void {
-  rateLimitUntil.clear();
+function rateLimitUntil(): Map<string, number> {
+  return getGlobal("discord-rate-limit", () => new Map<string, number>());
 }
+const GLOBAL_GATE = "global";
 
 /** @internal Exported for testing gates */
 export function _setRateLimitGate(
@@ -83,7 +80,7 @@ export function _setRateLimitGate(
   route: string,
   until: number,
 ): void {
-  rateLimitUntil.set(bucketOf(method, route), until);
+  rateLimitUntil().set(bucketOf(method, route), until);
 }
 
 // Discord buckets by route and channel or guild, and those never vary here.
@@ -92,10 +89,8 @@ function bucketOf(method: Method, route: string): string {
 }
 
 function gateUntil(bucket: string): number {
-  return Math.max(
-    rateLimitUntil.get(bucket) ?? 0,
-    rateLimitUntil.get(GLOBAL_GATE) ?? 0,
-  );
+  const gates = rateLimitUntil();
+  return Math.max(gates.get(bucket) ?? 0, gates.get(GLOBAL_GATE) ?? 0);
 }
 
 // Counts the most jitter a wait can add, so a 429 and the gate agree on whether to give up.
@@ -211,7 +206,8 @@ async function call<Route extends string, T extends z.ZodType>(
       const until = Date.now() + retryAfterMs;
       const gate = global ? GLOBAL_GATE : bucket;
       // The true deadline, so callers that can't wait fail fast rather than re-hit Discord.
-      rateLimitUntil.set(gate, Math.max(rateLimitUntil.get(gate) ?? 0, until));
+      const gates = rateLimitUntil();
+      gates.set(gate, Math.max(gates.get(gate) ?? 0, until));
 
       const details = { endpoint, retryAfterMs, global, retries };
       const elapsedMs = performance.now() - startTime;
