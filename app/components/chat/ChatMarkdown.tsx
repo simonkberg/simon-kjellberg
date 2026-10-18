@@ -46,8 +46,18 @@ const extensions = [
     attributes: {},
     children: context.parseInline(match.slice(2, -2)),
   })),
-  // CommonMark's `*` and `_` open emphasis before a space; Discord's don't.
-  rule("looseEmphasis", "*_", /[*_](?=\s)/y, ([match]) => ({
+  // simple-markdown's (and Discord's) `em`: CommonMark's flanking rules differ.
+  rule(
+    "emphasis",
+    "*_",
+    /_(?:__|\\[\s\S]|[^\\_])+?_(?!\w)|\*(?=\S)(?:\*\*|\\[\s\S]|\s+(?:\\[\s\S]|[^\s*\\]|\*\*)|[^\s*\\])+?\*(?!\*)/y,
+    ([match], context) => ({
+      type: "emphasis",
+      children: context.parseInline(match.slice(1, -1)),
+    }),
+  ),
+  // Keeps CommonMark from reading a delimiter `emphasis` rejected.
+  rule("delimiter", "*_", /\*(?!\*)|_(?!_)/y, ([match]) => ({
     type: "text",
     value: match,
   })),
@@ -65,7 +75,7 @@ const extensions = [
   rule(
     "url",
     "h",
-    /(?<!\w)https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y,
+    /(?<![A-Za-z0-9])https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y,
     ([url], { inLink }) => (inLink ? undefined : link(url)),
   ),
 ] satisfies MarkdownExtension[];

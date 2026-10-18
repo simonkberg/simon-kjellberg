@@ -19,8 +19,8 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("leaves a * or _ before a space as text", () => {
-    expect(html("2 * 3 * 4 and a _ b _ c")).toBe("2 * 3 * 4 and a _ b _ c");
+  it("leaves a * that doesn't flank a word as text", () => {
+    expect(html("2 * 3 * 4 and *d *")).toBe("2 * 3 * 4 and *d *");
   });
 
   it("renders underline, strikethrough and inline code", () => {
