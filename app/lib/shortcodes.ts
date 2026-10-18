@@ -9,15 +9,13 @@ const COMPONENT_GROUP = 2;
 const FLAGS_GROUP = 9;
 const COUNTRY_CODE = /^[a-z]{2}$/;
 
-const codes = (preset: string | string[] | undefined) => [preset ?? []].flat();
-
 const EMOJI = emoji.flatMap(({ group, hexcode, unicode }) => {
   if (group === undefined || group === COMPONENT_GROUP) return [];
   // As exact matches, they would lead every two-letter search; flag_sk still finds 🇸🇰.
   const names = (preset: string | string[] | undefined) =>
-    codes(preset).filter(
-      (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
-    );
+    [preset ?? []]
+      .flat()
+      .filter((name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name));
   return [
     {
       emoji: qualified(unicode),
@@ -35,13 +33,11 @@ export const SHORTCODES: EmojiShortcodes[] = EMOJI.map(
   ],
 );
 
+const byName = (preset: "joypixels" | "emojibase") =>
+  EMOJI.flatMap((e) => e[preset].map((name) => [name, e.emoji] as const));
+
 // A name on two emoji, like dog on 🐶 and 🐕, goes to the one JoyPixels gives it.
-const EMOJI_BY_NAME = new Map(
-  [
-    ...EMOJI.map(({ emoji, emojibase }) => [emoji, emojibase] as const),
-    ...EMOJI.map(({ emoji, joypixels }) => [emoji, joypixels] as const),
-  ].flatMap(([emoji, names]) => names.map((name) => [name, emoji] as const)),
-);
+const EMOJI_BY_NAME = new Map([...byName("emojibase"), ...byName("joypixels")]);
 
 // Code spans, escapes, URLs and Discord's own <tokens>, like <:emoji:id> and <t:time:R>, pass through whole.
 const SHORTCODE =
@@ -49,6 +45,7 @@ const SHORTCODE =
 
 /** Replaces each known `:shortcode:` with its emoji, outside code, as Discord does. */
 export function emojify(text: string): string {
+  if (!text.includes(":")) return text;
   const pattern = new RegExp(SHORTCODE);
   let result = "";
   let last = 0;
