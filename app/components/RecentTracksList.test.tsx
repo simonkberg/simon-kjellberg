@@ -5,6 +5,7 @@ import type { GetRecentTracksResult, RecentTrack } from "@/actions/lastfm";
 import { refreshRecentTracks } from "@/actions/lastfm";
 
 import { RecentTracksList } from "./RecentTracksList";
+import { RelativeTime } from "./RelativeTime";
 
 vi.mock(import("@/actions/lastfm"), () => ({ refreshRecentTracks: vi.fn() }));
 
@@ -69,7 +70,8 @@ describe("RecentTracksList", () => {
     expect(item).toHaveTextContent("Past Song");
     const time = item.querySelector("time");
     expect(time).toHaveAttribute("dateTime", playedAt.toISOString());
-    expect(time).toHaveTextContent(/ ago$/);
+    const { container } = render(<RelativeTime date={playedAt} />);
+    expect(time?.textContent).toBe(container.textContent);
   });
 
   it("displays error message when tracks fetch fails", async () => {

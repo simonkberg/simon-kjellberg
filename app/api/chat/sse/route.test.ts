@@ -160,6 +160,7 @@ describe("GET /api/chat/sse", () => {
     onStatus(false);
     await vi.advanceTimersByTimeAsync(30_000);
 
+    // Only the ping written on connect, before the abort, reaches the client.
     expect(await readText(reader)).toBe(": ping\n\n");
     expect((await reader.read()).done).toBe(true);
   });

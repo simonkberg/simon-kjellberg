@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { config } from "@/config";
+
 import { Page } from "./Page";
 
 describe("Page", () => {
@@ -8,7 +10,9 @@ describe("Page", () => {
     render(<Page>Page content</Page>);
 
     const heading = screen.getByRole("heading", { level: 1 });
-    expect(within(heading).getByRole("link")).toHaveAttribute("href", "/");
+    const link = within(heading).getByRole("link");
+    expect(link).toHaveAccessibleName(config.title);
+    expect(link).toHaveAttribute("href", "/");
   });
 
   it("renders Header with section", () => {

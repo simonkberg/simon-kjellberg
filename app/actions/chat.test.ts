@@ -179,13 +179,15 @@ describe("postChatMessage", () => {
   it("rejects the sixth post in 30 seconds with the wait time", async () => {
     await postUpToTheLimit();
     vi.advanceTimersByTime(10_000);
+    vi.mocked(postChannelMessage).mockClear();
+    vi.mocked(setChatTipDismissed).mockClear();
 
     expect(await post()).toEqual({
       status: "error",
       error: "Rate limit exceeded. Wait 20 seconds before trying again.",
     });
-    expect(postChannelMessage).toHaveBeenCalledTimes(5);
-    expect(setChatTipDismissed).toHaveBeenCalledTimes(5);
+    expect(postChannelMessage).not.toHaveBeenCalled();
+    expect(setChatTipDismissed).not.toHaveBeenCalled();
   });
 
   it("turns away an IP on the deny list before rate limiting it", async () => {
