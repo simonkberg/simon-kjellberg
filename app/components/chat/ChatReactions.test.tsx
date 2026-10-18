@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI } from "@/lib/emoji";
@@ -47,9 +47,16 @@ function getEmojis() {
     .slice(0, REACTION_EMOJI.length);
 }
 
-afterEach(() => {
-  localStorage.clear();
-});
+// happy-dom has no layout, so each emoji gets the row it would sit in.
+function layOutGrid(columns: number) {
+  const items = getEmojis();
+  for (const [index, item] of items.entries()) {
+    Object.defineProperty(item, "offsetTop", {
+      value: Math.floor(index / columns) * 40,
+    });
+  }
+  return items;
+}
 
 describe("ChatReactionPicker", () => {
   it("renders no emoji until opened", () => {
@@ -128,12 +135,7 @@ describe("ChatReactionPicker", () => {
   it("moves a row at a time, counting the columns from the layout", async () => {
     const user = userEvent.setup();
     renderOpenPicker();
-    const items = getEmojis();
-    for (const [index, item] of items.entries()) {
-      Object.defineProperty(item, "offsetTop", {
-        value: Math.floor(index / 8) * 40,
-      });
-    }
+    const items = layOutGrid(8);
     items[0]?.focus();
 
     await user.keyboard("{ArrowDown}");
@@ -147,12 +149,7 @@ describe("ChatReactionPicker", () => {
   it("moves between the last row and the tone row below it", async () => {
     const user = userEvent.setup();
     renderOpenPicker();
-    const items = getEmojis();
-    for (const [index, item] of items.entries()) {
-      Object.defineProperty(item, "offsetTop", {
-        value: Math.floor(index / 8) * 40,
-      });
-    }
+    const items = layOutGrid(8);
     items.at(-1)?.focus();
 
     await user.keyboard("{ArrowRight}{Shift>}{ArrowDown}{/Shift}");

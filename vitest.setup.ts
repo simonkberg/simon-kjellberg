@@ -53,6 +53,11 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  // Cleared the way another tab would, so stores that cache it start over.
+  if (typeof window !== "undefined") {
+    localStorage.clear();
+    window.dispatchEvent(new StorageEvent("storage"));
+  }
   server.resetHandlers();
 });
 

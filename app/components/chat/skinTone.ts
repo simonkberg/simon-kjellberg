@@ -1,17 +1,12 @@
 import { useSyncExternalStore } from "react";
 
-import { SKIN_TONES } from "@/lib/emoji";
-
-type SkinTone = (typeof SKIN_TONES)[number];
+import { SKIN_TONES, type SkinTone } from "@/lib/emoji";
 
 const KEY = "skin-tone";
 const listeners = new Set<() => void>();
+let current: SkinTone | undefined;
 
-// Once storage fails to save a pick, the pick still sticks for the visit.
-let unsaved: SkinTone | undefined;
-
-function read(): SkinTone {
-  if (unsaved) return unsaved;
+function load(): SkinTone {
   try {
     return SKIN_TONES[Number(localStorage.getItem(KEY))] ?? SKIN_TONES[0];
   } catch {
@@ -19,18 +14,22 @@ function read(): SkinTone {
   }
 }
 
+const read = () => (current ??= load());
+
+function notify() {
+  for (const listener of listeners) listener();
+}
+
+function onStorage() {
+  current = undefined;
+  notify();
+}
+
 function subscribe(onChange: () => void) {
-  // The tone is all this site stores, so any change from another tab wins over an unsaved pick.
-  const onStorage = () => {
-    unsaved = undefined;
-    onChange();
-  };
-  listeners.add(onChange);
+  // Kept after the last unsubscribe, so a closed picker still hears other tabs; adding it again is a no-op.
   window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(onChange);
-    window.removeEventListener("storage", onStorage);
-  };
+  listeners.add(onChange);
+  return () => listeners.delete(onChange);
 }
 
 /** The visitor's skin tone, one of SKIN_TONES. */
@@ -38,11 +37,11 @@ export const useSkinTone = () =>
   useSyncExternalStore(subscribe, read, () => SKIN_TONES[0]);
 
 export function setSkinTone(tone: SkinTone) {
+  current = tone;
   try {
     localStorage.setItem(KEY, String(SKIN_TONES.indexOf(tone)));
-    unsaved = undefined;
   } catch {
-    unsaved = tone;
+    // Kept in memory anyway, so the pick still holds for the visit.
   }
-  for (const listener of listeners) listener();
+  notify();
 }

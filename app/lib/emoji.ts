@@ -52,6 +52,8 @@ export const SKIN_TONES = [
   { name: "Dark", modifier: "\u{1F3FF}" },
 ] as const;
 
+export type SkinTone = (typeof SKIN_TONES)[number];
+
 const TONEABLE = /^\p{Emoji_Modifier_Base}\uFE0F?$/u;
 
 /** A single emoji in a tone, if it takes one; the tone replaces any U+FE0F. */
