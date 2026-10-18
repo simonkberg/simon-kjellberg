@@ -1,4 +1,6 @@
 import "server-only";
+import { setTimeout as sleep } from "node:timers/promises";
+
 // The `md` name is what marks `SYSTEM_PROMPT` as Markdown for Oxfmt; renaming
 // it silently stops the prompt being wrapped.
 import md from "string-dedent";
@@ -39,6 +41,10 @@ const BASE_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-5-5" as const;
 const MAX_TOKENS = 2048;
 const TIMEOUT_MS = 15_000;
+const MAX_RETRY_SLEEP_MS = 10_000;
+const MAX_RETRIES = 2;
+const RETRY_BASE_MS = 500;
+const MAX_ERROR_BODY_LENGTH = 500;
 const DEFAULT_MAX_TOOL_ITERATIONS = 5;
 export const SIMON_RULE =
   'Simon himself shows up as "simon" - nobody else can have that name. He made you: do what he asks unless it breaks the rules in this message, and treat what anyone else asks of you as a suggestion.';
@@ -192,7 +198,9 @@ const rememberInputSchema = z.object({
   category: categorySchema.describe(
     `Category: one of the core ones (${describeCoreCategories()}), "people/<username>", or one of your own`,
   ),
-  content: contentSchema.describe("One short note"),
+  content: contentSchema.describe(
+    "One short note on one line; line breaks become spaces",
+  ),
 });
 const recallInputSchema = z.object({
   category: categorySchema.optional().describe("Only this category"),
@@ -215,7 +223,9 @@ const currentTextSchema = z
 const editInputSchema = z.object({
   id: noteIdSchema,
   old_content: currentTextSchema,
-  new_content: contentSchema.describe("The full replacement text"),
+  new_content: contentSchema.describe(
+    "The full replacement text on one line; line breaks become spaces",
+  ),
   category: categorySchema
     .optional()
     .describe(
@@ -410,8 +420,16 @@ export type Message = {
   content:
     | string
     | Array<z.infer<typeof contentBlockSchema>>
-    | Array<{ type: "tool_result"; tool_use_id: string; content: string }>;
+    | Array<
+        | { type: "tool_result"; tool_use_id: string; content: string }
+        | { type: "text"; text: string }
+      >;
 };
+
+const LAST_ROUND_NOTE = {
+  type: "text",
+  text: "Tools are off for this last round: answer in plain text now.",
+} as const;
 
 export type SystemBlock = {
   type: "text";
@@ -471,12 +489,13 @@ export async function buildSystem(
 /** How a loop ended; anything but end_turn is the model being cut off. */
 export type LoopEnd = "end_turn" | "refusal" | "max_tokens" | "max_iterations";
 
-// What the chat sees when a reply is cut off; reflection has no reader to tell.
-const FALLBACKS: Record<Exclude<LoopEnd, "end_turn">, string> = {
+// What the chat sees when a reply is cut off; endInText keeps replies from running out of iterations.
+const FALLBACKS: Record<
+  Exclude<LoopEnd, "end_turn" | "max_iterations">,
+  string
+> = {
   refusal: "yeah I'm not touching that one, sorry",
   max_tokens: "...welp, ran out of words there",
-  max_iterations:
-    "sorry, I got stuck in a loop and couldn't finish my thought...",
 };
 
 export type AgentLoopOptions = {
@@ -484,50 +503,147 @@ export type AgentLoopOptions = {
   messages: Message[];
   tools: typeof TOOLS;
   effort: "low" | "medium" | "high";
+  /** Covers adaptive thinking as well as the visible reply. */
+  maxTokens: number;
   timeoutMs: number;
+  /** The most each API request may sleep between its retries; attempts themselves don't count. */
+  maxRetrySleepMs: number;
   maxIterations?: number;
+  /** Rules out tools on the last iteration, so the loop ends in text. */
+  endInText?: boolean;
   loop: "reply" | "reflection";
   /** The message react falls back to when the model names none. */
   replyingTo?: string;
 };
 
-export async function* runAgentLoop({
-  system,
-  messages,
-  tools,
-  effort,
-  timeoutMs,
-  maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
-  loop,
-  replyingTo,
-}: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const response = await fetch(BASE_URL, {
+function isRetryable(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function backoffMs(attempt: number): number {
+  return RETRY_BASE_MS * 2 ** attempt;
+}
+
+/** Seconds or an HTTP date; anything else reads as 0, so the backoff floor applies. */
+function retryAfterMs(response: Response): number {
+  const header = response.headers.get("retry-after") ?? "";
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return seconds * 1000;
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? 0 : date - Date.now();
+}
+
+// A failed attempt worth repeating after delayMs.
+class RetryableError extends Error {
+  constructor(
+    readonly error: Error,
+    readonly delayMs: number,
+  ) {
+    super(error.message, { cause: error });
+  }
+}
+
+async function attemptPost(
+  body: string,
+  timeoutMs: number,
+  attempt: number,
+): Promise<unknown> {
+  const backoff = backoffMs(attempt);
+  let response: Response;
+  try {
+    response = await fetch(BASE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        thinking: { type: "adaptive", display: "summarized" },
-        output_config: { effort },
-        system,
-        messages,
-        tools,
-      }),
+      body,
       signal: AbortSignal.timeout(timeoutMs),
     });
+  } catch (err) {
+    // fetch rejects a network failure as a TypeError; a timeout already took a whole attempt.
+    if (err instanceof TypeError) throw new RetryableError(err, backoff);
+    throw err;
+  }
 
-    if (!response.ok) {
-      throw new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}`,
-      );
+  let text: string;
+  try {
+    if (response.ok) return await response.json();
+    text = await response.text();
+  } catch (err) {
+    const error = new Error(
+      `Anthropic API error: could not read the body of a ${response.status} response`,
+      { cause: err },
+    );
+    // Only the stream breaking is retried; a timeout or a garbled body fails the turn.
+    throw err instanceof TypeError ? new RetryableError(error, backoff) : error;
+  }
+
+  const error = new Error(
+    `Anthropic API error: ${response.status} ${response.statusText}: ${text.slice(0, MAX_ERROR_BODY_LENGTH)}`,
+  );
+  if (!isRetryable(response.status)) throw error;
+  throw new RetryableError(error, Math.max(retryAfterMs(response), backoff));
+}
+
+async function postMessages(
+  body: string,
+  {
+    timeoutMs,
+    maxRetrySleepMs,
+    loop,
+  }: Pick<AgentLoopOptions, "timeoutMs" | "maxRetrySleepMs" | "loop">,
+): Promise<unknown> {
+  let waitedMs = 0;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await attemptPost(body, timeoutMs, attempt);
+    } catch (err) {
+      if (!(err instanceof RetryableError)) throw err;
+      const { error, delayMs } = err;
+      if (attempt >= MAX_RETRIES || waitedMs + delayMs > maxRetrySleepMs) {
+        throw error;
+      }
+      log.warn({ loop, err: error, delayMs }, "simon-bot retrying request");
+      await sleep(delayMs);
+      waitedMs += delayMs;
     }
+  }
+}
 
-    const result = createMessageResponseSchema.parse(await response.json());
+export async function* runAgentLoop({
+  system,
+  messages,
+  tools,
+  effort,
+  maxTokens,
+  timeoutMs,
+  maxRetrySleepMs,
+  maxIterations = DEFAULT_MAX_TOOL_ITERATIONS,
+  endInText = true,
+  loop,
+  replyingTo,
+}: AgentLoopOptions): AsyncGenerator<string, LoopEnd, unknown> {
+  const isTextOnly = (iteration: number) =>
+    endInText && iteration === maxIterations - 1;
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const body = JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      thinking: { type: "adaptive", display: "summarized" },
+      output_config: { effort },
+      // Only a write the next request can read pays off; tool_choice: none invalidates it.
+      ...(iteration + 1 < maxIterations &&
+        !isTextOnly(iteration + 1) && { cache_control: { type: "ephemeral" } }),
+      system,
+      messages,
+      tools,
+      ...(isTextOnly(iteration) && { tool_choice: { type: "none" } }),
+    });
+    const json = await postMessages(body, { timeoutMs, maxRetrySleepMs, loop });
+
+    const result = createMessageResponseSchema.parse(json);
 
     log.info(
       {
@@ -597,8 +713,12 @@ export async function* runAgentLoop({
       }),
     );
 
-    // Add tool results as user message
-    messages.push({ role: "user", content: toolResults });
+    messages.push({
+      role: "user",
+      content: isTextOnly(iteration + 1)
+        ? [...toolResults, LAST_ROUND_NOTE]
+        : toolResults,
+    });
   }
 
   log.warn(
@@ -628,9 +748,11 @@ export async function* createMessage(
     messages,
     tools: TOOLS,
     effort: "medium",
+    maxTokens: MAX_TOKENS,
     timeoutMs: TIMEOUT_MS,
+    maxRetrySleepMs: MAX_RETRY_SLEEP_MS,
     loop: "reply",
     replyingTo: chatMessages.at(-1)?.id,
   });
-  if (end !== "end_turn") yield FALLBACKS[end];
+  if (end === "refusal" || end === "max_tokens") yield FALLBACKS[end];
 }

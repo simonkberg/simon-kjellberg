@@ -32,6 +32,12 @@ export async function GET(request: NextRequest) {
     return new NextResponse(null, { status: 503 });
   }
 
+  // The client may have left while the gateway was reconnecting, and abort doesn't fire twice.
+  if (request.signal.aborted) {
+    unsubscribe();
+    return new NextResponse(null, { status: 499 });
+  }
+
   // The client counts an open stream as live; this tells it when the gateway
   // behind it drops and comes back.
   const unsubscribeStatus = subscribeToStatus((ready) => {
