@@ -44,6 +44,9 @@ export const DiscordMessageSchema = z.object({
   reactions: z
     .array(z.object({ count: z.number(), me: z.boolean(), emoji: EmojiSchema }))
     .optional(),
+  message_snapshots: z
+    .array(z.object({ message: z.object({ content: z.string() }) }))
+    .optional(),
 });
 
 export type DiscordMessage = z.infer<typeof DiscordMessageSchema>;

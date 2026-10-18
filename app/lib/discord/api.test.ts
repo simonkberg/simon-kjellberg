@@ -659,6 +659,33 @@ describe("getChannelMessages", () => {
     ]);
   });
 
+  it("should show what a forward forwards", async () => {
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json([
+          {
+            ...rawMessage([], "2"),
+            author: { id: "user2", username: "forwarder" },
+            content: "",
+            message_reference: { type: 1, message_id: "1" },
+            message_snapshots: [{ message: { content: "Forwarded text" } }],
+          },
+          {
+            ...rawMessage([], "3"),
+            author: { id: "user2", username: "forwarder" },
+            content: "",
+          },
+        ]),
+      ),
+      http.get(MEMBER_URL, () => member("forwarder")),
+    );
+
+    expect(await getChannelMessages()).toMatchObject([
+      { id: "2", content: "Forwarded text" },
+      { id: "3", content: "" },
+    ]);
+  });
+
   it("should filter out non-standard message types", async () => {
     server.use(
       http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
@@ -1595,6 +1622,71 @@ describe("rate limiting", () => {
       expect.objectContaining({ retryAfterMs: 3000 }),
       "Discord rate limited, retrying",
     );
+  });
+
+  it.each([
+    ["an HTTP-date", () => new Date(Date.now() + 3000).toUTCString(), 3000],
+    ["0", () => "0", 0],
+    ["invalid", () => "soon", 1000],
+    ["negative", () => "-5", 1000],
+    ["empty", () => "", 1000],
+  ])(
+    "should read a Retry-After given as %s",
+    async (_, header, retryAfterMs) => {
+      vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+      const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
+      let attempts = 0;
+      server.use(
+        http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+          ++attempts === 1
+            ? HttpResponse.html("<html>Too Many Requests</html>", {
+                status: 429,
+                headers: { "Retry-After": header() },
+              })
+            : HttpResponse.json([]),
+        ),
+      );
+
+      const promise = getChannelMessages();
+      await vi.advanceTimersByTimeAsync(retryAfterMs);
+      await promise;
+
+      expect(attempts).toBe(2);
+      expect(logWarnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ retryAfterMs }),
+        "Discord rate limited, retrying",
+      );
+    },
+  );
+
+  it("should gate every route on a 429 whose header says it's global", async () => {
+    vi.spyOn(log, "warn").mockImplementation(() => {});
+    const messageRequests = vi.fn();
+    let reactionRequests = 0;
+    server.use(
+      http.put(`${REACTIONS_URL}/@me`, () =>
+        ++reactionRequests === 1
+          ? HttpResponse.html("<html>Too Many Requests</html>", {
+              status: 429,
+              headers: { "Retry-After": "2", "X-RateLimit-Global": "true" },
+            })
+          : new HttpResponse(null, { status: 204 }),
+      ),
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () => {
+        messageRequests();
+        return HttpResponse.json([]);
+      }),
+    );
+
+    const reaction = addBotReaction("1", "👍");
+    await vi.advanceTimersByTimeAsync(0);
+    const messages = getChannelMessages();
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(messageRequests).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    await Promise.all([reaction, messages]);
+    expect(messageRequests).toHaveBeenCalledOnce();
   });
 
   it("should report the status of an error whose body isn't JSON", async () => {

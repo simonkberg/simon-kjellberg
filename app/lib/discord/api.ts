@@ -66,6 +66,17 @@ function exceedsWaitBudget(elapsedMs: number, waitMs: number): boolean {
   return elapsedMs + waitMs + GATE_JITTER_MS > RATE_LIMIT_TIMEOUT_MS;
 }
 
+// Retry-After is either delta-seconds or an HTTP-date.
+function retryAfterHeaderMs(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds)) {
+    const date = Date.parse(value);
+    return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
+  }
+  return seconds >= 0 ? seconds * 1000 : undefined;
+}
+
 function gateUntil(route: string): number {
   let until = 0;
   for (const key of [route, GLOBAL_GATE]) {
@@ -165,8 +176,10 @@ async function call<T extends z.ZodType>(
       const rateLimit = RateLimitResponseSchema.safeParse(json);
       const retryAfterMs = rateLimit.success
         ? rateLimit.data.retry_after * 1000
-        : Number(response.headers.get("retry-after")) * 1000 || 1000;
-      const global = rateLimit.success && rateLimit.data.global;
+        : (retryAfterHeaderMs(response.headers.get("retry-after")) ?? 1000);
+      const global =
+        (rateLimit.success && rateLimit.data.global) ||
+        response.headers.get("x-ratelimit-global") === "true";
 
       // Outlives a caller that gives up, capped at the longest anyone waits.
       const gate = global ? GLOBAL_GATE : route;
@@ -257,9 +270,12 @@ async function authorName(msg: DiscordMessage): Promise<string> {
 async function resolveMessageContent(
   msg: DiscordMessage,
 ): Promise<{ username: string; content: string }> {
-  const parsed = msg.author.bot ? parseUsernamePrefix(msg.content) : undefined;
+  // A forward's own content is empty; what it forwards is in its snapshot.
+  const text =
+    msg.content || (msg.message_snapshots?.[0]?.message.content ?? "");
+  const parsed = msg.author.bot ? parseUsernamePrefix(text) : undefined;
   const username = parsed ? parsed[0] : await authorName(msg);
-  const content = (parsed?.[1] ?? msg.content).trim();
+  const content = (parsed?.[1] ?? text).trim();
   return { username, content };
 }
 
