@@ -34,10 +34,10 @@ describe("Chat", () => {
     document.cookie = "chatTipDismissed=; max-age=0";
   });
 
-  const chatElement = (result: ChatHistoryResult, dismissed = false) => (
+  const chatElement = (result: ChatHistoryResult) => (
     <Chat
       history={Promise.resolve(result)}
-      tipDismissed={Promise.resolve(dismissed)}
+      tipDismissed={Promise.resolve(false)}
     />
   );
 
@@ -60,11 +60,9 @@ describe("Chat", () => {
     ).toBeInTheDocument();
   });
 
-  it("hides the simon-bot tip once it has been dismissed", async () => {
+  it("hides the simon-bot tip once its cookie is set", async () => {
     document.cookie = "chatTipDismissed=true";
-    await act(async () =>
-      render(chatElement({ status: "ok", messages: [] }, true)),
-    );
+    await act(async () => render(chatElement({ status: "ok", messages: [] })));
 
     expect(
       screen.queryByRole("button", { name: "Dismiss tip" }),
