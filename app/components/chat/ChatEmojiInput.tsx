@@ -18,9 +18,7 @@ import { loadShortcodes, reloadShortcodes } from "./shortcodes";
 
 const LIMIT = 24;
 
-// After whitespace or the last code point an emoji can end with, so "🅰️:b" opens but "/:id" doesn't.
-const SHORTCODE =
-  /(?:^|[\s\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}\u20E3\uFE0F\u{E007F}]):([\w+-]*)$/u;
+const SHORTCODE = /(?:^|\s):([\w+-]*)$/;
 
 /** The shortcode typed up to the caret, without its colon, and where it starts with its colon. */
 function typedShortcode(input: HTMLInputElement) {
@@ -105,7 +103,13 @@ export const ChatEmojiInput = ({
     const input = ref.current;
     const shortcode = input && typedShortcode(input);
     if (!input || !shortcode) return;
-    input.setRangeText(glyph, shortcode.start, shortcode.end, "end");
+    const spaced = /^\s/.test(input.value.slice(shortcode.end));
+    input.setRangeText(
+      spaced ? glyph : `${glyph} `,
+      shortcode.start,
+      shortcode.end,
+      "end",
+    );
     setTyped(null);
     onValueChange(input.value);
     input.focus();

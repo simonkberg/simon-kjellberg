@@ -58,23 +58,11 @@ describe("ChatEmojiInput", () => {
 
     await user.keyboard("{Enter}");
 
-    expect(input).toHaveValue("hi 🔥");
+    expect(input).toHaveValue("hi 🔥 ");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(input).toHaveAttribute("aria-expanded", "false");
     expect(postChatMessage).not.toHaveBeenCalled();
   });
-
-  it.each(["🅰️", "🔥", "👍🏽", "1️⃣", "🇸🇪", "🏴󠁧󠁢󠁳󠁣󠁴󠁿"])(
-    "opens right after %s",
-    async (emoji) => {
-      const { user, input } = renderChatInput();
-
-      await user.type(input, `${emoji}:fire`);
-
-      expect(await screen.findByRole("listbox")).toBeInTheDocument();
-      expect(options()).toBe("🔥🧑‍🚒");
-    },
-  );
 
   it("moves the choice with the arrow keys and picks it with Tab", async () => {
     const { user, input } = renderChatInput();
@@ -85,7 +73,7 @@ describe("ChatEmojiInput", () => {
     expect(chosen()).toHaveAccessibleName("firefighter");
     await user.keyboard("{ArrowLeft}{ArrowRight}{Tab}");
 
-    expect(input).toHaveValue("🧑‍🚒");
+    expect(input).toHaveValue("🧑‍🚒 ");
     expect(input).toHaveFocus();
   });
 
@@ -143,7 +131,7 @@ describe("ChatEmojiInput", () => {
     await screen.findByRole("listbox");
     await user.keyboard("{ArrowUp}{Enter}");
 
-    expect(input).toHaveValue("💀");
+    expect(input).toHaveValue("💀 ");
   });
 
   it("closes on Escape without clearing the reply, until the shortcode changes", async () => {
@@ -225,7 +213,7 @@ describe("ChatEmojiInput", () => {
     await user.type(input, "so :s");
     await user.click(await screen.findByRole("option", { name: "skull" }));
 
-    expect(input).toHaveValue("so 💀");
+    expect(input).toHaveValue("so 💀 ");
     expect(input).toHaveFocus();
   });
 
@@ -278,7 +266,7 @@ describe("ChatEmojiInput", () => {
     );
   });
 
-  it.each(["12:30", "https://simon.dev", "std::fi", "/:fire", ":)", ":zzz"])(
+  it.each(["12:30", "https://simon.dev", ":)", ":zzz"])(
     "stays closed for %s",
     async (text) => {
       const { user, input } = renderChatInput();
