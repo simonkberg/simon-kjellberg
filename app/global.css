@@ -1503,6 +1503,11 @@ ul {
       &[aria-pressed="true"] {
         background: color-mix(in oklch, var(--accent) 22%, transparent);
         color: var(--ink);
+
+        /* Touch keeps :hover after a tap, so a hovered pill must still read as yours. */
+        &:hover:not(:disabled) {
+          background: color-mix(in oklch, var(--accent) 30%, transparent);
+        }
       }
 
       &:disabled {

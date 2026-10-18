@@ -12,6 +12,7 @@ import {
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
   addBotReaction,
+  removeBotReaction,
   DiscordApiError,
   getChannelMessages,
   type Message,
@@ -47,7 +48,9 @@ vi.mock(import("@/lib/session"), () => ({
 }));
 vi.mock(import("@/lib/chatTip"), () => ({ setChatTipDismissed: vi.fn() }));
 vi.mock(import("@/lib/discord/api"));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 function createMockMessage(overrides: Partial<Message> = {}): Message {
   return {
@@ -304,6 +307,16 @@ describe("postChatMessage", () => {
     expect(result.status).toBe("error");
   });
 
+  it("rejects text over the length limit", async () => {
+    expect(await post("x".repeat(500))).toEqual({ status: "ok" });
+
+    expect(await post("x".repeat(501))).toEqual({
+      status: "error",
+      error: "Messages can be at most 500 characters long.",
+    });
+    expect(postChannelMessage).toHaveBeenCalledOnce();
+  });
+
   it("returns error when text is only whitespace", async () => {
     const formData = new FormData();
     formData.set("text", "   ");
@@ -325,6 +338,7 @@ describe("reactToChatMessage", () => {
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(addBotReaction).mockResolvedValue();
+    vi.mocked(removeBotReaction).mockResolvedValue();
   });
 
   afterEach(() => {

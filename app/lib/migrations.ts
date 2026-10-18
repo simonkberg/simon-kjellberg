@@ -2,11 +2,11 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { log } from "@/lib/log";
-import { query } from "@/lib/turso";
+import { batch, query } from "@/lib/turso";
 
 // Append only, and never edit an entry once applied: boot fails on a changed
-// checksum. Each entry is one statement that must be safe to re-run, since a
-// crash between applying and recording it re-applies it on the next boot.
+// checksum. Each entry is one statement, applied and recorded in one transaction.
+// Inside a transaction, so PRAGMA, VACUUM and multi-statement strings don't belong here.
 export const MIGRATIONS: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS memories (
     id INTEGER PRIMARY KEY,
@@ -25,6 +25,14 @@ export const MIGRATIONS: readonly string[] = [
     username TEXT NOT NULL,
     UNIQUE (message_id, emoji, username)
   )`,
+  // Backfills toOneLine in memory.ts; trim() strips the space an edge U+0085 becomes.
+  `UPDATE memories SET content = trim(
+    replace(replace(replace(replace(replace(replace(replace(replace(content,
+      char(13, 10), ' '), char(13), ' '), char(10), ' '), char(11), ' '),
+      char(12), ' '), char(133), ' '), char(8232), ' '), char(8233), ' ')
+  )`,
+  // A note that was only U+0085 is now empty, which contentSchema never writes.
+  `DELETE FROM memories WHERE content = ''`,
 ];
 
 // Outside MIGRATIONS: the lock and the version list need these before it can run.
@@ -134,11 +142,13 @@ async function applyPending(): Promise<void> {
     const version = index + 1;
     if (applied.has(version)) continue;
 
-    await query(sql);
-    await query(
-      "INSERT INTO migrations (version, applied_at, checksum) VALUES (?, ?, ?)",
-      [version, new Date().toISOString(), checksum(sql)],
-    );
+    await batch([
+      { sql },
+      {
+        sql: "INSERT INTO migrations (version, applied_at, checksum) VALUES (?, ?, ?)",
+        args: [version, new Date().toISOString(), checksum(sql)],
+      },
+    ]);
     log.info({ version }, "Applied migration");
   }
 }

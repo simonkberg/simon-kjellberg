@@ -13,7 +13,9 @@ import {
 } from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 let sqlite: typeof query;
 
@@ -204,6 +206,17 @@ describe("runMigrations", () => {
 
     await expect(runMigrations()).rejects.toThrow("boom");
     expect((await query("SELECT * FROM locks")).rows).toEqual([]);
+  });
+
+  it("should roll back a migration it fails to record", async () => {
+    failNext("INSERT INTO migrations");
+
+    await expect(runMigrations()).rejects.toThrow("boom");
+    expect(await appliedVersions()).toEqual([]);
+    const { rows } = await query(
+      "SELECT name FROM sqlite_master WHERE name = 'memories'",
+    );
+    expect(rows).toEqual([]);
   });
 
   it("should succeed when releasing the lock fails", async () => {

@@ -142,6 +142,16 @@ describe("ChatReactionPicker", () => {
     expect(getPicker()).not.toHaveAttribute("data-popover-open");
   });
 
+  it("closes on Escape without leaving it to the page", () => {
+    renderWithContext(<ChatReactionPicker messageId="1" />);
+    getPicker().showPopover();
+    openPicker();
+    getEmoji("heart").focus();
+
+    expect(fireEvent.keyDown(getEmoji("heart"), { key: "Escape" })).toBe(false);
+    expect(getPicker()).not.toHaveAttribute("data-popover-open");
+  });
+
   it("returns focus to its button when it closes around it", () => {
     renderWithContext(<ChatReactionPicker messageId="1" />);
     openPicker();

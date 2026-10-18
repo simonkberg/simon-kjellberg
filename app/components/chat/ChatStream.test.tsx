@@ -139,6 +139,86 @@ describe("ChatStream", () => {
       expect(refreshChatHistory).toHaveBeenCalled();
     });
 
+    it("refreshes the history when it reconnects, not when it first opens", () => {
+      vi.useFakeTimers();
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+
+      act(() => getInstance().onopen());
+      expect(refreshChatHistory).not.toHaveBeenCalled();
+
+      act(() => getInstance().onerror());
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      act(() => getInstance().onopen());
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
+    it("refreshes the history when its first attempt failed", () => {
+      vi.useFakeTimers();
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+
+      act(() => getInstance().onerror());
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      act(() => getInstance().onopen());
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
+    it("refreshes the history when it reconnects after the network returns", () => {
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+      act(() => getInstance().onopen());
+
+      act(() => {
+        window.dispatchEvent(new Event("offline"));
+        window.dispatchEvent(new Event("online"));
+      });
+      act(() => getInstance().onopen());
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
+    it("refreshes the history when the gateway behind the stream recovers", () => {
+      vi.mocked(refreshChatHistory).mockClear();
+      render(<ChatStream />);
+      const instance = mockEventSource.getInstance();
+      act(() => instance.onopen());
+
+      act(() => instance.sendStatus("live"));
+      expect(refreshChatHistory).not.toHaveBeenCalled();
+
+      act(() => instance.sendStatus("connecting"));
+      act(() => instance.sendStatus("live"));
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
+    it("refreshes once when it reconnects after the gateway went down", () => {
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+      act(() => getInstance().onopen());
+      act(() => getInstance().sendStatus("connecting"));
+
+      act(() => {
+        window.dispatchEvent(new Event("offline"));
+        window.dispatchEvent(new Event("online"));
+      });
+      act(() => getInstance().onopen());
+      act(() => getInstance().sendStatus("live"));
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
     it("closes EventSource on unmount", () => {
       const { getInstance } = mockEventSource;
 

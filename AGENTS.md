@@ -142,9 +142,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   its events. Renders call Discord only for what a session hasn't seen yet: a name not on
   an event's `member` (looked up once per session) and who reacted to a seeded reaction
   (once). Otherwise only a reply chain reaching past the window, search and writes use
-  REST, where a rate-limit "gate" prevents retry
-  storms on 429s. Messages from the site carry a
-  `username: content` prefix for attribution.
+  REST, where a rate-limit "gate" per route (every route on a global 429) prevents
+  retry storms. Messages from the site carry a `username: content` prefix for attribution.
 - **Chat stream:** `ChatStream` (in the chat's title bar) owns the SSE connection and shows
   its state: `live`, `connecting` or `offline`. The route sends a named `status` event when
   the gateway behind it drops or recovers, so an open stream alone doesn't read as live.
@@ -179,10 +178,13 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   instances don't double-reply. Without Turso it doesn't reply at all, rather than twice.
   The reply chain reaches it as one user turn of escaped `<message>` elements, its own
   included, so ids, authors and reactions sit outside the text people can type.
+  A reply's last round rules out tools, so it ends in text rather than running out of rounds.
 - **Turso:** the only datastore. `app/lib/turso.ts` calls its HTTP pipeline endpoint with raw
-  `fetch`; once migrations apply, `instrumentation.ts` runs `keepWarm()`, a `SELECT 1` each
+  `fetch`; `batch()` sends several statements in one request and one transaction. Once
+  migrations apply, `instrumentation.ts` runs `keepWarm()`, a `SELECT 1` each
   minute, since idle Turso stalls the next query past its timeout. `app/lib/migrations.ts`
-  is an append-only list of idempotent statements applied at boot under a lock row in `locks`. Each records a checksum, and boot fails if an applied
+  is an append-only list of statements applied at boot under a lock row in `locks`, each
+  in one transaction with its record. Each records a checksum, and boot fails if an applied
   one was edited: change the schema with a new migration. Chat posts are rate limited by `app/lib/rateLimit.ts`,
   a sliding window kept atomic across replicas by doing the count and insert in one statement.
   It fails open: a limiter error lets the post through. It remembers blocked keys in memory,
@@ -192,7 +194,7 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **simon-bot memory:** `app/lib/memory.ts` owns the `memories` table and renders the
   `<memory>` system-prompt block: `self`, `style`, `interests`, `context` and `people/<username>` for
   the current participants in full, every other category as a name and count the bot reads
-  with `recall`. `edit` and `forget` are compare-and-swap on the note's text. Memory
+  with `recall`. Notes are one line. `edit` and `forget` are compare-and-swap on the note's text. Memory
   failures degrade to a reply without memory, never to no reply.
 - **simon-bot self:** the bot's `self` and `style` notes are its personality and voice; the
   base prompt in `app/lib/anthropic.ts` carries a starting point they take precedence over.
@@ -262,7 +264,7 @@ Files that must not run on client import `"server-only"` at top (e.g., `app/lib/
 
 - **Environment:** happy-dom
 - **Location:** Co-located with source files (`*.test.ts`, `*.test.tsx`)
-- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema); happy-dom has no popover API, so `vitest.setup.ts` stubs `showPopover`/`hidePopover` to toggle `data-popover-open`
+- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema; mock `@/lib/turso` with `mockTurso()` so `batch` runs through `query`); happy-dom has no popover API, so `vitest.setup.ts` stubs `showPopover`/`hidePopover` to toggle `data-popover-open`
 - **React Compiler:** enabled in `vitest.config.ts` via `react({ compiler: true })`, so tests exercise auto-memoized components like production does
 
 > The Vitest setup uses the **native** (Rust) React Compiler from `oxc-transform-react`, an experimental optional peer of `@vitejs/plugin-react`. Next.js runs the same native compiler inside Turbopack (`reactCompiler` + `experimental.turbopackRustReactCompiler` in `next.config.ts`), so `babel-plugin-react-compiler` is not needed. The two are still configured independently.

@@ -363,10 +363,19 @@ export class ChannelStore {
   }
 
   #forgetOlder(event: ChannelEvent): void {
-    if (event.t === "MESSAGE_UPDATE" || event.t === "MESSAGE_DELETE") {
-      this.#older.delete(event.d.id);
-    } else if (event.t === "MESSAGE_DELETE_BULK") {
-      for (const id of event.d.ids) this.#older.delete(id);
+    switch (event.t) {
+      case "MESSAGE_UPDATE":
+      case "MESSAGE_DELETE":
+        this.#older.delete(event.d.id);
+        return;
+      case "MESSAGE_DELETE_BULK":
+        for (const id of event.d.ids) this.#older.delete(id);
+        return;
+      case "MESSAGE_REACTION_ADD":
+      case "MESSAGE_REACTION_REMOVE":
+      case "MESSAGE_REACTION_REMOVE_ALL":
+      case "MESSAGE_REACTION_REMOVE_EMOJI":
+        this.#older.delete(event.d.message_id);
     }
   }
 

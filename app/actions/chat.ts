@@ -22,6 +22,8 @@ import {
 } from "@/lib/reactions";
 import { getSession, type Username } from "@/lib/session";
 
+const MAX_MESSAGE_LENGTH = 500;
+
 export type ChatHistoryResult =
   | { status: "ok"; messages: Message[] }
   | { status: "error"; error: string };
@@ -97,6 +99,12 @@ export async function postChatMessage(
     if (denied) return denied;
 
     const text = z.string().trim().min(1).parse(formData.get("text"));
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      return {
+        status: "error",
+        error: `Messages can be at most ${MAX_MESSAGE_LENGTH} characters long.`,
+      };
+    }
     const replyToId = z
       .string()
       .optional()

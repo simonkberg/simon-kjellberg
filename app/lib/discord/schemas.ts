@@ -38,13 +38,26 @@ export const DiscordMessageSchema = z.object({
   content: z.string(),
   timestamp: z.string(),
   edited_timestamp: z.string().nullable().optional(),
-  message_reference: z.object({ message_id: z.string().optional() }).optional(),
+  message_reference: z
+    .object({ type: z.number().optional(), message_id: z.string().optional() })
+    .optional(),
   reactions: z
     .array(z.object({ count: z.number(), me: z.boolean(), emoji: EmojiSchema }))
+    .optional(),
+  message_snapshots: z
+    .array(z.object({ message: z.object({ content: z.string().nullish() }) }))
     .optional(),
 });
 
 export type DiscordMessage = z.infer<typeof DiscordMessageSchema>;
+
+const FORWARD = 1;
+
+// A forward references the message it copies, not one it replies to.
+export function parentId(message: DiscordMessage): string | undefined {
+  const reference = message.message_reference;
+  return reference?.type === FORWARD ? undefined : reference?.message_id;
+}
 
 // Default messages and replies; the rest are system messages.
 export function isShown(message: DiscordMessage): boolean {

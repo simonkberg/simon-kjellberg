@@ -120,6 +120,33 @@ describe("handleMessage", () => {
     expect(postChannelMessage).not.toHaveBeenCalled();
   });
 
+  it("should not treat a forward as a reply", async () => {
+    await handleMessage(
+      createMessage({
+        id: "msg-2",
+        message_reference: { type: 1, message_id: "msg-1" },
+        content: "User2: look at this",
+      }),
+    );
+
+    expect(query).not.toHaveBeenCalled();
+    expect(getMessageChain).not.toHaveBeenCalled();
+  });
+
+  it("should not be summoned by a forward of someone else's mention", async () => {
+    await handleMessage(
+      createMessage({
+        id: "msg-2",
+        content: "",
+        message_reference: { type: 1, message_id: "msg-1" },
+        message_snapshots: [{ message: { content: "User1: hey simon-bot" } }],
+      }),
+    );
+
+    expect(query).not.toHaveBeenCalled();
+    expect(getMessageChain).not.toHaveBeenCalled();
+  });
+
   it("should not respond to a reply when nothing in the chain mentions the bot", async () => {
     vi.mocked(getMessageChain).mockResolvedValue([
       link("msg-1", 0, "User1", "hello"),
