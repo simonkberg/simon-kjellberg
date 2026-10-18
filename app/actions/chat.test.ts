@@ -12,6 +12,7 @@ import {
 import { setChatTipDismissed } from "@/lib/chatTip";
 import {
   addBotReaction,
+  removeBotReaction,
   DiscordApiError,
   getChannelMessages,
   type Message,
@@ -46,7 +47,9 @@ vi.mock(import("@/lib/session"), () => ({
 }));
 vi.mock(import("@/lib/chatTip"), () => ({ setChatTipDismissed: vi.fn() }));
 vi.mock(import("@/lib/discord/api"));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 function createMockMessage(overrides: Partial<Message> = {}): Message {
   return {
@@ -298,6 +301,7 @@ describe("reactToChatMessage", () => {
     await refreshIpDenyList();
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
     vi.mocked(addBotReaction).mockResolvedValue();
+    vi.mocked(removeBotReaction).mockResolvedValue();
   });
 
   afterEach(() => {

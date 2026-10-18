@@ -36,7 +36,9 @@ vi.mock(import("@/lib/discord/api"), () => ({
   getChannelMessages: vi.fn(),
   searchChannelMessages: vi.fn(),
 }));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 vi.mock(import("@/lib/reactions"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, addReaction: vi.fn() };

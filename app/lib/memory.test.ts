@@ -19,7 +19,9 @@ import {
 import { MIGRATIONS } from "./migrations";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 const CREATED_AT = "2025-01-01T00:00:00.000Z";
 

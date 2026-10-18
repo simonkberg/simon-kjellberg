@@ -5,31 +5,32 @@ import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { server } from "@/mocks/node";
 
-import { keepWarm, query } from "./turso";
+import { batch, keepWarm, query } from "./turso";
 
 vi.mock(import("server-only"), () => ({}));
 
 const PIPELINE_URL = "https://test-db.turso.io/v2/pipeline";
 
-function pipelineResponse(result: Record<string, unknown> = {}) {
+function pipelineBody(response: Record<string, unknown>) {
   return {
     results: [
-      {
-        type: "ok",
-        response: {
-          type: "execute",
-          result: {
-            cols: [],
-            rows: [],
-            affected_row_count: 0,
-            last_insert_rowid: null,
-            ...result,
-          },
-        },
-      },
+      { type: "ok", response },
       { type: "ok", response: { type: "close" } },
     ],
   };
+}
+
+function pipelineResponse(result: Record<string, unknown> = {}) {
+  return pipelineBody({
+    type: "execute",
+    result: {
+      cols: [],
+      rows: [],
+      affected_row_count: 0,
+      last_insert_rowid: null,
+      ...result,
+    },
+  });
 }
 
 describe("query", () => {
@@ -197,6 +198,132 @@ describe("query", () => {
       await expect(freshQuery("SELECT 1")).resolves.toMatchObject({ rows: [] });
     },
   );
+});
+
+describe("batch", () => {
+  function stmtResult(value: number) {
+    return {
+      cols: [{ name: "n" }],
+      rows: [[{ type: "integer", value: String(value) }]],
+      affected_row_count: 0,
+      last_insert_rowid: null,
+    };
+  }
+
+  function batchResponse(
+    stepResults: unknown[],
+    stepErrors: unknown[] = stepResults.map(() => null),
+  ) {
+    return pipelineBody({
+      type: "batch",
+      result: { step_results: stepResults, step_errors: stepErrors },
+    });
+  }
+
+  it("should run the statements in one transaction that rolls back on failure", async () => {
+    let body: unknown;
+    server.use(
+      http.post(PIPELINE_URL, async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json(
+          batchResponse([
+            stmtResult(0),
+            stmtResult(1),
+            stmtResult(2),
+            stmtResult(0),
+            null,
+          ]),
+        );
+      }),
+    );
+
+    await expect(
+      batch([{ sql: "SELECT ?", args: [1] }, { sql: "SELECT 2" }]),
+    ).resolves.toEqual([
+      { rows: [{ n: 1 }], rowsAffected: 0, lastInsertRowId: null },
+      { rows: [{ n: 2 }], rowsAffected: 0, lastInsertRowId: null },
+    ]);
+    expect(body).toEqual({
+      requests: [
+        {
+          type: "batch",
+          batch: {
+            steps: [
+              { stmt: { sql: "BEGIN" } },
+              {
+                condition: { type: "ok", step: 0 },
+                stmt: {
+                  sql: "SELECT ?",
+                  args: [{ type: "integer", value: "1" }],
+                },
+              },
+              {
+                condition: { type: "ok", step: 1 },
+                stmt: { sql: "SELECT 2", args: [] },
+              },
+              { condition: { type: "ok", step: 2 }, stmt: { sql: "COMMIT" } },
+              {
+                condition: { type: "not", cond: { type: "ok", step: 3 } },
+                stmt: { sql: "ROLLBACK" },
+              },
+            ],
+          },
+        },
+        { type: "close" },
+      ],
+    });
+  });
+
+  it.each([
+    { failed: 0, step: "BEGIN" },
+    { failed: 2, step: "statement 2" },
+    { failed: 3, step: "COMMIT" },
+  ])("should name the step that failed: $step", async ({ failed, step }) => {
+    // BEGIN, two statements, COMMIT and ROLLBACK.
+    const steps = Array.from({ length: 5 }, (_, index) => index);
+    server.use(
+      http.post(PIPELINE_URL, () =>
+        HttpResponse.json(
+          batchResponse(
+            steps.map((index) =>
+              index < failed || index === 4 ? stmtResult(0) : null,
+            ),
+            steps.map((index) =>
+              index === failed ? { message: "database is locked" } : null,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await expect(
+      batch([{ sql: "SELECT 1" }, { sql: "SELECT 2" }]),
+    ).rejects.toThrow(`Turso query error in ${step}: database is locked`);
+  });
+
+  it("should throw when a step has neither a result nor an error", async () => {
+    server.use(
+      http.post(PIPELINE_URL, () =>
+        HttpResponse.json(
+          batchResponse([stmtResult(0), null, stmtResult(0), null]),
+        ),
+      ),
+    );
+
+    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
+      "Turso query error in statement 1: no result",
+    );
+  });
+
+  it("should throw when the result is not a batch result", async () => {
+    server.use(
+      http.post(PIPELINE_URL, () => HttpResponse.json(pipelineResponse())),
+    );
+
+    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
+      "Turso returned unexpected execute result",
+    );
+  });
 });
 
 describe("keepWarm", () => {
