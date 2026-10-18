@@ -49,19 +49,13 @@ export const qualified = (emoji: string) =>
 /** An emoji and its shortcodes, the first being the one it is known by. */
 export type EmojiShortcodes = [emoji: string, ...shortcodes: string[]];
 
-/** Each shortcode's emoji; a name on two goes to the one listing it sooner, so JoyPixels' names win. */
-export function emojiByShortcode(
-  emoji: EmojiShortcodes[],
-): Map<string, string> {
-  const byName = new Map<string, string>();
-  for (let index = 1; emoji.some((names) => index < names.length); index++) {
-    for (const [glyph, ...names] of emoji) {
-      const name = names[index - 1];
-      if (name !== undefined && !byName.has(name)) byName.set(name, glyph);
-    }
-  }
-  return byName;
-}
+/** Each shortcode's emoji. */
+export const emojiByShortcode = (emoji: EmojiShortcodes[]) =>
+  new Map(
+    emoji.flatMap(([glyph, ...names]) =>
+      names.map((name) => [name, glyph] as const),
+    ),
+  );
 
 export interface EmojiMatch {
   emoji: string;

@@ -24,6 +24,12 @@ describe("GET /api/emoji", () => {
     }
   });
 
+  it("gives each name to one emoji", async () => {
+    const names = (await shortcodes()).flatMap(([, ...names]) => names);
+
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("leaves out skin tones and other components", async () => {
     const emoji = (await shortcodes()).map(([emoji]) => emoji);
 
