@@ -1,31 +1,19 @@
-import { render, screen } from "@testing-library/react";
-import type { PropsWithChildren } from "react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { config } from "@/config";
 
 import RootLayout, { metadata, viewport } from "./layout";
 
-vi.mock(import("@/components/Layout"), () => ({
-  Layout: ({ children }: PropsWithChildren) => (
-    <div data-testid="layout">{children}</div>
-  ),
-}));
+vi.mock(import("@/components/Layout"), () => import("@/mocks/layout"));
 
 describe("metadata", () => {
-  it("should have correct title with template", () => {
-    expect(metadata.title).toEqual({
-      default: config.title,
-      template: `%s - ${config.title}`,
+  it("should have the title template, description and canonical URL", () => {
+    expect(metadata).toEqual({
+      title: { default: config.title, template: `%s - ${config.title}` },
+      description: config.description,
+      alternates: { canonical: new URL(config.url) },
     });
-  });
-
-  it("should have correct description", () => {
-    expect(metadata.description).toEqual(config.description);
-  });
-
-  it("should have correct alternates", () => {
-    expect(metadata.alternates).toEqual({ canonical: new URL(config.url) });
   });
 });
 
@@ -36,15 +24,11 @@ describe("viewport", () => {
 });
 
 describe("RootLayout", () => {
-  it("should render within Layout component", () => {
+  it("renders children inside Layout", () => {
     render(<RootLayout>Test Content</RootLayout>);
 
-    expect(screen.getByTestId("layout")).toBeInTheDocument();
-  });
-
-  it("should render children", () => {
-    render(<RootLayout>Test Content</RootLayout>);
-
-    expect(screen.getByText("Test Content")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("layout")).getByText("Test Content"),
+    ).toBeInTheDocument();
   });
 });

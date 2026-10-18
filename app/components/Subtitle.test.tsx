@@ -6,7 +6,10 @@ import { Subtitle } from "./Subtitle";
 describe("Subtitle", () => {
   it("renders children content", () => {
     render(<Subtitle>Test subtitle</Subtitle>);
-    expect(screen.getByText("Test subtitle")).toBeInTheDocument();
+    expect(screen.getByText("Test subtitle")).toHaveAttribute(
+      "class",
+      "subtitle",
+    );
   });
 
   it("adds an extra class name", () => {

@@ -23,12 +23,11 @@ describe("getWakaTimeStats", () => {
     const result = await getWakaTimeStats();
 
     expect(result).toEqual({ status: "ok", stats: mockStats });
-    expect(cacheLife).toHaveBeenCalledWith("hours");
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
   });
 
   it("should return error status when getStats fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
-
+    vi.spyOn(log, "error").mockImplementation(() => {});
     const mockError = new Error("Network error");
     vi.mocked(getStats).mockRejectedValue(mockError);
 
@@ -38,11 +37,10 @@ describe("getWakaTimeStats", () => {
       status: "error",
       error: "Failed to fetch WakaTime stats",
     });
-
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getWakaTimeStats" },
       "Error fetching WakaTime stats",
     );
-    expect(cacheLife).toHaveBeenCalledWith("seconds");
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
   });
 });

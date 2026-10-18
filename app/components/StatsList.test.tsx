@@ -1,28 +1,24 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { WakaTimeStatsResult } from "@/actions/wakaTime";
 
 import { StatsList, StatsListSkeleton } from "./StatsList";
 
+const renderStats = (result: WakaTimeStatsResult) =>
+  act(() => render(<StatsList stats={Promise.resolve(result)} />));
+
 describe("StatsList", () => {
   it("renders stats as list items", async () => {
-    const successResult: WakaTimeStatsResult = {
+    await renderStats({
       status: "ok",
       stats: [
         { name: "TypeScript", percent: 45.67 },
         { name: "JavaScript", percent: 30.12 },
       ],
-    };
+    });
 
-    await act(() =>
-      render(<StatsList stats={Promise.resolve(successResult)} />),
-    );
-
-    const list = screen.getByRole("list");
-    expect(list).toBeInTheDocument();
-
-    const items = screen.getAllByRole("listitem");
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(items).toHaveLength(2);
 
     expect(items[0]).toHaveTextContent("TypeScript 45.67%");
@@ -30,23 +26,16 @@ describe("StatsList", () => {
   });
 
   it("keeps the bars' scale valid when every stat is zero", async () => {
-    const zeroResult: WakaTimeStatsResult = {
+    await renderStats({
       status: "ok",
       stats: [{ name: "TypeScript", percent: 0 }],
-    };
-
-    await act(() => render(<StatsList stats={Promise.resolve(zeroResult)} />));
+    });
 
     expect(screen.getByRole("list").style.getPropertyValue("--max")).toBe("1");
   });
 
   it("displays error message when stats fetch fails", async () => {
-    const errorResult: WakaTimeStatsResult = {
-      status: "error",
-      error: "Failed to fetch stats",
-    };
-
-    await act(() => render(<StatsList stats={Promise.resolve(errorResult)} />));
+    await renderStats({ status: "error", error: "Failed to fetch stats" });
 
     expect(
       screen.getByText("Language statistics are temporarily unavailable :("),
@@ -54,13 +43,9 @@ describe("StatsList", () => {
   });
 
   it("displays empty state message when stats array is empty", async () => {
-    const emptyResult: WakaTimeStatsResult = { status: "ok", stats: [] };
+    await renderStats({ status: "ok", stats: [] });
 
-    await act(() => render(<StatsList stats={Promise.resolve(emptyResult)} />));
-
-    expect(
-      screen.getByText(/probably on vacation/, { exact: false }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/probably on vacation/)).toBeInTheDocument();
   });
 });
 

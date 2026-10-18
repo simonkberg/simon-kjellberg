@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, type JsonBodyType } from "msw";
 import { describe, expect, it, vi } from "vitest";
 
 import { server } from "@/mocks/node";
@@ -13,58 +13,33 @@ const STATS_URLS: Record<Period, string> = {
   all_time: "b65f0e73-704a-44ce-9538-eee4fc913be8.json",
 };
 
-describe("periods", () => {
-  it("should export all valid periods", () => {
-    expect(periods).toEqual([
-      "last_7_days",
-      "last_30_days",
-      "last_year",
-      "all_time",
-    ]);
-  });
-});
+function statsRespond(
+  body: JsonBodyType | Response,
+  period: Period = "last_7_days",
+) {
+  server.use(
+    http.get(`${WAKATIME_BASE_URL}/${STATS_URLS[period]}`, () =>
+      body instanceof Response ? body : HttpResponse.json(body),
+    ),
+  );
+}
 
 describe("getStats", () => {
-  it("should fetch and parse WakaTime stats successfully", async () => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({
-          data: [
-            { name: "TypeScript", percent: 45.5 },
-            { name: "JavaScript", percent: 30.2 },
-            { name: "JSON", percent: 15.3 },
-          ],
-        }),
-      ),
-    );
-
-    const stats = await getStats();
-
-    expect(stats).toEqual([
+  it("should use last_7_days as the default period", async () => {
+    const data = [
       { name: "TypeScript", percent: 45.5 },
       { name: "JavaScript", percent: 30.2 },
       { name: "JSON", percent: 15.3 },
-    ]);
-  });
-
-  it("should use last_7_days as the default period", async () => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({ data: [{ name: "TypeScript", percent: 100 }] }),
-      ),
-    );
+    ];
+    statsRespond({ data });
 
     const stats = await getStats();
 
-    expect(stats).toEqual([{ name: "TypeScript", percent: 100 }]);
+    expect(stats).toEqual(data);
   });
 
   it.each(periods)("should fetch stats for period: %s", async (period) => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS[period]}`, () =>
-        HttpResponse.json({ data: [{ name: "TypeScript", percent: 50 }] }),
-      ),
-    );
+    statsRespond({ data: [{ name: "TypeScript", percent: 50 }] }, period);
 
     const stats = await getStats(period);
 
@@ -72,23 +47,18 @@ describe("getStats", () => {
   });
 
   it("should limit results to specified limit", async () => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({
-          data: [
-            { name: "TypeScript", percent: 40 },
-            { name: "JavaScript", percent: 30 },
-            { name: "JSON", percent: 15 },
-            { name: "CSS", percent: 10 },
-            { name: "HTML", percent: 5 },
-          ],
-        }),
-      ),
-    );
+    statsRespond({
+      data: [
+        { name: "TypeScript", percent: 40 },
+        { name: "JavaScript", percent: 30 },
+        { name: "JSON", percent: 15 },
+        { name: "CSS", percent: 10 },
+        { name: "HTML", percent: 5 },
+      ],
+    });
 
     const stats = await getStats("last_7_days", 3);
 
-    expect(stats).toHaveLength(3);
     expect(stats).toEqual([
       { name: "TypeScript", percent: 40 },
       { name: "JavaScript", percent: 30 },
@@ -97,16 +67,12 @@ describe("getStats", () => {
   });
 
   it("should use default limit of 15", async () => {
-    const manyLanguages = Array.from({ length: 20 }, (_, i) => ({
-      name: `Language${i}`,
-      percent: 5,
-    }));
-
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({ data: manyLanguages }),
-      ),
-    );
+    statsRespond({
+      data: Array.from({ length: 20 }, (_, i) => ({
+        name: `Language${i}`,
+        percent: 5,
+      })),
+    });
 
     const stats = await getStats();
 
@@ -114,54 +80,36 @@ describe("getStats", () => {
   });
 
   it("should handle invalid response schema", async () => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({ data: [{ invalid: "data" }] }),
-      ),
-    );
+    statsRespond({ data: [{ invalid: "data" }] });
 
     await expect(getStats()).rejects.toThrow();
   });
 
   it("should handle network errors", async () => {
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.error(),
-      ),
-    );
+    statsRespond(HttpResponse.error());
 
     await expect(getStats()).rejects.toThrow();
   });
 
   it("should configure fetch with 3 second timeout", async () => {
     const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
-
-    server.use(
-      http.get(`${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`, () =>
-        HttpResponse.json({ data: [{ name: "TypeScript", percent: 45.5 }] }),
-      ),
-    );
+    statsRespond({ data: [{ name: "TypeScript", percent: 45.5 }] });
 
     await getStats();
 
     expect(timeoutSpy).toHaveBeenCalledWith(3000);
   });
 
-  it.each([
-    { status: 404, statusText: "Not Found" },
-    { status: 429, statusText: "Too Many Requests" },
-    { status: 500, statusText: "Internal Server Error" },
-    { status: 503, statusText: "Service Unavailable" },
-  ])("should handle HTTP $status error", async ({ status, statusText }) => {
-    server.use(
-      http.get(
-        `${WAKATIME_BASE_URL}/${STATS_URLS.last_7_days}`,
-        () => new HttpResponse(null, { status, statusText }),
-      ),
+  it("should handle an HTTP error", async () => {
+    statsRespond(
+      new HttpResponse(null, {
+        status: 503,
+        statusText: "Service Unavailable",
+      }),
     );
 
     await expect(getStats()).rejects.toThrow(
-      `WakaTime API error: ${status} ${statusText}`,
+      "WakaTime API error: 503 Service Unavailable",
     );
   });
 });

@@ -3,10 +3,8 @@ import { describe, expect, it } from "vitest";
 import { randomName } from "./randomName";
 
 describe("randomName", () => {
-  it("returns at least two words separated by dash", () => {
-    const name = randomName();
-
-    expect(name).toMatch(/\w+-\w+/);
+  it("returns lowercase dash-separated words", () => {
+    expect(randomName()).toMatch(/^[a-z]+(-[a-z]+)+$/);
   });
 
   it("generates different names on multiple calls", () => {
@@ -15,19 +13,6 @@ describe("randomName", () => {
       names.add(randomName());
     }
 
-    // With ~100 adjectives and ~200 animals, we should get some variety
     expect(names.size).toBeGreaterThan(50);
-  });
-
-  it("returns string with no spaces", () => {
-    const name = randomName();
-
-    expect(name).not.toMatch(/\s/);
-  });
-
-  it("returns lowercase string", () => {
-    const name = randomName();
-
-    expect(name).toBe(name.toLowerCase());
   });
 });

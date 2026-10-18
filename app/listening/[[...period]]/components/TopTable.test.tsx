@@ -14,6 +14,13 @@ const columns = [
   { label: "Artist", key: "artist" },
 ] as const;
 
+const renderTable = (rows: TopTrack[] | undefined) =>
+  act(async () =>
+    render(
+      <TopTable rows={Promise.resolve(rows)} noun="tracks" columns={columns} />,
+    ),
+  );
+
 describe("TopTable", () => {
   it("renders a ranked row per item under the given columns", async () => {
     const rows: TopTrack[] = [
@@ -21,15 +28,7 @@ describe("TopTable", () => {
       { name: "Track 2", artist: "Artist 2", playcount: 50, rank: 2 },
     ];
 
-    await act(async () =>
-      render(
-        <TopTable
-          rows={Promise.resolve(rows)}
-          noun="tracks"
-          columns={columns}
-        />,
-      ),
-    );
+    await renderTable(rows);
 
     expect(
       screen.getAllByRole("columnheader").map((th) => th.textContent),
@@ -44,15 +43,7 @@ describe("TopTable", () => {
   });
 
   it("says the list is unavailable when it failed to load", async () => {
-    await act(async () =>
-      render(
-        <TopTable
-          rows={Promise.resolve(undefined)}
-          noun="tracks"
-          columns={columns}
-        />,
-      ),
-    );
+    await renderTable(undefined);
 
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(

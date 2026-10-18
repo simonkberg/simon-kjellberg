@@ -1,42 +1,39 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("server-only", () => ({}));
+import { periodLabels } from "@/lib/lastfm";
 
 import { PeriodSelector } from "./PeriodSelector";
+
+vi.mock(import("server-only"), () => ({}));
 
 describe("PeriodSelector", () => {
   it("should render all period options", () => {
     render(<PeriodSelector current="overall" />);
 
-    expect(screen.getByText("7 days")).toBeInTheDocument();
-    expect(screen.getByText("1 month")).toBeInTheDocument();
-    expect(screen.getByText("3 months")).toBeInTheDocument();
-    expect(screen.getByText("6 months")).toBeInTheDocument();
-    expect(screen.getByText("1 year")).toBeInTheDocument();
-    expect(screen.getByText("all time")).toBeInTheDocument();
+    for (const label of Object.values(periodLabels)) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
   it("should render current period without link", () => {
     render(<PeriodSelector current="7day" />);
 
-    expect(screen.getByText("7 days")).toBeInTheDocument();
+    expect(screen.getByText("7 days")).toHaveAttribute("aria-current", "page");
     expect(
       screen.queryByRole("link", { name: "7 days" }),
     ).not.toBeInTheDocument();
   });
 
-  it("should render non-current periods as links", () => {
-    render(<PeriodSelector current="overall" />);
+  it.each([
+    ["overall", "7 days", "/listening/7day"],
+    ["7day", "all time", "/listening"],
+  ] as const)("on %s, should link %s to %s", (current, label, href) => {
+    render(<PeriodSelector current={current} />);
 
-    const link = screen.getByRole("link", { name: "7 days" });
-    expect(link).toHaveAttribute("href", "/listening/7day");
-  });
-
-  it("should link to /listening for overall period", () => {
-    render(<PeriodSelector current="7day" />);
-
-    const link = screen.getByRole("link", { name: "all time" });
-    expect(link).toHaveAttribute("href", "/listening");
+    expect(screen.getByRole("link", { name: label })).toHaveAttribute(
+      "href",
+      href,
+    );
   });
 });

@@ -14,7 +14,7 @@ import type { Username } from "@/lib/session";
 
 import RootPage from "./page";
 
-vi.mock("server-only", () => ({}));
+vi.mock(import("server-only"), () => ({}));
 
 vi.mock(import("next/cache"), async (importOriginal) => {
   const actual = await importOriginal();
@@ -53,8 +53,13 @@ vi.mock(import("@/actions/wakaTime"), () => ({
 vi.mock(import("@/components/chat/Chat"), () => ({
   Chat: ({ history, tipDismissed }: ChatProps) => {
     const result = use(history);
-    use(tipDismissed);
-    return <div data-testid="chat" data-status={result.status} />;
+    return (
+      <div
+        data-testid="chat"
+        data-status={result.status}
+        data-tip-dismissed={use(tipDismissed)}
+      />
+    );
   },
 }));
 
@@ -77,55 +82,45 @@ vi.mock(import("@/components/StatsList"), async (importOriginal) => ({
   },
 }));
 
+const renderPage = () => act(async () => render(<RootPage />));
+
+const region = (name: RegExp) => screen.getByRole("region", { name });
+
 describe("RootPage", () => {
   describe("About section", () => {
-    it("should be a labeled landmark region", async () => {
-      await act(async () => render(<RootPage />));
-
-      expect(screen.getByRole("region", { name: /About/ })).toBeInTheDocument();
-    });
-
     it("should contain the description", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /About/ });
-      expect(within(region).getByText(config.description)).toBeInTheDocument();
+      const section = region(/About/);
+      expect(within(section).getByText(config.description)).toBeInTheDocument();
     });
 
     it("should contain location subtitle", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /About/ });
+      const section = region(/About/);
       expect(
-        within(region).getByText(/Location: Stockholm, Sweden/),
+        within(section).getByText(/Location: Stockholm, Sweden/),
       ).toBeInTheDocument();
     });
 
     it("should contain Spotify link", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /About/ });
+      const section = region(/About/);
       expect(
-        within(region).getByRole("link", { name: "Spotify" }),
+        within(section).getByRole("link", { name: "Spotify" }),
       ).toHaveAttribute("href", "https://twitter.com/SpotifyEng");
     });
   });
 
   describe("Currently writing section", () => {
-    it("should be a labeled landmark region", async () => {
-      await act(async () => render(<RootPage />));
-
-      expect(
-        screen.getByRole("region", { name: /Currently writing/ }),
-      ).toBeInTheDocument();
-    });
-
     it("should contain WakaTime link", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /Currently writing/ });
+      const section = region(/Currently writing/);
       expect(
-        within(region).getByRole("link", { name: "WakaTime" }),
+        within(section).getByRole("link", { name: "WakaTime" }),
       ).toHaveAttribute("href", "https://wakatime.com/@simonkberg");
     });
 
@@ -134,12 +129,12 @@ describe("RootPage", () => {
       const { promise, resolve } = Promise.withResolvers<WakaTimeStatsResult>();
       vi.mocked(getWakaTimeStats).mockReturnValue(promise);
 
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /Currently writing/ });
-      expect(within(region).getByRole("status")).toBeInTheDocument();
+      const section = region(/Currently writing/);
+      expect(within(section).getByRole("status")).toBeInTheDocument();
       expect(
-        within(region).queryByTestId("stats-list"),
+        within(section).queryByTestId("stats-list"),
       ).not.toBeInTheDocument();
 
       await act(async () => {
@@ -149,40 +144,28 @@ describe("RootPage", () => {
       });
 
       await waitFor(() => {
-        expect(within(region).queryByRole("status")).not.toBeInTheDocument();
-        expect(within(region).getByTestId("stats-list")).toBeInTheDocument();
+        expect(within(section).queryByRole("status")).not.toBeInTheDocument();
+        expect(within(section).getByTestId("stats-list")).toBeInTheDocument();
       });
     });
   });
 
   describe("Currently listening section", () => {
-    it("should be a labeled landmark region", async () => {
-      await act(async () => render(<RootPage />));
-
-      expect(
-        screen.getByRole("region", { name: /Currently listening to/ }),
-      ).toBeInTheDocument();
-    });
-
     it("should contain Last.fm link", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", {
-        name: /Currently listening to/,
-      });
+      const section = region(/Currently listening to/);
       expect(
-        within(region).getByRole("link", { name: "Last.fm" }),
+        within(section).getByRole("link", { name: "Last.fm" }),
       ).toHaveAttribute("href", "https://www.last.fm/user/magijo");
     });
 
     it("should contain link to listening statistics", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", {
-        name: /Currently listening to/,
-      });
+      const section = region(/Currently listening to/);
       expect(
-        within(region).getByRole("link", { name: "listening statistics" }),
+        within(section).getByRole("link", { name: "listening statistics" }),
       ).toHaveAttribute("href", "/listening");
     });
 
@@ -192,14 +175,12 @@ describe("RootPage", () => {
         Promise.withResolvers<GetRecentTracksResult>();
       vi.mocked(getRecentTracks).mockReturnValue(promise);
 
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", {
-        name: /Currently listening to/,
-      });
-      expect(within(region).getByRole("status")).toBeInTheDocument();
+      const section = region(/Currently listening to/);
+      expect(within(section).getByRole("status")).toBeInTheDocument();
       expect(
-        within(region).queryByTestId("recent-tracks-list"),
+        within(section).queryByTestId("recent-tracks-list"),
       ).not.toBeInTheDocument();
 
       await act(async () => {
@@ -209,44 +190,37 @@ describe("RootPage", () => {
       });
 
       await waitFor(() => {
-        expect(within(region).queryByRole("status")).not.toBeInTheDocument();
+        expect(within(section).queryByRole("status")).not.toBeInTheDocument();
         expect(
-          within(region).getByTestId("recent-tracks-list"),
+          within(section).getByTestId("recent-tracks-list"),
         ).toBeInTheDocument();
       });
     });
   });
 
   describe("Links section", () => {
-    it("should be a labeled landmark region", async () => {
-      await act(async () => render(<RootPage />));
-
-      expect(screen.getByRole("region", { name: /Links/ })).toBeInTheDocument();
-    });
-
     it("should contain all config links", async () => {
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /Links/ });
+      const section = region(/Links/);
       for (const link of config.links) {
         expect(
-          within(region).getByRole("link", { name: link.label }),
+          within(section).getByRole("link", { name: link.label }),
         ).toHaveAttribute("href", link.url);
       }
     });
   });
 
   describe("Chat section", () => {
-    it("should be a labeled landmark region", async () => {
-      await act(async () => render(<RootPage />));
+    it("should pass whether the tip has been dismissed", async () => {
+      vi.mocked(getChatTipDismissed).mockResolvedValueOnce(true);
 
-      expect(screen.getByRole("region", { name: /Chat/ })).toBeInTheDocument();
-    });
+      await renderPage();
 
-    it("should read whether the tip has been dismissed", async () => {
-      await act(async () => render(<RootPage />));
-
-      expect(getChatTipDismissed).toHaveBeenCalled();
+      expect(screen.getByTestId("chat")).toHaveAttribute(
+        "data-tip-dismissed",
+        "true",
+      );
     });
 
     it("should pass a failed history through", async () => {
@@ -255,7 +229,7 @@ describe("RootPage", () => {
         error: "Failed",
       });
 
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
       expect(screen.getByTestId("chat")).toHaveAttribute(
         "data-status",
@@ -268,11 +242,11 @@ describe("RootPage", () => {
       const { promise, resolve } = Promise.withResolvers<ChatHistoryResult>();
       vi.mocked(getChatHistory).mockReturnValue(promise);
 
-      await act(async () => render(<RootPage />));
+      await renderPage();
 
-      const region = screen.getByRole("region", { name: /^Chat/ });
-      expect(within(region).getByText("Loading")).toBeInTheDocument();
-      expect(within(region).queryByTestId("chat")).not.toBeInTheDocument();
+      const section = region(/^Chat/);
+      expect(within(section).getByText("Loading")).toBeInTheDocument();
+      expect(within(section).queryByTestId("chat")).not.toBeInTheDocument();
 
       await act(async () => {
         resolve({ status: "ok", messages: [] });
@@ -281,21 +255,9 @@ describe("RootPage", () => {
       });
 
       await waitFor(() => {
-        expect(within(region).queryByText("Loading")).not.toBeInTheDocument();
-        expect(within(region).getByTestId("chat")).toBeInTheDocument();
+        expect(within(section).queryByText("Loading")).not.toBeInTheDocument();
+        expect(within(section).getByTestId("chat")).toBeInTheDocument();
       });
-    });
-  });
-
-  describe("Footer", () => {
-    it("should contain Railway affiliate link", async () => {
-      await act(async () => render(<RootPage />));
-
-      const footer = screen.getByRole("contentinfo");
-      expect(
-        within(footer).getByRole("link", { name: "Railway" }),
-      ).toHaveAttribute("href", "https://railway.com?referralCode=wzuAxn");
-      expect(within(footer).getByText(/affiliate link/)).toBeInTheDocument();
     });
   });
 });

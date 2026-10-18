@@ -2,7 +2,15 @@ import { Globals } from "@react-spring/web";
 import { act, render, screen } from "@testing-library/react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 
 import { AnimatedNumber } from "./AnimatedNumber";
 
@@ -31,13 +39,15 @@ describe("AnimatedNumber", () => {
     const container = document.createElement("div");
     container.innerHTML = renderToString(<AnimatedNumber value={42} />);
     document.body.append(container);
-
-    await act(async () => {
-      hydrateRoot(container, <AnimatedNumber value={42} />);
+    const root = await act(async () =>
+      hydrateRoot(container, <AnimatedNumber value={42} />),
+    );
+    onTestFinished(() => {
+      act(() => root.unmount());
+      container.remove();
     });
 
     expect(container).toHaveTextContent("42");
-    container.remove();
   });
 
   it("counts up from zero when rendered on the client", () => {

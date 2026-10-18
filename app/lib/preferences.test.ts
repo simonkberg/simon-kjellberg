@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished } from "vitest";
 
 import {
   renderThemeColorTags,
@@ -42,6 +42,9 @@ describe("applySavedPreferences", () => {
   it("leaves the fallbacks without valid cookies", () => {
     root.setAttribute("data-variant", "panes");
     root.setAttribute("data-theme", "system");
+    onTestFinished(() => {
+      document.cookie = "myvariant=; max-age=0; path=/";
+    });
     document.cookie = "myvariant=manual; path=/";
     document.cookie = "variant=neon; path=/";
     document.cookie = "theme=sepia; path=/";
@@ -50,7 +53,6 @@ describe("applySavedPreferences", () => {
 
     expect(root).toHaveAttribute("data-variant", "panes");
     expect(root).toHaveAttribute("data-theme", "system");
-    document.cookie = "myvariant=; max-age=0; path=/";
   });
 
   it("is what the head script runs, with every option", () => {

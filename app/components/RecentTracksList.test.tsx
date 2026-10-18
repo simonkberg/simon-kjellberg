@@ -1,47 +1,47 @@
-import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GetRecentTracksResult, RecentTrack } from "@/actions/lastfm";
 import { refreshRecentTracks } from "@/actions/lastfm";
 
 import { RecentTracksList } from "./RecentTracksList";
+import { RelativeTime } from "./RelativeTime";
 
 vi.mock(import("@/actions/lastfm"), () => ({ refreshRecentTracks: vi.fn() }));
 
-describe("RecentTracksList", () => {
-  const createMockTrack = (
-    overrides: Partial<RecentTrack> = {},
-  ): RecentTrack => ({
-    name: "Test Song",
-    artist: "Test Artist",
-    album: "Test Album",
-    playedAt: undefined,
-    nowPlaying: false,
-    loved: false,
-    ...overrides,
-  });
+const createMockTrack = (
+  overrides: Partial<RecentTrack> = {},
+): RecentTrack => ({
+  name: "Test Song",
+  artist: "Test Artist",
+  album: "Test Album",
+  playedAt: undefined,
+  nowPlaying: false,
+  loved: false,
+  ...overrides,
+});
 
+const ok = (...tracks: RecentTrack[]): GetRecentTracksResult => ({
+  status: "ok",
+  tracks,
+});
+
+const renderTracks = (result: GetRecentTracksResult) =>
+  act(() =>
+    render(<RecentTracksList recentTracks={Promise.resolve(result)} />),
+  );
+
+describe("RecentTracksList", () => {
   it("renders tracks as list items with name and artist", async () => {
-    const successResult: GetRecentTracksResult = {
-      status: "ok",
-      tracks: [
+    await renderTracks(
+      ok(
         createMockTrack({ name: "Song 1", artist: "Artist 1" }),
         createMockTrack({ name: "Song 2", artist: "Artist 2" }),
-      ],
-    };
-
-    await act(() =>
-      render(
-        <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
       ),
     );
 
-    const list = screen.getByRole("list");
-    expect(list).toBeInTheDocument();
-
-    const items = screen.getAllByRole("listitem");
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(items).toHaveLength(2);
-
     expect(items[0]).toHaveTextContent("Song 1");
     expect(items[0]).toHaveTextContent("Artist 1");
     expect(items[1]).toHaveTextContent("Song 2");
@@ -49,17 +49,10 @@ describe("RecentTracksList", () => {
   });
 
   it("displays heart emoji for loved tracks", async () => {
-    const successResult: GetRecentTracksResult = {
-      status: "ok",
-      tracks: [
+    await renderTracks(
+      ok(
         createMockTrack({ name: "Loved Song", loved: true }),
         createMockTrack({ name: "Regular Song", loved: false }),
-      ],
-    };
-
-    await act(() =>
-      render(
-        <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
       ),
     );
 
@@ -68,110 +61,54 @@ describe("RecentTracksList", () => {
     expect(items[1]).not.toHaveTextContent("❤");
   });
 
-  it('displays "Now playing" for currently playing tracks', async () => {
-    const successResult: GetRecentTracksResult = {
-      status: "ok",
-      tracks: [
-        createMockTrack({
-          name: "Current Song",
-          nowPlaying: true,
-          playedAt: undefined,
-        }),
-      ],
-    };
+  it("renders a relative time for past tracks", async () => {
+    const playedAt = new Date(Date.now() - 5 * 60 * 1000);
 
-    await act(() =>
-      render(
-        <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
-      ),
-    );
-
-    const item = screen.getByRole("listitem");
-    expect(item).toHaveTextContent("Current Song");
-    expect(screen.getByText("(Now playing)")).toBeInTheDocument();
-  });
-
-  it("displays relative time for past tracks", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-
-    const now = Date.now();
-    vi.setSystemTime(now);
-
-    const fiveMinutesAgo = new Date(now - 5 * 60 * 1000);
-
-    const successResult: GetRecentTracksResult = {
-      status: "ok",
-      tracks: [
-        createMockTrack({
-          name: "Past Song",
-          nowPlaying: false,
-          playedAt: fiveMinutesAgo,
-        }),
-      ],
-    };
-
-    await act(() =>
-      render(
-        <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
-      ),
-    );
+    await renderTracks(ok(createMockTrack({ name: "Past Song", playedAt })));
 
     const item = screen.getByRole("listitem");
     expect(item).toHaveTextContent("Past Song");
-    expect(screen.getByText(/5 minutes ago/)).toBeInTheDocument();
+    const time = item.querySelector("time");
+    expect(time).toHaveAttribute("dateTime", playedAt.toISOString());
+    const { container } = render(<RelativeTime date={playedAt} />);
+    expect(time?.textContent).toBe(container.textContent);
   });
 
   it("displays error message when tracks fetch fails", async () => {
-    const errorResult: GetRecentTracksResult = {
+    await renderTracks({
       status: "error",
       error: "Failed to fetch recent tracks",
-    };
-
-    await act(() =>
-      render(<RecentTracksList recentTracks={Promise.resolve(errorResult)} />),
-    );
+    });
 
     expect(
       screen.getByText("Recently played tracks are temporarily unavailable :("),
     ).toBeInTheDocument();
   });
 
-  it("does not display relative time for now playing tracks even if playedAt is set", async () => {
-    const successResult: GetRecentTracksResult = {
-      status: "ok",
-      tracks: [
+  it("shows now playing instead of a relative time, even if playedAt is set", async () => {
+    await renderTracks(
+      ok(
         createMockTrack({
           name: "Current Song",
           nowPlaying: true,
           playedAt: new Date(Date.now() - 5 * 60 * 1000),
         }),
-      ],
-    };
-
-    await act(() =>
-      render(
-        <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
       ),
     );
 
+    const item = screen.getByRole("listitem");
+    expect(item).toHaveTextContent("Current Song");
     expect(screen.getByText("(Now playing)")).toBeInTheDocument();
-    expect(screen.queryByText(/ago/)).not.toBeInTheDocument();
+    expect(item.querySelector("time")).not.toBeInTheDocument();
   });
 
   describe("polling for new tracks", () => {
-    it("refreshes recent tracks every minute", async () => {
+    beforeEach(() => {
       vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
 
-      const successResult: GetRecentTracksResult = {
-        status: "ok",
-        tracks: [createMockTrack()],
-      };
-
-      await act(() =>
-        render(
-          <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
-        ),
-      );
+    it("refreshes recent tracks every minute", async () => {
+      await renderTracks(ok(createMockTrack()));
 
       expect(refreshRecentTracks).not.toHaveBeenCalled();
 
@@ -189,24 +126,16 @@ describe("RecentTracksList", () => {
     });
 
     it("shows the tracks the refreshed page brings", async () => {
-      const { rerender } = await act(() =>
-        render(
-          <RecentTracksList
-            recentTracks={Promise.resolve({
-              status: "ok",
-              tracks: [createMockTrack({ name: "Old Song" })],
-            })}
-          />,
-        ),
+      const { rerender } = await renderTracks(
+        ok(createMockTrack({ name: "Old Song" })),
       );
 
       await act(async () =>
         rerender(
           <RecentTracksList
-            recentTracks={Promise.resolve({
-              status: "ok",
-              tracks: [createMockTrack({ name: "New Song" })],
-            })}
+            recentTracks={Promise.resolve(
+              ok(createMockTrack({ name: "New Song" })),
+            )}
           />,
         ),
       );
@@ -215,18 +144,7 @@ describe("RecentTracksList", () => {
     });
 
     it("cleans up interval on unmount", async () => {
-      vi.useFakeTimers({ shouldAdvanceTime: true });
-
-      const successResult: GetRecentTracksResult = {
-        status: "ok",
-        tracks: [createMockTrack()],
-      };
-
-      const { unmount } = await act(() =>
-        render(
-          <RecentTracksList recentTracks={Promise.resolve(successResult)} />,
-        ),
-      );
+      const { unmount } = await renderTracks(ok(createMockTrack()));
 
       await act(async () => {
         vi.advanceTimersByTime(60 * 1000);
@@ -240,7 +158,6 @@ describe("RecentTracksList", () => {
         vi.advanceTimersByTime(60 * 1000);
       });
 
-      // Should not have been called again after unmount
       expect(refreshRecentTracks).toHaveBeenCalledTimes(1);
     });
   });

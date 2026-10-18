@@ -1,4 +1,3 @@
-import { http, HttpResponse } from "msw";
 import { cacheLife, cacheTag, refresh, updateTag } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -20,12 +19,11 @@ import {
 } from "@/lib/discord/api";
 import { resetGlobal } from "@/lib/global";
 import { identifiers } from "@/lib/identifiers";
-import { IP_DENY_LIST_URL, refreshIpDenyList } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
 import { getSession, type Username } from "@/lib/session";
 import { query } from "@/lib/turso";
-import { server } from "@/mocks/node";
+import { loadDenyList } from "@/mocks/ipDenyList";
 import { createSqliteQuery } from "@/mocks/sqlite";
 
 vi.mock(import("server-only"), () => ({}));
@@ -71,17 +69,30 @@ function post(text = "Hello!") {
   return postChatMessage(formData);
 }
 
+function fromIp(ip: string | undefined) {
+  vi.mocked(identifiers).mockResolvedValue({ ip, userAgent: "vitest" });
+}
+
+function nextFromIp(ip: string) {
+  vi.mocked(identifiers).mockResolvedValueOnce({ ip, userAgent: "vitest" });
+}
+
 async function postUpToTheLimit() {
   for (let i = 0; i < 5; i++) {
     expect(await post()).toEqual({ status: "ok" });
   }
 }
 
-describe("getChatHistory", () => {
-  beforeEach(() => {
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
+beforeEach(async () => {
+  vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
+  vi.spyOn(log, "info").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+  vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  resetGlobal("simon.dev/rate-limit-blocked");
+  await loadDenyList("6.6.6.6");
+});
 
+describe("getChatHistory", () => {
   it("returns messages on success", async () => {
     const mockMessages = [
       createMockMessage({ id: "1", content: "First message" }),
@@ -95,7 +106,6 @@ describe("getChatHistory", () => {
   });
 
   it("returns error and logs when Discord API fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     const error = new Error("Discord API error");
     vi.mocked(getChannelMessages).mockRejectedValue(error);
 
@@ -105,7 +115,7 @@ describe("getChatHistory", () => {
       status: "error",
       error: "Failed to fetch chat history",
     });
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       { err: error, action: "getChatHistory" },
       "Error fetching chat history",
     );
@@ -143,15 +153,7 @@ describe("refreshChatHistory", () => {
 });
 
 describe("postChatMessage", () => {
-  beforeEach(async () => {
-    vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    resetGlobal("simon.dev/rate-limit-blocked");
-    resetGlobal("simon.dev/ip-deny-list");
-    server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
-    await refreshIpDenyList();
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  beforeEach(() => {
     vi.mocked(postChannelMessage).mockResolvedValue("msg-123");
   });
 
@@ -176,8 +178,9 @@ describe("postChatMessage", () => {
 
   it("rejects the sixth post in 30 seconds with the wait time", async () => {
     await postUpToTheLimit();
-    vi.clearAllMocks();
     vi.advanceTimersByTime(10_000);
+    vi.mocked(postChannelMessage).mockClear();
+    vi.mocked(setChatTipDismissed).mockClear();
 
     expect(await post()).toEqual({
       status: "error",
@@ -188,10 +191,7 @@ describe("postChatMessage", () => {
   });
 
   it("turns away an IP on the deny list before rate limiting it", async () => {
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "6.6.6.6",
-      userAgent: "vitest",
-    });
+    nextFromIp("6.6.6.6");
 
     expect(await post()).toEqual({
       status: "error",
@@ -203,99 +203,68 @@ describe("postChatMessage", () => {
 
   it("limits each IP separately", async () => {
     await postUpToTheLimit();
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "1.1.1.1",
-      userAgent: "vitest",
-    });
+    nextFromIp("1.1.1.1");
 
     expect(await post()).toEqual({ status: "ok" });
   });
 
   it("limits an IPv6 /64 as one IP", async () => {
-    vi.mocked(identifiers).mockResolvedValue({
-      ip: "2001:db8:1:2::1",
-      userAgent: "vitest",
-    });
+    fromIp("2001:db8:1:2::1");
     await postUpToTheLimit();
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "2001:db8:1:2:ffff::1",
-      userAgent: "vitest",
-    });
+    nextFromIp("2001:db8:1:2:ffff::1");
 
     expect(await post()).toMatchObject({ status: "error" });
 
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "2001:db8:1:3::1",
-      userAgent: "vitest",
-    });
+    nextFromIp("2001:db8:1:3::1");
 
     expect(await post()).toEqual({ status: "ok" });
   });
 
   it("limits by username when the IP is unavailable", async () => {
-    vi.mocked(identifiers).mockResolvedValue({
-      ip: undefined,
-      userAgent: "vitest",
-    });
+    fromIp(undefined);
     await postUpToTheLimit();
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "0.0.0.0",
-      userAgent: "vitest",
-    });
+    nextFromIp("0.0.0.0");
 
     expect(await post()).toEqual({ status: "ok" });
   });
 
   it("returns error and logs when Discord API fails", async () => {
-    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
     const error = new Error("Discord connection failed");
     vi.mocked(postChannelMessage).mockRejectedValue(error);
-    const formData = new FormData();
-    formData.set("text", "Test message");
 
-    const result = await postChatMessage(formData);
-
-    expect(result).toEqual({
+    expect(await post("Test message")).toEqual({
       status: "error",
       error: "Failed to post chat message",
     });
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       { err: error, action: "postChatMessage" },
       "Error posting chat message",
     );
   });
 
   it("returns an error result when the request has no session", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
 
-    expect(await postChatMessage(new FormData())).toEqual({
+    expect(await post()).toEqual({
       status: "error",
       error: "Failed to post chat message",
     });
-    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
-    expect(await reactToChatMessage("1", "👍")).toEqual({
+    expect(postChannelMessage).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no text field", undefined],
+    ["empty text", ""],
+    ["only whitespace", "   "],
+  ])("rejects %s", async (_, text) => {
+    const formData = new FormData();
+    if (text !== undefined) formData.set("text", text);
+
+    expect(await postChatMessage(formData)).toEqual({
       status: "error",
-      error: "Failed to react to chat message",
+      error: "Failed to post chat message",
     });
-  });
-
-  it("returns error when form data is invalid", async () => {
-    const formData = new FormData();
-    // Missing 'text' field
-
-    const result = await postChatMessage(formData);
-
-    expect(result.status).toBe("error");
-  });
-
-  it("returns error when text is empty", async () => {
-    const formData = new FormData();
-    formData.set("text", "");
-
-    const result = await postChatMessage(formData);
-
-    expect(result.status).toBe("error");
+    expect(postChannelMessage).not.toHaveBeenCalled();
   });
 
   it("rejects text over the length limit", async () => {
@@ -307,27 +276,10 @@ describe("postChatMessage", () => {
     });
     expect(postChannelMessage).toHaveBeenCalledOnce();
   });
-
-  it("returns error when text is only whitespace", async () => {
-    const formData = new FormData();
-    formData.set("text", "   ");
-
-    const result = await postChatMessage(formData);
-
-    expect(result.status).toBe("error");
-  });
 });
 
 describe("reactToChatMessage", () => {
-  beforeEach(async () => {
-    vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    resetGlobal("simon.dev/rate-limit-blocked");
-    resetGlobal("simon.dev/ip-deny-list");
-    server.use(http.get(IP_DENY_LIST_URL, () => new HttpResponse("6.6.6.6\n")));
-    await refreshIpDenyList();
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  beforeEach(() => {
     vi.mocked(addBotReaction).mockResolvedValue();
     vi.mocked(removeBotReaction).mockResolvedValue();
   });
@@ -342,6 +294,15 @@ describe("reactToChatMessage", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("returns an error result when the request has no session", async () => {
+    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
+
+    expect(await reactToChatMessage("123", "👍")).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
+  });
+
   it.each([
     ["a message ID that isn't a snowflake", "../123", "👍"],
     ["text that isn't one emoji", "123", "nice"],
@@ -354,10 +315,7 @@ describe("reactToChatMessage", () => {
   });
 
   it("turns away an IP on the deny list", async () => {
-    vi.mocked(identifiers).mockResolvedValueOnce({
-      ip: "6.6.6.6",
-      userAgent: "vitest",
-    });
+    nextFromIp("6.6.6.6");
 
     expect(await reactToChatMessage("123", "👍")).toEqual({
       status: "error",
@@ -377,7 +335,6 @@ describe("reactToChatMessage", () => {
   });
 
   it("counts malformed reactions against the limit", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     for (let i = 0; i < 30; i++) {
       await reactToChatMessage("not-an-id", "👍");
     }
