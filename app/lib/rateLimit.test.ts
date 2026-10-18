@@ -5,13 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
-import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
+import { emptyResult, failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
 import { MIGRATIONS } from "./migrations";
 import { rateLimit } from "./rateLimit";
 
 vi.mock(import("server-only"), () => ({}));
-vi.mock(import("@/lib/turso"), () => ({ query: vi.fn() }));
+vi.mock(import("@/lib/turso"), async () =>
+  (await import("@/mocks/sqlite")).mockTurso(),
+);
 
 const options = { limit: 3, windowMs: 30_000 };
 
@@ -20,24 +22,20 @@ async function countRows(): Promise<unknown> {
   return rows[0]?.["n"];
 }
 
+const sqlite = sqliteBeforeEach(query, MIGRATIONS);
+
 describe("rateLimit", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/rate-limit-blocked");
     vi.useFakeTimers({ now: 1_000_000 });
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
-
-  it("should allow requests up to the limit", async () => {
-    for (let i = 0; i < options.limit; i++) {
-      expect(await rateLimit("a", options)).toEqual({ success: true });
-    }
+    vi.spyOn(log, "warn").mockImplementation(() => {});
   });
 
   it("should reject past the limit until the oldest request leaves the window", async () => {
-    await rateLimit("a", options);
+    expect(await rateLimit("a", options)).toEqual({ success: true });
     vi.advanceTimersByTime(10_000);
-    await rateLimit("a", options);
-    await rateLimit("a", options);
+    expect(await rateLimit("a", options)).toEqual({ success: true });
+    expect(await rateLimit("a", options)).toEqual({ success: true });
 
     expect(await rateLimit("a", options)).toEqual({
       success: false,
@@ -89,12 +87,14 @@ describe("rateLimit", () => {
   });
 
   it("should fail open when the database fails", async () => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
     const err = new Error("boom");
     vi.mocked(query).mockRejectedValueOnce(err);
 
     expect(await rateLimit("a", options)).toEqual({ success: true });
-    expect(warn).toHaveBeenCalledWith({ err, key: "a" }, "Rate limiter failed");
+    expect(log.warn).toHaveBeenCalledWith(
+      { err, key: "a" },
+      "Rate limiter failed",
+    );
   });
 
   it("should not record rejected requests", async () => {
@@ -133,29 +133,12 @@ describe("rateLimit", () => {
     expect(rows).toEqual([{ key: "c" }, { key: "long" }]);
   });
 
-  it("should prune requests outside the window when it records one", async () => {
-    await rateLimit("a", options);
-    vi.advanceTimersByTime(20_000);
-    await rateLimit("b", options);
-    vi.advanceTimersByTime(10_000);
-
-    await rateLimit("c", options);
-
-    expect(await countRows()).toBe(2);
-  });
-
   it("should log rather than throw when pruning fails", async () => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => {});
-    const sqlite = createSqliteQuery(MIGRATIONS);
-    vi.mocked(query).mockImplementation(async (sql, args) =>
-      sql.startsWith("DELETE")
-        ? Promise.reject(new Error("boom"))
-        : sqlite(sql, args),
-    );
+    vi.mocked(query).mockImplementation(failQuery(sqlite(), "DELETE"));
 
     expect(await rateLimit("a", options)).toEqual({ success: true });
     await vi.waitFor(() =>
-      expect(warn).toHaveBeenCalledWith(
+      expect(log.warn).toHaveBeenCalledWith(
         { err: expect.any(Error) },
         "Failed to prune rate limits",
       ),

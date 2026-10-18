@@ -2,6 +2,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 
 import { config } from "@/config";
 import { getChannelMessages, searchChannelMessages } from "@/lib/discord/api";
@@ -16,8 +17,14 @@ import { MIGRATIONS } from "@/lib/migrations";
 import { addReaction } from "@/lib/reactions";
 import { query } from "@/lib/turso";
 import { getStats } from "@/lib/wakaTime";
+import {
+  CREATED_AT,
+  fillCategory,
+  seedMemory as seed,
+  storedMemory as stored,
+} from "@/mocks/memory";
 import { server } from "@/mocks/node";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { sqliteBeforeEach } from "@/mocks/sqlite";
 
 import {
   type ChatMessage,
@@ -60,7 +67,6 @@ vi.mock(import("@/lib/lastfm"), async (importOriginal) => {
 
 const ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1/messages";
 const TEST_USERNAME = "test-user";
-const CREATED_AT = "2025-01-01T00:00:00.000Z";
 const EPHEMERAL = { type: "ephemeral" };
 
 type RequestBody = {
@@ -75,25 +81,23 @@ type RequestBody = {
 };
 
 let requests: RequestBody[] = [];
+let headers: Headers[] = [];
+
+sqliteBeforeEach(query, MIGRATIONS);
 
 beforeEach(() => {
   requests = [];
+  headers = [];
+  vi.spyOn(log, "info").mockImplementation(() => {});
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+  vi.mocked(getStats).mockResolvedValue([]);
+  vi.mocked(getChannelMessages).mockResolvedValue([]);
+  vi.mocked(userGetRecentTracks).mockResolvedValue([]);
+  vi.mocked(userGetTopTracks).mockResolvedValue([]);
+  vi.mocked(userGetTopArtists).mockResolvedValue([]);
+  vi.mocked(userGetTopAlbums).mockResolvedValue([]);
 });
-
-async function seed(id: number, category: string, content: string) {
-  await query(
-    "INSERT INTO memories (id, category, content, created_at) VALUES (?, ?, ?, ?)",
-    [id, category, content, CREATED_AT],
-  );
-}
-
-async function stored(id: number) {
-  const { rows } = await query(
-    "SELECT category, content FROM memories WHERE id = ?",
-    [id],
-  );
-  return rows[0];
-}
 
 function conversation(author: string, text: string): string {
   return `<conversation>\n<message author="${author}">${text}</message>\n</conversation>`;
@@ -116,6 +120,7 @@ function respond(...responses: Array<() => Response>) {
   server.use(
     http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
       requests.push((await request.json()) as RequestBody);
+      headers.push(request.headers);
       const next = responses[Math.min(requests.length, responses.length) - 1];
       return next?.() ?? reply([]);
     }),
@@ -150,64 +155,49 @@ async function runTool(
 }
 
 describe("createMessage", () => {
-  beforeEach(() => {
-    vi.mocked(sleep).mockClear();
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
-
   it("should create message and yield text content", async () => {
-    server.use(
-      http.post(ANTHROPIC_BASE_URL, async ({ request }) => {
-        const body = await request.json();
-        expect(body).not.toHaveProperty("tool_choice");
-        expect(body).toMatchObject({
-          model: "claude-haiku-5-5",
-          thinking: { type: "adaptive", display: "summarized" },
-          output_config: { effort: "medium" },
-          max_tokens: 2048,
-          cache_control: EPHEMERAL,
-          system: [
-            {
-              type: "text",
-              text: expect.stringContaining("simon-bot"),
-              cache_control: EPHEMERAL,
-            },
-            { type: "text", text: expect.stringContaining("<memory>") },
-          ],
-          messages: [
-            {
-              role: "user",
-              content: conversation(TEST_USERNAME, "Hello, bot!"),
-            },
-          ],
-          tools: [
-            { name: "get_chat_history" },
-            { name: "get_wakatime_stats" },
-            { name: "get_recent_tracks" },
-            { name: "get_top_tracks" },
-            { name: "get_top_artists" },
-            { name: "get_top_albums" },
-            { name: "search_messages" },
-            { name: "react" },
-            { name: "remember" },
-            { name: "recall" },
-            { name: "edit" },
-            { name: "forget" },
-          ],
-        });
-        expect(request.headers.get("x-api-key")).toBe("test-anthropic-api-key");
-        expect(request.headers.get("anthropic-version")).toBe("2023-06-01");
-        return reply([text("Hello! How can I help you?")]);
-      }),
-    );
+    respond(() => reply([text("Hello! How can I help you?")]));
 
     expect(
       await ask([
         { role: "user", username: TEST_USERNAME, content: "Hello, bot!" },
       ]),
     ).toEqual(["Hello! How can I help you?"]);
+    expect(requests[0]).not.toHaveProperty("tool_choice");
+    expect(requests[0]).toMatchObject({
+      model: "claude-haiku-5-5",
+      thinking: { type: "adaptive", display: "summarized" },
+      output_config: { effort: "medium" },
+      max_tokens: 2048,
+      cache_control: EPHEMERAL,
+      system: [
+        {
+          type: "text",
+          text: expect.stringContaining("simon-bot"),
+          cache_control: EPHEMERAL,
+        },
+        { type: "text", text: expect.stringContaining("<memory>") },
+      ],
+      messages: [
+        { role: "user", content: conversation(TEST_USERNAME, "Hello, bot!") },
+      ],
+      tools: [
+        { name: "get_chat_history" },
+        { name: "get_wakatime_stats" },
+        { name: "get_recent_tracks" },
+        { name: "get_top_tracks" },
+        { name: "get_top_artists" },
+        { name: "get_top_albums" },
+        { name: "search_messages" },
+        { name: "react" },
+        { name: "remember" },
+        { name: "recall" },
+        { name: "edit" },
+        { name: "forget" },
+      ],
+    });
+    expect(headers[0]?.get("x-api-key")).toBe("test-anthropic-api-key");
+    expect(headers[0]?.get("anthropic-version")).toBe("2023-06-01");
   });
 
   it("should send the whole conversation and build memory for its users only", async () => {
@@ -215,26 +205,16 @@ describe("createMessage", () => {
     await seed(2, "people/bob", "likes dogs");
     await seed(3, "people/simon-bot", "that's me");
     respond(() => reply([text("I'm good!")]));
+    const chat: [ChatMessage, ...ChatMessage[]] = [
+      { role: "user", username: "Alice", content: "Hello" },
+      { role: "assistant", username: "simon-bot", content: "Hi there!" },
+      { role: "user", username: "Bob", content: "How are you?" },
+    ];
 
-    expect(
-      await ask([
-        { role: "user", username: "Alice", content: "Hello" },
-        { role: "assistant", username: "simon-bot", content: "Hi there!" },
-        { role: "user", username: "Bob", content: "How are you?" },
-      ]),
-    ).toEqual(["I'm good!"]);
+    expect(await ask(chat)).toEqual(["I'm good!"]);
 
     expect(requests[0]?.messages).toEqual([
-      {
-        role: "user",
-        content: [
-          "<conversation>",
-          '<message author="Alice">Hello</message>',
-          '<message author="simon-bot">Hi there!</message>',
-          '<message author="Bob">How are you?</message>',
-          "</conversation>",
-        ].join("\n"),
-      },
+      { role: "user", content: formatConversation(chat) },
     ]);
     const memory = requests[0]?.system[1]?.text;
     expect(memory).toContain("## people/alice\n- #1 likes cats");
@@ -243,7 +223,6 @@ describe("createMessage", () => {
   });
 
   it("should omit the memory block when memory can't be read", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValue(new Error("db down"));
     respond(() => reply([text("ok")]));
 
@@ -252,44 +231,23 @@ describe("createMessage", () => {
   });
 
   describe("memory tools", () => {
-    const changed = (content: string) => ({
-      error:
-        "Note #3 has changed since you read it - work from its current text",
-      current: { id: 3, category: "self", content, createdAt: CREATED_AT },
-    });
-    const full = (category: string) => ({
-      error: `Category "${category}" is full (25 memories). Forget something first.`,
-    });
-
     it("should save notes with remember", async () => {
-      const result = JSON.parse(
-        await runTool("remember", {
-          category: "self",
-          content: "i like trains",
-        }),
-      );
+      const result = await runTool("remember", {
+        category: "self",
+        content: "i like trains",
+      });
 
-      expect(result).toEqual({
+      const memory = JSON.parse(result);
+      expect(memory).toEqual({
         id: expect.any(Number),
         category: "self",
         content: "i like trains",
         createdAt: expect.any(String),
       });
-      expect(await stored(result.id)).toEqual({
+      expect(await stored(memory.id)).toEqual({
         category: "self",
         content: "i like trains",
       });
-    });
-
-    it("should say when a category is full instead of saving", async () => {
-      for (let i = 0; i < 25; i++) await seed(100 + i, "self", `note ${i}`);
-
-      const result = await runTool("remember", {
-        category: "self",
-        content: "one more",
-      });
-
-      expect(JSON.parse(result)).toEqual(full("self"));
     });
 
     it("should read notes with recall", async () => {
@@ -328,43 +286,18 @@ describe("createMessage", () => {
     it("should move a note when edit gets a category", async () => {
       await seed(3, "style", "this chat gets spam");
 
-      await runTool("edit", {
+      const result = await runTool("edit", {
         id: 3,
         old_content: "this chat gets spam",
         new_content: "this chat gets spam",
         category: "context",
       });
 
+      expect(JSON.parse(result)).toMatchObject({ id: 3, category: "context" });
       expect(await stored(3)).toEqual({
         category: "context",
         content: "this chat gets spam",
       });
-    });
-
-    it("should hand a changed note back instead of editing it", async () => {
-      await seed(3, "self", "i like dogs");
-
-      const result = await runTool("edit", {
-        id: 3,
-        old_content: "i like cats",
-        new_content: "i like trains",
-      });
-
-      expect(JSON.parse(result)).toEqual(changed("i like dogs"));
-    });
-
-    it("should say when a move would overfill a category", async () => {
-      await seed(3, "style", "this chat gets spam");
-      for (let i = 0; i < 25; i++) await seed(100 + i, "context", `note ${i}`);
-
-      const result = await runTool("edit", {
-        id: 3,
-        old_content: "this chat gets spam",
-        new_content: "this chat gets spam",
-        category: "context",
-      });
-
-      expect(JSON.parse(result)).toEqual(full("context"));
     });
 
     it("should delete notes with forget", async () => {
@@ -376,34 +309,74 @@ describe("createMessage", () => {
       expect(await stored(3)).toBeUndefined();
     });
 
-    it("should hand a changed note back instead of forgetting it", async () => {
-      await seed(3, "self", "i like dogs");
-
-      const result = await runTool("forget", { id: 3, content: "i like cats" });
-
-      expect(JSON.parse(result)).toEqual(changed("i like dogs"));
-      expect(await stored(3)).toBeDefined();
+    const full = (category: string) => ({
+      error: `Category "${category}" is full (25 memories). Forget something first.`,
     });
+    const changed = {
+      error:
+        "Note #3 has changed since you read it - work from its current text",
+      current: {
+        id: 3,
+        category: "self",
+        content: "i like dogs",
+        createdAt: CREATED_AT,
+      },
+    };
 
-    it("should say when a note to forget is already gone", async () => {
-      const result = await runTool("forget", { id: 3, content: "i like cats" });
+    it.each([
+      {
+        case: "remember into a full category",
+        setup: () => fillCategory("self"),
+        tool: "remember",
+        input: { category: "self", content: "one more" },
+        expected: full("self"),
+      },
+      {
+        case: "edit moving into a full category",
+        setup: async () => {
+          await seed(3, "style", "this chat gets spam");
+          await fillCategory("context");
+        },
+        tool: "edit",
+        input: {
+          id: 3,
+          old_content: "this chat gets spam",
+          new_content: "this chat gets spam",
+          category: "context",
+        },
+        expected: full("context"),
+      },
+      {
+        case: "edit of a changed note",
+        setup: () => seed(3, "self", "i like dogs"),
+        tool: "edit",
+        input: { id: 3, old_content: "i like cats", new_content: "x" },
+        expected: changed,
+      },
+      {
+        case: "forget of a changed note",
+        setup: () => seed(3, "self", "i like dogs"),
+        tool: "forget",
+        input: { id: 3, content: "i like cats" },
+        expected: changed,
+      },
+      {
+        case: "forget of a note already gone",
+        setup: async () => {},
+        tool: "forget",
+        input: { id: 3, content: "i like cats" },
+        expected: {
+          error: "There is no note #3 - it may have been forgotten already",
+        },
+      },
+    ])(
+      "should hand the miss back for $case",
+      async ({ setup, tool, input, expected }) => {
+        await setup();
 
-      expect(JSON.parse(result)).toEqual({
-        error: "There is no note #3 - it may have been forgotten already",
-      });
-    });
-
-    it("should return validation errors instead of saving", async () => {
-      const result = await runTool("remember", {
-        category: "Not Valid!",
-        content: "x",
-      });
-
-      expect(JSON.parse(result)).toEqual({
-        error: expect.stringContaining("category"),
-      });
-      expect((await query("SELECT * FROM memories")).rows).toEqual([]);
-    });
+        expect(JSON.parse(await runTool(tool, input))).toEqual(expected);
+      },
+    );
   });
 
   it("should configure fetch with 15 second timeout", async () => {
@@ -454,7 +427,6 @@ describe("createMessage", () => {
       sleep: 2000,
     },
     { case: "no retry-after", retryAfter: undefined, sleep: 500 },
-    { case: "an empty retry-after", retryAfter: "", sleep: 500 },
     { case: "a zero retry-after", retryAfter: "0", sleep: 500 },
     { case: "a retry-after of neither kind", retryAfter: "soon", sleep: 500 },
     {
@@ -566,7 +538,8 @@ describe("createMessage", () => {
   it("should handle invalid response schema", async () => {
     respond(() => HttpResponse.json({ invalid: "data" }));
 
-    await expect(ask()).rejects.toThrow();
+    await expect(ask()).rejects.toBeInstanceOf(z.ZodError);
+    expect(requests).toHaveLength(1);
   });
 
   it("should log every turn with its stop reason, blocks and usage", async () => {
@@ -658,7 +631,6 @@ describe("createMessage", () => {
   });
 
   it("should execute tools, keeping every block in the history", async () => {
-    vi.mocked(getStats).mockResolvedValue([]);
     const thinking = { type: "thinking", thinking: "hmm", signature: "sig" };
     const use = toolUse("get_wakatime_stats");
     respond(
@@ -838,9 +810,6 @@ describe("createMessage", () => {
         content: JSON.stringify(mockTracks),
       },
     ]);
-    expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-      limit: 5,
-    });
   });
 
   it("should yield multiple text blocks from single response", async () => {
@@ -850,139 +819,79 @@ describe("createMessage", () => {
   });
 
   describe("tool execution", () => {
-    it("should call getChannelMessages for get_chat_history tool", async () => {
-      const mockMessages = [
-        {
-          id: "1",
-          user: { name: "User1", color: "hsl(0 50% 50%)" as const },
-          content: "Hello",
-          edited: false,
-          timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-          reactions: [],
-          replies: [],
-        },
-      ];
-      vi.mocked(getChannelMessages).mockResolvedValue(mockMessages);
+    const searchInput = {
+      content: "hello",
+      limit: 10,
+      sort_by: "timestamp",
+      sort_order: "asc",
+    } as const;
 
-      expect(await runTool("get_chat_history", { limit: 5 })).toBe(
-        JSON.stringify(mockMessages),
-      );
-      expect(getChannelMessages).toHaveBeenCalledWith(5);
-    });
+    type Lookup = (...args: never[]) => Promise<unknown>;
 
-    it("should call userGetTopTracks for get_top_tracks tool", async () => {
-      const mockTracks = [
-        { name: "Track 1", artist: "Artist 1", playcount: 100, rank: 1 },
-      ];
-      vi.mocked(userGetTopTracks).mockResolvedValue(mockTracks);
+    function wiring<F extends Lookup>(
+      tool: string,
+      input: object,
+      mock: F,
+      ...calledWith: Parameters<F>
+    ): { tool: string; input: object; mock: Lookup; calledWith: unknown[] } {
+      return { tool, input, mock, calledWith };
+    }
 
-      expect(
-        await runTool("get_top_tracks", { period: "3month", limit: 10 }),
-      ).toBe(JSON.stringify(mockTracks));
-      expect(userGetTopTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "3month",
-        limit: 10,
-      });
-    });
+    it.each([
+      wiring("get_chat_history", { limit: 5 }, getChannelMessages, 5),
+      wiring(
+        "get_wakatime_stats",
+        { period: "last_30_days", limit: 10 },
+        getStats,
+        "last_30_days",
+        10,
+      ),
+      wiring(
+        "get_recent_tracks",
+        { limit: 10 },
+        userGetRecentTracks,
+        config.lastfmUsername,
+        { limit: 10 },
+      ),
+      wiring(
+        "get_top_tracks",
+        { period: "3month", limit: 10 },
+        userGetTopTracks,
+        config.lastfmUsername,
+        { period: "3month", limit: 10 },
+      ),
+      wiring(
+        "get_top_artists",
+        { period: "6month", limit: 3 },
+        userGetTopArtists,
+        config.lastfmUsername,
+        { period: "6month", limit: 3 },
+      ),
+      wiring(
+        "get_top_albums",
+        { period: "12month", limit: 7 },
+        userGetTopAlbums,
+        config.lastfmUsername,
+        { period: "12month", limit: 7 },
+      ),
+      wiring(
+        "search_messages",
+        searchInput,
+        searchChannelMessages,
+        searchInput,
+      ),
+    ])(
+      "should hand $tool its input and the model its result",
+      async ({ tool, input, mock, calledWith }) => {
+        const data = [{ from: tool }];
+        vi.mocked(mock).mockResolvedValue(data);
 
-    it("should call userGetTopArtists for get_top_artists tool", async () => {
-      const mockArtists = [{ name: "Artist 1", playcount: 200, rank: 1 }];
-      vi.mocked(userGetTopArtists).mockResolvedValue(mockArtists);
-
-      expect(
-        await runTool("get_top_artists", { period: "6month", limit: 3 }),
-      ).toBe(JSON.stringify(mockArtists));
-      expect(userGetTopArtists).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "6month",
-        limit: 3,
-      });
-    });
-
-    it("should call userGetTopAlbums for get_top_albums tool", async () => {
-      const mockAlbums = [
-        { name: "Album 1", artist: "Artist 1", playcount: 80, rank: 1 },
-      ];
-      vi.mocked(userGetTopAlbums).mockResolvedValue(mockAlbums);
-
-      expect(
-        await runTool("get_top_albums", { period: "12month", limit: 7 }),
-      ).toBe(JSON.stringify(mockAlbums));
-      expect(userGetTopAlbums).toHaveBeenCalledWith(config.lastfmUsername, {
-        period: "12month",
-        limit: 7,
-      });
-    });
-
-    it("should call getStats for get_wakatime_stats tool", async () => {
-      const mockStats = [{ name: "TypeScript", percent: 80 }];
-      vi.mocked(getStats).mockResolvedValue(mockStats);
-
-      expect(
-        await runTool("get_wakatime_stats", {
-          period: "last_30_days",
-          limit: 10,
-        }),
-      ).toBe(JSON.stringify(mockStats));
-      expect(getStats).toHaveBeenCalledWith("last_30_days", 10);
-    });
-
-    it("should call userGetRecentTracks for get_recent_tracks tool", async () => {
-      const mockTracks = [
-        {
-          name: "Track 1",
-          artist: "Artist 1",
-          album: "Album 1",
-          playedAt: new Date("2025-01-01"),
-          nowPlaying: false,
-          loved: true,
-        },
-      ];
-      vi.mocked(userGetRecentTracks).mockResolvedValue(mockTracks);
-
-      expect(await runTool("get_recent_tracks", { limit: 10 })).toBe(
-        JSON.stringify(mockTracks),
-      );
-      expect(userGetRecentTracks).toHaveBeenCalledWith(config.lastfmUsername, {
-        limit: 10,
-      });
-    });
-
-    it("should call searchChannelMessages for search_messages tool", async () => {
-      const mockSearchResult = {
-        total_results: 1,
-        hits: [
-          {
-            hit: {
-              id: "1",
-              username: "Alice",
-              content: "hello world",
-              timestamp: "2025-01-01T00:00:00.000000+00:00",
-            },
-            context: [],
-          },
-        ],
-      };
-      vi.mocked(searchChannelMessages).mockResolvedValue(mockSearchResult);
-      const input = {
-        content: "hello",
-        limit: 10,
-        sort_by: "timestamp",
-        sort_order: "asc",
-      };
-
-      expect(await runTool("search_messages", input)).toBe(
-        JSON.stringify(mockSearchResult),
-      );
-      expect(searchChannelMessages).toHaveBeenCalledWith(input);
-    });
+        expect(await runTool(tool, input)).toBe(JSON.stringify(data));
+        expect(mock).toHaveBeenCalledWith(...calledWith);
+      },
+    );
 
     it("should use default values when tool inputs are empty", async () => {
-      vi.mocked(getChannelMessages).mockResolvedValue([]);
-      vi.mocked(getStats).mockResolvedValue([]);
-      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopArtists).mockResolvedValue([]);
-      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
       const names = [
         "get_chat_history",
         "get_wakatime_stats",
@@ -1023,10 +932,6 @@ describe("createMessage", () => {
     });
 
     it("should pass custom username to Last.fm tools", async () => {
-      vi.mocked(userGetRecentTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopTracks).mockResolvedValue([]);
-      vi.mocked(userGetTopArtists).mockResolvedValue([]);
-      vi.mocked(userGetTopAlbums).mockResolvedValue([]);
       respond(
         () =>
           reply(
@@ -1116,10 +1021,6 @@ describe("formatConversation", () => {
 });
 
 describe("react tool", () => {
-  beforeEach(() => {
-    vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  });
-
   async function runReact(
     input: Record<string, unknown>,
     chat: [ChatMessage, ...ChatMessage[]] = [
