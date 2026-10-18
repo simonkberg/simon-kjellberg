@@ -63,7 +63,9 @@ describe("Chat", () => {
   });
 
   it("renders the simon-bot tip until it is dismissed", async () => {
-    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+    await act(async () =>
+      render(chatElement({ status: "ok", fetchedAt: 0, messages: [] })),
+    );
 
     expect(
       screen.getByRole("button", { name: "Dismiss tip" }),
@@ -72,7 +74,7 @@ describe("Chat", () => {
 
   it("hides the simon-bot tip once it has been dismissed", async () => {
     await act(async () =>
-      render(chatElement({ status: "ok", messages: [] }, true)),
+      render(chatElement({ status: "ok", fetchedAt: 0, messages: [] }, true)),
     );
 
     expect(
@@ -96,6 +98,7 @@ describe("Chat", () => {
   it("renders messages on success", async () => {
     const successResult: ChatHistoryResult = {
       status: "ok",
+      fetchedAt: 0,
       messages: [createMessage({ content: "Hello world" })],
     };
 
@@ -110,6 +113,7 @@ describe("Chat", () => {
       const message = createMessage({ id: "target-msg", content: "Original" });
       const successResult: ChatHistoryResult = {
         status: "ok",
+        fetchedAt: 0,
         messages: [message],
       };
 
@@ -135,6 +139,7 @@ describe("Chat", () => {
       });
       const successResult: ChatHistoryResult = {
         status: "ok",
+        fetchedAt: 0,
         messages: [parentMessage],
       };
 
@@ -151,6 +156,7 @@ describe("Chat", () => {
       const message = createMessage({ id: "target-msg" });
       const successResult: ChatHistoryResult = {
         status: "ok",
+        fetchedAt: 0,
         messages: [message],
       };
 
@@ -171,6 +177,7 @@ describe("Chat", () => {
       });
       const initialResult: ChatHistoryResult = {
         status: "ok",
+        fetchedAt: 0,
         messages: [message],
       };
 
@@ -184,6 +191,7 @@ describe("Chat", () => {
       // Re-render with messages that don't include the replied-to message
       const updatedResult: ChatHistoryResult = {
         status: "ok",
+        fetchedAt: 0,
         messages: [
           createMessage({ id: "different-msg", content: "New message" }),
         ],
@@ -198,19 +206,21 @@ describe("Chat", () => {
 
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
-    const saved: Reaction[] = [
-      { emoji: "👍", count: 2, users: [], mine: true },
-    ];
+
+    // The route saves at 100: a history read at 200 has the toggle, one read at 50 doesn't.
+    const SAVED_AT = 100;
 
     // A new history, as router.refresh would bring.
     const refreshWith = (
       rerender: (ui: React.ReactNode) => void,
       reactions: Reaction[],
+      fetchedAt: number,
     ) =>
       act(async () =>
         rerender(
           chatElement({
             status: "ok",
+            fetchedAt,
             messages: [createMessage({ reactions })],
           }),
         ),
@@ -221,6 +231,7 @@ describe("Chat", () => {
         render(
           chatElement({
             status: "ok",
+            fetchedAt: 0,
             messages: [createMessage({ reactions })],
           }),
         ),
@@ -248,7 +259,12 @@ describe("Chat", () => {
       );
     }
 
-    const ok = () => HttpResponse.json<ReactionResult>({ status: "ok" });
+    const ok = (mine = true) =>
+      HttpResponse.json<ReactionResult>({
+        status: "ok",
+        mine,
+        savedAt: SAVED_AT,
+      });
 
     function holdReaction() {
       const { promise, resolve } = Promise.withResolvers<void>();
@@ -284,6 +300,7 @@ describe("Chat", () => {
         rerender(
           chatElement({
             status: "ok",
+            fetchedAt: 0,
             messages: [
               createMessage({
                 reactions: [{ emoji: "👍", count: 2, users: [], mine: true }],
@@ -308,7 +325,13 @@ describe("Chat", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
       await act(async () =>
-        rerender(chatElement({ status: "ok", messages: [createMessage()] })),
+        rerender(
+          chatElement({
+            status: "ok",
+            fetchedAt: 0,
+            messages: [createMessage()],
+          }),
+        ),
       );
 
       expect(
@@ -364,6 +387,7 @@ describe("Chat", () => {
         render(
           chatElement({
             status: "ok",
+            fetchedAt: 0,
             messages: [
               createMessage({
                 replies: [createMessage({ id: "reply-1", content: "Reply" })],
@@ -402,6 +426,7 @@ describe("Chat", () => {
         render(
           chatElement({
             status: "ok",
+            fetchedAt: 0,
             messages: [
               createMessage({ reactions: thumbs }),
               createMessage({ id: "msg-2", content: "Other" }),
@@ -427,13 +452,19 @@ describe("Chat", () => {
         if (messageId === "msg-1") await promise;
         return ok();
       });
-      const other = (reactions: Reaction[]) =>
-        createMessage({ id: "msg-2", content: "Other", reactions });
-      const { rerender } = await act(async () =>
+      await act(async () =>
         render(
           chatElement({
             status: "ok",
-            messages: [createMessage({ reactions: thumbs }), other(thumbs)],
+            fetchedAt: 0,
+            messages: [
+              createMessage({ reactions: thumbs }),
+              createMessage({
+                id: "msg-2",
+                content: "Other",
+                reactions: thumbs,
+              }),
+            ],
           }),
         ),
       );
@@ -441,54 +472,64 @@ describe("Chat", () => {
       const [slow, quick] = screen.getAllByRole("button", { name: "👍 1" });
       await userEvent.click(slow!);
       await userEvent.click(quick!);
-      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
-      await act(async () =>
-        rerender(
-          chatElement({
-            status: "ok",
-            messages: [createMessage({ reactions: thumbs }), other(saved)],
-          }),
-        ),
-      );
 
       const [busy, free] = screen.getAllByRole("button", {
         name: "Add reaction",
       });
+      await waitFor(() => expect(free).toBeEnabled());
       expect(busy).toBeDisabled();
-      expect(free).toBeEnabled();
       await act(async () => resolve());
     });
 
-    it("keeps a saved reaction until the refreshed history has it", async () => {
-      answer(ok);
+    it("shows the saved reaction over any history read before it", async () => {
+      answer(() => ok());
       const { rerender } = await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
       await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
-
       expect(requests).toEqual([{ messageId: "msg-1", emoji: "👍" }]);
-      expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
-      await refreshWith(rerender, saved);
+      await refreshWith(rerender, thumbs, SAVED_AT - 50);
+
       const pill = screen.getByRole("button", { name: "👍 2" });
-      expect(pill).toBeEnabled();
       expect(pill).toHaveAttribute("aria-pressed", "true");
+      expect(pill).toBeEnabled();
+      // A history read after the save is the truth, as when another tab took it back since.
+      await refreshWith(rerender, thumbs, SAVED_AT + 100);
+      expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
     });
 
-    it("keeps a saved reaction over a history requested before it", async () => {
-      answer(ok);
-      const { rerender } = await renderReactions(thumbs);
+    it("shows what the route saved over what the click expected", async () => {
+      answer(() => ok(false));
+      await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
-      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
-      await refreshWith(rerender, thumbs);
 
-      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled(),
       );
-      // One more without it means the history really lacks it, as when another tab took it back.
-      await refreshWith(rerender, thumbs);
-      expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    });
+
+    it("reacts again before a refreshed history arrives", async () => {
+      answer(() => ok(requests.length === 1));
+      await renderReactions(thumbs);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "👍 2" })).toBeEnabled(),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "👍 2" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled(),
+      );
+      expect(requests).toHaveLength(2);
     });
 
     it.each([
@@ -503,7 +544,7 @@ describe("Chat", () => {
         error: "Discord allows 20 emoji per message",
       },
     ])(
-      "puts the reaction back at once and says why when $failure",
+      "puts the reaction back and says why when $failure",
       async ({ status, error }) => {
         answer(() =>
           HttpResponse.json<ReactionResult>(
@@ -519,6 +560,8 @@ describe("Chat", () => {
         const pill = screen.getByRole("button", { name: "👍 1" });
         expect(pill).toHaveAttribute("aria-pressed", "false");
         expect(pill).toBeEnabled();
+        // It changed nothing, so there is nothing to refresh.
+        expect(router.refresh).not.toHaveBeenCalled();
       },
     );
 
@@ -539,6 +582,11 @@ describe("Chat", () => {
         error: "Failed to react to chat message",
       },
       {
+        failure: "the result lacks the saved state",
+        respond: () => HttpResponse.json({ status: "ok" }),
+        error: "Failed to react to chat message",
+      },
+      {
         failure: "the error has no message",
         respond: () => HttpResponse.json({ status: "error" }, { status: 500 }),
         error: "Failed to react to chat message (HTTP 500)",
@@ -546,7 +594,10 @@ describe("Chat", () => {
       {
         failure: "the status says it failed",
         respond: () =>
-          HttpResponse.json<ReactionResult>({ status: "ok" }, { status: 500 }),
+          HttpResponse.json<ReactionResult>(
+            { status: "ok", mine: true, savedAt: SAVED_AT },
+            { status: 500 },
+          ),
         error: "Failed to react to chat message (HTTP 500)",
       },
       {
@@ -555,21 +606,19 @@ describe("Chat", () => {
         error: "Failed to react to chat message",
       },
     ])(
-      "says why and leaves the outcome to the refreshed history when $failure",
+      "shows the history and refreshes it when $failure",
       async ({ respond, error }) => {
         answer(respond);
-        const { rerender } = await renderReactions(thumbs);
+        await renderReactions(thumbs);
 
         await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
         expect(await screen.findByText(error)).toBeInTheDocument();
-        // The toggle may have been saved before it failed, so the history decides.
-        expect(router.refresh).toHaveBeenCalledOnce();
-        expect(screen.getByRole("button", { name: "👍 2" })).toBeDisabled();
-        await refreshWith(rerender, thumbs);
         const pill = screen.getByRole("button", { name: "👍 1" });
         expect(pill).toHaveAttribute("aria-pressed", "false");
         expect(pill).toBeEnabled();
+        // It may have been saved before it failed, so the refreshed history decides.
+        expect(router.refresh).toHaveBeenCalledOnce();
       },
     );
 
@@ -577,7 +626,7 @@ describe("Chat", () => {
       const timeout = vi
         .spyOn(AbortSignal, "timeout")
         .mockReturnValue(AbortSignal.abort());
-      answer(ok);
+      answer(() => ok());
       await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));

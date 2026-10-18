@@ -74,7 +74,11 @@ export async function POST(request: NextRequest) {
     );
 
     revalidateTag("getChatHistory", { expire: 0 });
-    return respond({ status: "ok" });
+    return respond({
+      status: "ok",
+      mine: change === "added",
+      savedAt: Date.now(),
+    });
   } catch (err) {
     if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
       return respond(

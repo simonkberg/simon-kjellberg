@@ -23,7 +23,11 @@ vi.mock(import("next/cache"), async (importOriginal) => {
 
 vi.mock(import("@/actions/chat"), () => ({
   getChatHistory: vi.fn(() =>
-    Promise.resolve<ChatHistoryResult>({ status: "ok", messages: [] }),
+    Promise.resolve<ChatHistoryResult>({
+      status: "ok",
+      fetchedAt: 0,
+      messages: [],
+    }),
   ),
 }));
 
@@ -288,7 +292,7 @@ describe("RootPage", () => {
       expect(within(region).queryByTestId("chat")).not.toBeInTheDocument();
 
       await act(async () => {
-        resolve({ status: "ok", messages: [] });
+        resolve({ status: "ok", fetchedAt: 0, messages: [] });
         // Skip React's Suspense throttling delay
         await vi.advanceTimersByTimeAsync(300);
       });

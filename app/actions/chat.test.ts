@@ -79,7 +79,8 @@ describe("getChatHistory", () => {
     vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
   });
 
-  it("returns messages on success", async () => {
+  it("returns messages on success, with when they were read", async () => {
+    vi.useFakeTimers({ now: 1_000, toFake: ["Date"] });
     const mockMessages = [
       createMockMessage({ id: "1", content: "First message" }),
       createMockMessage({ id: "2", content: "Second message" }),
@@ -88,7 +89,12 @@ describe("getChatHistory", () => {
 
     const result = await getChatHistory();
 
-    expect(result).toEqual({ status: "ok", messages: mockMessages });
+    expect(result).toEqual({
+      status: "ok",
+      messages: mockMessages,
+      fetchedAt: 1_000,
+    });
+    vi.useRealTimers();
   });
 
   it("returns error and logs when Discord API fails", async () => {

@@ -81,7 +81,16 @@ function readResult(body: unknown, ok: boolean): ReactionResult | null {
   if (typeof body !== "object" || body === null || !("status" in body)) {
     return null;
   }
-  if (body.status === "ok" && ok) return { status: "ok" };
+  if (
+    ok &&
+    body.status === "ok" &&
+    "mine" in body &&
+    typeof body.mine === "boolean" &&
+    "savedAt" in body &&
+    typeof body.savedAt === "number"
+  ) {
+    return { status: "ok", mine: body.mine, savedAt: body.savedAt };
+  }
   if (
     body.status === "error" &&
     "error" in body &&
@@ -122,42 +131,13 @@ async function postReaction(
   );
 }
 
-interface PendingReaction extends OwnReaction {
-  /** Set once the request settles: how many more histories it shows over, unless one has it. */
-  waits?: number;
+interface SavedReaction extends OwnReaction {
+  messageId: string;
+  savedAt: number;
 }
 
-const NOT_REACTING: ReadonlyMap<string, PendingReaction> = new Map();
-
-function hasOwnReaction(
-  messages: Message[],
-  messageId: string,
-  { emoji, mine }: OwnReaction,
-) {
-  const reaction = findMessageById(messages, messageId)?.reactions.find(
-    (candidate) => candidate.emoji === emoji,
-  );
-  return Boolean(reaction?.mine) === mine;
-}
-
-/** Drops settled reactions the new history shows, or that have waited out their histories. */
-function afterHistory(
-  pending: ReadonlyMap<string, PendingReaction>,
-  messages: Message[],
-): ReadonlyMap<string, PendingReaction> {
-  const next = new Map<string, PendingReaction>();
-  for (const [messageId, reaction] of pending) {
-    if (reaction.waits === undefined) {
-      next.set(messageId, reaction);
-    } else if (
-      reaction.waits > 1 &&
-      !hasOwnReaction(messages, messageId, reaction)
-    ) {
-      next.set(messageId, { ...reaction, waits: reaction.waits - 1 });
-    }
-  }
-  return next;
-}
+const NOT_REACTING: ReadonlyMap<string, OwnReaction> = new Map();
+const NONE_SAVED: ReadonlyMap<string, SavedReaction> = new Map();
 
 export interface ChatProps {
   history: Promise<ChatHistoryResult>;
@@ -172,18 +152,21 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   // State, not an async transition: React holds every other transition until
   // one settles, and Discord's rate limit can hold a toggle 30s.
   const [pending, setPending] = useState(NOT_REACTING);
+  // What the route saved, shown over any history read before it.
+  const [saved, setSaved] = useState(NONE_SAVED);
   // Counted so the toast remounts and shows a repeated message again.
   const [reactionError, setReactionError] = useState<{
     message: string;
     count: number;
   }>();
-  const [shownResult, setShownResult] = useState(result);
-  const serverMessages = result.status === "ok" ? result.messages : [];
-  if (shownResult !== result) {
-    setShownResult(result);
-    setPending((current) => afterHistory(current, serverMessages));
+  const shown =
+    result.status === "ok" ? result : { messages: [], fetchedAt: Infinity };
+  let messages = shown.messages;
+  for (const own of saved.values()) {
+    if (own.savedAt > shown.fetchedAt) {
+      messages = withOwnReaction(messages, own.messageId, own);
+    }
   }
-  let messages = serverMessages;
   for (const [messageId, own] of pending) {
     messages = withOwnReaction(messages, messageId, own);
   }
@@ -198,23 +181,23 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     void postReaction(messageId, emoji).then((reaction) => {
       setPending((current) => {
         const next = new Map(current);
-        // A rejected toggle changed nothing; any other shows until a history has it.
-        if (reaction.status === "error") {
-          next.delete(messageId);
-        } else {
-          // A history already on its way when a saved toggle settles can still lack it.
-          const waits = reaction.status === "ok" ? 2 : 1;
-          next.set(messageId, { emoji, mine, waits });
-        }
+        next.delete(messageId);
         return next;
       });
+      if (reaction.status === "ok") {
+        const { mine: savedMine, savedAt } = reaction;
+        const own = { messageId, emoji, mine: savedMine, savedAt };
+        setSaved((current) =>
+          new Map(current).set(`${messageId} ${emoji}`, own),
+        );
+      }
       setReactionError((previous) =>
         reaction.status === "ok"
           ? undefined
           : { message: reaction.error, count: (previous?.count ?? 0) + 1 },
       );
-      // Even on failure: a timeout or dropped connection may follow a saved toggle.
-      router.refresh();
+      // A rejected toggle changed nothing; any other may have been saved.
+      if (reaction.status !== "error") router.refresh();
     });
   };
 

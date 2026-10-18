@@ -16,7 +16,7 @@ import { withSiteReactions } from "@/lib/reactions";
 import { getSession } from "@/lib/session";
 
 export type ChatHistoryResult =
-  | { status: "ok"; messages: Message[] }
+  | { status: "ok"; messages: Message[]; fetchedAt: number }
   | { status: "error"; error: string };
 
 export async function getChatHistory(): Promise<ChatHistoryResult> {
@@ -25,8 +25,10 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
   cacheTag("getChatHistory");
 
   try {
+    // Taken before the reads, so the history has every reaction saved before it.
+    const fetchedAt = Date.now();
     const messages = await withSiteReactions(await getChannelMessages());
-    return { status: "ok", messages };
+    return { status: "ok", messages, fetchedAt };
   } catch (err) {
     log.error({ err, action: "getChatHistory" }, "Error fetching chat history");
     return { status: "error", error: "Failed to fetch chat history" };

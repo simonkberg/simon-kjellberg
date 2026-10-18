@@ -75,12 +75,26 @@ describe("POST /api/chat/reactions", () => {
   it("toggles the visitor's reaction and expires the history", async () => {
     expect(
       await result(await react({ messageId: "123", emoji: "👍" })),
-    ).toEqual({ status: 200, body: { status: "ok" } });
+    ).toEqual({
+      status: 200,
+      body: { status: "ok", mine: true, savedAt: 1_000_000 },
+    });
 
     expect(
       (await query("SELECT message_id, emoji, username FROM reactions")).rows,
     ).toEqual([{ message_id: "123", emoji: "👍", username: "test-user" }]);
     expect(revalidateTag).toHaveBeenCalledWith("getChatHistory", { expire: 0 });
+  });
+
+  it("answers with the reaction taken back", async () => {
+    await react({ messageId: "123", emoji: "👍" });
+
+    expect(
+      await result(await react({ messageId: "123", emoji: "👍" })),
+    ).toEqual({
+      status: 200,
+      body: { status: "ok", mine: false, savedAt: 1_000_000 },
+    });
   });
 
   it("asks a visitor without a session to reload", async () => {
