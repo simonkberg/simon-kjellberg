@@ -1,8 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TooltipButton } from "./Tooltip";
+import { isOpen, tap } from "@/mocks/popover";
+
+import { TooltipButton, TooltipText } from "./Tooltip";
 
 const renderButton = () => {
   const onClick = vi.fn();
@@ -16,9 +18,6 @@ const renderButton = () => {
   );
   return { button: screen.getByRole("button", { name: "Reply" }), onClick };
 };
-
-const isOpen = (tip = screen.getByRole("tooltip", { hidden: true })) =>
-  tip.hasAttribute("data-popover-open");
 
 describe("TooltipButton", () => {
   it("is named by its tooltip", () => {
@@ -101,7 +100,7 @@ describe("TooltipButton", () => {
     expect(isOpen()).toBe(false);
   });
 
-  it("closes when its button is clicked", async () => {
+  it("closes when its button is activated", async () => {
     const { onClick } = renderButton();
 
     await userEvent.tab();
@@ -292,5 +291,88 @@ describe("TooltipButton", () => {
 
       expect(onClick).toHaveBeenCalled();
     });
+  });
+});
+
+describe("TooltipText", () => {
+  const renderText = () => {
+    render(
+      <>
+        <p>elsewhere</p>
+        <TooltipText tooltip="tip">text</TooltipText>
+      </>,
+    );
+    return {
+      text: screen.getByText("text"),
+      elsewhere: screen.getByText("elsewhere"),
+    };
+  };
+
+  afterEach(() => {
+    getSelection()?.removeAllRanges();
+  });
+
+  it("toggles on each tap", async () => {
+    const { text } = renderText();
+
+    await tap(text);
+    expect(isOpen()).toBe(true);
+    await tap(text);
+    expect(isOpen()).toBe(false);
+    await tap(text);
+    expect(isOpen()).toBe(true);
+  });
+
+  it("shows on tap after a press that closed it ended elsewhere", async () => {
+    const { text, elsewhere } = renderText();
+
+    await tap(text);
+    await act(() =>
+      userEvent.pointer([
+        { keys: "[TouchA>]", target: text },
+        { pointerName: "TouchA", target: elsewhere },
+        { keys: "[/TouchA]", target: elsewhere },
+      ]),
+    );
+    expect(isOpen()).toBe(false);
+    await tap(text);
+
+    expect(isOpen()).toBe(true);
+  });
+
+  it("doesn't show at the end of a long press that selected text", async () => {
+    const { text } = renderText();
+    getSelection()?.selectAllChildren(text);
+
+    await tap(text);
+
+    expect(isOpen()).toBe(false);
+  });
+
+  it("shows on tap while other text is selected", async () => {
+    const { text, elsewhere } = renderText();
+    getSelection()?.selectAllChildren(elsewhere);
+
+    await tap(text);
+
+    expect(isOpen()).toBe(true);
+  });
+
+  it("hides on a mouse click, as on buttons", async () => {
+    const { text } = renderText();
+
+    await userEvent.hover(text);
+    expect(isOpen()).toBe(true);
+    await userEvent.click(text);
+
+    expect(isOpen()).toBe(false);
+  });
+
+  it("is not a tab stop", async () => {
+    renderText();
+
+    await userEvent.tab();
+
+    expect(document.body).toHaveFocus();
   });
 });

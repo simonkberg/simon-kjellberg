@@ -1,16 +1,11 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { type ChatHistoryResult, reactToChatMessage } from "@/actions/chat";
 import type { Message, Reaction } from "@/lib/discord/api";
+import { createMessage } from "@/mocks/messages";
+import { sendToggle } from "@/mocks/popover";
 
 import { Chat } from "./Chat";
 
@@ -18,18 +13,6 @@ vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/actions/chat"), () => ({ reactToChatMessage: vi.fn() }));
 
 describe("Chat", () => {
-  beforeEach(() => {
-    vi.stubGlobal(
-      "EventSource",
-      class MockEventSource {
-        close = vi.fn();
-        onopen?: () => void;
-        onmessage?: () => void;
-        onerror?: () => void;
-      },
-    );
-  });
-
   afterEach(() => {
     document.cookie = "chatTipDismissed=; max-age=0";
   });
@@ -41,19 +24,11 @@ describe("Chat", () => {
     />
   );
 
-  const createMessage = (overrides?: Partial<Message>): Message => ({
-    id: "msg-1",
-    content: "Test message",
-    user: { name: "TestUser", color: "hsl(0 100% 50%)" },
-    edited: false,
-    timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-    reactions: [],
-    replies: [],
-    ...overrides,
-  });
+  const renderChat = (messages: Message[]) =>
+    act(async () => render(chatElement({ status: "ok", messages })));
 
   it("renders the simon-bot tip until it is dismissed", async () => {
-    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+    await renderChat([]);
 
     expect(
       screen.getByRole("button", { name: "Dismiss tip" }),
@@ -62,7 +37,7 @@ describe("Chat", () => {
 
   it("hides the simon-bot tip once its cookie is set", async () => {
     document.cookie = "chatTipDismissed=true";
-    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+    await renderChat([]);
 
     expect(
       screen.queryByRole("button", { name: "Dismiss tip" }),
@@ -70,7 +45,7 @@ describe("Chat", () => {
   });
 
   it("hides the simon-bot tip when the cookie is newer than the render", async () => {
-    await act(async () => render(chatElement({ status: "ok", messages: [] })));
+    await renderChat([]);
 
     document.cookie = "chatTipDismissed=true";
     act(() => {
@@ -83,12 +58,9 @@ describe("Chat", () => {
   });
 
   it("displays error message when result status is error", async () => {
-    const errorResult: ChatHistoryResult = {
-      status: "error",
-      error: "Failed to fetch",
-    };
-
-    await act(async () => render(chatElement(errorResult)));
+    await act(async () =>
+      render(chatElement({ status: "error", error: "Failed to fetch" })),
+    );
 
     expect(
       screen.getByText("Chat is temporarily unavailable :("),
@@ -96,67 +68,32 @@ describe("Chat", () => {
   });
 
   it("renders messages on success", async () => {
-    const successResult: ChatHistoryResult = {
-      status: "ok",
-      messages: [createMessage({ content: "Hello world" })],
-    };
-
-    await act(async () => render(chatElement(successResult)));
+    await renderChat([createMessage({ content: "Hello world" })]);
 
     expect(screen.getByText("Hello world")).toBeInTheDocument();
   });
 
   describe("reply flow", () => {
-    it("shows reply preview when reply button is clicked", async () => {
-      const user = userEvent.setup();
-      const message = createMessage({ id: "100", content: "Original" });
-      const successResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [message],
-      };
-
-      await act(async () => render(chatElement(successResult)));
-
-      expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole("button", { name: "Reply" }));
-
-      expect(screen.getByText("Replying to")).toBeInTheDocument();
-    });
-
     it("shows reply preview for nested message", async () => {
       const user = userEvent.setup();
-      const nestedMessage = createMessage({
-        id: "200",
-        content: "Nested reply",
-      });
-      const parentMessage = createMessage({
-        id: "100",
-        content: "Parent message",
-        replies: [nestedMessage],
-      });
-      const successResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [parentMessage],
-      };
-
-      await act(async () => render(chatElement(successResult)));
+      await renderChat([
+        createMessage({
+          id: "100",
+          content: "Parent message",
+          replies: [createMessage({ id: "200", content: "Nested reply" })],
+        }),
+      ]);
 
       const replyButtons = screen.getAllByRole("button", { name: "Reply" });
-      await user.click(replyButtons[1]!); // Click nested message's reply button
+      await user.click(replyButtons[1]!);
 
       expect(screen.getByText("Replying to")).toBeInTheDocument();
     });
 
-    it("clears reply when clear button is clicked", async () => {
+    it("shows and clears the reply preview", async () => {
       const user = userEvent.setup();
-      const message = createMessage({ id: "100" });
-      const successResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [message],
-      };
-
-      await act(async () => render(chatElement(successResult)));
+      await renderChat([createMessage({ id: "100" })]);
+      expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "Reply" }));
       expect(screen.getByText("Replying to")).toBeInTheDocument();
@@ -187,16 +124,6 @@ describe("Chat", () => {
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
 
-    const renderReactions = (reactions: Reaction[]) =>
-      act(async () =>
-        render(
-          chatElement({
-            status: "ok",
-            messages: [createMessage({ reactions })],
-          }),
-        ),
-      );
-
     // React holds every transition until all pending actions settle, so each test settles its own.
     function holdReaction() {
       const { promise, resolve } =
@@ -207,7 +134,11 @@ describe("Chat", () => {
 
     it("shows a reaction at once while the server catches up", async () => {
       const settle = holdReaction();
-      await renderReactions([...thumbs, { emoji: "🎉", count: 1, users: [] }]);
+      await renderChat([
+        createMessage({
+          reactions: [...thumbs, { emoji: "🎉", count: 1, users: [] }],
+        }),
+      ]);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
@@ -223,7 +154,11 @@ describe("Chat", () => {
 
     it("drops a pill at once when the last reaction is taken back", async () => {
       const settle = holdReaction();
-      await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
+      await renderChat([
+        createMessage({
+          reactions: [{ emoji: "👍", count: 1, users: [], mine: true }],
+        }),
+      ]);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
@@ -235,28 +170,18 @@ describe("Chat", () => {
 
     it("shows a reply's new reaction at once", async () => {
       const settle = holdReaction();
-      await act(async () =>
-        render(
-          chatElement({
-            status: "ok",
-            messages: [
-              createMessage({
-                replies: [createMessage({ id: "reply-1", content: "Reply" })],
-              }),
-              createMessage({ id: "msg-2", content: "Untouched" }),
-            ],
-          }),
-        ),
-      );
+      await renderChat([
+        createMessage({
+          replies: [createMessage({ id: "reply-1", content: "Reply" })],
+        }),
+        createMessage({ id: "msg-2", content: "Untouched" }),
+      ]);
 
       const picker = screen.getAllByRole("toolbar", {
         name: "Pick a reaction",
         hidden: true,
       })[1]!;
-      fireEvent(
-        picker,
-        Object.assign(new Event("beforetoggle"), { newState: "open" }),
-      );
+      sendToggle(picker, "beforetoggle", "open");
       await userEvent.click(
         within(picker).getByRole("button", { name: "tada", hidden: true }),
       );
@@ -271,17 +196,10 @@ describe("Chat", () => {
 
     it("keeps other messages reactable while one reaction is pending", async () => {
       const settle = holdReaction();
-      await act(async () =>
-        render(
-          chatElement({
-            status: "ok",
-            messages: [
-              createMessage({ reactions: thumbs }),
-              createMessage({ id: "msg-2", content: "Other" }),
-            ],
-          }),
-        ),
-      );
+      await renderChat([
+        createMessage({ reactions: thumbs }),
+        createMessage({ id: "msg-2", content: "Other" }),
+      ]);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
@@ -316,7 +234,7 @@ describe("Chat", () => {
       "puts the reaction back and says why when $failure",
       async ({ mock, error }) => {
         mock();
-        await renderReactions(thumbs);
+        await renderChat([createMessage({ reactions: thumbs })]);
 
         await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
 
@@ -333,7 +251,7 @@ describe("Chat", () => {
         status: "error",
         error: "Rate limit exceeded.",
       });
-      await renderReactions(thumbs);
+      await renderChat([createMessage({ reactions: thumbs })]);
 
       const pill = screen.getByRole("button", { name: "👍 1" });
       await userEvent.click(pill);
