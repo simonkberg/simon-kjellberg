@@ -4,6 +4,13 @@ import { describe, expect, it } from "vitest";
 import { Page } from "./Page";
 
 describe("Page", () => {
+  it("renders Header with the title linking home", () => {
+    render(<Page>Page content</Page>);
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(within(heading).getByRole("link")).toHaveAttribute("href", "/");
+  });
+
   it("renders Header with section", () => {
     render(<Page section="Listening">Page content</Page>);
 

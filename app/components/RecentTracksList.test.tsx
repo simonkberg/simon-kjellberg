@@ -69,7 +69,7 @@ describe("RecentTracksList", () => {
     expect(item).toHaveTextContent("Past Song");
     const time = item.querySelector("time");
     expect(time).toHaveAttribute("dateTime", playedAt.toISOString());
-    expect(time?.textContent).not.toBe("");
+    expect(time).toHaveTextContent(/ ago$/);
   });
 
   it("displays error message when tracks fetch fails", async () => {
