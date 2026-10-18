@@ -14,7 +14,12 @@ describe("displayName", () => {
       {},
       "user",
     ],
-    ["nothing for a user with no name", {}, undefined, undefined],
+    [
+      "nothing for a user with no name",
+      { bot: false, global_name: null },
+      { nick: null },
+      undefined,
+    ],
   ])("should give %s", (_, user, member, expected) => {
     expect(displayName(user, member)).toBe(expected);
   });

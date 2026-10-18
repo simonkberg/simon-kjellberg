@@ -333,6 +333,7 @@ describe("subscribe", () => {
     server.use(createHandshakeHandler());
     await subscribe(vi.fn());
 
+    // A fresh module graph, as Next gives instrumentation and each route, must find the same gateway.
     vi.resetModules();
     const second = await import("./gateway");
     await second.subscribe(vi.fn());
