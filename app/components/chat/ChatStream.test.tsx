@@ -157,6 +157,21 @@ describe("ChatStream", () => {
       expect(refreshChatHistory).toHaveBeenCalledOnce();
     });
 
+    it("refreshes the history when its first attempt failed", () => {
+      vi.useFakeTimers();
+      vi.mocked(refreshChatHistory).mockClear();
+      const { getInstance } = mockEventSource;
+      render(<ChatStream />);
+
+      act(() => getInstance().onerror());
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      act(() => getInstance().onopen());
+
+      expect(refreshChatHistory).toHaveBeenCalledOnce();
+    });
+
     it("refreshes the history when it reconnects after the network returns", () => {
       vi.mocked(refreshChatHistory).mockClear();
       const { getInstance } = mockEventSource;

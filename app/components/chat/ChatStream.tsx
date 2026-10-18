@@ -15,7 +15,7 @@ export const ChatStream = () => {
   useEffect(() => {
     let eventSource: EventSource | null = null;
     let reconnectAttempts = 0;
-    let opened = false;
+    let connected = false;
     let gatewayDown = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -28,13 +28,14 @@ export const ChatStream = () => {
 
     const connect = () => {
       disconnect();
+      // Changes made since the page rendered or the last stream sent no event.
+      const reconnecting = connected;
+      connected = true;
       eventSource = new EventSource("/api/chat/sse");
       eventSource.onopen = () => {
         reconnectAttempts = 0;
         setStatus("live");
-        // Changes made while disconnected sent no event.
-        if (opened) void refreshChatHistory();
-        opened = true;
+        if (reconnecting) void refreshChatHistory();
         gatewayDown = false;
       };
       eventSource.onmessage = () => void refreshChatHistory();
