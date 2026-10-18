@@ -316,7 +316,8 @@ Components use React's recommended [storing information from previous renders](h
 ### Style Variants
 
 The site has three looks (panes, ledger, manual) over one markup. `app/global.css` is a
-default block of custom properties, one `:root[data-variant="…"]` block per variant, then
+`:root` block of the custom properties the variants share, one `:root[data-variant="…"]`
+block per variant setting the rest (`app/global.test.ts` checks each sets them all), then
 rules that read only those properties: no rule outside the blocks names a variant. A change
 that needs a variant to differ is a new property, not a scoped selector. Every variant shows
 the same content; a variant may add decoration (glyphs, prefixes) but never words or controls

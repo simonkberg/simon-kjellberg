@@ -22,7 +22,7 @@ import { identifiers } from "@/lib/identifiers";
 import { IP_DENY_LIST_URL, refreshIpDenyList } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
-import type { Username } from "@/lib/session";
+import { getSession, type Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 import { server } from "@/mocks/node";
 import { createSqliteQuery } from "@/mocks/sqlite";
@@ -269,6 +269,21 @@ describe("postChatMessage", () => {
       { err: error, action: "postChatMessage" },
       "Error posting chat message",
     );
+  });
+
+  it("returns an error result when the request has no session", async () => {
+    vi.spyOn(log, "error").mockImplementation(() => {});
+    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
+
+    expect(await postChatMessage(new FormData())).toEqual({
+      status: "error",
+      error: "Failed to post chat message",
+    });
+    vi.mocked(getSession).mockRejectedValueOnce(new Error("No session"));
+    expect(await reactToChatMessage("1", "👍")).toEqual({
+      status: "error",
+      error: "Failed to react to chat message",
+    });
   });
 
   it("returns error when form data is invalid", async () => {
