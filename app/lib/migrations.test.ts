@@ -27,7 +27,11 @@ beforeEach(() => {
 
 function failNext(prefix: string, { afterRunning = false } = {}) {
   vi.mocked(query).mockImplementation(
-    failQuery(sqlite(), prefix, { once: true, afterRunning }),
+    failQuery(
+      sqlite(),
+      prefix,
+      afterRunning ? { afterRunning } : { once: true },
+    ),
   );
 }
 

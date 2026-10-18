@@ -824,56 +824,62 @@ describe("createMessage", () => {
       limit: 10,
       sort_by: "timestamp",
       sort_order: "asc",
-    };
+    } as const;
 
-    it.each<{
-      tool: string;
-      input: object;
-      mock: (...args: never[]) => Promise<unknown>;
-      calledWith: unknown[];
-    }>([
-      {
-        tool: "get_chat_history",
-        input: { limit: 5 },
-        mock: getChannelMessages,
-        calledWith: [5],
-      },
-      {
-        tool: "get_wakatime_stats",
-        input: { period: "last_30_days", limit: 10 },
-        mock: getStats,
-        calledWith: ["last_30_days", 10],
-      },
-      {
-        tool: "get_recent_tracks",
-        input: { limit: 10 },
-        mock: userGetRecentTracks,
-        calledWith: [config.lastfmUsername, { limit: 10 }],
-      },
-      {
-        tool: "get_top_tracks",
-        input: { period: "3month", limit: 10 },
-        mock: userGetTopTracks,
-        calledWith: [config.lastfmUsername, { period: "3month", limit: 10 }],
-      },
-      {
-        tool: "get_top_artists",
-        input: { period: "6month", limit: 3 },
-        mock: userGetTopArtists,
-        calledWith: [config.lastfmUsername, { period: "6month", limit: 3 }],
-      },
-      {
-        tool: "get_top_albums",
-        input: { period: "12month", limit: 7 },
-        mock: userGetTopAlbums,
-        calledWith: [config.lastfmUsername, { period: "12month", limit: 7 }],
-      },
-      {
-        tool: "search_messages",
-        input: searchInput,
-        mock: searchChannelMessages,
-        calledWith: [searchInput],
-      },
+    type Lookup = (...args: never[]) => Promise<unknown>;
+
+    function wiring<F extends Lookup>(
+      tool: string,
+      input: object,
+      mock: F,
+      ...calledWith: Parameters<F>
+    ): { tool: string; input: object; mock: Lookup; calledWith: unknown[] } {
+      return { tool, input, mock, calledWith };
+    }
+
+    it.each([
+      wiring("get_chat_history", { limit: 5 }, getChannelMessages, 5),
+      wiring(
+        "get_wakatime_stats",
+        { period: "last_30_days", limit: 10 },
+        getStats,
+        "last_30_days",
+        10,
+      ),
+      wiring(
+        "get_recent_tracks",
+        { limit: 10 },
+        userGetRecentTracks,
+        config.lastfmUsername,
+        { limit: 10 },
+      ),
+      wiring(
+        "get_top_tracks",
+        { period: "3month", limit: 10 },
+        userGetTopTracks,
+        config.lastfmUsername,
+        { period: "3month", limit: 10 },
+      ),
+      wiring(
+        "get_top_artists",
+        { period: "6month", limit: 3 },
+        userGetTopArtists,
+        config.lastfmUsername,
+        { period: "6month", limit: 3 },
+      ),
+      wiring(
+        "get_top_albums",
+        { period: "12month", limit: 7 },
+        userGetTopAlbums,
+        config.lastfmUsername,
+        { period: "12month", limit: 7 },
+      ),
+      wiring(
+        "search_messages",
+        searchInput,
+        searchChannelMessages,
+        searchInput,
+      ),
     ])(
       "should hand $tool its input and the model its result",
       async ({ tool, input, mock, calledWith }) => {
