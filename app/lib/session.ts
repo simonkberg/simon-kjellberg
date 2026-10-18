@@ -1,5 +1,5 @@
 import "server-only";
-import { type JWTPayload, jwtVerify, SignJWT } from "jose";
+import { errors, type JWTPayload, jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
@@ -32,7 +32,12 @@ export async function decrypt(session: string | undefined) {
     });
     return SessionSchema.parse(payload);
   } catch (err) {
-    log.warn({ err }, "Failed to verify session");
+    // A bad signature on a well-formed token is what a changed SESSION_SECRET looks like.
+    if (err instanceof errors.JWSSignatureVerificationFailed) {
+      log.error({ err }, "Session signature didn't match SESSION_SECRET");
+    } else {
+      log.warn({ err }, "Failed to verify session");
+    }
     return;
   }
 }

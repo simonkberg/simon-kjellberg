@@ -9,11 +9,8 @@ interface Ranked {
   playcount: number;
 }
 
-interface Labelled {
+interface TopTableColumn<Key extends string = string> {
   label: string;
-}
-
-interface TopTableColumn<Key extends string> extends Labelled {
   key: Key;
 }
 
@@ -42,20 +39,20 @@ const textWidths = [
   [19, 9],
 ] as const;
 
-const Head = ({ columns }: { columns: readonly Labelled[] }) => (
+const Head = ({ columns }: { columns: readonly TopTableColumn[] }) => (
   <>
     <colgroup>
       <col />
-      {columns.map(({ label }) => (
-        <col key={label} style={{ width: `${100 / columns.length}%` }} />
+      {columns.map(({ key }) => (
+        <col key={key} style={{ width: `${100 / columns.length}%` }} />
       ))}
       <col />
     </colgroup>
     <thead>
       <tr>
         <th className="numeric">#</th>
-        {columns.map(({ label }) => (
-          <th key={label}>{label}</th>
+        {columns.map(({ key, label }) => (
+          <th key={key}>{label}</th>
         ))}
         <th className="numeric">Plays</th>
       </tr>
@@ -102,7 +99,7 @@ export const TopTable = <
 export const TopTableSkeleton = ({
   columns,
 }: {
-  columns: readonly Labelled[];
+  columns: readonly TopTableColumn[];
 }) => (
   <SkeletonStatus>
     <table className="placeholder" aria-hidden="true">

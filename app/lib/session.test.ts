@@ -1,3 +1,4 @@
+import { SignJWT } from "jose";
 import { cookies } from "next/headers";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -66,16 +67,17 @@ describe("session", () => {
       expect(logWarnSpy).toHaveBeenCalledOnce();
     });
 
-    it("should return undefined for tampered token", async () => {
+    it("logs a token signed with another secret as an error", async () => {
+      const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
       const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
-      const payload = SessionSchema.parse({ username: "testuser" });
-      const encrypted = await encrypt(payload);
-      const tampered = encrypted.slice(0, -5) + "xxxxx";
+      const token = await new SignJWT({ username: "testuser" })
+        .setProtectedHeader({ alg: "HS256" })
+        .sign(new TextEncoder().encode("another_secret"));
 
-      const result = await decrypt(tampered);
-      expect(result).toBeUndefined();
-      expect(logWarnSpy).toHaveBeenCalledOnce();
+      expect(await decrypt(token)).toBeUndefined();
+      expect(logErrorSpy).toHaveBeenCalledOnce();
+      expect(logWarnSpy).not.toHaveBeenCalled();
     });
 
     it("should validate session schema and reject invalid payload", async () => {
