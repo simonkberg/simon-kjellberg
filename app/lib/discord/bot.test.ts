@@ -40,8 +40,9 @@ function link(
   type: number,
   username: string,
   content: string,
+  reactions: ChainMessage["reactions"] = [],
 ): ChainMessage {
-  return { id, type, username, content, reactions: [] };
+  return { id, type, username, content, reactions };
 }
 
 function replyWith(...texts: string[]) {
@@ -250,17 +251,22 @@ describe("handleMessage", () => {
     ]);
   });
 
-  it("should show the bot the site's reactions on each message", async () => {
+  it("should show the bot each message's reactions, the site's included", async () => {
     await query(
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('msg-1', '😂', 'otter')",
     );
+    vi.mocked(getMessageChain).mockResolvedValue([
+      link("msg-1", 0, "User1", "hey simon-bot", [
+        { emoji: "😂", count: 1, users: [] },
+      ]),
+    ]);
     replyWith();
 
     await handleMessage(message("msg-1", { content: "User1: hey simon-bot" }));
 
     expect(createAnthropicMessage).toHaveBeenCalledWith([
       expect.objectContaining({
-        reactions: [{ emoji: "😂", count: 1, users: ["otter"] }],
+        reactions: [{ emoji: "😂", count: 2, users: ["otter"] }],
       }),
     ]);
   });
@@ -381,6 +387,7 @@ describe("handleMessage", () => {
       { err: new Error("model timed out"), messageId: "msg-1" },
       "Bot response failed",
     );
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(reflect).not.toHaveBeenCalled();
   });
 
@@ -442,23 +449,34 @@ describe("startBotSubscription", () => {
     vi.mocked(subscribe).mockResolvedValue(() => {});
   });
 
-  it("should handle created messages and ignore other channel events", async () => {
+  async function startAndGetSubscriber() {
     await startBotSubscription();
     const callback = vi.mocked(subscribe).mock.calls[0]?.[0];
+    if (!callback) throw new Error("Bot did not subscribe");
+    return callback;
+  }
 
-    // Would reach the chain lookup if the bot handled updates as new messages.
-    callback?.({
-      t: "MESSAGE_UPDATE",
-      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
-    });
-    callback?.({
+  it("should handle created messages", async () => {
+    const callback = await startAndGetSubscriber();
+
+    callback({
       t: "MESSAGE_CREATE",
-      d: { ...message("msg-2", { content: "hey simon-bot" }), channel_id: "c" },
+      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
     });
 
     await vi.waitFor(() => {
-      expect(getMessageChain).toHaveBeenCalled();
+      expect(getMessageChain).toHaveBeenCalledExactlyOnceWith("msg-1");
     });
-    expect(getMessageChain).toHaveBeenCalledExactlyOnceWith("msg-2");
+  });
+
+  it("should ignore message updates", async () => {
+    const callback = await startAndGetSubscriber();
+
+    callback({
+      t: "MESSAGE_UPDATE",
+      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
+    });
+
+    expect(query).not.toHaveBeenCalled();
   });
 });

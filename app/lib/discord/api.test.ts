@@ -105,8 +105,16 @@ function byId(...messages: DiscordMessage[]) {
   );
 }
 
+// Posted by the bot for a site visitor, so the author is the content's prefix and needs no lookup.
+function post(
+  id: string,
+  overrides: Partial<DiscordMessage> = {},
+): DiscordMessage {
+  return message(id, { author: { id: "user1", bot: true }, ...overrides });
+}
+
 function reply(id: string, parent: string, content: string) {
-  return message(id, {
+  return post(id, {
     type: 19,
     content,
     message_reference: { message_id: parent },
@@ -115,7 +123,7 @@ function reply(id: string, parent: string, content: string) {
 
 describe("getChannelMessages", () => {
   it("should fetch and parse messages successfully", async () => {
-    server.use(history(message("1", { content: "TestUser: Hello world" })));
+    server.use(history(post("1", { content: "TestUser: Hello world" })));
 
     const messages = await getChannelMessages();
 
@@ -130,7 +138,7 @@ describe("getChannelMessages", () => {
   });
 
   it("should parse prefixed message with empty content", async () => {
-    server.use(history(message("1", { content: "TestUser:" })));
+    server.use(history(post("1", { content: "TestUser:" })));
 
     const messages = await getChannelMessages();
 
@@ -141,7 +149,7 @@ describe("getChannelMessages", () => {
 
   it("should leave markdown in content untouched", async () => {
     server.use(
-      history(message("1", { content: "TestUser: **Bold** and *italic*" })),
+      history(post("1", { content: "TestUser: **Bold** and *italic*" })),
     );
 
     const messages = await getChannelMessages();
@@ -152,7 +160,7 @@ describe("getChannelMessages", () => {
   it("should name a non-bot author from the guild member and keep their content whole", async () => {
     server.use(
       history(
-        message("1", {
+        post("1", {
           author: { id: "human-user" },
           content: "the source is here: https://github.com/example/repo",
         }),
@@ -177,7 +185,7 @@ describe("getChannelMessages", () => {
 
   it("should handle edited messages", async () => {
     server.use(
-      history(message("1", { edited_timestamp: "2024-01-01T00:00:00Z" })),
+      history(post("1", { edited_timestamp: "2024-01-01T00:00:00Z" })),
     );
 
     const messages = await getChannelMessages();
@@ -188,7 +196,7 @@ describe("getChannelMessages", () => {
   it("should count Discord reactions other than the bot's own mirror", async () => {
     server.use(
       history(
-        message("1", {
+        post("1", {
           reactions: [
             reaction("👍", 3, true),
             reaction("🎉", 1, true),
@@ -226,7 +234,7 @@ describe("getChannelMessages", () => {
   it("should page through every Discord reactor", async () => {
     const page = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}` }));
     server.use(
-      history(message("many-reactors", { reactions: [reaction("😂", 101)] })),
+      history(post("many-reactors", { reactions: [reaction("😂", 101)] })),
       http.get(REACTIONS_URL, ({ request }) =>
         HttpResponse.json(
           new URL(request.url).searchParams.get("after") === "r99"
@@ -245,7 +253,7 @@ describe("getChannelMessages", () => {
 
   it("should skip Discord reactors who left the server", async () => {
     server.use(
-      history(message("reactors-left", { reactions: [reaction("😂", 2)] })),
+      history(post("reactors-left", { reactions: [reaction("😂", 2)] })),
       http.get(REACTIONS_URL, () =>
         HttpResponse.json([{ id: "reactor-stays" }, { id: "reactor-left" }]),
       ),
@@ -263,7 +271,7 @@ describe("getChannelMessages", () => {
 
   it("should keep the reactors it could name when one lookup fails", async () => {
     server.use(
-      history(message("reactor-fails", { reactions: [reaction("😂", 2)] })),
+      history(post("reactor-fails", { reactions: [reaction("😂", 2)] })),
       http.get(REACTIONS_URL, () =>
         HttpResponse.json([{ id: "reactor-ok" }, { id: "reactor-busy" }]),
       ),
@@ -282,10 +290,10 @@ describe("getChannelMessages", () => {
   it("should name an author who left the server by their Discord name, or else their id", async () => {
     server.use(
       history(
-        message("1", {
+        post("1", {
           author: { id: "author-left", username: "left", global_name: null },
         }),
-        message("2", { author: { id: "nameless" } }),
+        post("2", { author: { id: "nameless" } }),
       ),
       http.get(MEMBER_URL, goneMember),
     );
@@ -298,7 +306,7 @@ describe("getChannelMessages", () => {
   it("should fail when an author's name fails to load", async () => {
     server.use(
       history(
-        message("1", {
+        post("1", {
           author: { id: "busy", username: "busy", global_name: null },
           content: "hi",
         }),
@@ -313,7 +321,7 @@ describe("getChannelMessages", () => {
 
   it("should still serve history when the gateway can't be subscribed to", async () => {
     vi.mocked(subscribe).mockRejectedValueOnce(new Error("fatal"));
-    server.use(history(message("1")));
+    server.use(history(post("1")));
 
     expect(await getChannelMessages()).toHaveLength(1);
     expect(log.error).toHaveBeenCalledWith(
@@ -324,7 +332,7 @@ describe("getChannelMessages", () => {
 
   it("should still count Discord reactions when their names fail to load", async () => {
     server.use(
-      history(message("1", { reactions: [reaction("😂")] })),
+      history(post("1", { reactions: [reaction("😂")] })),
       http.get(REACTIONS_URL, () => new HttpResponse(null, { status: 500 })),
     );
 
@@ -342,7 +350,7 @@ describe("getChannelMessages", () => {
   it("should handle replies as nested messages with multiple levels", async () => {
     server.use(
       history(
-        message("1", { content: "User1: Parent message" }),
+        post("1", { content: "User1: Parent message" }),
         reply("2", "1", "User2: First reply"),
         reply("3", "2", "User3: Reply to reply"),
         reply("4", "1", "User4: Another top-level reply"),
@@ -372,7 +380,7 @@ describe("getChannelMessages", () => {
     const reactorLookups = vi.fn(emptyList);
     server.use(
       history(
-        message("1", {
+        post("1", {
           author: { id: "user1" },
           content: "Orphaned reply",
           message_reference: { message_id: "999" },
@@ -391,8 +399,8 @@ describe("getChannelMessages", () => {
   it("should show a forward as a message of its own", async () => {
     server.use(
       history(
-        message("1"),
-        message("2", { message_reference: { type: 1, message_id: "1" } }),
+        post("1"),
+        post("2", { message_reference: { type: 1, message_id: "1" } }),
       ),
     );
 
@@ -410,17 +418,17 @@ describe("getChannelMessages", () => {
     const forwarder = { id: "user2", username: "forwarder" };
     server.use(
       history(
-        message("2", {
+        post("2", {
           ...forward,
           author: forwarder,
           message_snapshots: [{ message: { content: "Forwarded text" } }],
         }),
-        message("3", {
+        post("3", {
           ...forward,
           author: forwarder,
           message_snapshots: [{ message: {} }],
         }),
-        message("4", {
+        post("4", {
           ...forward,
           message_snapshots: [{ message: { content: "Name: Hi" } }],
         }),
@@ -436,7 +444,7 @@ describe("getChannelMessages", () => {
   });
 
   it("should sort messages by ID", async () => {
-    server.use(history(message("3"), message("1"), message("2")));
+    server.use(history(post("3"), post("1"), post("2")));
 
     const messages = await getChannelMessages();
 
@@ -502,7 +510,7 @@ describe("subscribeToChannel", () => {
 
 describe("getMessageChain", () => {
   it("should return single message when no parent", async () => {
-    server.use(byId(message("single-1", { content: "User1: Hello" })));
+    server.use(byId(post("single-1", { content: "User1: Hello" })));
 
     const chain = await getMessageChain("single-1");
 
@@ -513,10 +521,7 @@ describe("getMessageChain", () => {
   it("should read messages in the window from the store", async () => {
     const single = vi.fn(serverError);
     server.use(
-      history(
-        reply("stored-2", "stored-1", "User2: Second"),
-        message("stored-1"),
-      ),
+      history(reply("stored-2", "stored-1", "User2: Second"), post("stored-1")),
       http.get(MESSAGE_URL, single),
     );
     await getChannelMessages();
@@ -532,7 +537,7 @@ describe("getMessageChain", () => {
       byId(
         reply("chain-3", "chain-2", "User3: Third"),
         reply("chain-2", "chain-1", "User2: Second"),
-        message("chain-1", { content: "User1: First" }),
+        post("chain-1", { content: "User1: First" }),
       ),
     );
 
@@ -546,8 +551,8 @@ describe("getMessageChain", () => {
   it("should stop at a forward", async () => {
     server.use(
       history(
-        message("2", { message_reference: { type: 1, message_id: "1" } }),
-        message("1"),
+        post("2", { message_reference: { type: 1, message_id: "1" } }),
+        post("1"),
       ),
     );
     await getChannelMessages();
@@ -1076,15 +1081,15 @@ describe("searchChannelMessages", () => {
           total_results: 1,
           messages: [
             [
-              message("ctx-1", { content: "Alice: before the match" }),
+              post("ctx-1", { content: "Alice: before the match" }),
               {
-                ...message("hit-1", {
+                ...post("hit-1", {
                   content: "Bob: hello everyone",
                   timestamp: "2025-01-01T00:01:00.000000+00:00",
                 }),
                 hit: true,
               },
-              message("ctx-2", {
+              post("ctx-2", {
                 author: { id: "user3" },
                 content: "after the match",
                 timestamp: "2025-01-01T00:02:00.000000+00:00",
@@ -1166,7 +1171,7 @@ describe("searchChannelMessages", () => {
       http.get(SEARCH_URL, () =>
         HttpResponse.json({
           total_results: 1,
-          messages: [[message("no-hit-1", { content: "Alice: no hit flag" })]],
+          messages: [[post("no-hit-1", { content: "Alice: no hit flag" })]],
         }),
       ),
     );

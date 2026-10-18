@@ -559,6 +559,7 @@ describe("ChannelStore", () => {
 
     store.apply(create(message("2")));
     store.apply(update("1", { content: "edited" }));
+    store.apply(create(message("3", { type: 7 })));
 
     expect(await store.messages()).toMatchObject([
       { id: "1", content: "edited" },
