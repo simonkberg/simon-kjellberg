@@ -130,7 +130,7 @@ describe("getChatHistory", () => {
     );
 
     expect(await getChatHistory()).toMatchObject({
-      messages: [{ reactions: [expect.objectContaining({ emoji: "👍" })] }],
+      messages: [{ reactions: [{ emoji: "👍", count: 1, users: ["a"] }] }],
     });
   });
 
