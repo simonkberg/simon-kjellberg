@@ -39,24 +39,19 @@ const rule = (
 /** The Discord syntax CommonMark lacks or reads differently. */
 const extensions = [
   // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
-  rule(
-    "underline",
-    "_",
-    /^__([\s\S]+?)__(?!_)/,
-    ([, content = ""], context) => ({
-      type: "inlineComponent",
-      name: "u",
-      attributes: {},
-      children: context.parseInline(content),
-    }),
-  ),
+  rule("underline", "_", /^__[\s\S]+?__(?!_)/, ([match], context) => ({
+    type: "inlineComponent",
+    name: "u",
+    attributes: {},
+    children: context.parseInline(match.slice(2, -2)),
+  })),
   rule("hardBreak", " ", /^ {2,}\n/, () => ({ type: "break" })),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
-  rule("autolink", "<", /^<(https?:\/\/[^\s<>]+)>/, ([, url = ""]) =>
-    link(url),
+  rule("autolink", "<", /^<https?:\/\/[^\s<>]+>/, ([match]) =>
+    link(match.slice(1, -1)),
   ),
-  rule("mailto", "<", /^<([^\s<>@]+@[^\s<>]+)>/, ([, address = ""]) =>
-    link(`mailto:${address}`, address),
+  rule("mailto", "<", /^<[^\s<>@]+@[^\s<>]+>/, ([match]) =>
+    link(`mailto:${match.slice(1, -1)}`, match.slice(1, -1)),
   ),
   rule("url", "h", /^https?:\/\/[^\s<]+[^<.,:;"')\]\s]/, ([url], { inLink }) =>
     inLink ? undefined : link(url),
@@ -98,9 +93,11 @@ const renderNode = (
     case "image":
       return node.alt;
     // Only parsed with the `footnotes` and `allowHtml` options.
+    /* v8 ignore start */
     case "footnoteReference":
     case "inlineHtml":
       return null;
+    /* v8 ignore stop */
   }
 };
 

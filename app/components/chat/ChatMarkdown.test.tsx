@@ -43,6 +43,12 @@ describe("ChatMarkdown", () => {
     );
   });
 
+  it("does not autolink a url that is already a link's text", () => {
+    expect(html("[https://a.dev](https://b.dev)")).toBe(
+      '<a href="https://b.dev">https://a.dev</a>',
+    );
+  });
+
   it("autolinks bracketed urls and email addresses", () => {
     expect(html("<https://auto.link> and <a@b.com>")).toBe(
       '<a href="https://auto.link">https://auto.link</a> and <a href="mailto:a@b.com">a@b.com</a>',
