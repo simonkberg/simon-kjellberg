@@ -10,7 +10,7 @@ import {
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
-import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
+import { createSqliteQuery } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -18,7 +18,7 @@ import {
   addReaction,
   EmojiSchema,
   markOwnReactions,
-  toggleReaction,
+  removeReaction,
   withSiteReactions,
 } from "./reactions";
 
@@ -50,42 +50,50 @@ beforeEach(() => {
   vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
 });
 
-describe("toggleReaction", () => {
+describe("addReaction and removeReaction", () => {
   it("adds a reaction and mirrors it on Discord", async () => {
-    expect(await toggleReaction("1", "👍", alice)).toBe("added");
+    await addReaction("1", "👍", alice);
 
     expect(addBotReaction).toHaveBeenCalledWith("1", "👍");
   });
 
   it("keeps the bot's reaction while other visitors still react", async () => {
-    await toggleReaction("1", "👍", alice);
-    await toggleReaction("1", "👍", bob);
+    await addReaction("1", "👍", alice);
+    await addReaction("1", "👍", bob);
 
-    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    await removeReaction("1", "👍", alice);
     expect(removeBotReaction).not.toHaveBeenCalled();
 
-    expect(await toggleReaction("1", "👍", bob)).toBe("removed");
+    await removeReaction("1", "👍", bob);
     expect(removeBotReaction).toHaveBeenCalledWith("1", "👍");
+  });
+
+  it("changes nothing when taking back a reaction that isn't there", async () => {
+    await removeReaction("1", "👍", alice);
+
+    expect(removeBotReaction).not.toHaveBeenCalled();
   });
 
   it("still removes the reaction when Discord fails to drop the mirror", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(removeBotReaction).mockRejectedValueOnce(new Error("down"));
-    await toggleReaction("1", "👍", alice);
+    await addReaction("1", "👍", alice);
 
-    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    await removeReaction("1", "👍", alice);
+    expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
     expect(log.warn).toHaveBeenCalledOnce();
   });
 
   it("still removes the reaction when counting the rest fails", async () => {
     vi.spyOn(log, "warn").mockImplementation(() => {});
-    await toggleReaction("1", "👍", alice);
+    await addReaction("1", "👍", alice);
     const sqlite = vi.mocked(query).getMockImplementation()!;
     vi.mocked(query)
       .mockImplementationOnce(sqlite)
       .mockRejectedValueOnce(new Error("blip"));
 
-    expect(await toggleReaction("1", "👍", alice)).toBe("removed");
+    await removeReaction("1", "👍", alice);
+    expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
     expect(log.warn).toHaveBeenCalledOnce();
     expect(removeBotReaction).not.toHaveBeenCalled();
   });
@@ -101,7 +109,7 @@ describe("toggleReaction", () => {
   it("adds nothing when Discord turns the reaction away", async () => {
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
 
-    await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
+    await expect(addReaction("1", "👍", alice)).rejects.toThrow("404");
     expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
   });
 
@@ -117,20 +125,6 @@ describe("toggleReaction", () => {
 
     await expect(addReaction("1", "👍", alice)).rejects.toThrow("30010");
     expect(log.warn).toHaveBeenCalledOnce();
-  });
-
-  it("leaves the mirror to the concurrent add that created the row", async () => {
-    await query(
-      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'alice')",
-    );
-    // The concurrent request's row lands between this one's DELETE and INSERT.
-    vi.mocked(query)
-      .mockResolvedValueOnce(emptyResult)
-      .mockResolvedValueOnce(emptyResult);
-
-    expect(await toggleReaction("1", "👍", alice)).toBe("added");
-    expect(addBotReaction).not.toHaveBeenCalled();
-    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
   });
 });
 
@@ -164,10 +158,10 @@ describe("markOwnReactions", () => {
 
 describe("withSiteReactions", () => {
   it("adds the site's reactions to Discord's, replies included", async () => {
-    await toggleReaction("1", "😂", alice);
-    await toggleReaction("1", "👍", alice);
-    await toggleReaction("1", "👍", bob);
-    await toggleReaction("2", "🎉", bob);
+    await addReaction("1", "😂", alice);
+    await addReaction("1", "👍", alice);
+    await addReaction("1", "👍", bob);
+    await addReaction("2", "🎉", bob);
 
     const messages = await withSiteReactions([
       message("1", {

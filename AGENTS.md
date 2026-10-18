@@ -155,11 +155,12 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   changes, so a toggle that leaves the mirror unchanged reaches them on the next change. Mirror
   failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
-  A toggle POSTs to `app/api/chat/reactions/`, not a server action: the mirror can wait 30s
-  on Discord's rate limit, and a pending action or async transition holds every other one.
-  The route checks Origin against Host itself, as Next does for actions. It answers with the
-  reaction as saved and `savedAt`, which the client shows over any history whose `fetchedAt`
-  is older; only an in-flight toggle disables a message's buttons.
+  A click POSTs the state it shows (`mine`) for `app/api/chat/reactions/` to set, never a
+  toggle. It is a route, not a server action: the mirror can wait 30s on Discord's rate limit,
+  and a pending action or async transition holds every other one. The route checks Origin against
+  Host itself, as Next does for actions. It answers with `savedAt`, and the client shows that
+  state over any history whose `fetchedAt` is older, dropping it once one isn't; only an
+  in-flight request disables a message's buttons.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static

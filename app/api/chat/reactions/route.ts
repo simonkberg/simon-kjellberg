@@ -7,10 +7,20 @@ import { DiscordApiError } from "@/lib/discord/api";
 import { identifiers } from "@/lib/identifiers";
 import { log } from "@/lib/log";
 import type { ReactionResult } from "@/lib/reactionResult";
-import { EmojiSchema, MessageIdSchema, toggleReaction } from "@/lib/reactions";
+import {
+  addReaction,
+  EmojiSchema,
+  MessageIdSchema,
+  removeReaction,
+} from "@/lib/reactions";
 import { decrypt } from "@/lib/session";
 
-const BodySchema = z.object({ messageId: MessageIdSchema, emoji: EmojiSchema });
+// The state to set, not a toggle, so a repeated or crossed request can't flip it back.
+const BodySchema = z.object({
+  messageId: MessageIdSchema,
+  emoji: EmojiSchema,
+  mine: z.boolean(),
+});
 
 // Each click counts, and trying a few emoji on and off is quick.
 const REACTION_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
@@ -65,20 +75,16 @@ export async function POST(request: NextRequest) {
       );
       return respond(FAILED, 400);
     }
-    const { messageId, emoji } = parsed.data;
+    const { messageId, emoji, mine } = parsed.data;
 
-    const change = await toggleReaction(messageId, emoji, username);
+    await (mine ? addReaction : removeReaction)(messageId, emoji, username);
     log.info(
-      { username, messageId, emoji, change, action: "reactToChatMessage" },
-      "Toggled reaction",
+      { username, messageId, emoji, mine, action: "reactToChatMessage" },
+      "Set reaction",
     );
 
     revalidateTag("getChatHistory", { expire: 0 });
-    return respond({
-      status: "ok",
-      mine: change === "added",
-      savedAt: Date.now(),
-    });
+    return respond({ status: "ok", savedAt: Date.now() });
   } catch (err) {
     if (err instanceof DiscordApiError && err.code === MAX_REACTIONS_CODE) {
       return respond(

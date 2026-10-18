@@ -1,4 +1,5 @@
-/** What `/api/chat/reactions` answers a toggle with: on success, the visitor's reaction as saved and when. */
-export type ReactionResult =
-  | { status: "ok"; mine: boolean; savedAt: number }
-  | { status: "error"; error: string };
+/** A request turned away, with the reason to show the visitor. */
+export type ErrorResult = { status: "error"; error: string };
+
+/** What `/api/chat/reactions` answers with: on success, when the reaction was saved. */
+export type ReactionResult = { status: "ok"; savedAt: number } | ErrorResult;

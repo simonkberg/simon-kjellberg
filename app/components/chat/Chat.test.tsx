@@ -207,7 +207,7 @@ describe("Chat", () => {
   describe("reactions", () => {
     const thumbs: Reaction[] = [{ emoji: "👍", count: 1, users: [] }];
 
-    // The route saves at 100: a history read at 200 has the toggle, one read at 50 doesn't.
+    // The route saves at 100: a history read at 200 has the reaction, one read at 50 doesn't.
     const SAVED_AT = 100;
 
     // A new history, as router.refresh would bring.
@@ -237,7 +237,7 @@ describe("Chat", () => {
         ),
       );
 
-    let requests: { messageId: string; emoji: string }[];
+    let requests: { messageId: string; emoji: string; mine: boolean }[];
 
     beforeEach(() => {
       requests = [];
@@ -249,22 +249,15 @@ describe("Chat", () => {
     ) {
       server.use(
         http.post("*/api/chat/reactions", async ({ request }) => {
-          const body = (await request.json()) as {
-            messageId: string;
-            emoji: string;
-          };
+          const body = (await request.json()) as (typeof requests)[number];
           requests.push(body);
           return respond(body.messageId);
         }),
       );
     }
 
-    const ok = (mine = true) =>
-      HttpResponse.json<ReactionResult>({
-        status: "ok",
-        mine,
-        savedAt: SAVED_AT,
-      });
+    const ok = () =>
+      HttpResponse.json<ReactionResult>({ status: "ok", savedAt: SAVED_AT });
 
     function holdReaction() {
       const { promise, resolve } = Promise.withResolvers<void>();
@@ -411,7 +404,9 @@ describe("Chat", () => {
       );
 
       await waitFor(() =>
-        expect(requests).toEqual([{ messageId: "reply-1", emoji: "🎉" }]),
+        expect(requests).toEqual([
+          { messageId: "reply-1", emoji: "🎉", mine: true },
+        ]),
       );
       expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
         "aria-pressed",
@@ -487,7 +482,9 @@ describe("Chat", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
       await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
-      expect(requests).toEqual([{ messageId: "msg-1", emoji: "👍" }]);
+      expect(requests).toEqual([
+        { messageId: "msg-1", emoji: "👍", mine: true },
+      ]);
       await refreshWith(rerender, thumbs, SAVED_AT - 50);
 
       const pill = screen.getByRole("button", { name: "👍 2" });
@@ -501,23 +498,38 @@ describe("Chat", () => {
       );
     });
 
-    it("shows what the route saved over what the click expected", async () => {
-      answer(() => ok(false));
-      await renderReactions(thumbs);
+    it("forgets a saved reaction once a history has it", async () => {
+      answer(() => ok());
+      const { rerender } = await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      await refreshWith(rerender, thumbs, SAVED_AT + 100);
+      await refreshWith(rerender, thumbs, SAVED_AT - 50);
 
-      await waitFor(() =>
-        expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled(),
-      );
       expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
         "aria-pressed",
         "false",
       );
     });
 
+    it("asks the route to take back a reaction the visitor has", async () => {
+      answer(() => ok());
+      await renderReactions([{ emoji: "👍", count: 1, users: [], mine: true }]);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      expect(requests).toEqual([
+        { messageId: "msg-1", emoji: "👍", mine: false },
+      ]);
+      expect(
+        screen.queryByRole("button", { name: /👍/ }),
+      ).not.toBeInTheDocument();
+    });
+
     it("reacts again before a refreshed history arrives", async () => {
-      answer(() => ok(requests.length === 1));
+      answer(() => ok());
       await renderReactions(thumbs);
 
       await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
@@ -529,7 +541,7 @@ describe("Chat", () => {
       await waitFor(() =>
         expect(screen.getByRole("button", { name: "👍 1" })).toBeEnabled(),
       );
-      expect(requests).toHaveLength(2);
+      expect(requests.map(({ mine }) => mine)).toEqual([true, false]);
     });
 
     it.each([
@@ -595,7 +607,7 @@ describe("Chat", () => {
         failure: "the status says it failed",
         respond: () =>
           HttpResponse.json<ReactionResult>(
-            { status: "ok", mine: true, savedAt: SAVED_AT },
+            { status: "ok", savedAt: SAVED_AT },
             { status: 500 },
           ),
         error: "Failed to react to chat message (HTTP 500)",

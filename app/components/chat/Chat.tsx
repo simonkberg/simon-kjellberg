@@ -84,12 +84,10 @@ function readResult(body: unknown, ok: boolean): ReactionResult | null {
   if (
     ok &&
     body.status === "ok" &&
-    "mine" in body &&
-    typeof body.mine === "boolean" &&
     "savedAt" in body &&
     typeof body.savedAt === "number"
   ) {
-    return { status: "ok", mine: body.mine, savedAt: body.savedAt };
+    return { status: "ok", savedAt: body.savedAt };
   }
   if (
     body.status === "error" &&
@@ -103,14 +101,14 @@ function readResult(body: unknown, ok: boolean): ReactionResult | null {
 
 async function postReaction(
   messageId: string,
-  emoji: string,
+  { emoji, mine }: OwnReaction,
 ): Promise<ReactionOutcome> {
   let response: Response;
   try {
     response = await fetch("/api/chat/reactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messageId, emoji }),
+      body: JSON.stringify({ messageId, emoji, mine }),
       // Past the rate-limit gate's 30s, so only a hung connection gives up.
       signal: AbortSignal.timeout(45_000),
     });
@@ -160,35 +158,42 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     count: number;
   }>();
   const shown =
-    result.status === "ok" ? result : { messages: [], fetchedAt: Infinity };
+    result.status === "ok" ? result : { messages: [], fetchedAt: -Infinity };
+  // A history read after a save already has it, so the save can go.
+  const unseen = [...saved].filter(([, own]) => own.savedAt > shown.fetchedAt);
+  if (unseen.length < saved.size) setSaved(new Map(unseen));
   let messages = shown.messages;
-  for (const own of saved.values()) {
-    if (own.savedAt > shown.fetchedAt) {
-      messages = withOwnReaction(messages, own.messageId, own);
-    }
+  for (const [, own] of unseen) {
+    messages = withOwnReaction(messages, own.messageId, own);
   }
   for (const [messageId, own] of pending) {
     messages = withOwnReaction(messages, messageId, own);
   }
 
   const react = (messageId: string, emoji: string) => {
-    // One toggle per message at a time, as its buttons are disabled while one is pending.
+    // One request per message at a time, as its buttons are disabled while one is pending.
     if (pending.has(messageId)) return;
-    const mine = !findMessageById(messages, messageId)?.reactions.find(
-      (reaction) => reaction.emoji === emoji,
-    )?.mine;
-    setPending((current) => new Map(current).set(messageId, { emoji, mine }));
-    void postReaction(messageId, emoji).then((reaction) => {
+    const own = {
+      emoji,
+      mine: !findMessageById(messages, messageId)?.reactions.find(
+        (reaction) => reaction.emoji === emoji,
+      )?.mine,
+    };
+    setPending((current) => new Map(current).set(messageId, own));
+    void postReaction(messageId, own).then((reaction) => {
       setPending((current) => {
         const next = new Map(current);
         next.delete(messageId);
         return next;
       });
       if (reaction.status === "ok") {
-        const { mine: savedMine, savedAt } = reaction;
-        const own = { messageId, emoji, mine: savedMine, savedAt };
+        const { savedAt } = reaction;
         setSaved((current) =>
-          new Map(current).set(`${messageId} ${emoji}`, own),
+          new Map(current).set(`${messageId} ${emoji}`, {
+            ...own,
+            messageId,
+            savedAt,
+          }),
         );
       }
       setReactionError((previous) =>
@@ -196,7 +201,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
           ? undefined
           : { message: reaction.error, count: (previous?.count ?? 0) + 1 },
       );
-      // A rejected toggle changed nothing; any other may have been saved.
+      // A rejected request changed nothing; any other may have been saved.
       if (reaction.status !== "error") router.refresh();
     });
   };

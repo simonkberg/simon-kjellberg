@@ -23,24 +23,18 @@ function deleteRow(messageId: string, emoji: string, username: Username) {
   );
 }
 
-/** Adds the visitor's reaction, or takes it back if they already reacted with that emoji. */
-export async function toggleReaction(
+/** Takes back a reaction, dropping the mirror once no one has it; taking back one that isn't there changes nothing. */
+export async function removeReaction(
   messageId: string,
   emoji: string,
   username: Username,
-): Promise<"added" | "removed"> {
+): Promise<void> {
   const { rowsAffected } = await deleteRow(messageId, emoji, username);
-
-  if (rowsAffected > 0) {
-    // The site counts from Turso, so a stale mirror only shows on Discord.
-    await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
-      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-    });
-    return "removed";
-  }
-
-  await addReaction(messageId, emoji, username);
-  return "added";
+  if (rowsAffected === 0) return;
+  // The site counts from Turso, so a stale mirror only shows on Discord.
+  await dropMirrorIfUnused(messageId, emoji).catch((err: unknown) => {
+    log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+  });
 }
 
 /** Adds a reaction and mirrors it on Discord; adding one that's already there changes nothing. */

@@ -72,13 +72,10 @@ describe("POST /api/chat/reactions", () => {
     vi.restoreAllMocks();
   });
 
-  it("toggles the visitor's reaction and expires the history", async () => {
+  it("adds the visitor's reaction and expires the history", async () => {
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
-    ).toEqual({
-      status: 200,
-      body: { status: "ok", mine: true, savedAt: 1_000_000 },
-    });
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
+    ).toEqual({ status: 200, body: { status: "ok", savedAt: 1_000_000 } });
 
     expect(
       (await query("SELECT message_id, emoji, username FROM reactions")).rows,
@@ -86,22 +83,29 @@ describe("POST /api/chat/reactions", () => {
     expect(revalidateTag).toHaveBeenCalledWith("getChatHistory", { expire: 0 });
   });
 
-  it("answers with the reaction taken back", async () => {
-    await react({ messageId: "123", emoji: "👍" });
+  it("keeps the reaction when the same one is set twice", async () => {
+    await react({ messageId: "123", emoji: "👍", mine: true });
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
-    ).toEqual({
-      status: 200,
-      body: { status: "ok", mine: false, savedAt: 1_000_000 },
-    });
+      (await react({ messageId: "123", emoji: "👍", mine: true })).status,
+    ).toBe(200);
+    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+  });
+
+  it("takes the visitor's reaction back", async () => {
+    await react({ messageId: "123", emoji: "👍", mine: true });
+
+    expect(
+      await result(await react({ messageId: "123", emoji: "👍", mine: false })),
+    ).toEqual({ status: 200, body: { status: "ok", savedAt: 1_000_000 } });
+    expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
   });
 
   it("asks a visitor without a session to reload", async () => {
     vi.mocked(decrypt).mockResolvedValueOnce(undefined);
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
       status: 401,
       body: { status: "error", error: "Reload the page to react" },
@@ -112,7 +116,7 @@ describe("POST /api/chat/reactions", () => {
 
   it("accepts the host a proxy forwarded", async () => {
     const response = await react(
-      { messageId: "123", emoji: "👍" },
+      { messageId: "123", emoji: "👍", mine: true },
       {
         origin: "https://simon.dev",
         host: "internal:3000",
@@ -149,7 +153,10 @@ describe("POST /api/chat/reactions", () => {
       { origin: "https://simon.dev", host: "evil.example" },
     ],
   ])("refuses a request %s", async (_, headers, logged) => {
-    const response = await react({ messageId: "123", emoji: "👍" }, headers);
+    const response = await react(
+      { messageId: "123", emoji: "👍", mine: true },
+      headers,
+    );
 
     expect(await result(response)).toEqual({
       status: 403,
@@ -165,9 +172,13 @@ describe("POST /api/chat/reactions", () => {
   it.each([
     [
       "a message ID that isn't a snowflake",
-      { messageId: "../123", emoji: "👍" },
+      { messageId: "../123", emoji: "👍", mine: true },
     ],
-    ["text that isn't one emoji", { messageId: "123", emoji: "nice" }],
+    [
+      "text that isn't one emoji",
+      { messageId: "123", emoji: "nice", mine: true },
+    ],
+    ["a reaction without the state to set", { messageId: "123", emoji: "👍" }],
     ["a body that isn't JSON", "{"],
   ])("rejects %s", async (_, body) => {
     expect(await result(await react(body))).toEqual({
@@ -188,7 +199,7 @@ describe("POST /api/chat/reactions", () => {
     });
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
       status: 429,
       body: {
@@ -200,11 +211,13 @@ describe("POST /api/chat/reactions", () => {
 
   it("rejects the 31st reaction in a minute", async () => {
     for (let i = 0; i < 30; i++) {
-      expect((await react({ messageId: "123", emoji: "👍" })).status).toBe(200);
+      expect(
+        (await react({ messageId: "123", emoji: "👍", mine: true })).status,
+      ).toBe(200);
     }
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
       status: 429,
       body: {
@@ -216,17 +229,19 @@ describe("POST /api/chat/reactions", () => {
 
   it("counts malformed reactions against the limit", async () => {
     for (let i = 0; i < 30; i++) {
-      await react({ messageId: "not-an-id", emoji: "👍" });
+      await react({ messageId: "not-an-id", emoji: "👍", mine: true });
     }
 
-    expect((await react({ messageId: "123", emoji: "👍" })).status).toBe(429);
+    expect(
+      (await react({ messageId: "123", emoji: "👍", mine: true })).status,
+    ).toBe(429);
   });
 
   it("returns error when Discord rejects the reaction", async () => {
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("Unknown"));
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
       status: 500,
       body: { status: "error", error: "Failed to react to chat message" },
@@ -243,7 +258,7 @@ describe("POST /api/chat/reactions", () => {
     );
 
     expect(
-      await result(await react({ messageId: "123", emoji: "👍" })),
+      await result(await react({ messageId: "123", emoji: "👍", mine: true })),
     ).toEqual({
       status: 400,
       body: { status: "error", error: "Discord allows 20 emoji per message" },
