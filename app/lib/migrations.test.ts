@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
 import {
   MIGRATIONS,
@@ -17,16 +17,22 @@ vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );
 
-let sqlite: typeof query;
+const sqlite = sqliteBeforeEach(query);
+
+beforeEach(() => {
+  vi.spyOn(log, "info").mockImplementation(() => {});
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
+});
 
 function failNext(prefix: string, { afterRunning = false } = {}) {
-  let failed = false;
-  vi.mocked(query).mockImplementation(async (sql, args) => {
-    if (failed || !sql.startsWith(prefix)) return sqlite(sql, args);
-    failed = true;
-    if (afterRunning) await sqlite(sql, args);
-    throw new Error("boom");
-  });
+  vi.mocked(query).mockImplementation(
+    failQuery(
+      sqlite(),
+      prefix,
+      afterRunning ? { afterRunning } : { once: true },
+    ),
+  );
 }
 
 async function holdLock(owner: string, expiresAt: number) {
@@ -51,13 +57,6 @@ function lockOwners(): unknown[] {
 }
 
 describe("runMigrations", () => {
-  beforeEach(() => {
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "warn").mockImplementation(() => {});
-    sqlite = createSqliteQuery();
-    vi.mocked(query).mockImplementation(sqlite);
-  });
-
   it("should record a checksum for each applied migration", async () => {
     await runMigrations();
 
@@ -229,9 +228,6 @@ describe("runMigrations", () => {
 describe("runMigrationsUntilApplied", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "error").mockImplementation(() => {});
-    sqlite = createSqliteQuery();
   });
 
   it("should retry with capped backoff until Turso answers", async () => {
@@ -240,7 +236,6 @@ describe("runMigrationsUntilApplied", () => {
     for (let i = 0; i < failures; i++) {
       vi.mocked(query).mockRejectedValueOnce(outage);
     }
-    vi.mocked(query).mockImplementation(sqlite);
 
     const running = runMigrationsUntilApplied();
     await vi.runAllTimersAsync();

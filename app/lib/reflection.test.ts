@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildSystem, MEMORY_TOOLS, runAgentLoop } from "@/lib/anthropic";
+import {
+  buildSystem,
+  type ChatMessage,
+  formatConversation,
+  MEMORY_TOOLS,
+  runAgentLoop,
+} from "@/lib/anthropic";
 
 import { reflect } from "./reflection";
 
@@ -27,12 +33,14 @@ describe("reflect", () => {
     }
     vi.mocked(runAgentLoop).mockReturnValue(loop());
 
-    await reflect([
+    const transcript: ChatMessage[] = [
       { role: "user", username: "alice", content: "i love cats" },
       { role: "assistant", username: "simon-bot", content: "same" },
       { role: "user", username: "simon", content: "be nicer" },
       { role: "assistant", username: "simon-bot", content: "ok fine" },
-    ]);
+    ];
+
+    await reflect(transcript);
 
     expect(buildSystem).toHaveBeenCalledWith(
       expect.stringContaining("taking a quiet"),
@@ -40,19 +48,7 @@ describe("reflect", () => {
     );
     expect(runAgentLoop).toHaveBeenCalledWith({
       system,
-      messages: [
-        {
-          role: "user",
-          content: [
-            "<conversation>",
-            '<message author="alice">i love cats</message>',
-            '<message author="simon-bot">same</message>',
-            '<message author="simon">be nicer</message>',
-            '<message author="simon-bot">ok fine</message>',
-            "</conversation>",
-          ].join("\n"),
-        },
-      ],
+      messages: [{ role: "user", content: formatConversation(transcript) }],
       tools: MEMORY_TOOLS,
       effort: "high",
       maxTokens: 8192,
