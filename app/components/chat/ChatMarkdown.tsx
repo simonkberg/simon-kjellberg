@@ -59,8 +59,11 @@ const extensions = [
   rule("mailto", "<", /<[^\s<>@]+@[^\s<>]+>/y, ([match]) =>
     link(`mailto:${match.slice(1, -1)}`, match.slice(1, -1)),
   ),
-  rule("url", "h", /https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y, ([url], { inLink }) =>
-    inLink ? undefined : link(url),
+  rule(
+    "url",
+    "h",
+    /(?<!\w)https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y,
+    ([url], { inLink }) => (inLink ? undefined : link(url)),
   ),
 ] satisfies MarkdownExtension[];
 

@@ -47,6 +47,10 @@ describe("ChatMarkdown", () => {
     );
   });
 
+  it("does not autolink a url inside a word", () => {
+    expect(html("xhttps://a.dev")).toBe("xhttps://a.dev");
+  });
+
   it("does not autolink a url that is already a link's text", () => {
     expect(html("[https://a.dev](https://b.dev)")).toBe(
       '<a href="https://b.dev">https://a.dev</a>',
