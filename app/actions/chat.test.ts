@@ -103,7 +103,7 @@ describe("getChatHistory", () => {
     expect(result.fetchedAt).toBeLessThanOrEqual(Date.now());
   });
 
-  it("dates the history before every save when Turso's clock fails", async () => {
+  it("leaves the history undated when Turso's clock fails", async () => {
     const sqlite = vi.mocked(query).getMockImplementation()!;
     vi.mocked(query).mockImplementation((sql, args) =>
       sql.includes("unixepoch")
@@ -115,7 +115,7 @@ describe("getChatHistory", () => {
     expect(await getChatHistory()).toEqual({
       status: "ok",
       messages: [],
-      fetchedAt: -Infinity,
+      fetchedAt: null,
     });
   });
 

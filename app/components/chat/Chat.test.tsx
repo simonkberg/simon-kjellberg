@@ -214,7 +214,7 @@ describe("Chat", () => {
     const refreshWith = (
       rerender: (ui: React.ReactNode) => void,
       reactions: Reaction[],
-      fetchedAt: number,
+      fetchedAt: number | null,
     ) =>
       act(async () =>
         rerender(
@@ -226,12 +226,15 @@ describe("Chat", () => {
         ),
       );
 
-    const renderReactions = (reactions: Reaction[]) =>
+    const renderReactions = (
+      reactions: Reaction[],
+      fetchedAt: number | null = 0,
+    ) =>
       act(async () =>
         render(
           chatElement({
             status: "ok",
-            fetchedAt: 0,
+            fetchedAt,
             messages: [createMessage({ reactions })],
           }),
         ),
@@ -511,6 +514,58 @@ describe("Chat", () => {
         "aria-pressed",
         "false",
       );
+    });
+
+    it("holds a saved reaction over an undated history only until the next", async () => {
+      answer(() => ok());
+      const { rerender } = await renderReactions(thumbs, null);
+
+      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      expect(screen.getByRole("button", { name: "👍 2" })).toBeEnabled();
+
+      await refreshWith(rerender, thumbs, null);
+      expect(screen.getByRole("button", { name: "👍 1" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    });
+
+    it("keeps one message's error when another's reaction succeeds", async () => {
+      answer((messageId) =>
+        messageId === "msg-1"
+          ? HttpResponse.json<ReactionResult>(
+              { status: "error", error: "Rate limit exceeded." },
+              { status: 429 },
+            )
+          : ok(),
+      );
+      await act(async () =>
+        render(
+          chatElement({
+            status: "ok",
+            fetchedAt: 0,
+            messages: [
+              createMessage({ reactions: thumbs }),
+              createMessage({
+                id: "msg-2",
+                content: "Other",
+                reactions: thumbs,
+              }),
+            ],
+          }),
+        ),
+      );
+      const [first, second] = screen.getAllByRole("button", { name: "👍 1" });
+
+      await userEvent.click(first!);
+      expect(
+        await screen.findByText("Rate limit exceeded."),
+      ).toBeInTheDocument();
+      await userEvent.click(second!);
+
+      await waitFor(() => expect(router.refresh).toHaveBeenCalledOnce());
+      expect(screen.getByText("Rate limit exceeded.")).toBeInTheDocument();
     });
 
     it("asks the route to take back a reaction the visitor has", async () => {

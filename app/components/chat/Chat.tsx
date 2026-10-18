@@ -135,8 +135,9 @@ async function postReaction(
 
 interface SavedReaction extends OwnReaction {
   messageId: string;
-  // An unknown outcome has no savedAt, so it is held over the history shown when it settled.
+  // None when the outcome is unknown.
   savedAt?: number;
+  // The history shown when it settled.
   heldOver?: ChatHistoryResult;
 }
 
@@ -163,20 +164,19 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
     message: string;
     count: number;
   }>();
-  const shown =
-    result.status === "ok" ? result : { messages: [], fetchedAt: -Infinity };
-  // A history read after a save already has it, so the save can go. An unknown
-  // outcome may not have been saved, so the next history to arrive decides.
+  const fetchedAt =
+    (result.status === "ok" ? result.fetchedAt : null) ?? Infinity;
+  // Shown over the history it settled on and any read before its save. Without a
+  // time on either side, only the next history to arrive can say if it was saved.
   const unseen = [...saved]
     .map(([key, own]) =>
-      own.savedAt === undefined && own.heldOver === undefined
-        ? ([key, { ...own, heldOver: result }] as const)
-        : ([key, own] as const),
+      own.heldOver
+        ? ([key, own] as const)
+        : ([key, { ...own, heldOver: result }] as const),
     )
-    .filter(([, own]) =>
-      own.savedAt === undefined
-        ? own.heldOver === result
-        : own.savedAt >= shown.fetchedAt,
+    .filter(
+      ([, own]) =>
+        own.heldOver === result || (own.savedAt ?? -Infinity) >= fetchedAt,
     );
   if (
     unseen.length < saved.size ||
@@ -184,7 +184,7 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   ) {
     setSaved(new Map(unseen));
   }
-  let messages = shown.messages;
+  let messages = result.status === "ok" ? result.messages : [];
   for (const [, own] of unseen) {
     messages = withOwnReaction(messages, own.messageId, own);
   }
@@ -217,11 +217,13 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
           }),
         );
       }
-      setReactionError((previous) =>
-        reaction.status === "ok"
-          ? undefined
-          : { message: reaction.error, count: (previous?.count ?? 0) + 1 },
-      );
+      // A success leaves an earlier error to time out, as it may be another message's.
+      if (reaction.status !== "ok") {
+        setReactionError((previous) => ({
+          message: reaction.error,
+          count: (previous?.count ?? 0) + 1,
+        }));
+      }
       // A rejected request changed nothing; any other may have been saved.
       if (reaction.status !== "error") router.refresh();
     });

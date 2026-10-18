@@ -77,7 +77,7 @@ export async function reactionsClock(): Promise<number> {
   const { rows } = await query(
     "SELECT CAST(unixepoch('subsec') * 1000 AS INTEGER) AS now",
   );
-  return Number(rows[0]?.["now"]);
+  return z.object({ now: z.number() }).parse(rows[0]).now;
 }
 
 async function dropMirrorIfUnused(messageId: string, emoji: string) {

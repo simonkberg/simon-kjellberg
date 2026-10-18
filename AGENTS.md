@@ -160,9 +160,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   and a pending action or async transition holds every other one. The route checks Origin against
   Host itself, as Next does for actions. It answers with `savedAt`, and the client shows that
   state over any history whose `fetchedAt` is older, dropping it once one isn't; both come
-  from Turso's clock (`reactionsClock`), since replicas' clocks differ. An outcome the client
-  can't read (network error, 5xx) may have saved, so it shows until the next history. Only an
-  in-flight request disables a message's buttons.
+  from Turso's clock (`reactionsClock`), since replicas' clocks differ. Without a time on
+  either side (an outcome it can't read, such as a 5xx, or a failed clock read), the state shows
+  until the next history arrives. Only an in-flight request disables a message's buttons.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static

@@ -10,7 +10,7 @@ import {
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -18,6 +18,7 @@ import {
   addReaction,
   EmojiSchema,
   markOwnReactions,
+  reactionsClock,
   removeReaction,
   withSiteReactions,
 } from "./reactions";
@@ -170,6 +171,23 @@ describe("addReaction and removeReaction", () => {
 
     await expect(addReaction("1", "👍", alice)).rejects.toThrow("30010");
     expect(log.warn).toHaveBeenCalledOnce();
+  });
+});
+
+describe("reactionsClock", () => {
+  it("reads Turso's time in milliseconds", async () => {
+    const before = Date.now();
+
+    const now = await reactionsClock();
+
+    expect(now).toBeGreaterThanOrEqual(before);
+    expect(now).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("throws on an answer without a time", async () => {
+    vi.mocked(query).mockResolvedValueOnce(emptyResult);
+
+    await expect(reactionsClock()).rejects.toThrow();
   });
 });
 

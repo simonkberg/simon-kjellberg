@@ -16,7 +16,7 @@ import { reactionsClock, withSiteReactions } from "@/lib/reactions";
 import { getSession } from "@/lib/session";
 
 export type ChatHistoryResult =
-  | { status: "ok"; messages: Message[]; fetchedAt: number }
+  | { status: "ok"; messages: Message[]; fetchedAt: number | null }
   | { status: "error"; error: string };
 
 export async function getChatHistory(): Promise<ChatHistoryResult> {
@@ -26,9 +26,8 @@ export async function getChatHistory(): Promise<ChatHistoryResult> {
 
   try {
     // Read before the reactions, so the history has every reaction saved before it.
-    // Without the clock, Turso's reads likely fail too, so saved reactions show over it.
     const [fetchedAt, channel] = await Promise.all([
-      reactionsClock().catch(() => -Infinity),
+      reactionsClock().catch(() => null),
       getChannelMessages(),
     ]);
     const messages = await withSiteReactions(channel);
