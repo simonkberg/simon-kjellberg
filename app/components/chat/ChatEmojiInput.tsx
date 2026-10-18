@@ -42,8 +42,8 @@ function completeShortcode(
   input: HTMLInputElement,
   byName: Map<string, string>,
 ) {
-  const caret = input.selectionStart;
-  if (caret === null || caret !== input.selectionEnd) return;
+  // A typed colon leaves the caret right after it.
+  const caret = input.selectionEnd ?? 0;
   const before = input.value.slice(0, caret);
   const name = COMPLETED.exec(before)?.[1];
   const glyph = name && byName.get(name);
