@@ -1,10 +1,10 @@
-import { parseInline } from "@tanstack/markdown";
-import type {
-  InlineNode,
-  InlineParseContext,
-  MarkdownExtension,
+import {
+  type InlineNode,
+  type InlineParseContext,
+  type MarkdownExtension,
+  parseInline,
 } from "@tanstack/markdown";
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { EmojiText } from "./EmojiText";
 
@@ -14,7 +14,7 @@ const link = (href: string, text = href): InlineNode => ({
   children: [{ type: "text", value: text }],
 });
 
-/** An inline parser for the text matching `pattern` at the current index. */
+/** An inline parser for the text matching sticky `pattern` at the current index. */
 const rule = (
   name: string,
   markers: string,
@@ -28,7 +28,8 @@ const rule = (
   inlineParser: {
     markers,
     parse: (context) => {
-      const match = pattern.exec(context.source.slice(context.index));
+      pattern.lastIndex = context.index;
+      const match = pattern.exec(context.source);
       if (!match) return;
       const node = toNode(match, context);
       return node && { node, length: match[0].length };
@@ -39,21 +40,26 @@ const rule = (
 /** The Discord syntax CommonMark lacks or reads differently. */
 const extensions = [
   // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
-  rule("underline", "_", /^__[\s\S]+?__(?!_)/, ([match], context) => ({
+  rule("underline", "_", /__[\s\S]+?__(?!_)/y, ([match], context) => ({
     type: "inlineComponent",
     name: "u",
     attributes: {},
     children: context.parseInline(match.slice(2, -2)),
   })),
-  rule("hardBreak", " ", /^ {2,}\n/, () => ({ type: "break" })),
+  // CommonMark's `*` and `_` open emphasis before a space; Discord's don't.
+  rule("looseEmphasis", "*_", /[*_](?=\s)/y, ([match]) => ({
+    type: "text",
+    value: match,
+  })),
+  rule("hardBreak", " ", / {2,}\n/y, () => ({ type: "break" })),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
-  rule("autolink", "<", /^<https?:\/\/[^\s<>]+>/, ([match]) =>
+  rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
     link(match.slice(1, -1)),
   ),
-  rule("mailto", "<", /^<[^\s<>@]+@[^\s<>]+>/, ([match]) =>
+  rule("mailto", "<", /<[^\s<>@]+@[^\s<>]+>/y, ([match]) =>
     link(`mailto:${match.slice(1, -1)}`, match.slice(1, -1)),
   ),
-  rule("url", "h", /^https?:\/\/[^\s<]+[^<.,:;"')\]\s]/, ([url], { inLink }) =>
+  rule("url", "h", /https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y, ([url], { inLink }) =>
     inLink ? undefined : link(url),
   ),
 ] satisfies MarkdownExtension[];
