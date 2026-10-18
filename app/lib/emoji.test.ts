@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type EmojiShortcodes, searchEmoji } from "./emoji";
+import { emojiByShortcode, type EmojiShortcodes, searchEmoji } from "./emoji";
 
 const EMOJI: EmojiShortcodes[] = [
   ["🧑‍🚒", "firefighter"],
@@ -36,5 +36,17 @@ describe("searchEmoji", () => {
 
   it("finds nothing for an unknown shortcode", () => {
     expect(search("zzz")).toBe("");
+  });
+});
+
+describe("emojiByShortcode", () => {
+  it("gives a name on two emoji to the one listing it sooner", () => {
+    const byName = emojiByShortcode([
+      ["🐕", "dog2", "dog"],
+      ["🐶", "dog", "dog_face"],
+    ]);
+
+    expect(byName.get("dog")).toBe("🐶");
+    expect(byName.get("dog2")).toBe("🐕");
   });
 });
