@@ -8,7 +8,6 @@ import { message, reaction } from "@/mocks/discord";
 import { server } from "@/mocks/node";
 
 import {
-  _resetRateLimitState,
   _setRateLimitGate,
   addBotReaction,
   getChannelMessages,
@@ -26,10 +25,6 @@ vi.mock(import("./gateway"), () => ({
   subscribe: vi.fn(async () => () => {}),
   getBotUserId: () => "bot-user-id",
 }));
-
-beforeEach(() => {
-  _resetRateLimitState();
-});
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
 const MESSAGES_URL = `${DISCORD_BASE_URL}/channels/:channelId/messages`;
