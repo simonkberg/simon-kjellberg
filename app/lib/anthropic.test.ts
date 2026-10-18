@@ -13,7 +13,6 @@ import {
   userGetTopTracks,
 } from "@/lib/lastfm";
 import { log } from "@/lib/log";
-import { describeMiss } from "@/lib/memory";
 import { MIGRATIONS } from "@/lib/migrations";
 import { addReaction } from "@/lib/reactions";
 import { query } from "@/lib/turso";
@@ -251,19 +250,6 @@ describe("createMessage", () => {
       });
     });
 
-    it("should say when a category is full instead of saving", async () => {
-      await fillCategory("self");
-
-      const result = await runTool("remember", {
-        category: "self",
-        content: "one more",
-      });
-
-      expect(JSON.parse(result)).toEqual(
-        describeMiss({ status: "full", category: "self" }),
-      );
-    });
-
     it("should read notes with recall", async () => {
       await seed(1, "jokes", "knock knock");
       await seed(2, "self", "i like trains");
@@ -314,28 +300,6 @@ describe("createMessage", () => {
       });
     });
 
-    it("should hand a changed note back instead of editing it", async () => {
-      await seed(3, "self", "i like dogs");
-
-      const result = await runTool("edit", {
-        id: 3,
-        old_content: "i like cats",
-        new_content: "i like trains",
-      });
-
-      expect(JSON.parse(result)).toEqual(
-        describeMiss({
-          status: "stale",
-          current: {
-            id: 3,
-            category: "self",
-            content: "i like dogs",
-            createdAt: CREATED_AT,
-          },
-        }),
-      );
-    });
-
     it("should delete notes with forget", async () => {
       await seed(3, "self", "i like cats");
 
@@ -345,13 +309,74 @@ describe("createMessage", () => {
       expect(await stored(3)).toBeUndefined();
     });
 
-    it("should say when a note to forget is already gone", async () => {
-      const result = await runTool("forget", { id: 3, content: "i like cats" });
-
-      expect(JSON.parse(result)).toEqual(
-        describeMiss({ status: "missing", id: 3 }),
-      );
+    const full = (category: string) => ({
+      error: `Category "${category}" is full (25 memories). Forget something first.`,
     });
+    const changed = {
+      error:
+        "Note #3 has changed since you read it - work from its current text",
+      current: {
+        id: 3,
+        category: "self",
+        content: "i like dogs",
+        createdAt: CREATED_AT,
+      },
+    };
+
+    it.each([
+      {
+        case: "remember into a full category",
+        setup: () => fillCategory("self"),
+        tool: "remember",
+        input: { category: "self", content: "one more" },
+        expected: full("self"),
+      },
+      {
+        case: "edit moving into a full category",
+        setup: async () => {
+          await seed(3, "style", "this chat gets spam");
+          await fillCategory("context");
+        },
+        tool: "edit",
+        input: {
+          id: 3,
+          old_content: "this chat gets spam",
+          new_content: "this chat gets spam",
+          category: "context",
+        },
+        expected: full("context"),
+      },
+      {
+        case: "edit of a changed note",
+        setup: () => seed(3, "self", "i like dogs"),
+        tool: "edit",
+        input: { id: 3, old_content: "i like cats", new_content: "x" },
+        expected: changed,
+      },
+      {
+        case: "forget of a changed note",
+        setup: () => seed(3, "self", "i like dogs"),
+        tool: "forget",
+        input: { id: 3, content: "i like cats" },
+        expected: changed,
+      },
+      {
+        case: "forget of a note already gone",
+        setup: async () => {},
+        tool: "forget",
+        input: { id: 3, content: "i like cats" },
+        expected: {
+          error: "There is no note #3 - it may have been forgotten already",
+        },
+      },
+    ])(
+      "should hand the miss back for $case",
+      async ({ setup, tool, input, expected }) => {
+        await setup();
+
+        expect(JSON.parse(await runTool(tool, input))).toEqual(expected);
+      },
+    );
   });
 
   it("should configure fetch with 15 second timeout", async () => {

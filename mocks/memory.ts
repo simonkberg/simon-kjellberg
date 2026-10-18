@@ -3,7 +3,7 @@ import { query } from "@/lib/turso";
 
 export const CREATED_AT = "2025-01-01T00:00:00.000Z";
 
-// These go through @/lib/turso, so the test file must mock it and call sqliteBeforeEach.
+// Needs @/lib/turso mocked with sqliteBeforeEach, and the real @/lib/memory for MAX_PER_CATEGORY.
 
 export async function seedMemory(
   id: number,

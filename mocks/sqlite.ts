@@ -53,7 +53,7 @@ export function failQuery(
   let failed = false;
   return async (sql, args) => {
     if (!sql.startsWith(prefix) || (once && failed)) return run(sql, args);
-    failed = true;
+    if (once) failed = true;
     if (afterRunning) await run(sql, args);
     throw error;
   };
