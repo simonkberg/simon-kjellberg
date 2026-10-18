@@ -32,7 +32,9 @@ describe("ChatMarkdown", () => {
   });
 
   it("opens emphasis only before a non-space, but closes it after one", () => {
-    expect(html("2 * 3 * 4 and *a *")).toBe("2 * 3 * 4 and <em>a </em>");
+    expect(html("2 * 3 * 4 _ 5 _ and *a *")).toBe(
+      "2 * 3 * 4 _ 5 _ and <em>a </em>",
+    );
   });
 
   it("leaves a link without a target as typed", () => {
