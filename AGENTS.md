@@ -86,7 +86,6 @@ Key settings in `next.config.ts`:
 - `cacheComponents: true` — Next.js 16 Cache Components
 - `reactCompiler: true` — React Compiler (auto-memoization)
 - `typedRoutes: true` — type-safe `<Link>` hrefs
-- `experimental: { globalNotFound: true }` — top-level 404 page
 - `experimental: { turbopackRustReactCompiler: true }` — native (Rust) React Compiler inside Turbopack
 
 > **`/` keeps cached data out of its static shell** by chaining the `"use cache"` calls on
@@ -253,7 +252,9 @@ their own markup so each variant styles it; chat keeps `Loader`.
 
 - Root layout template: `%s - Simon Kjellberg`
 - Subpages only set `title: "PageName"`
-- `global-error.tsx` and `global-not-found.tsx` must set full titles manually (don't inherit template)
+- `global-error.tsx` must set its full title manually (doesn't inherit the template)
+- 404s use `not-found.tsx`, not `global-not-found.tsx`: that one is a separate root layout, so
+  `<Link>`s out of it change the URL but not the page
 
 ### Tooltips
 
