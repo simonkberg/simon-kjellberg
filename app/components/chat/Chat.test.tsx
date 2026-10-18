@@ -93,7 +93,7 @@ describe("Chat", () => {
   describe("reply flow", () => {
     it("shows reply preview when reply button is clicked", async () => {
       const user = userEvent.setup();
-      const message = createMessage({ id: "target-msg", content: "Original" });
+      const message = createMessage({ id: "100", content: "Original" });
       const successResult: ChatHistoryResult = {
         status: "ok",
         messages: [message],
@@ -111,11 +111,11 @@ describe("Chat", () => {
     it("shows reply preview for nested message", async () => {
       const user = userEvent.setup();
       const nestedMessage = createMessage({
-        id: "nested-msg",
+        id: "200",
         content: "Nested reply",
       });
       const parentMessage = createMessage({
-        id: "parent-msg",
+        id: "100",
         content: "Parent message",
         replies: [nestedMessage],
       });
@@ -134,7 +134,7 @@ describe("Chat", () => {
 
     it("clears reply when clear button is clicked", async () => {
       const user = userEvent.setup();
-      const message = createMessage({ id: "target-msg" });
+      const message = createMessage({ id: "100" });
       const successResult: ChatHistoryResult = {
         status: "ok",
         messages: [message],
@@ -149,36 +149,22 @@ describe("Chat", () => {
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
     });
 
-    it("hides reply preview when message is deleted", async () => {
+    it("drops the reply when its message leaves the history", async () => {
       const user = userEvent.setup();
-      const message = createMessage({
-        id: "will-be-deleted",
-        content: "Soon gone",
-      });
-      const initialResult: ChatHistoryResult = {
+      const history = (...ids: string[]): ChatHistoryResult => ({
         status: "ok",
-        messages: [message],
-      };
-
+        messages: ids.map((id) => createMessage({ id, content: id })),
+      });
       const { rerender } = await act(async () =>
-        render(chatElement(initialResult)),
+        render(chatElement(history("200", "300"))),
       );
-
-      await user.click(screen.getByRole("button", { name: "Reply" }));
+      await user.click(screen.getAllByRole("button", { name: "Reply" })[0]!);
       expect(screen.getByText("Replying to")).toBeInTheDocument();
 
-      // Re-render with messages that don't include the replied-to message
-      const updatedResult: ChatHistoryResult = {
-        status: "ok",
-        messages: [
-          createMessage({ id: "different-msg", content: "New message" }),
-        ],
-      };
+      await act(async () => rerender(chatElement(history("300", "400"))));
 
-      await act(async () => rerender(chatElement(updatedResult)));
-
-      // Reply preview should be hidden since the message no longer exists
       expect(screen.queryByText("Replying to")).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Write a message...")).toBeVisible();
     });
   });
 

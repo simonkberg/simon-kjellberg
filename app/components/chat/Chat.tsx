@@ -124,6 +124,8 @@ export const Chat = ({ history, tipDismissed }: ChatProps) => {
   const replyToMessage = replyToId
     ? findMessageById(messages, replyToId)
     : null;
+  // Its banner holds the only way to clear it.
+  if (replyToId && !replyToMessage) setReplyToId(null);
 
   return (
     <ChatReactionsContext value={{ reacting, react }}>

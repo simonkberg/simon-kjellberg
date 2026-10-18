@@ -1169,7 +1169,10 @@ describe("postChannelMessage", () => {
           message_reference?: { message_id: string };
         };
         expect(body.content).toBe("simon-bot: This is a reply");
-        expect(body.message_reference).toEqual({ message_id: "original-123" });
+        expect(body.message_reference).toEqual({
+          message_id: "original-123",
+          fail_if_not_exists: false,
+        });
         return HttpResponse.json({ id: "reply-456" });
       }),
     );

@@ -591,8 +591,9 @@ export async function postChannelMessage(
 ): Promise<string> {
   const body = {
     content: `${username}: ${text}`,
+    // A reply to a message deleted meanwhile goes out as a plain message.
     message_reference: replyToMessageId
-      ? { message_id: replyToMessageId }
+      ? { message_id: replyToMessageId, fail_if_not_exists: false }
       : undefined,
   };
 
