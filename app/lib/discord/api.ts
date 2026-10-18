@@ -22,6 +22,7 @@ const BASE_URL = "https://discord.com/api/v10";
 const RATE_LIMIT_TIMEOUT_MS = 30_000;
 const GATE_JITTER_MS = 250;
 const MAX_RETRIES = 5;
+const BODY_SNIPPET_LENGTH = 200;
 
 const RateLimitResponseSchema = z.object({
   message: z.string(),
@@ -46,8 +47,8 @@ export class DiscordApiError extends Error {
 const rateLimitUntil = new Map<string, number>();
 const GLOBAL_GATE = "global";
 
-// Discord buckets by method, route and channel or guild.
-function routeOf(method: string, endpoint: string): string {
+/** @internal Exported for testing. Discord buckets by method, route and channel or guild. */
+export function routeOf(method: string, endpoint: string): string {
   const route = endpoint
     .split("/")
     .map((segment, i, segments) => {
@@ -58,6 +59,11 @@ function routeOf(method: string, endpoint: string): string {
     })
     .join("/");
   return `${method} ${route}`;
+}
+
+// Counts the most jitter a wait can add, so a 429 and the gate agree on whether to give up.
+function exceedsWaitBudget(elapsedMs: number, waitMs: number): boolean {
+  return elapsedMs + waitMs + GATE_JITTER_MS > RATE_LIMIT_TIMEOUT_MS;
 }
 
 function gateUntil(route: string): number {
@@ -108,16 +114,16 @@ async function call<T extends z.ZodType>(
     for (;;) {
       const waitMs = gateUntil(route) - Date.now();
       if (waitMs <= 0) break;
-      // Jitter, so callers waiting on one gate don't all retry at once.
-      const jitterMs = Math.random() * GATE_JITTER_MS;
       const elapsedMs = performance.now() - startTime;
-      if (elapsedMs + waitMs + jitterMs > RATE_LIMIT_TIMEOUT_MS) {
+      if (exceedsWaitBudget(elapsedMs, waitMs)) {
         log.error(
           { endpoint, elapsedMs, waitMs, retries },
           "Discord rate limit exceeded max wait time",
         );
         throw new Error(`Discord rate limit exceeded`);
       }
+      // Jitter, so callers waiting on one gate don't all retry at once.
+      const jitterMs = Math.random() * GATE_JITTER_MS;
       await new Promise((resolve) => setTimeout(resolve, waitMs + jitterMs));
     }
 
@@ -131,22 +137,27 @@ async function call<T extends z.ZodType>(
       signal: AbortSignal.timeout(5000),
     });
 
-    const json =
-      response.status === 204
-        ? null
-        : await response.json().catch((err: unknown) => {
-            if (!(err instanceof SyntaxError)) throw err;
-            // A proxy's HTML error page falls back like an unexpected body.
-            if (!response.ok) return null;
-            log.error(
-              { endpoint, status: response.status },
-              "Discord API body isn't JSON",
-            );
-            throw new DiscordApiError(
-              `Discord API error: ${response.status} body isn't JSON`,
-              undefined,
-            );
-          });
+    const text = response.status === 204 ? "null" : await response.text();
+    let json: unknown = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      // A proxy's HTML error page falls back like an unexpected body; a success can't.
+      if (response.ok) {
+        log.error(
+          {
+            endpoint,
+            status: response.status,
+            body: text.slice(0, BODY_SNIPPET_LENGTH),
+          },
+          "Discord API body isn't JSON",
+        );
+        throw new DiscordApiError(
+          `Discord API error: ${response.status} body isn't JSON`,
+          undefined,
+        );
+      }
+    }
 
     if (response.status === 429) {
       retries++;
@@ -160,16 +171,14 @@ async function call<T extends z.ZodType>(
       // Outlives a caller that gives up, capped at the longest anyone waits.
       const gate = global ? GLOBAL_GATE : route;
       const newUntil =
-        Date.now() + Math.min(retryAfterMs, RATE_LIMIT_TIMEOUT_MS);
+        Date.now() +
+        Math.min(retryAfterMs, RATE_LIMIT_TIMEOUT_MS - GATE_JITTER_MS);
       const existing = rateLimitUntil.get(gate) ?? 0;
       rateLimitUntil.set(gate, Math.max(existing, newUntil));
 
       const elapsedMs = performance.now() - startTime;
 
-      if (
-        retries > MAX_RETRIES ||
-        elapsedMs + retryAfterMs > RATE_LIMIT_TIMEOUT_MS
-      ) {
+      if (retries > MAX_RETRIES || exceedsWaitBudget(elapsedMs, retryAfterMs)) {
         log.error(
           { endpoint, elapsedMs, retryAfterMs, global, retries },
           "Discord rate limit exceeded max wait time",
@@ -186,7 +195,11 @@ async function call<T extends z.ZodType>(
 
     if (!response.ok) {
       log.error(
-        { endpoint, status: response.status, body: json },
+        {
+          endpoint,
+          status: response.status,
+          body: json ?? text.slice(0, BODY_SNIPPET_LENGTH),
+        },
         "Discord API call failed",
       );
       throw new DiscordApiError(

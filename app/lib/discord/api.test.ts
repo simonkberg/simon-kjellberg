@@ -10,6 +10,7 @@ import { server } from "@/mocks/node";
 import {
   _resetRateLimitState,
   _setRateLimitGate,
+  routeOf,
   addBotReaction,
   getChannelMessages,
   getMessageChain,
@@ -1234,6 +1235,27 @@ describe("bot reactions", () => {
   });
 });
 
+describe("routeOf", () => {
+  it.each([
+    ["GET", "channels/123/messages", "GET channels/123/messages"],
+    ["GET", "channels/123/messages/456", "GET channels/123/messages/:id"],
+    [
+      "PUT",
+      "channels/123/messages/456/reactions/%F0%9F%91%8D/@me",
+      "PUT channels/123/messages/:id/reactions/:emoji/@me",
+    ],
+    [
+      "GET",
+      "channels/123/messages/456/reactions/%F0%9F%91%8D",
+      "GET channels/123/messages/:id/reactions/:emoji",
+    ],
+    ["GET", "guilds/789/members/456", "GET guilds/789/members/:id"],
+    ["GET", "guilds/789/messages/search", "GET guilds/789/messages/search"],
+  ])("should key %s %s as %s", (method, endpoint, route) => {
+    expect(routeOf(method, endpoint)).toBe(route);
+  });
+});
+
 describe("rate limiting", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -1592,7 +1614,10 @@ describe("rate limiting", () => {
       code: undefined,
     });
     expect(logErrorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 502, body: null }),
+      expect.objectContaining({
+        status: 502,
+        body: "<html>Bad Gateway</html>",
+      }),
       "Discord API call failed",
     );
   });
@@ -1617,7 +1642,7 @@ describe("rate limiting", () => {
       "Discord rate limit exceeded",
     );
     const messages = getChannelMessages();
-    await vi.advanceTimersByTimeAsync(29_999);
+    await vi.advanceTimersByTimeAsync(29_749);
     expect(messageRequests).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(1);
@@ -1773,6 +1798,28 @@ describe("rate limiting", () => {
 
     await expect(getChannelMessages()).rejects.toThrow(
       "Discord rate limit exceeded",
+    );
+  });
+
+  it("should give up on a 429 the gate's wait wouldn't fit", async () => {
+    const logErrorSpy = vi.spyOn(log, "error").mockImplementation(() => {});
+    const logWarnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
+    server.use(
+      http.get(`${DISCORD_BASE_URL}/channels/:channelId/messages`, () =>
+        HttpResponse.json(
+          { message: "Rate limited", retry_after: 29.9, global: false },
+          { status: 429 },
+        ),
+      ),
+    );
+
+    await expect(getChannelMessages()).rejects.toThrow(
+      "Discord rate limit exceeded",
+    );
+    expect(logWarnSpy).not.toHaveBeenCalled();
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ retryAfterMs: 29_900, retries: 1 }),
+      "Discord rate limit exceeded max wait time",
     );
   });
 
