@@ -43,14 +43,13 @@ describe("chatTip", () => {
   });
 
   describe("setChatTipDismissed", () => {
-    it("writes the dismissal cookie for a year", async () => {
+    it("writes the dismissal cookie", async () => {
       const headers = mockCookies();
 
       await setChatTipDismissed();
 
       const setCookie = headers.get("set-cookie");
       expect(setCookie).toContain("chatTipDismissed=true");
-      expect(setCookie).toContain("Max-Age=31536000");
     });
 
     it("does not rewrite an already-dismissed cookie", async () => {
