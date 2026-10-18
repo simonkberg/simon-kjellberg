@@ -1,11 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { expect, it, vi } from "vitest";
 
+import { renderChatInput } from "@/mocks/chatInput";
 import { server } from "@/mocks/node";
-
-import { ChatInput } from "./ChatInput";
 
 vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
@@ -16,13 +14,7 @@ it("falls back to the reactions when the emoji can't load, and retries on the ne
       HttpResponse.json({ error: "Bad gateway" }, { status: 502 }),
     ),
   );
-  const user = userEvent.setup({ delay: null });
-  render(
-    <ChatInput replyToId={null} setReplyToId={vi.fn()}>
-      <button type="button">Next</button>
-    </ChatInput>,
-  );
-  const input = screen.getByRole("combobox");
+  const { user, input } = renderChatInput();
 
   await user.type(input, ":sku");
   expect(await screen.findByRole("option", { name: "skull" })).toBeVisible();
