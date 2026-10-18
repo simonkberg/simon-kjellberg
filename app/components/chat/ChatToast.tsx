@@ -29,7 +29,7 @@ export const ChatToast = ({
     const timer = setTimeout(() => setIsVisible(false), duration);
 
     return () => clearTimeout(timer);
-  }, [duration, isVisible]);
+  }, [duration, isVisible, message]);
 
   if (!deferredIsVisible) return null;
 

@@ -1,4 +1,5 @@
 import {
+  act,
   render,
   screen,
   waitForElementToBeRemoved,
@@ -101,26 +102,19 @@ describe("ChatToast", () => {
   });
 
   it("resets timer when message changes", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers();
 
     const { rerender } = render(
       <ChatToast message="First message" duration={5000} />,
     );
-    expect(screen.getByText("First message")).toBeInTheDocument();
-
-    vi.advanceTimersByTime(3000);
+    await act(() => vi.advanceTimersByTimeAsync(3000));
 
     rerender(<ChatToast message="Second message" duration={5000} />);
-
+    await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(screen.getByText("Second message")).toBeInTheDocument();
 
-    vi.advanceTimersByTime(3000);
-    expect(screen.getByText("Second message")).toBeInTheDocument();
-
-    vi.advanceTimersByTime(2000);
-    vi.runAllTimers();
-
-    await waitForElementToBeRemoved(() => screen.queryByText("Second message"));
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(screen.queryByText("Second message")).not.toBeInTheDocument();
   });
 
   it("applies correct variant class", () => {
