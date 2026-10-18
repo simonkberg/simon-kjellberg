@@ -88,9 +88,6 @@ sqliteBeforeEach(query, MIGRATIONS);
 beforeEach(() => {
   requests = [];
   headers = [];
-  vi.spyOn(log, "info").mockImplementation(() => {});
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
   vi.mocked(getStats).mockResolvedValue([]);
   vi.mocked(getChannelMessages).mockResolvedValue([]);
   vi.mocked(userGetRecentTracks).mockResolvedValue([]);

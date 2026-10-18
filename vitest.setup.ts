@@ -1,8 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 import { Globals } from "@react-spring/web";
 import { cleanup, configure } from "@testing-library/react";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 
+import { log } from "@/lib/log";
 import { server } from "@/mocks/node";
 
 Globals.assign({ skipAnimation: true });
@@ -29,6 +30,20 @@ if (
 
 beforeAll(() => {
   server.listen({ onUnhandledFrame: "error" });
+});
+
+// Tests assert on log calls through vi.mocked(log.<level>); none should print.
+beforeEach(() => {
+  for (const level of [
+    "fatal",
+    "error",
+    "warn",
+    "info",
+    "debug",
+    "trace",
+  ] as const) {
+    vi.spyOn(log, level).mockImplementation(() => {});
+  }
 });
 
 afterEach(() => {

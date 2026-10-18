@@ -27,7 +27,6 @@ describe("getWakaTimeStats", () => {
   });
 
   it("should return error status when getStats fails", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     const mockError = new Error("Network error");
     vi.mocked(getStats).mockRejectedValue(mockError);
 

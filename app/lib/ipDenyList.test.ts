@@ -28,8 +28,6 @@ describe("ipDenyList", () => {
   beforeEach(() => {
     resetGlobal("simon.dev/ip-deny-list");
     vi.useFakeTimers({ now: 0, toFake: ["Date"] });
-    vi.spyOn(log, "info").mockImplementation(() => {});
-    vi.spyOn(log, "warn").mockImplementation(() => {});
   });
 
   it("should deny only listed IPs, skipping anything that isn't one", async () => {

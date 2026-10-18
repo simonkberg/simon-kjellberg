@@ -11,7 +11,6 @@ import {
 
 import { subscribeToChannel } from "@/lib/discord/api";
 import { subscribeToStatus } from "@/lib/discord/gateway";
-import { log } from "@/lib/log";
 
 import { GET } from "./route";
 
@@ -113,7 +112,6 @@ describe("GET /api/chat/sse", () => {
   });
 
   it("should return 503 without a ping interval when subscribing fails", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(subscribeToChannel).mockRejectedValue(
       new Error("Gateway closed"),
     );

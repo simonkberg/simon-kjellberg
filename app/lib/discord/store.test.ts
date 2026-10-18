@@ -134,8 +134,6 @@ function react(
 
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.spyOn(log, "warn").mockImplementation(() => {});
-  vi.spyOn(log, "error").mockImplementation(() => {});
 });
 
 describe("ChannelStore", () => {
