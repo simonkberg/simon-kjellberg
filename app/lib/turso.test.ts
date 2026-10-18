@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, type JsonBodyType } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetGlobal } from "@/lib/global";
@@ -33,23 +33,32 @@ function pipelineResponse(result: Record<string, unknown> = {}) {
   });
 }
 
+function respond(body: JsonBodyType) {
+  server.use(http.post(PIPELINE_URL, () => HttpResponse.json(body)));
+}
+
+function capture(body: JsonBodyType = pipelineResponse()) {
+  const requests: { body: unknown; headers: Headers }[] = [];
+  server.use(
+    http.post(PIPELINE_URL, async ({ request }) => {
+      requests.push({ body: await request.json(), headers: request.headers });
+      return HttpResponse.json(body);
+    }),
+  );
+  return requests;
+}
+
 describe("query", () => {
   it("should send the statement with encoded args and the auth header", async () => {
-    let body: unknown;
-    server.use(
-      http.post(PIPELINE_URL, async ({ request }) => {
-        body = await request.json();
-        expect(request.headers.get("authorization")).toBe(
-          "Bearer test-turso-token",
-        );
-        expect(request.headers.get("content-type")).toBe("application/json");
-        return HttpResponse.json(pipelineResponse());
-      }),
-    );
+    const requests = capture();
 
     await query("SELECT ?, ?, ?, ?", ["text", 42, 1.5, null]);
 
-    expect(body).toEqual({
+    expect(requests[0]?.headers.get("authorization")).toBe(
+      "Bearer test-turso-token",
+    );
+    expect(requests[0]?.headers.get("content-type")).toBe("application/json");
+    expect(requests[0]?.body).toEqual({
       requests: [
         {
           type: "execute",
@@ -69,35 +78,41 @@ describe("query", () => {
   });
 
   it("should decode rows into objects keyed by column name", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          pipelineResponse({
-            cols: [
-              { name: "id" },
-              { name: "name" },
-              { name: "score" },
-              { name: "missing" },
-              { name: null },
-            ],
-            rows: [
-              [
-                { type: "integer", value: "7" },
-                { type: "text", value: "seven" },
-                { type: "float", value: 0.5 },
-                { type: "null" },
-                { type: "blob", base64: "AQI=" },
-              ],
-            ],
-            affected_row_count: 1,
-            last_insert_rowid: "7",
-          }),
-        ),
-      ),
+    respond(
+      pipelineResponse({
+        cols: [
+          { name: "id" },
+          { name: "name" },
+          { name: "score" },
+          { name: "missing" },
+          { name: null },
+        ],
+        rows: [
+          [
+            { type: "integer", value: "7" },
+            { type: "text", value: "seven" },
+            { type: "float", value: 0.5 },
+            { type: "null" },
+            { type: "blob", base64: "AQI=" },
+            { type: "text", value: "extra" },
+          ],
+        ],
+        affected_row_count: 1,
+        last_insert_rowid: "7",
+      }),
     );
 
     await expect(query("SELECT 1")).resolves.toEqual({
-      rows: [{ id: 7, name: "seven", score: 0.5, missing: null, 4: "AQI=" }],
+      rows: [
+        {
+          id: 7,
+          name: "seven",
+          score: 0.5,
+          missing: null,
+          4: "AQI=",
+          5: "extra",
+        },
+      ],
       rowsAffected: 1,
       lastInsertRowId: 7,
     });
@@ -116,16 +131,12 @@ describe("query", () => {
   });
 
   it("should throw on statement errors", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json({
-          results: [
-            { type: "error", error: { message: "no such table: nope" } },
-            { type: "ok", response: { type: "close" } },
-          ],
-        }),
-      ),
-    );
+    respond({
+      results: [
+        { type: "error", error: { message: "no such table: nope" } },
+        { type: "ok", response: { type: "close" } },
+      ],
+    });
 
     await expect(query("SELECT * FROM nope")).rejects.toThrow(
       "Turso query error: no such table: nope",
@@ -133,45 +144,15 @@ describe("query", () => {
   });
 
   it("should throw when the first result is not an execute result", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json({
-          results: [{ type: "ok", response: { type: "close" } }],
-        }),
-      ),
-    );
+    respond({ results: [{ type: "ok", response: { type: "close" } }] });
 
     await expect(query("SELECT 1")).rejects.toThrow(
       "Turso returned unexpected close result",
     );
   });
 
-  it("should fall back to the column index when a value has no column", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          pipelineResponse({
-            cols: [{ name: "id" }],
-            rows: [
-              [
-                { type: "integer", value: "1" },
-                { type: "text", value: "extra" },
-              ],
-            ],
-          }),
-        ),
-      ),
-    );
-
-    await expect(query("SELECT 1")).resolves.toMatchObject({
-      rows: [{ id: 1, 1: "extra" }],
-    });
-  });
-
   it("should throw when the response has no results", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () => HttpResponse.json({ results: [] })),
-    );
+    respond({ results: [] });
 
     await expect(query("SELECT 1")).rejects.toThrow(
       "Turso returned no results",
@@ -217,20 +198,14 @@ describe("batch", () => {
   }
 
   it("should run the statements in one transaction that rolls back on failure", async () => {
-    let body: unknown;
-    server.use(
-      http.post(PIPELINE_URL, async ({ request }) => {
-        body = await request.json();
-        return HttpResponse.json(
-          batchResponse([
-            stmtResult(0),
-            stmtResult(1),
-            stmtResult(2),
-            stmtResult(0),
-            null,
-          ]),
-        );
-      }),
+    const requests = capture(
+      batchResponse([
+        stmtResult(0),
+        stmtResult(1),
+        stmtResult(2),
+        stmtResult(0),
+        null,
+      ]),
     );
 
     await expect(
@@ -239,7 +214,7 @@ describe("batch", () => {
       { rows: [{ n: 1 }], rowsAffected: 0, lastInsertRowId: null },
       { rows: [{ n: 2 }], rowsAffected: 0, lastInsertRowId: null },
     ]);
-    expect(body).toEqual({
+    expect(requests[0]?.body).toEqual({
       requests: [
         {
           type: "batch",
@@ -277,17 +252,13 @@ describe("batch", () => {
   ])("should name the step that failed: $step", async ({ failed, step }) => {
     // BEGIN, two statements, COMMIT and ROLLBACK.
     const steps = Array.from({ length: 5 }, (_, index) => index);
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          batchResponse(
-            steps.map((index) =>
-              index < failed || index === 4 ? stmtResult(0) : null,
-            ),
-            steps.map((index) =>
-              index === failed ? { message: "database is locked" } : null,
-            ),
-          ),
+    respond(
+      batchResponse(
+        steps.map((index) =>
+          index < failed || index === 4 ? stmtResult(0) : null,
+        ),
+        steps.map((index) =>
+          index === failed ? { message: "database is locked" } : null,
         ),
       ),
     );
@@ -298,13 +269,7 @@ describe("batch", () => {
   });
 
   it("should throw when a step has neither a result nor an error", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () =>
-        HttpResponse.json(
-          batchResponse([stmtResult(0), null, stmtResult(0), null]),
-        ),
-      ),
-    );
+    respond(batchResponse([stmtResult(0), null, stmtResult(0), null]));
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
       "Turso query error in statement 1: no result",
@@ -312,9 +277,7 @@ describe("batch", () => {
   });
 
   it("should throw when the result is not a batch result", async () => {
-    server.use(
-      http.post(PIPELINE_URL, () => HttpResponse.json(pipelineResponse())),
-    );
+    respond(pipelineResponse());
 
     await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
       "Turso returned unexpected execute result",
@@ -332,13 +295,7 @@ describe("keepWarm", () => {
   });
 
   it("should query Turso every minute", async () => {
-    const statements: unknown[] = [];
-    server.use(
-      http.post(PIPELINE_URL, async ({ request }) => {
-        statements.push(await request.json());
-        return HttpResponse.json(pipelineResponse());
-      }),
-    );
+    const statements = capture();
 
     keepWarm();
     keepWarm();
@@ -348,7 +305,7 @@ describe("keepWarm", () => {
 
     vi.advanceTimersByTime(1);
     await vi.waitFor(() => expect(statements).toHaveLength(1));
-    expect(statements[0]).toEqual({
+    expect(statements[0]?.body).toEqual({
       requests: [
         { type: "execute", stmt: { sql: "SELECT 1", args: [] } },
         { type: "close" },

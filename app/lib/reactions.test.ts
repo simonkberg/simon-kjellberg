@@ -10,7 +10,7 @@ import {
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
-import { createSqliteQuery, emptyResult } from "@/mocks/sqlite";
+import { emptyResult, failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
 import { REACTION_EMOJI } from "./emoji";
 import { MIGRATIONS } from "./migrations";
@@ -47,9 +47,16 @@ function message(id: string, overrides: Partial<Message> = {}): Message {
   };
 }
 
+const sqlite = sqliteBeforeEach(query, MIGRATIONS);
+
 beforeEach(() => {
-  vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
+  vi.spyOn(log, "warn").mockImplementation(() => {});
+  vi.spyOn(log, "error").mockImplementation(() => {});
 });
+
+async function storedReactions() {
+  return (await sqlite()("SELECT * FROM reactions")).rows;
+}
 
 describe("toggleReaction", () => {
   it("adds a reaction and mirrors it on Discord", async () => {
@@ -70,7 +77,6 @@ describe("toggleReaction", () => {
   });
 
   it("still removes the reaction when Discord fails to drop the mirror", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(removeBotReaction).mockRejectedValueOnce(new Error("down"));
     await toggleReaction("1", "👍", alice);
 
@@ -80,16 +86,12 @@ describe("toggleReaction", () => {
 
   it("removes nothing when counting the rest fails", async () => {
     await toggleReaction("1", "👍", alice);
-    const sqlite = vi.mocked(query).getMockImplementation()!;
-    vi.mocked(query).mockImplementation((sql, args) =>
-      sql.startsWith("SELECT 1")
-        ? Promise.reject(new Error("blip"))
-        : sqlite(sql, args),
+    vi.mocked(query).mockImplementation(
+      failQuery(sqlite(), "SELECT 1", { error: new Error("blip") }),
     );
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("blip");
-    vi.mocked(query).mockImplementation(sqlite);
-    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+    expect(await storedReactions()).toHaveLength(1);
     expect(removeBotReaction).not.toHaveBeenCalled();
   });
 
@@ -97,7 +99,7 @@ describe("toggleReaction", () => {
     await addReaction("1", "👍", alice);
     await addReaction("1", "👍", alice);
 
-    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+    expect(await storedReactions()).toHaveLength(1);
     expect(addBotReaction).toHaveBeenCalledOnce();
   });
 
@@ -105,17 +107,13 @@ describe("toggleReaction", () => {
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
 
     await expect(toggleReaction("1", "👍", alice)).rejects.toThrow("404");
-    expect((await query("SELECT * FROM reactions")).rows).toEqual([]);
+    expect(await storedReactions()).toEqual([]);
   });
 
   it("keeps Discord's error when the rollback fails", async () => {
-    vi.spyOn(log, "warn").mockImplementation(() => {});
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("30010"));
-    const sqlite = vi.mocked(query).getMockImplementation()!;
-    vi.mocked(query).mockImplementation((sql, args) =>
-      sql.startsWith("DELETE")
-        ? Promise.reject(new Error("timeout"))
-        : sqlite(sql, args),
+    vi.mocked(query).mockImplementation(
+      failQuery(sqlite(), "DELETE", { error: new Error("timeout") }),
     );
 
     await expect(addReaction("1", "👍", alice)).rejects.toThrow("30010");
@@ -132,7 +130,7 @@ describe("toggleReaction", () => {
 
     expect(await toggleReaction("1", "👍", alice)).toBe("added");
     expect(addBotReaction).not.toHaveBeenCalled();
-    expect((await query("SELECT * FROM reactions")).rows).toHaveLength(1);
+    expect(await storedReactions()).toHaveLength(1);
   });
 });
 
@@ -166,10 +164,10 @@ describe("markOwnReactions", () => {
 
 describe("withSiteReactions", () => {
   it("adds the site's reactions to Discord's, replies included", async () => {
-    await toggleReaction("1", "😂", alice);
-    await toggleReaction("1", "👍", alice);
-    await toggleReaction("1", "👍", bob);
-    await toggleReaction("2", "🎉", bob);
+    await query(
+      `INSERT INTO reactions (message_id, emoji, username) VALUES
+        ('1', '😂', 'alice'), ('1', '👍', 'alice'), ('1', '👍', 'bob'), ('2', '🎉', 'bob')`,
+    );
 
     const messages = await withSiteReactions([
       message("1", {
@@ -195,7 +193,6 @@ describe("withSiteReactions", () => {
   });
 
   it("falls back to Discord's reactions when Turso fails", async () => {
-    vi.spyOn(log, "error").mockImplementation(() => {});
     vi.mocked(query).mockRejectedValueOnce(new Error("down"));
     const messages = [message("1")];
 

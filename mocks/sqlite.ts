@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 import type { batch, BatchResults, query, QueryResult, Row } from "@/lib/turso";
 
@@ -27,6 +27,35 @@ export function createSqliteQuery(setup: readonly string[] = []): typeof query {
       statement.run(...(args ?? []));
     }
     return { rows, rowsAffected: changes() - before, lastInsertRowId: null };
+  };
+}
+
+// Gives the mocked query a fresh database before each test; call the result for it.
+export function sqliteBeforeEach(
+  mocked: typeof query,
+  setup: readonly string[] = [],
+): () => typeof query {
+  let sqlite: typeof query;
+  beforeEach(() => {
+    sqlite = createSqliteQuery(setup);
+    vi.mocked(mocked).mockImplementation(sqlite);
+  });
+  return () => sqlite;
+}
+
+// Rejects statements starting with prefix and runs the rest. afterRunning
+// rejects after the statement ran, like a response lost on the way back.
+export function failQuery(
+  run: typeof query,
+  prefix: string,
+  { error = new Error("boom"), once = false, afterRunning = false } = {},
+): typeof query {
+  let failed = false;
+  return async (sql, args) => {
+    if (!sql.startsWith(prefix) || (once && failed)) return run(sql, args);
+    failed = true;
+    if (afterRunning) await run(sql, args);
+    throw error;
   };
 }
 

@@ -1,10 +1,16 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { log } from "@/lib/log";
 import { query } from "@/lib/turso";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import {
+  CREATED_AT,
+  fillCategory,
+  seedMemory as seed,
+  storedMemory as stored,
+} from "@/mocks/memory";
+import { sqliteBeforeEach } from "@/mocks/sqlite";
 
 import {
   buildMemoryContext,
@@ -23,35 +29,7 @@ vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );
 
-const CREATED_AT = "2025-01-01T00:00:00.000Z";
-
-async function seed(
-  id: number,
-  category: string,
-  content: string,
-  createdAt = CREATED_AT,
-) {
-  await query(
-    "INSERT INTO memories (id, category, content, created_at) VALUES (?, ?, ?, ?)",
-    [id, category, content, createdAt],
-  );
-}
-
-async function fill(category: string, count: number) {
-  for (let i = 0; i < count; i++) await seed(100 + i, category, `note ${i}`);
-}
-
-async function stored(id: number) {
-  const { rows } = await query(
-    "SELECT category, content FROM memories WHERE id = ?",
-    [id],
-  );
-  return rows[0];
-}
-
-beforeEach(() => {
-  vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-});
+sqliteBeforeEach(query, MIGRATIONS);
 
 describe("peopleCategory", () => {
   it("should slugify usernames under the people prefix", () => {
@@ -133,7 +111,7 @@ describe("remember", () => {
   );
 
   it("should refuse when the category is full", async () => {
-    await fill("jokes", MAX_PER_CATEGORY);
+    await fillCategory("jokes");
 
     await expect(
       remember({ category: "jokes", content: "one more" }),
@@ -144,7 +122,7 @@ describe("remember", () => {
   });
 
   it("should not let parallel notes slip past the cap", async () => {
-    await fill("jokes", MAX_PER_CATEGORY - 1);
+    await fillCategory("jokes", MAX_PER_CATEGORY - 1);
 
     const results = await Promise.all([
       remember({ category: "jokes", content: "a" }),
@@ -254,7 +232,7 @@ describe("edit", () => {
   });
 
   it("should edit a note in place in a full category", async () => {
-    await fill("self", MAX_PER_CATEGORY);
+    await fillCategory("self");
 
     await expect(
       edit({
@@ -268,7 +246,7 @@ describe("edit", () => {
 
   it("should refuse to move a note into a full category", async () => {
     await seed(4, "style", "this chat gets spam");
-    await fill("context", MAX_PER_CATEGORY);
+    await fillCategory("context");
 
     await expect(
       edit({
@@ -384,14 +362,13 @@ describe("line-break backfill", () => {
   const BACKFILL = MIGRATIONS.slice(start, start + 2);
 
   async function backfill() {
-    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
     for (const statement of BACKFILL) await query(statement);
   }
 
-  beforeEach(() => {
-    vi.mocked(query).mockImplementation(
-      createSqliteQuery(MIGRATIONS.slice(0, start)),
-    );
+  sqliteBeforeEach(query, MIGRATIONS.slice(0, start));
+
+  it("should find the backfill migrations", () => {
+    expect(BACKFILL[1]).toBe("DELETE FROM memories WHERE content = ''");
   });
 
   const nel = String.fromCodePoint(0x85);
