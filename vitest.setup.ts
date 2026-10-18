@@ -3,10 +3,10 @@ import { Globals } from "@react-spring/web";
 import { cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 
+import { resetGlobals } from "@/lib/global";
 import { log } from "@/lib/log";
 import { server } from "@/mocks/node";
 
-Globals.assign({ skipAnimation: true });
 configure({ reactStrictMode: true });
 
 // happy-dom has no popover API: these mark an open popover with an attribute tests can query.
@@ -28,12 +28,16 @@ if (
   };
 }
 
+vi.mock(import("server-only"), () => ({}));
+
 beforeAll(() => {
   server.listen({ onUnhandledFrame: "error" });
 });
 
-// Tests assert on log calls through vi.mocked(log.<level>); none should print.
 beforeEach(() => {
+  resetGlobals();
+  Globals.assign({ skipAnimation: true });
+  // Tests assert on log calls through vi.mocked(log.<level>); none should print.
   for (const level of [
     "fatal",
     "error",

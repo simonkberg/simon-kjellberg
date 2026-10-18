@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { identifiers, networkOf } from "./identifiers";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/headers"), () => ({ headers: vi.fn() }));
 
 function identifiersFrom(init: HeadersInit) {

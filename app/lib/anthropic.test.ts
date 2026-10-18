@@ -17,12 +17,7 @@ import { MIGRATIONS } from "@/lib/migrations";
 import { addReaction } from "@/lib/reactions";
 import { query } from "@/lib/turso";
 import { getStats } from "@/lib/wakaTime";
-import {
-  CREATED_AT,
-  fillCategory,
-  seedMemory as seed,
-  storedMemory as stored,
-} from "@/mocks/memory";
+import { CREATED_AT, fillCategory, seed, stored } from "@/mocks/memory";
 import { server } from "@/mocks/node";
 import { sqliteBeforeEach } from "@/mocks/sqlite";
 
@@ -34,7 +29,6 @@ import {
   runAgentLoop,
 } from "./anthropic";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("node:timers/promises"), async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, setTimeout: vi.fn() };
@@ -80,8 +74,8 @@ type RequestBody = {
   tools: Array<{ name: string }>;
 };
 
-let requests: RequestBody[] = [];
-let headers: Headers[] = [];
+let requests: RequestBody[];
+let headers: Headers[];
 
 sqliteBeforeEach(query, MIGRATIONS);
 

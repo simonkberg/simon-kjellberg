@@ -14,19 +14,17 @@ import {
   removeBotReaction,
   DiscordApiError,
   getChannelMessages,
-  type Message,
   postChannelMessage,
 } from "@/lib/discord/api";
-import { resetGlobal } from "@/lib/global";
 import { identifiers } from "@/lib/identifiers";
 import { log } from "@/lib/log";
 import { MIGRATIONS } from "@/lib/migrations";
 import { getSession, type Username } from "@/lib/session";
 import { query } from "@/lib/turso";
 import { loadDenyList } from "@/mocks/ipDenyList";
-import { createSqliteQuery } from "@/mocks/sqlite";
+import { createMessage } from "@/mocks/messages";
+import { sqliteBeforeEach } from "@/mocks/sqlite";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("next/cache"), () => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
@@ -50,19 +48,6 @@ vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );
 
-function createMockMessage(overrides: Partial<Message> = {}): Message {
-  return {
-    id: "123",
-    user: { name: "test-user", color: "hsl(200 50% 50%)" },
-    content: "Hello, world!",
-    edited: false,
-    timestamp: new Date("2025-01-01T00:00:00.000000+00:00"),
-    reactions: [],
-    replies: [],
-    ...overrides,
-  };
-}
-
 function post(text = "Hello!") {
   const formData = new FormData();
   formData.set("text", text);
@@ -83,18 +68,18 @@ async function postUpToTheLimit() {
   }
 }
 
+sqliteBeforeEach(query, MIGRATIONS);
+
 beforeEach(async () => {
   vi.useFakeTimers({ now: 1_000_000, toFake: ["Date"] });
-  vi.mocked(query).mockImplementation(createSqliteQuery(MIGRATIONS));
-  resetGlobal("simon.dev/rate-limit-blocked");
   await loadDenyList("6.6.6.6");
 });
 
 describe("getChatHistory", () => {
   it("returns messages on success", async () => {
     const mockMessages = [
-      createMockMessage({ id: "1", content: "First message" }),
-      createMockMessage({ id: "2", content: "Second message" }),
+      createMessage({ id: "1", content: "First message" }),
+      createMessage({ id: "2", content: "Second message" }),
     ];
     vi.mocked(getChannelMessages).mockResolvedValue(mockMessages);
 
@@ -121,7 +106,7 @@ describe("getChatHistory", () => {
 
   it("adds the site's reactions", async () => {
     vi.mocked(getChannelMessages).mockResolvedValue([
-      createMockMessage({ id: "1" }),
+      createMessage({ id: "1" }),
     ]);
     await query(
       "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍', 'a')",

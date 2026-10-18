@@ -1,7 +1,7 @@
 import { Globals } from "@react-spring/web";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Message } from "@/lib/discord/api";
 import { createMessage } from "@/mocks/messages";
@@ -58,10 +58,6 @@ describe("ChatHistory", () => {
   describe("animations", () => {
     beforeEach(() => {
       Globals.assign({ skipAnimation: false });
-    });
-
-    afterEach(() => {
-      Globals.assign({ skipAnimation: true });
     });
 
     it("slides in the first reply to a message", () => {

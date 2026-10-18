@@ -274,9 +274,8 @@ Files that must not run on client import `"server-only"` at top (e.g., `app/lib/
 - **Type-safe mocks:** Use `vi.mock(import("module"), ...)`, never string-based
 - **Accessing mocks:** Import mocked functions at the top level like any other import — `vi.mock` is hoisted before imports, so they resolve to the mock automatically. Never use `await import()` to access mocked values.
 - **Async components with `use()`:** Wrap render in `await act(async () => render(...))`
-- **Server-only modules:** Mock with `vi.mock("server-only", () => ({}))`
 - **Shared mocks:** Check `mocks/` before hand-rolling a stub. For `cookies()` from `next/headers`, use `mockCookieJar(cookie?)` from `@/mocks/headers`: it serves a `MockCookies` — a real jar over `@edge-runtime/cookies` that needs no casting to satisfy the return type, and lets tests assert on the resulting `set-cookie` header rather than on a `vi.fn` spy. See `app/lib/session.test.ts` and `app/lib/chatTip.test.ts`.
-- **Lifecycle is global:** the config resets every mock to its factory implementation, restores spies and unstubs envs and globals before each test, and `vitest.setup.ts` restores real timers after it. Don't repeat these in a file, and set mock defaults in the `vi.mock` factory or a `beforeEach`, since one set at file scope is gone by the second test. Undo any other state (DOM selection, cookies) in `afterEach`, never on a test's last line.
+- **Lifecycle is global:** the config resets every mock to its factory implementation, restores spies and unstubs envs and globals before each test, and `vitest.setup.ts` mocks `server-only`, clears `getGlobal` state and turns off react-spring animations before each test and restores real timers after it. Don't repeat these in a file, and set mock defaults in the `vi.mock` factory or a `beforeEach`, since one set at file scope is gone by the second test. Undo any other state (DOM selection, cookies) in `afterEach`, never on a test's last line.
 - **Hoist repeated setup:** setup written three times becomes a file-level hook or a local helper, or a shared one in `mocks/`.
 - **Assert outside MSW handlers:** an `expect` inside a resolver fails as a 500 that hides the diff, and passes if the handler never matches. Record the request and assert after the call.
 - **One test per branch:** add a test or an `it.each` row only when it takes a different path, not for a new input on the same one or for what another test's query already proves. Assert the specific error or arguments, so the test fails when its behaviour breaks.
@@ -306,7 +305,7 @@ Strict mode enabled with `noUncheckedIndexedAccess` and `noPropertyAccessFromInd
 Next bundles `instrumentation.ts` and each route handler into separate module graphs, so a
 module-level `let` is one instance per graph, not per process. State that must be shared
 between them (the gateway connection, readiness) goes through `getGlobal` in
-`app/lib/global.ts`; tests reset it with `resetGlobal` instead of `vi.resetModules()`.
+`app/lib/global.ts`; each test starts without it (`resetGlobals` in `vitest.setup.ts`), so don't reach for `vi.resetModules()`.
 
 ### Private Fields
 

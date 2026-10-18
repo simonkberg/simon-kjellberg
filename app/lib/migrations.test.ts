@@ -12,7 +12,6 @@ import {
   runMigrationsUntilApplied,
 } from "./migrations";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("@/lib/turso"), async () =>
   (await import("@/mocks/sqlite")).mockTurso(),
 );

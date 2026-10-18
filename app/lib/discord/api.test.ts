@@ -2,7 +2,6 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { message, reaction } from "@/mocks/discord";
@@ -22,7 +21,6 @@ import {
 import { connect, subscribe } from "./gateway";
 import type { DiscordMessage } from "./schemas";
 
-vi.mock(import("server-only"), () => ({}));
 vi.mock(import("./gateway"), () => ({
   connect: vi.fn(async () => {}),
   subscribe: vi.fn(async () => () => {}),
@@ -30,7 +28,6 @@ vi.mock(import("./gateway"), () => ({
 }));
 
 beforeEach(() => {
-  resetGlobal("simon.dev/discord-store");
   _resetRateLimitState();
 });
 
@@ -44,14 +41,8 @@ const BOT_REACTION_ROUTE =
 const MEMBER_URL = `${DISCORD_BASE_URL}/guilds/:guildId/members/:userId`;
 const SEARCH_URL = `${DISCORD_BASE_URL}/guilds/:guildId/messages/search`;
 
-function member(
-  username: string,
-  {
-    nick = null,
-    global_name = null,
-  }: { nick?: string | null; global_name?: string | null } = {},
-) {
-  return HttpResponse.json({ user: { username, global_name }, nick });
+function member(username: string, nick: string | null = null) {
+  return HttpResponse.json({ user: { username, global_name: null }, nick });
 }
 
 function goneMember() {
@@ -162,7 +153,7 @@ describe("getChannelMessages", () => {
       ),
       http.get(MEMBER_URL, ({ params }) =>
         params["userId"] === "human-user"
-          ? member("simon", { nick: "Simon" })
+          ? member("simon", "Simon")
           : goneMember(),
       ),
     );
@@ -212,9 +203,10 @@ describe("getChannelMessages", () => {
         ),
       ),
       http.get(MEMBER_URL, ({ params }) =>
-        member(String(params["userId"]), {
-          nick: params["userId"] === "reactor-1" ? "simon" : null,
-        }),
+        member(
+          String(params["userId"]),
+          params["userId"] === "reactor-1" ? "simon" : null,
+        ),
       ),
     );
 
@@ -1095,7 +1087,7 @@ describe("searchChannelMessages", () => {
       }),
       http.get(MEMBER_URL, ({ params }) =>
         params["userId"] === "user3"
-          ? member("charlie", { nick: "Charlie" })
+          ? member("charlie", "Charlie")
           : goneMember(),
       ),
     );

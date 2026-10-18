@@ -9,10 +9,7 @@ import { vi } from "vitest";
 
 // Next.js doesn't export ReadonlyRequestCookies, so we recreate it here
 // to match the interface returned by next/headers cookies()
-export type ReadonlyRequestCookies = Omit<
-  RequestCookies,
-  "set" | "clear" | "delete"
-> &
+type ReadonlyRequestCookies = Omit<RequestCookies, "set" | "clear" | "delete"> &
   Pick<ResponseCookies, "set" | "delete">;
 
 /**
@@ -24,7 +21,7 @@ export type ReadonlyRequestCookies = Omit<
  * const headers = mockCookieJar("session=abc123");
  * ```
  */
-export class MockCookies implements ReadonlyRequestCookies {
+class MockCookies implements ReadonlyRequestCookies {
   #requestCookies: RequestCookies;
   #responseCookies: ResponseCookies;
 

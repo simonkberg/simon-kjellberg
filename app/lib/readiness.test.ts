@@ -1,16 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { resetGlobal } from "./global";
 import { log } from "./log";
 import { getPendingStages, markReady } from "./readiness";
 
-vi.mock(import("server-only"), () => ({}));
-
 describe("readiness", () => {
-  beforeEach(() => {
-    resetGlobal("simon.dev/readiness");
-  });
-
   it("should start with every stage pending", () => {
     expect(getPendingStages()).toEqual(["migrations", "bot"]);
   });

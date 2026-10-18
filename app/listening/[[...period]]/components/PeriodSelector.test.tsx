@@ -1,11 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { periodLabels } from "@/lib/lastfm";
 
 import { PeriodSelector } from "./PeriodSelector";
-
-vi.mock(import("server-only"), () => ({}));
 
 describe("PeriodSelector", () => {
   it("should render all period options", () => {

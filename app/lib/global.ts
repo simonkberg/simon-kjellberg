@@ -8,6 +8,11 @@ export function getGlobal<T>(key: string, init: () => T): T {
   return Reflect.get(globalThis, symbol) as T;
 }
 
-export function resetGlobal(key: string): void {
-  Reflect.deleteProperty(globalThis, Symbol.for(key));
+/** @internal Every test starts without the state `getGlobal` keeps. */
+export function resetGlobals(): void {
+  for (const symbol of Object.getOwnPropertySymbols(globalThis)) {
+    if (Symbol.keyFor(symbol)?.startsWith("simon.dev/")) {
+      Reflect.deleteProperty(globalThis, symbol);
+    }
+  }
 }

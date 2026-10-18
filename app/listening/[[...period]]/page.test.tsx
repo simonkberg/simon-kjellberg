@@ -13,8 +13,6 @@ import { periods } from "@/lib/lastfm";
 
 import ListeningPage, { generateMetadata, generateStaticParams } from "./page";
 
-vi.mock(import("server-only"), () => ({}));
-
 vi.mock(import("next/navigation"), () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");

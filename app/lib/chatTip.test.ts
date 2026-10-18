@@ -4,8 +4,6 @@ import { mockCookieJar } from "@/mocks/headers";
 
 import { getChatTipDismissed, setChatTipDismissed } from "./chatTip";
 
-vi.mock(import("server-only"), () => ({}));
-
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 
 describe("chatTip", () => {

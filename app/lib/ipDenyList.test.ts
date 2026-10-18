@@ -1,14 +1,11 @@
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetGlobal } from "@/lib/global";
 import { log } from "@/lib/log";
 import { loadDenyList } from "@/mocks/ipDenyList";
 import { server } from "@/mocks/node";
 
 import { IP_DENY_LIST_URL, isDeniedIp, refreshIpDenyList } from "./ipDenyList";
-
-vi.mock(import("server-only"), () => ({}));
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -26,7 +23,6 @@ function serveList(body: string, status = 200) {
 
 describe("ipDenyList", () => {
   beforeEach(() => {
-    resetGlobal("simon.dev/ip-deny-list");
     vi.useFakeTimers({ now: 0, toFake: ["Date"] });
   });
 

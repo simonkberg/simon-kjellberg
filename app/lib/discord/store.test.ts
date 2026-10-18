@@ -7,8 +7,6 @@ import { mockEnv } from "@/mocks/env";
 import type { ChannelEvent, DiscordMessage } from "./schemas";
 import { ChannelStore, type Reactor, type StoreSource, WINDOW } from "./store";
 
-vi.mock(import("server-only"), () => ({}));
-
 const CHANNEL = mockEnv.DISCORD_CHANNEL_ID;
 const BOT = "bot-user-id";
 const SMILE = { id: null, name: "😄" };
