@@ -18,14 +18,12 @@ const JOYPIXELS = new Set(Object.values(joypixels).flatMap(codes));
 export const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
   ({ group, hexcode, unicode }) => {
     if (group === undefined || group === COMPONENT_GROUP) return [];
-    const names = new Set(
-      [
-        ...codes(joypixels[hexcode]),
-        ...codes(emojibase[hexcode]).filter((name) => !JOYPIXELS.has(name)),
-      ].filter(
-        // As exact matches, they would lead every two-letter search; flag_sk still finds 🇸🇰.
-        (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
-      ),
+    const names = [
+      ...codes(joypixels[hexcode]),
+      ...codes(emojibase[hexcode]).filter((name) => !JOYPIXELS.has(name)),
+    ].filter(
+      // As exact matches, they would lead every two-letter search; flag_sk still finds 🇸🇰.
+      (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
     );
     return [[qualified(unicode), ...names]];
   },
@@ -38,12 +36,11 @@ const EMOJI_BY_NAME = new Map(
 );
 
 // Code spans, escapes, URLs and Discord's own <tokens>, like <:emoji:id> and <t:time:R>, pass through whole.
+// A code span takes its whole backtick run, so an unclosed one can't backtrack into every shorter run.
 const SHORTCODE =
-  /(`+)[\s\S]*?[^`]\1(?!`)|\\.|https?:\/\/\S+|<[^\s>]+>|:([\w+-]+):/g;
+  /(?<!`)(?=(`+))\1[\s\S]*?[^`]\1(?!`)|\\.|https?:\/\/\S+|<[^\s>]+>|:([\w+-]+):/g;
 
-/** Replaces each known `:shortcode:` with its emoji, outside code, as Discord does. */
 export function emojify(text: string): string {
-  if (!text.includes(":")) return text;
   const pattern = new RegExp(SHORTCODE);
   let result = "";
   let last = 0;
