@@ -85,13 +85,6 @@ function getLastClient(clients: WebSocketLink["clients"]) {
 
 type Client = NonNullable<ReturnType<typeof getLastClient>>;
 
-function chatMessage(id: string, content = "hello world") {
-  return {
-    ...message(id, { author: { id: "user-123" }, content }),
-    channel_id: CHANNEL,
-  };
-}
-
 describe("subscribe", () => {
   const gateway = ws.link(GATEWAY_URL);
   const resumeGateway = ws.link(RESUME_URL);
@@ -265,7 +258,10 @@ describe("subscribe", () => {
   it("should ignore messages from other channels", async () => {
     const { callback } = await subscribed();
 
-    await dispatch("MESSAGE_CREATE", { channel_id: "some-other-channel-id" });
+    await dispatch("MESSAGE_CREATE", {
+      ...message("msg-1"),
+      channel_id: "some-other-channel-id",
+    });
 
     expect(callback).not.toHaveBeenCalled();
   });
@@ -278,7 +274,7 @@ describe("subscribe", () => {
     const callback = vi.fn();
     await subscribe(callback);
 
-    await dispatch("MESSAGE_CREATE", chatMessage("msg-1", "first"));
+    await dispatch("MESSAGE_CREATE", message("msg-1", { content: "first" }));
 
     expect(log.error).toHaveBeenCalledWith(
       { err: expect.any(Error) },
@@ -292,11 +288,15 @@ describe("subscribe", () => {
   it("should stop notifying after unsubscribe", async () => {
     const { callback, unsubscribe } = await subscribed();
 
-    await dispatch("MESSAGE_CREATE", chatMessage("msg-1", "first"));
+    await dispatch("MESSAGE_CREATE", message("msg-1", { content: "first" }));
     expect(callback).toHaveBeenCalledOnce();
 
     unsubscribe();
-    await dispatch("MESSAGE_CREATE", chatMessage("msg-2", "second"), 3);
+    await dispatch(
+      "MESSAGE_CREATE",
+      message("msg-2", { content: "second" }),
+      3,
+    );
     expect(callback).toHaveBeenCalledOnce();
   });
 
@@ -719,13 +719,13 @@ describe("subscribe", () => {
       const { callback } = await subscribed();
 
       await dispatch("MESSAGE_CREATE", {
-        ...chatMessage("msg-123"),
+        ...message("msg-123"),
         nonce: "ignored",
       });
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({
         t: "MESSAGE_CREATE",
-        d: chatMessage("msg-123"),
+        d: message("msg-123"),
       });
     });
 

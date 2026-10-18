@@ -387,7 +387,8 @@ describe("handleMessage", () => {
       { err: new Error("model timed out"), messageId: "msg-1" },
       "Bot response failed",
     );
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Reflection is fire-and-forget, so give it time to run had the guard let it.
+    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(reflect).not.toHaveBeenCalled();
   });
 
@@ -461,7 +462,7 @@ describe("startBotSubscription", () => {
 
     callback({
       t: "MESSAGE_CREATE",
-      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
+      d: message("msg-1", { content: "hey simon-bot" }),
     });
 
     await vi.waitFor(() => {
@@ -474,7 +475,7 @@ describe("startBotSubscription", () => {
 
     callback({
       t: "MESSAGE_UPDATE",
-      d: { ...message("msg-1", { content: "hey simon-bot" }), channel_id: "c" },
+      d: message("msg-1", { content: "hey simon-bot" }),
     });
 
     expect(query).not.toHaveBeenCalled();

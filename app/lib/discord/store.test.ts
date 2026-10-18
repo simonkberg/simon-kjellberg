@@ -77,10 +77,10 @@ function reactors(store: ChannelStore, id = "1") {
 }
 
 function create(
-  m: DiscordMessage,
+  m: ReturnType<typeof message>,
   member?: MessageCreate["d"]["member"],
 ): ChannelEvent {
-  return { t: "MESSAGE_CREATE", d: { ...m, channel_id: CHANNEL, member } };
+  return { t: "MESSAGE_CREATE", d: { ...m, member } };
 }
 
 function update(

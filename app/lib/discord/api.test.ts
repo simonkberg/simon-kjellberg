@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { resetGlobal } from "@/lib/global";
@@ -31,12 +31,9 @@ vi.mock(import("./gateway"), () => ({
 
 beforeEach(() => {
   resetGlobal("simon.dev/discord-store");
+  _resetRateLimitState();
   vi.spyOn(log, "warn").mockImplementation(() => {});
   vi.spyOn(log, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  _resetRateLimitState();
 });
 
 const DISCORD_BASE_URL = "https://discord.com/api/v10";
