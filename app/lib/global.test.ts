@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { getGlobal, resetGlobals } from "./global";
 
-const KEY = "simon.dev/test";
+const KEY = "test";
 
 describe("getGlobal", () => {
   it("should create the value once and return the same instance", () => {

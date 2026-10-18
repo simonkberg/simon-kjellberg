@@ -418,7 +418,7 @@ class DiscordGateway {
 }
 
 function getGateway(): DiscordGateway {
-  return getGlobal("simon.dev/discord-gateway", () => new DiscordGateway());
+  return getGlobal("discord-gateway", () => new DiscordGateway());
 }
 
 /** Calls back with every new session and every message and reaction event in the site's channel. */

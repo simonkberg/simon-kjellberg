@@ -20,7 +20,7 @@ type State = {
 };
 
 function state(): State {
-  return getGlobal("simon.dev/ip-deny-list", () => ({
+  return getGlobal("ip-deny-list", () => ({
     ips: new Set<string>(),
     nextRefreshAt: 0,
     failures: 0,
