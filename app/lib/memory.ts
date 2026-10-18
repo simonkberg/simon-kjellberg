@@ -32,10 +32,9 @@ export const categorySchema = z
 
 const LINE_BREAKS = /\r\n|[\r\n\v\f\u0085\u2028\u2029]/g;
 
-// One line, so a note can't start a section of its own in the <memory> block. The backfill in
-// MIGRATIONS does the same in SQL, whose trim() strips only spaces, so this does too.
+// One line, so a note can't start a section of its own in the <memory> block.
 function toOneLine(text: string): string {
-  return text.replace(LINE_BREAKS, " ").replace(/^ +| +$/g, "");
+  return text.replace(LINE_BREAKS, " ").trim();
 }
 
 export const contentSchema = z

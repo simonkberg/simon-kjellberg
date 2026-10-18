@@ -105,9 +105,11 @@ describe("remember", () => {
   });
 
   it("should reject empty or overlong content", async () => {
-    await expect(
-      remember({ category: "self", content: "   " }),
-    ).rejects.toThrow();
+    for (const blank of ["   ", "\t", String.fromCodePoint(0xa0), "\r\n\n"]) {
+      await expect(
+        remember({ category: "self", content: blank }),
+      ).rejects.toThrow();
+    }
     await expect(
       remember({
         category: "self",
@@ -393,26 +395,33 @@ describe("line-break backfill", () => {
     );
   });
 
-  it("should store exactly what a write would", async () => {
-    const nbsp = String.fromCodePoint(0xa0);
-    const content = `\n\t a\r\n\r\nb\n\nc\r\vd${nbsp} \n`;
+  const nel = String.fromCodePoint(0x85);
+  const nbsp = String.fromCodePoint(0xa0);
+
+  // Notes written before it went through a JS trim(), which keeps U+0085.
+  it.each([
+    `a\t\r\n\r\nb${nbsp}\n\nc\r\vd`,
+    `${nel}a b${nel}`,
+    `a${nel}${nel}b`,
+  ])("should store exactly what a write would: %j", async (content) => {
+    expect(content.trim()).toBe(content);
     await seed(1, "interests", content);
     await backfill();
 
-    const written = await remember({ category: "interests", content });
+    const backfilled = await stored(1);
 
-    const expected = `\t a  b  c  d${nbsp}`;
-    expect(written).toMatchObject({ memory: { content: expected } });
-    expect(await stored(1)).toMatchObject({ content: expected });
+    await expect(
+      remember({ category: "interests", content }),
+    ).resolves.toMatchObject({ memory: { content: backfilled?.["content"] } });
   });
 
-  it("should drop a note that was only line breaks", async () => {
-    await seed(1, "interests", "\r\n\n");
+  it("should drop a note that was only U+0085", async () => {
+    await seed(1, "interests", nel);
     await backfill();
 
     expect(await stored(1)).toBeUndefined();
     await expect(
-      remember({ category: "interests", content: "\r\n\n" }),
+      remember({ category: "interests", content: nel }),
     ).rejects.toThrow();
   });
 
