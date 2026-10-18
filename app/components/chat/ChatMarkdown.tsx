@@ -46,7 +46,18 @@ const extensions = [
     attributes: {},
     children: context.parseInline(match.slice(2, -2)),
   })),
-  rule("hardBreak", " ", / {2,}\n/y, () => ({ type: "break" })),
+  // Discord breaks every line; CommonMark only after two spaces.
+  rule("break", " \n", / *\n/y, () => ({ type: "break" })),
+  // CommonMark opens emphasis before a space; Discord doesn't (but closes after one).
+  rule("looseEmphasis", "*_", /[*_](?=\s)/y, ([match]) => ({
+    type: "text",
+    value: match,
+  })),
+  // Discord leaves a link without a target as typed.
+  rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, ([match]) => ({
+    type: "text",
+    value: match,
+  })),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
     link(match.slice(1, -1)),
@@ -60,7 +71,8 @@ const extensions = [
   rule(
     "url",
     "h",
-    /(?<![A-Za-z0-9])https?:\/\/[^\s<]+[^<.,:;"')\]\s]/y,
+    // Balanced parentheses stay in the url, as in Wikipedia's `Foo_(bar)`.
+    /https?:\/\/(?:\([^\s<()]*\)|[^\s<()])*(?:\([^\s<()]*\)|[^\s<().,:;"'\]])/y,
     ([url], { inLink }) => (inLink ? undefined : link(url)),
   ),
 ] satisfies MarkdownExtension[];

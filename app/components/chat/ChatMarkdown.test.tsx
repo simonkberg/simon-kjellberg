@@ -26,7 +26,17 @@ describe("ChatMarkdown", () => {
   });
 
   it("renders line breaks", () => {
-    expect(html("line one  \nline two")).toBe("line one<br>line two");
+    expect(html("line one\nline two  \nline three")).toBe(
+      "line one<br>line two<br>line three",
+    );
+  });
+
+  it("opens emphasis only before a non-space, but closes it after one", () => {
+    expect(html("2 * 3 * 4 and *a *")).toBe("2 * 3 * 4 and <em>a </em>");
+  });
+
+  it("leaves a link without a target as typed", () => {
+    expect(html("[x]()")).toBe("[x]()");
   });
 
   it("renders explicit links, with an optional title", () => {
@@ -43,8 +53,10 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("does not autolink a url inside a word", () => {
-    expect(html("xhttps://a.dev")).toBe("xhttps://a.dev");
+  it("keeps balanced parentheses in a bare url", () => {
+    expect(html("(see https://a.dev/x_(y))")).toBe(
+      '(see <a href="https://a.dev/x_(y)">https://a.dev/x_(y)</a>)',
+    );
   });
 
   it("does not autolink a url that is already a link's text", () => {
