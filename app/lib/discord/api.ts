@@ -55,13 +55,15 @@ type RouteParams<Route extends string> = Record<
 >;
 
 function fillRoute(route: string, params: Record<string, string>): string {
-  const values: Record<string, string> = {
+  const values = Object.entries({
     ...params,
     "channel.id": env.DISCORD_CHANNEL_ID,
     "guild.id": env.DISCORD_GUILD_ID,
-  };
-  return route.replace(/\{([^}]+)\}/g, (_, name: string) =>
-    encodeURIComponent(values[name] ?? ""),
+  });
+  return values.reduce(
+    (path, [name, value]) =>
+      path.replaceAll(`{${name}}`, encodeURIComponent(value)),
+    route,
   );
 }
 
