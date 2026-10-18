@@ -56,8 +56,11 @@ const extensions = [
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
     link(match.slice(1, -1)),
   ),
-  rule("mailto", "<", /<[^\s<>@]+@[^\s<>]+>/y, ([match]) =>
-    link(`mailto:${match.slice(1, -1)}`, match.slice(1, -1)),
+  rule("mailto", "<", /<(?:mailto:)?[^\s<>@:]+@[^\s<>]+>/iy, ([match]) =>
+    link(
+      `mailto:${match.slice(1, -1).replace(/^mailto:/i, "")}`,
+      match.slice(1, -1),
+    ),
   ),
   rule(
     "url",

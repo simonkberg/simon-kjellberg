@@ -61,6 +61,9 @@ describe("ChatMarkdown", () => {
     expect(html("<https://auto.link> and <a@b.com>")).toBe(
       '<a href="https://auto.link">https://auto.link</a> and <a href="mailto:a@b.com">a@b.com</a>',
     );
+    expect(html("<mailto:a@b.com>")).toBe(
+      '<a href="mailto:a@b.com">mailto:a@b.com</a>',
+    );
   });
 
   it("does not embed images, keeping only the alt text", () => {
