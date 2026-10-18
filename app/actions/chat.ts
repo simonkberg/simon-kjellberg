@@ -13,7 +13,6 @@ import {
 import { identifiers } from "@/lib/identifiers";
 import { isDeniedIp } from "@/lib/ipDenyList";
 import { log } from "@/lib/log";
-import { MAX_MESSAGE_LENGTH } from "@/lib/messageLength";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   EmojiSchema,
@@ -22,6 +21,8 @@ import {
   withSiteReactions,
 } from "@/lib/reactions";
 import { getSession, type Username } from "@/lib/session";
+
+const MAX_MESSAGE_LENGTH = 500;
 
 export type ChatHistoryResult =
   | { status: "ok"; messages: Message[] }

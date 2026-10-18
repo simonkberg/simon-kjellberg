@@ -11,7 +11,6 @@ import {
 import { requestFormReset } from "react-dom";
 
 import { postChatMessage, PostChatMessageResult } from "@/actions/chat";
-import { MAX_MESSAGE_LENGTH } from "@/lib/messageLength";
 
 import { CaretBuddy } from "./CaretBuddy";
 import { ChatEmojiInput } from "./ChatEmojiInput";
@@ -102,7 +101,6 @@ export const ChatInput = ({
             value={inputValue}
             onValueChange={setInputValue}
             autoComplete="off"
-            maxLength={MAX_MESSAGE_LENGTH}
           />
           <CaretBuddy
             inputValue={inputValue}
