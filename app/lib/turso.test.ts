@@ -301,6 +301,20 @@ describe("batch", () => {
     ).rejects.toThrow(`Turso query error in ${step}: database is locked`);
   });
 
+  it("should throw when a step has neither a result nor an error", async () => {
+    server.use(
+      http.post(PIPELINE_URL, () =>
+        HttpResponse.json(
+          batchResponse([stmtResult(0), null, stmtResult(0), null]),
+        ),
+      ),
+    );
+
+    await expect(batch([{ sql: "SELECT 1" }])).rejects.toThrow(
+      "Turso query error in statement 1: no result",
+    );
+  });
+
   it("should throw when the result is not a batch result", async () => {
     server.use(
       http.post(PIPELINE_URL, () => HttpResponse.json(pipelineResponse())),

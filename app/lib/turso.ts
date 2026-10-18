@@ -90,7 +90,19 @@ export type BatchResults<T extends readonly Statement[]> = {
   -readonly [K in keyof T]: QueryResult;
 };
 
-function encodeStatement({ sql, args = [] }: Statement) {
+type EncodedStatement = {
+  sql: string;
+  args?: ReturnType<typeof encodeValue>[];
+};
+type Condition =
+  | { type: "ok"; step: number }
+  | { type: "not"; cond: Condition };
+type BatchStep = { condition?: Condition; stmt: EncodedStatement };
+type PipelineRequest =
+  | { type: "execute"; stmt: EncodedStatement }
+  | { type: "batch"; batch: { steps: BatchStep[] } };
+
+function encodeStatement({ sql, args = [] }: Statement): EncodedStatement {
   return { sql, args: args.map(encodeValue) };
 }
 
@@ -115,7 +127,7 @@ function decodeResult({
   };
 }
 
-async function pipeline(request: object) {
+async function pipeline(request: PipelineRequest) {
   const response = await fetch(pipelineUrl(), {
     method: "POST",
     headers: {
@@ -167,7 +179,7 @@ export async function batch<const T extends readonly Statement[]>(
     batch: {
       steps: [
         { stmt: { sql: "BEGIN" } },
-        ...statements.map((statement, index) => ({
+        ...statements.map((statement, index): BatchStep => ({
           condition: { type: "ok", step: index },
           stmt: encodeStatement(statement),
         })),
