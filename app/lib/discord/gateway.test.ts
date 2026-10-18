@@ -132,6 +132,7 @@ describe("subscribe", () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("should complete handshake and resolve", async () => {
@@ -588,6 +589,26 @@ describe("subscribe", () => {
     await expect(subscribe(vi.fn())).rejects.toThrow("Invalid URL");
   });
 
+  it("should drop the callback of a subscribe that failed to connect", async () => {
+    const { subscribe } = await import("./gateway");
+    server.use(createHandshakeHandler());
+    const failed = vi.fn();
+    vi.stubGlobal(
+      "WebSocket",
+      class {
+        constructor() {
+          throw new Error("No socket");
+        }
+      },
+    );
+
+    await expect(subscribe(failed)).rejects.toThrow("No socket");
+    vi.unstubAllGlobals();
+    await subscribe(vi.fn());
+
+    expect(failed).not.toHaveBeenCalled();
+  });
+
   it("should reject every connect after a fatal close without opening a socket", async () => {
     const { subscribe } = await import("./gateway");
     let connectionCount = 0;
@@ -876,6 +897,181 @@ describe("subscribe", () => {
     expect(secondConnectionMessages).toMatchObject([
       { op: GatewayOpcode.IDENTIFY },
     ]);
+  });
+
+  it("should resume a session that followed a non-resumable INVALID_SESSION", async () => {
+    const { subscribe } = await import("./gateway");
+    const resumeGateway = ws.link(
+      "wss://resume.discord.gg/?v=10&encoding=json",
+    );
+    const resumeMessages: Payload[] = [];
+
+    server.use(
+      createHandshakeHandler({
+        session: {
+          ...DEFAULT_SESSION,
+          resume_gateway_url: "wss://resume.discord.gg",
+        },
+      }),
+      resumeGateway.addEventListener("connection", ({ client }) => {
+        client.send(
+          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
+        );
+        client.addEventListener("message", (event) => {
+          resumeMessages.push(PayloadSchema.parse(event.data));
+        });
+      }),
+    );
+
+    await subscribe(vi.fn());
+    getLastClient(gateway.clients)?.send(
+      createPayload(GatewayOpcode.INVALID_SESSION, false),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(resumeMessages).toEqual([]);
+
+    getLastClient(gateway.clients)?.close(4000, "Dropped");
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+  });
+
+  it("should resume after a resumable INVALID_SESSION", async () => {
+    const { subscribe } = await import("./gateway");
+    const resumeGateway = ws.link(
+      "wss://resume.discord.gg/?v=10&encoding=json",
+    );
+    const resumeMessages: Payload[] = [];
+
+    server.use(
+      createHandshakeHandler({
+        session: {
+          ...DEFAULT_SESSION,
+          resume_gateway_url: "wss://resume.discord.gg",
+        },
+      }),
+      resumeGateway.addEventListener("connection", ({ client }) => {
+        client.send(
+          createPayload(GatewayOpcode.HELLO, { heartbeat_interval: 60000 }),
+        );
+        client.addEventListener("message", (event) => {
+          resumeMessages.push(PayloadSchema.parse(event.data));
+        });
+      }),
+    );
+
+    await subscribe(vi.fn());
+    getLastClient(gateway.clients)?.send(
+      createPayload(GatewayOpcode.INVALID_SESSION, true),
+    );
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(resumeMessages).toMatchObject([{ op: GatewayOpcode.RESUME }]);
+  });
+
+  describe("dead sockets", () => {
+    // A dead peer never answers the close handshake, so onclose never fires.
+    class DeadSocket {
+      static readonly OPEN = 1;
+      static instances: DeadSocket[] = [];
+      readyState = DeadSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onmessage: ((event: { data: string }) => void) | null = null;
+      constructor() {
+        DeadSocket.instances.push(this);
+      }
+      send() {}
+      close() {}
+      receive(...args: Parameters<typeof createPayload>) {
+        this.onmessage?.({ data: createPayload(...args) });
+      }
+    }
+
+    beforeEach(() => {
+      DeadSocket.instances = [];
+      vi.stubGlobal("WebSocket", DeadSocket);
+    });
+
+    it("should reconnect after a heartbeat timeout and ignore the old socket", async () => {
+      const { subscribe } = await import("./gateway");
+      const callback = vi.fn();
+
+      const subscribed = subscribe(callback);
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 1000 });
+      socket?.receive(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY");
+      await subscribed;
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(DeadSocket.instances).toHaveLength(2);
+
+      callback.mockClear();
+      socket?.receive(
+        GatewayOpcode.DISPATCH,
+        { id: "late", channel_id: "test-discord-channel-id" },
+        2,
+        "MESSAGE_DELETE",
+      );
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should reconnect when HELLO never arrives", async () => {
+      const { subscribe } = await import("./gateway");
+
+      void subscribe(vi.fn());
+      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(DeadSocket.instances).toHaveLength(2);
+    });
+
+    it("should reconnect when HELLO cannot be parsed", async () => {
+      const { subscribe } = await import("./gateway");
+      const { log } = await import("@/lib/log");
+
+      void subscribe(vi.fn());
+      DeadSocket.instances[0]?.receive(GatewayOpcode.HELLO, {});
+      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(2000);
+
+      expect(log.info).toHaveBeenCalledWith(
+        { code: 4000, reason: "No HELLO" },
+        "Gateway connection closed",
+      );
+      expect(DeadSocket.instances).toHaveLength(2);
+    });
+
+    it("should stop the HELLO watchdog once HELLO arrives", async () => {
+      const { subscribe } = await import("./gateway");
+
+      const subscribed = subscribe(vi.fn());
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
+      socket?.receive(GatewayOpcode.DISPATCH, DEFAULT_SESSION, 1, "READY");
+      await subscribed;
+      await vi.advanceTimersByTimeAsync(12_000);
+
+      expect(DeadSocket.instances).toHaveLength(1);
+    });
+
+    it("should close at once on an invalid READY without waiting for the socket", async () => {
+      const { subscribe } = await import("./gateway");
+      const { log } = await import("@/lib/log");
+
+      const subscribed = subscribe(vi.fn());
+      const [socket] = DeadSocket.instances;
+      socket?.receive(GatewayOpcode.HELLO, { heartbeat_interval: 60_000 });
+      socket?.receive(GatewayOpcode.DISPATCH, {}, 1, "READY");
+
+      await expect(subscribed).rejects.toThrow();
+      expect(log.info).toHaveBeenCalledWith(
+        { code: 4000, reason: "Invalid READY" },
+        "Gateway connection closed",
+      );
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(DeadSocket.instances).toHaveLength(1);
+    });
   });
 
   it("should not reconnect on fatal close codes", async () => {
