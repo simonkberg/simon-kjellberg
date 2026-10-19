@@ -10,10 +10,10 @@ import { tap } from "@/mocks/popover";
 import { EmojiText } from "./EmojiText";
 
 const EMOJI: EmojiShortcodes[] = [
-  ["👍", "thumbsup", "+1"],
-  ["❤️", "heart"],
-  ["🧑‍🚒", "firefighter"],
-  ["🏌️‍♂️", "golfer_man"],
+  ["👍", ["thumbsup", "+1"], []],
+  ["❤️", ["heart"], []],
+  ["🧑‍🚒", ["firefighter"], []],
+  ["🏌️‍♂️", ["golfer_man"], []],
 ];
 
 const tooltips = () => screen.queryAllByRole("tooltip", { hidden: true });

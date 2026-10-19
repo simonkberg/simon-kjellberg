@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { type EmojiShortcodes, searchEmoji, withSkinTone } from "./emoji";
 
 const EMOJI: EmojiShortcodes[] = [
-  ["🧑‍🚒", "firefighter"],
-  ["🔥", "fire", "flame"],
-  ["❤️‍🔥", "heart_on_fire"],
-  ["🌋", "volcano", "campfire_mountain"],
-  ["💀", "skull", "skeleton"],
+  ["🧑‍🚒", ["firefighter"], []],
+  ["🔥", ["fire", "flame"], []],
+  ["❤️‍🔥", ["heart_on_fire"], []],
+  ["🌋", ["volcano", "campfire_mountain"], []],
+  ["💀", ["skull", "skeleton"], ["dead"]],
+  ["😵", ["dizzy_face"], ["dead"]],
 ];
 
 const search = (query: string, limit = 10) =>
@@ -24,6 +25,14 @@ describe("searchEmoji", () => {
     expect(searchEmoji(EMOJI, "skel", 10)).toEqual([
       { emoji: "💀", name: "skeleton" },
     ]);
+  });
+
+  it("finds a whole keyword after every shortcode, named by its own", () => {
+    expect(searchEmoji(EMOJI, "dead", 10)).toEqual([
+      { emoji: "💀", name: "skull" },
+      { emoji: "😵", name: "dizzy_face" },
+    ]);
+    expect(search("dea")).toBe("");
   });
 
   it("ignores case, since a shortcode is typed after a capital as often", () => {

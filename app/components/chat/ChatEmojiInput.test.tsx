@@ -11,11 +11,11 @@ import { sendToggle } from "@/mocks/popover";
 vi.mock(import("@/actions/chat"), () => ({ postChatMessage: vi.fn() }));
 
 const EMOJI: EmojiShortcodes[] = [
-  ["🧑‍🚒", "firefighter"],
-  ["🔥", "fire", "flame"],
-  ["💀", "skull", "skeleton"],
-  ["😀", "grinning"],
-  ["😃", "smiley"],
+  ["🧑‍🚒", ["firefighter"], []],
+  ["🔥", ["fire", "flame"], []],
+  ["💀", ["skull", "skeleton"], []],
+  ["😀", ["grinning"], []],
+  ["😃", ["smiley"], []],
 ];
 
 const options = () =>

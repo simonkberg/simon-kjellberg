@@ -8,6 +8,8 @@ import { type EmojiShortcodes, qualified } from "@/lib/emoji";
 const COMPONENT_GROUP = 2;
 const FLAGS_GROUP = 9;
 const COUNTRY_CODE = /^[a-z]{2}$/;
+// What a search can match, typed after the colon and lowercased, so neither "i’m" nor a flag's "SE" is kept.
+const TYPEABLE = /^[a-z\d_+-]+$/;
 
 const codes = (preset: string | string[] | undefined) => [preset ?? []].flat();
 
@@ -16,7 +18,7 @@ const JOYPIXELS = new Set(Object.values(joypixels).flatMap(codes));
 // JoyPixels' names first, the closest to Discord's; Emojibase's fill the gaps,
 // leaving out names JoyPixels gives another emoji, so each name has one.
 export const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
-  ({ group, hexcode, unicode }) => {
+  ({ group, hexcode, unicode, tags = [] }) => {
     if (group === undefined || group === COMPONENT_GROUP) return [];
     const names = [
       ...codes(joypixels[hexcode]),
@@ -25,12 +27,14 @@ export const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
       // As exact matches, they would lead every two-letter search; flag_sk still finds 🇸🇰.
       (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
     );
-    return [[qualified(unicode), ...names]];
+    return [
+      [qualified(unicode), names, tags.filter((tag) => TYPEABLE.test(tag))],
+    ];
   },
 );
 
 const EMOJI_BY_NAME = new Map(
-  SHORTCODES.flatMap(([emoji, ...names]) =>
+  SHORTCODES.flatMap(([emoji, names]) =>
     names.map((name) => [name, emoji] as const),
   ),
 );

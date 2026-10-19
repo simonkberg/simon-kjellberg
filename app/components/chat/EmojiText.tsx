@@ -11,7 +11,7 @@ const EMOJI = /(\p{RGI_Emoji})/v;
 
 const Shortcode = ({ emoji }: { emoji: string }) => {
   const base = withoutSkinTone(emoji);
-  const name = use(loadShortcodes()).find(([known]) => known === base)?.[1];
+  const name = use(loadShortcodes()).find(([known]) => known === base)?.[1][0];
   return name && `:${name}:`;
 };
 
