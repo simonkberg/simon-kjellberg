@@ -49,9 +49,12 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("autolinks bare urls", () => {
+  it("autolinks bare urls, whatever the scheme's case", () => {
     expect(html("the source is here: https://github.com/example/repo")).toBe(
       'the source is here: <a href="https://github.com/example/repo">https://github.com/example/repo</a>',
+    );
+    expect(html("HTTPS://a.dev")).toBe(
+      '<a href="HTTPS://a.dev">HTTPS://a.dev</a>',
     );
   });
 
@@ -70,6 +73,9 @@ describe("ChatMarkdown", () => {
   it("autolinks bracketed urls and email addresses", () => {
     expect(html("<https://auto.link> and <a@b.com>")).toBe(
       '<a href="https://auto.link">https://auto.link</a> and <a href="mailto:a@b.com">a@b.com</a>',
+    );
+    expect(html("<HTTPS://a.dev>")).toBe(
+      '<a href="HTTPS://a.dev">HTTPS://a.dev</a>',
     );
     expect(html("<mailto:a@b.com>")).toBe(
       '<a href="mailto:a@b.com">mailto:a@b.com</a>',

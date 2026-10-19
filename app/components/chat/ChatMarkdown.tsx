@@ -57,7 +57,7 @@ const extensions = [
   // Discord leaves `[x]()` as typed.
   rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, literal),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
-  rule("autolink", "<", /<https?:\/\/[^\s<>]+>/y, ([match]) =>
+  rule("autolink", "<", /<https?:\/\/[^\s<>]+>/iy, ([match]) =>
     link(match.slice(1, -1)),
   ),
   rule("mailto", "<", /<(?:mailto:)?[^\s<>@:]+@[^\s<>]+>/iy, ([match]) => {
@@ -66,9 +66,9 @@ const extensions = [
   }),
   rule(
     "url",
-    "h",
+    "hH",
     // Balanced parentheses stay in the url, as in Wikipedia's `Foo_(bar)`.
-    /https?:\/\/(?:\([^\s<()]*\)|[^\s<()])*(?:\([^\s<()]*\)|[^\s<().,:;"'\]])/y,
+    /https?:\/\/(?:\([^\s<()]*\)|[^\s<()])*(?:\([^\s<()]*\)|[^\s<().,:;"'\]])/iy,
     ([url], { inLink }) => (inLink ? undefined : link(url)),
   ),
 ] satisfies MarkdownExtension[];
