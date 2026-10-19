@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
-import { REACTION_EMOJI } from "@/lib/emoji";
+import { REACTION_EMOJI, SKIN_TONES } from "@/lib/emoji";
 import { isOpen, sendToggle } from "@/mocks/popover";
 
 import {
@@ -12,6 +12,7 @@ import {
   ChatReactionsContext,
   type ChatReactionsContextValue,
 } from "./ChatReactions";
+import { setSkinTone } from "./skinTone";
 
 function renderWithContext(
   ui: React.ReactNode,
@@ -113,16 +114,16 @@ describe("ChatReactionPicker", () => {
     expect(localStorage.getItem("skin-tone")).toBe("2");
   });
 
-  it("leaves a reaction the visitor already has to its pill", async () => {
+  it("leaves a reaction the visitor already has, in any tone, to its pill", async () => {
     const { react } = renderWithContext(
       <ChatReactionList
         messageId="1"
-        reactions={[{ emoji: "🎉", count: 1, users: [], mine: true }]}
+        reactions={[{ emoji: "👍🏽", count: 1, users: [], mine: true }]}
       />,
     );
     openPicker();
 
-    await userEvent.click(getEmoji("tada"));
+    await userEvent.click(getEmoji("thumbsup"));
 
     expect(react).not.toHaveBeenCalled();
   });
@@ -284,5 +285,50 @@ describe("ChatReactionList", () => {
     await userEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
+  });
+
+  describe("with skin tones", () => {
+    const toned: Reaction[] = [
+      { emoji: "👍🏽", count: 2, users: ["alice"], mine: true },
+      { emoji: "🎉", count: 1, users: [] },
+      { emoji: "👍", count: 1, users: ["alice"] },
+      { emoji: "👍🏻", count: 1, users: [] },
+    ];
+
+    it("groups an emoji's tones into one pill, default first", () => {
+      renderWithContext(<ChatReactionList messageId="1" reactions={toned} />);
+
+      const [thumbs, tada] = screen.getAllByRole("button");
+      expect(thumbs).toHaveTextContent("👍👍🏻👍🏽 4");
+      expect(thumbs).toHaveAttribute("aria-pressed", "true");
+      expect(thumbs).toHaveAccessibleDescription(
+        "You, alice, and 1 on Discord",
+      );
+      expect(tada).toHaveTextContent("🎉 1");
+    });
+
+    it("takes back the visitor's own reaction in whichever tone it is", async () => {
+      const { react } = renderWithContext(
+        <ChatReactionList messageId="1" reactions={toned} />,
+      );
+
+      await userEvent.click(screen.getAllByRole("button")[0]!);
+
+      expect(react).toHaveBeenCalledWith("1", "👍🏽");
+    });
+
+    it("adds the visitor's tone when they haven't reacted", async () => {
+      setSkinTone(SKIN_TONES[5]);
+      const { react } = renderWithContext(
+        <ChatReactionList
+          messageId="1"
+          reactions={toned.map((reaction) => ({ ...reaction, mine: false }))}
+        />,
+      );
+
+      await userEvent.click(screen.getAllByRole("button")[0]!);
+
+      expect(react).toHaveBeenCalledWith("1", "👍🏿");
+    });
   });
 });

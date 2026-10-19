@@ -153,6 +153,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   changes, so a toggle that leaves the mirror unchanged reaches them on the next change. Mirror
   failures and races only show on Discord, so they are logged, not retried; a clear on Discord leaves the site's rows. simon-bot
   reacts the same way, as a `simon-bot` row, since its Discord reaction is the mirror.
+  Each skin tone is its own reaction, but a pill groups an emoji's tones, as Slack does:
+  clicking it takes back the visitor's own in any tone, or adds theirs in their tone.
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
