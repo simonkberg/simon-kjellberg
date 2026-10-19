@@ -8,8 +8,8 @@ import { type EmojiShortcodes, qualified } from "@/lib/emoji";
 const COMPONENT_GROUP = 2;
 const FLAGS_GROUP = 9;
 const COUNTRY_CODE = /^[a-z]{2}$/;
-// What can follow the colon, so "i’m" can never match.
-const TYPEABLE = /^[\w+-]+$/;
+// What a search can match, typed after the colon and lowercased, so neither "i’m" nor a flag's "SE" is kept.
+const TYPEABLE = /^[a-z\d_+-]+$/;
 
 const codes = (preset: string | string[] | undefined) => [preset ?? []].flat();
 

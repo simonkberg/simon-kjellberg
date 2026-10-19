@@ -39,6 +39,7 @@ describe("GET /api/emoji", () => {
 
     expect(flag?.[1]).toContain("flag_se");
     expect(flag?.[1]).not.toContain("se");
+    expect(flag?.[2]).not.toContain("SE");
   });
 
   it("keeps the keywords that can be typed and aren't already a shortcode", async () => {
