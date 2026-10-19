@@ -149,11 +149,16 @@ describe("Chat", () => {
         }),
       ]);
 
-      await userEvent.click(screen.getByRole("button", { name: "👍 1" }));
+      // Awaited in act: the click's hover shows the pill's tooltip, whose shortcode loads.
+      await act(() =>
+        userEvent.click(screen.getByRole("button", { name: "👍 1" })),
+      );
 
       const pill = screen.getByRole("button", { name: "👍 2" });
       expect(pill).toHaveAttribute("aria-pressed", "true");
-      expect(pill).toHaveAccessibleDescription("You and 1 on Discord");
+      expect(pill).toHaveAccessibleDescription(
+        /reacted by You and 1 on Discord$/,
+      );
       expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
         "aria-pressed",
         "false",

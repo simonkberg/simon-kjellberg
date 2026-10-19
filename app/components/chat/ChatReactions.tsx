@@ -10,12 +10,13 @@ import {
   useState,
 } from "react";
 
-import { TooltipButton } from "@/components/Tooltip";
+import { TooltipButton, WhenShown } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI, SKIN_TONES, withSkinTone } from "@/lib/emoji";
 
 import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
+import { EmojiShortcode } from "./EmojiText";
 import { setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
@@ -248,7 +249,15 @@ export const ChatReactionList = ({
       {reactions.map((reaction) => (
         <TooltipButton
           key={reaction.emoji}
-          tooltip={describeReactors(reaction)}
+          // Discord's wording; the shortcode waits for the tooltip, so rendering pills fetches nothing.
+          tooltip={
+            <>
+              <WhenShown>
+                <EmojiShortcode emoji={reaction.emoji} />{" "}
+              </WhenShown>
+              reacted by {describeReactors(reaction)}
+            </>
+          }
           describes
           aria-pressed={reaction.mine === true}
           disabled={reacting.has(messageId)}

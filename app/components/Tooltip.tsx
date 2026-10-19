@@ -7,6 +7,8 @@ import {
   type PointerEvent,
   type ReactNode,
   type RefObject,
+  createContext,
+  use,
   useEffect,
   useId,
   useRef,
@@ -20,6 +22,7 @@ function useTooltip(anchorId?: string) {
   const press = useRef<{ timer?: number; held?: boolean }>({});
   const dismiss = useRef<AbortController>(null);
   const dismissedBy = useRef<EventTarget>(null);
+  const [shown, setShown] = useState(false);
   const anchor = () => (anchorId ? document.getElementById(anchorId) : null);
 
   useEffect(
@@ -43,6 +46,7 @@ function useTooltip(anchorId?: string) {
   };
 
   const show = (button: HTMLElement) => {
+    setShown(true);
     dismiss.current?.abort();
     document.dispatchEvent(new Event("tooltipshow"));
     tip.current?.showPopover({ source: anchor() ?? button });
@@ -88,6 +92,7 @@ function useTooltip(anchorId?: string) {
 
   return {
     tip,
+    shown,
     show,
     closedBy,
     trigger: {
@@ -135,18 +140,28 @@ function useTooltip(anchorId?: string) {
 
 type Trigger = ReturnType<typeof useTooltip>["trigger"];
 
+const Shown = createContext(false);
+
+/** Renders inside a tooltip only once it first shows, for content that loads. */
+export const WhenShown = ({ children }: { children: ReactNode }) =>
+  use(Shown) && children;
+
 // Not hint, whose light dismiss closes it on the click or tap that reveals it.
 const Popover = ({
   tip,
+  shown,
   id,
   children,
 }: {
   tip: RefObject<HTMLSpanElement | null>;
+  shown: boolean;
   id?: string;
   children: ReactNode;
 }) => (
   <span ref={tip} id={id} popover="manual" role="tooltip" className="tooltip">
-    <span>{children}</span>
+    <Shown value={shown}>
+      <span>{children}</span>
+    </Shown>
   </span>
 );
 
@@ -165,7 +180,7 @@ export const TooltipButton = ({
   anchor?: string;
 }) => {
   const id = useId();
-  const { tip, trigger } = useTooltip(anchor);
+  const { tip, shown, trigger } = useTooltip(anchor);
   const link = describes
     ? { "aria-describedby": id }
     : props["aria-label"]
@@ -175,7 +190,7 @@ export const TooltipButton = ({
   return (
     <>
       <button {...link} {...props} {...trigger} data-tooltip-trigger="" />
-      <Popover tip={tip} id={id}>
+      <Popover tip={tip} shown={shown} id={id}>
         {tooltip}
       </Popover>
     </>
@@ -202,19 +217,14 @@ export const TooltipText = ({
   tooltip: ReactNode;
   children: ReactNode;
 }) => {
-  const { tip, show, closedBy } = useTooltip();
-  const [shown, setShown] = useState(false);
+  const { tip, shown, show, closedBy } = useTooltip();
   const closing = useRef(false);
-  const reveal = (text: HTMLElement) => {
-    setShown(true);
-    show(text);
-  };
 
   return (
     <>
       <span
         onPointerEnter={(event) => {
-          if (event.pointerType !== "touch") reveal(event.currentTarget);
+          if (event.pointerType !== "touch") show(event.currentTarget);
         }}
         // A tap on the open tooltip's text closes it, like a tap anywhere else.
         onPointerDown={(event) => {
@@ -227,13 +237,15 @@ export const TooltipText = ({
             !closing.current &&
             !selects(text)
           ) {
-            reveal(text);
+            show(text);
           }
         }}
       >
         {children}
       </span>
-      <Popover tip={tip}>{shown && tooltip}</Popover>
+      <Popover tip={tip} shown={shown}>
+        <WhenShown>{tooltip}</WhenShown>
+      </Popover>
     </>
   );
 };
