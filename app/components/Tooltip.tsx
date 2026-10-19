@@ -244,7 +244,7 @@ export const TooltipText = ({
         {children}
       </span>
       <Popover tip={tip} shown={shown}>
-        <WhenShown>{tooltip}</WhenShown>
+        {shown && tooltip}
       </Popover>
     </>
   );
