@@ -1,9 +1,18 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
 import { REACTION_EMOJI, SKIN_TONES } from "@/lib/emoji";
+import { server } from "@/mocks/node";
 import { isOpen, sendToggle } from "@/mocks/popover";
 
 import {
@@ -251,6 +260,17 @@ describe("ChatReactionPicker", () => {
 });
 
 describe("ChatReactionList", () => {
+  const fetched = vi.fn();
+
+  beforeEach(() => {
+    server.use(
+      http.get("*/api/emoji", () => {
+        fetched();
+        return HttpResponse.json([["👍", ["thumbsup", "+1"], []]]);
+      }),
+    );
+  });
+
   const reactions: Reaction[] = [
     { emoji: "👍", count: 3, users: ["alice"], mine: true },
     { emoji: "🎉", count: 1, users: [] },
@@ -262,11 +282,28 @@ describe("ChatReactionList", () => {
 
     const [thumbs, tada, fire, add] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
-    expect(thumbs).toHaveAccessibleDescription("You, alice, and 1 on Discord");
+    expect(thumbs).toHaveAccessibleDescription(
+      "reacted by you, alice, and 1 on Discord",
+    );
     expect(tada).toHaveTextContent("🎉 1");
-    expect(tada).toHaveAccessibleDescription("1 on Discord");
-    expect(fire).toHaveAccessibleDescription("alice and bob");
+    expect(tada).toHaveAccessibleDescription("reacted by 1 on Discord");
+    expect(fire).toHaveAccessibleDescription("reacted by alice and bob");
     expect(add).toHaveAccessibleName("Add reaction");
+  });
+
+  it("names the emoji by its shortcode once the tooltip shows", async () => {
+    renderWithContext(<ChatReactionList messageId="1" reactions={reactions} />);
+    expect(fetched).not.toHaveBeenCalled();
+
+    const [thumbs] = screen.getAllByRole("button");
+    await act(() => userEvent.hover(thumbs!));
+
+    await waitFor(() =>
+      expect(thumbs).toHaveAccessibleDescription(
+        ":thumbsup: reacted by you, alice, and 1 on Discord",
+      ),
+    );
+    expect(fetched).toHaveBeenCalledOnce();
   });
 
   it("marks the visitor's own reactions as pressed", () => {
@@ -295,16 +332,19 @@ describe("ChatReactionList", () => {
       { emoji: "👍🏻", count: 1, users: [] },
     ];
 
-    it("groups an emoji's tones into one pill, default first", () => {
+    it("groups an emoji's tones into one pill, default first, named once", async () => {
       renderWithContext(<ChatReactionList messageId="1" reactions={toned} />);
 
       const [thumbs, tada] = screen.getAllByRole("button");
       expect(thumbs).toHaveTextContent("👍👍🏻👍🏽 4");
       expect(thumbs).toHaveAttribute("aria-pressed", "true");
-      expect(thumbs).toHaveAccessibleDescription(
-        "You, alice, and 1 on Discord",
-      );
       expect(tada).toHaveTextContent("🎉 1");
+      await act(() => userEvent.hover(thumbs!));
+      await waitFor(() =>
+        expect(thumbs).toHaveAccessibleDescription(
+          ":thumbsup: reacted by you, alice, and 1 on Discord",
+        ),
+      );
     });
 
     it("takes back the visitor's own reaction in whichever tone it is", async () => {

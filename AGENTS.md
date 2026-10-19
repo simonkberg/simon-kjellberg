@@ -160,8 +160,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
   route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's, and
   Emojibase's keywords, which Discord matches too (whole, after every shortcode). It is
-  fetched when the input takes focus, a shortcode is typed or a message emoji is first hovered,
-  which shows its shortcode, so the full set never ships with the page;
+  fetched when the input takes focus, a shortcode is typed or a message emoji or reaction is
+  first hovered, which shows its shortcode, so the full set never ships with the page;
   `app/components/chat/shortcodes.ts` holds the one cached request.
   Sending turns known `:shortcodes:` into emoji (`emojify`, called from `postChannelMessage`), as
   Discord clients do: the one place they convert, so the input never rewrites what is typed.
@@ -263,7 +263,8 @@ their own markup so each variant styles it; chat keeps `Loader`.
 
 Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
 its button that opens on hover, keyboard focus or a long press on touch. `TooltipText` is the
-inline-text kind, used for emoji in messages: hover or tap, never a tab stop.
+inline-text kind, used for emoji in messages: hover or tap, never a tab stop. Tooltip content that
+loads goes in `WhenShown`, so it waits for the first show.
 
 ### Server-Only Code
 

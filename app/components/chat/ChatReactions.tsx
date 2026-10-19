@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 
-import { TooltipButton } from "@/components/Tooltip";
+import { TooltipButton, WhenShown } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
 import {
   REACTION_EMOJI,
@@ -21,6 +21,7 @@ import {
 
 import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
+import { EmojiShortcode } from "./EmojiText";
 import { setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
@@ -248,7 +249,7 @@ function groupByEmoji(reactions: Reaction[]): Map<string, Reaction[]> {
 function describeReactors(variants: Reaction[]): string {
   const users = variants.flatMap((variant) => variant.users);
   const named = new Set(
-    variants.some((variant) => variant.mine) ? ["You", ...users] : users,
+    variants.some((variant) => variant.mine) ? ["you", ...users] : users,
   );
   const onDiscord = variants.reduce(
     (sum, { count, users, mine }) =>
@@ -278,7 +279,15 @@ export const ChatReactionList = ({
         return (
           <TooltipButton
             key={base}
-            tooltip={describeReactors(variants)}
+            // Discord's wording; the shortcode waits for the tooltip, so rendering pills fetches nothing.
+            tooltip={
+              <>
+                <WhenShown>
+                  <EmojiShortcode emoji={base} />{" "}
+                </WhenShown>
+                reacted by {describeReactors(variants)}
+              </>
+            }
             describes
             aria-pressed={own !== undefined}
             disabled={reacting.has(messageId)}

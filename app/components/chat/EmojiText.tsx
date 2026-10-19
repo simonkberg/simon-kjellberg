@@ -15,20 +15,20 @@ const Shortcode = ({ emoji }: { emoji: string }) => {
   return name && `:${name}:`;
 };
 
+/** The emoji's `:shortcode:`, loading the set as it first renders. */
+export const EmojiShortcode = ({ emoji }: { emoji: string }) => (
+  <Suspense fallback="…">
+    <Shortcode emoji={emoji} />
+  </Suspense>
+);
+
 /** Text with each emoji naming its shortcode in a tooltip. */
 export const EmojiText = ({ text }: { text: string }) =>
   text.split(EMOJI).map((part, index) =>
     index % 2 === 0 ? (
       part
     ) : (
-      <TooltipText
-        key={index}
-        tooltip={
-          <Suspense fallback="…">
-            <Shortcode emoji={part} />
-          </Suspense>
-        }
-      >
+      <TooltipText key={index} tooltip={<EmojiShortcode emoji={part} />}>
         {part}
       </TooltipText>
     ),
