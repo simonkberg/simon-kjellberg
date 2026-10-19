@@ -347,9 +347,9 @@ rendered fallbacks, and `PreferenceSwitch` retints them.
 
 ### Markdown Rendering
 
-Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx`. We use simple-markdown's parser and walk the AST ourselves — their React output builds React 18 elements (`react.element` brand) that React 19 rejects, so don't swap in `defaultReactOutput`.
+Discord message content is raw markdown, rendered by `app/components/chat/ChatMarkdown.tsx` from TanStack Markdown's `parseInline()`, so block syntax stays text. It is CommonMark, so small inline parsers add what Discord reads differently. Discord itself is the reference, not simple-markdown: it has diverged.
 
-Two rules the tests pin: `sanitizeUrl()` guards every `link` target (a rejected one renders as plain text), and `image` renders as alt text — never an `<img>`, since message authors choose the URL.
+Two rules the tests pin: a link renders as typed unless it targets `http(s)`, `mailto` or `tel` (as Discord does; our autolinks only make `http(s)` and `mailto`), and `image` renders as alt text — never an `<img>`, since message authors choose the URL.
 
 ## Maintaining This Document
 

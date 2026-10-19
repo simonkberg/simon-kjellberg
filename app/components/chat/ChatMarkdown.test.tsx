@@ -26,20 +26,70 @@ describe("ChatMarkdown", () => {
   });
 
   it("renders line breaks", () => {
-    expect(html("line one  \nline two")).toBe("line one<br>line two");
+    expect(html("line one\nline two  \nline three")).toBe(
+      "line one<br>line two  <br>line three",
+    );
+  });
+
+  it.each([
+    ["2 * 3 * 4 _ 5 _", "2 * 3 * 4 _ 5 _"],
+    ["foo *bar *", "foo *bar *"],
+    ["*a * b*", "*a * b*"],
+    ["*a *b*", "*a <em>b</em>"],
+    ["x *a* * b*", "x <em>a</em> * b*"],
+    ["*a **b** c*", "<em>a <strong>b</strong> c</em>"],
+    ["*a `*` b*", "<em>a `</em>` b*"],
+  ])("pairs %j's asterisks as Discord does", (source, expected) => {
+    expect(html(source)).toBe(expected);
+  });
+
+  it("strikes through only double tildes, as Discord does", () => {
+    expect(html("~~a~~ ~b~ ~5 min or ~10 min")).toBe(
+      "<del>a</del> ~b~ ~5 min or ~10 min",
+    );
+  });
+
+  it.each([
+    "[xss](javascript:alert(1))",
+    "[https://a.dev](https://b.dev)",
+    "[<a@b.co>](https://b.com)",
+  ])("leaves %j as typed, as Discord does", (source) => {
+    expect(html(source)).toBe(
+      source.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+    );
+    expect(document.querySelector("a")).toBeNull();
   });
 
   it("renders explicit links, with an optional title", () => {
     expect(
-      html('[link](https://simon.dev) and [t](https://x.dev "title")'),
+      html('[a.dev](https://simon.dev) and [t](HTTPS://x.dev "title")'),
     ).toBe(
-      '<a href="https://simon.dev">link</a> and <a href="https://x.dev" title="title">t</a>',
+      '<a href="https://simon.dev">a.dev</a> and <a href="HTTPS://x.dev" title="title">t</a>',
+    );
+    expect(html("[x](mailto:a@b.com) [y](tel:123)")).toBe(
+      '<a href="mailto:a@b.com">x</a> <a href="tel:123">y</a>',
+    );
+    expect(html("[a@b.co `http://x`](https://b.com)")).toBe(
+      '<a href="https://b.com">a@b.co <code>http://x</code></a>',
     );
   });
 
-  it("autolinks bare urls", () => {
+  it("autolinks bare urls with a lowercase scheme, as Discord does", () => {
     expect(html("the source is here: https://github.com/example/repo")).toBe(
       'the source is here: <a href="https://github.com/example/repo">https://github.com/example/repo</a>',
+    );
+    expect(html("HTTPS://a.dev")).toBe("HTTPS://a.dev");
+  });
+
+  it("keeps balanced parentheses in a bare url", () => {
+    expect(html("(see https://a.dev/x_(y))")).toBe(
+      '(see <a href="https://a.dev/x_(y)">https://a.dev/x_(y)</a>)',
+    );
+  });
+
+  it("never nests a link inside a link", () => {
+    expect(html("[a [https://a.dev] b](https://b.dev)")).toBe(
+      '<a href="https://b.dev">a [https://a.dev] b</a>',
     );
   });
 
@@ -47,6 +97,13 @@ describe("ChatMarkdown", () => {
     expect(html("<https://auto.link> and <a@b.com>")).toBe(
       '<a href="https://auto.link">https://auto.link</a> and <a href="mailto:a@b.com">a@b.com</a>',
     );
+    expect(html("<HTTPS://a.dev>")).toBe(
+      '<a href="HTTPS://a.dev">HTTPS://a.dev</a>',
+    );
+    expect(html("<mailto:a@b.com>")).toBe(
+      '<a href="mailto:a@b.com">mailto:a@b.com</a>',
+    );
+    expect(html("<a@b> a@b.com")).toBe("&lt;a@b&gt; a@b.com");
   });
 
   it("does not embed images, keeping only the alt text", () => {
@@ -80,26 +137,13 @@ describe("ChatMarkdown", () => {
     });
   });
 
-  describe("reference links without a definition", () => {
-    it("renders the label as plain text", () => {
-      expect(html("[undefined-ref][9]")).toBe("undefined-ref");
-    });
-
-    it("renders an image as its alt text", () => {
-      expect(html("![undefined-ref][9]")).toBe("undefined-ref");
-    });
+  it("leaves reference links as typed, as Discord does", () => {
+    expect(html("[ref][9] ![ref][9]")).toBe("[ref][9] ![ref][9]");
   });
 
-  describe("url sanitisation", () => {
-    it("drops javascript: link targets, leaving no anchor", () => {
-      expect(html("[xss](javascript:alert(1))")).toBe("xss");
-      expect(document.querySelector("a")).toBeNull();
-    });
-
-    it("drops data: link targets, leaving no anchor", () => {
-      expect(html("[x](data:text/html;base64,PHN2Zz4=)")).toBe("x");
-      expect(document.querySelector("a")).toBeNull();
-    });
+  it("never links an unlinkable target the parser reads differently", () => {
+    expect(html("[a [b] c](javascript:alert(1))")).toBe("a [b] c");
+    expect(document.querySelector("a")).toBeNull();
   });
 
   it("gives emoji in text a tooltip, but not in code", () => {
