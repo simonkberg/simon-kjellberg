@@ -43,6 +43,12 @@ describe("ChatMarkdown", () => {
     expect(html(source)).toBe(expected);
   });
 
+  it("strikes through only double tildes, as Discord does", () => {
+    expect(html("~~a~~ ~b~ ~5 min or ~10 min")).toBe(
+      "<del>a</del> ~b~ ~5 min or ~10 min",
+    );
+  });
+
   it("leaves a link without a target as typed", () => {
     expect(html("[x]()")).toBe("[x]()");
   });
