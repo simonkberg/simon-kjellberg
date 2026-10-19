@@ -27,10 +27,9 @@ export const SHORTCODES: EmojiShortcodes[] = emoji.flatMap(
       // As exact matches, they would lead every two-letter search; flag_sk still finds 🇸🇰.
       (name) => group !== FLAGS_GROUP || !COUNTRY_CODE.test(name),
     );
-    const keywords = tags.filter(
-      (tag) => TYPEABLE.test(tag) && !names.includes(tag),
-    );
-    return [[qualified(unicode), names, keywords]];
+    return [
+      [qualified(unicode), names, tags.filter((tag) => TYPEABLE.test(tag))],
+    ];
   },
 );
 

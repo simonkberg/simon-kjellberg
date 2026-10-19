@@ -39,17 +39,14 @@ describe("GET /api/emoji", () => {
 
     expect(flag?.[1]).toContain("flag_se");
     expect(flag?.[1]).not.toContain("se");
-    expect(flag?.[2]).not.toContain("SE");
   });
 
-  it("keeps the keywords that can be typed and aren't already a shortcode", async () => {
+  it("keeps only the keywords a search can match", async () => {
     const emoji = await shortcodes();
-    const [, names = [], keywords = []] =
-      emoji.find(([emoji]) => emoji === "😂") ?? [];
+    const keywords = emoji.flatMap(([, , keywords]) => keywords);
 
-    expect(keywords).toContain("lol");
-    expect(keywords).not.toContain("joy");
-    expect(names).toContain("joy");
-    expect(emoji.flatMap(([, , keywords]) => keywords)).not.toContain("i’m");
+    expect(emoji.find(([emoji]) => emoji === "😂")?.[2]).toContain("lol");
+    expect(keywords).not.toContain("i’m");
+    expect(keywords).not.toContain("SE");
   });
 });
