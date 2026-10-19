@@ -156,7 +156,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
 - **Session:** `proxy.ts` mints a visitor's session and also forwards it on the request,
   so `getSession()` finds one on every page and action the matcher covers, first visit included.
 - **Emoji shortcodes:** typing `:` in the chat input suggests emoji from `/api/emoji`, a static
-  route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's. It is
+  route built from `emojibase-data` with JoyPixels' names first, the closest to Discord's, and
+  Emojibase's keywords, which Discord matches too (whole, after every shortcode). It is
   fetched when the input takes focus, a shortcode is typed or a message emoji is first hovered,
   which shows its shortcode, so the full set never ships with the page;
   `app/components/chat/shortcodes.ts` holds the one cached request.
