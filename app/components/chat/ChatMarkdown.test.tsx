@@ -55,6 +55,8 @@ describe("ChatMarkdown", () => {
     "[x](//a.com)",
     "[https://a.dev](https://b.dev)",
     "[<https://a.com>](https://b.com)",
+    "[<a@b.co>](https://b.com)",
+    "[**bold**](foo)",
   ])("leaves %j as typed, as Discord does", (source) => {
     expect(html(source)).toBe(
       source.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
@@ -70,6 +72,9 @@ describe("ChatMarkdown", () => {
     );
     expect(html("[x](mailto:a@b.com) [y](tel:123)")).toBe(
       '<a href="mailto:a@b.com">x</a> <a href="tel:123">y</a>',
+    );
+    expect(html("[a@b.co `http://x`](https://b.com)")).toBe(
+      '<a href="https://b.com">a@b.co <code>http://x</code></a>',
     );
   });
 

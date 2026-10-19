@@ -42,6 +42,9 @@ const literal = ([value]: RegExpExecArray): InlineNode => ({
   value,
 });
 
+const bracketedEmail = /<(?:mailto:)?[^\s<>@:]+@[^\s<>@]+\.[^\s<>@]+>/;
+const linkInText = new RegExp(`https?://|${bracketedEmail.source}`, "i");
+
 const extensions = [
   // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
   rule("underline", "_", /__[\s\S]+?__(?!_)/y, ([match], context) => ({
@@ -67,26 +70,22 @@ const extensions = [
   ),
   // CommonMark (GFM) strikes `~a~`; Discord only strikes `~~a~~`.
   rule("singleTilde", "~", /~(?!~)/y, literal),
-  // Discord shows a link as typed unless it targets http(s), mailto or tel and its text has no url.
-  rule("unlinkable", "[", /\[[^\]]*\]\([^)]*\)/y, (match) =>
-    /^\[[^\]]*https?:\/\//i.test(match[0]) ||
-    !/\]\(\s*<?(?:https?|mailto|tel):/i.test(match[0])
+  // Discord shows a link as typed unless it targets http(s), mailto or tel and its text, outside code, has no link.
+  rule("unlinkable", "[", /\[([^\]]*)\]\(([^)]*)\)/y, (match) => {
+    const [, text = "", target = ""] = match;
+    return linkInText.test(text.replaceAll(/`[^`]*`/g, "")) ||
+      !/^\s*<?(?:https?|mailto|tel):/i.test(target)
       ? literal(match)
-      : undefined,
-  ),
+      : undefined;
+  }),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/iy, ([match]) =>
     link(match.slice(1, -1)),
   ),
-  rule(
-    "mailto",
-    "<",
-    /<(?:mailto:)?[^\s<>@:]+@[^\s<>@]+\.[^\s<>@]+>/iy,
-    ([match]) => {
-      const text = match.slice(1, -1);
-      return link(`mailto:${text.replace(/^mailto:/i, "")}`, text);
-    },
-  ),
+  rule("mailto", "<", new RegExp(bracketedEmail.source, "iy"), ([match]) => {
+    const text = match.slice(1, -1);
+    return link(`mailto:${text.replace(/^mailto:/i, "")}`, text);
+  }),
   rule(
     "url",
     "h",
