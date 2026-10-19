@@ -1,7 +1,7 @@
 import { type EmojiShortcodes, REACTION_EMOJI } from "@/lib/emoji";
 
 const REACTION_SHORTCODES: EmojiShortcodes[] = REACTION_EMOJI.map(
-  ({ emoji, name }) => [emoji, name],
+  ({ emoji, name }) => [emoji, [name], []],
 );
 
 let shortcodes: Promise<EmojiShortcodes[]> | undefined;

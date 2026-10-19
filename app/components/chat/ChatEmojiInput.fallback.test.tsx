@@ -21,7 +21,7 @@ it("falls back to the reactions when the emoji can't load, and retries on the ne
 
   server.use(
     http.get("*/api/emoji", () =>
-      HttpResponse.json([["☠️", "skull_crossbones"]]),
+      HttpResponse.json([["☠️", ["skull_crossbones"], []]]),
     ),
   );
   await user.click(screen.getByRole("button", { name: "Next" }));

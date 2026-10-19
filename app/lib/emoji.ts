@@ -73,8 +73,12 @@ export const withoutSkinTone = (emoji: string) =>
 export const qualified = (emoji: string) =>
   emoji.replace(/(\p{Emoji_Presentation})\uFE0F/gu, "$1");
 
-/** An emoji and its shortcodes, the first being the one it is known by. */
-export type EmojiShortcodes = [emoji: string, ...shortcodes: string[]];
+/** An emoji, its shortcodes (the first being the one it is known by) and the keywords that also find it. */
+export type EmojiShortcodes = [
+  emoji: string,
+  shortcodes: string[],
+  keywords: string[],
+];
 
 export interface EmojiMatch {
   emoji: string;
@@ -88,7 +92,10 @@ function rank(shortcode: string, query: string): number {
   return shortcode.includes(query) ? 3 : Infinity;
 }
 
-/** Matches best first, each named by the shortcode that matched. */
+// After every shortcode match, and only whole, as Discord matches them.
+const KEYWORD = 4;
+
+/** Matches best first, each named by the shortcode that matched, or by its own for a keyword. */
 export function searchEmoji(
   emoji: EmojiShortcodes[],
   query: string,
@@ -96,13 +103,16 @@ export function searchEmoji(
 ): EmojiMatch[] {
   const needle = query.toLowerCase();
   return emoji
-    .flatMap(([emoji, ...shortcodes]) => {
+    .flatMap(([emoji, shortcodes, keywords]) => {
       let best: (EmojiMatch & { rank: number }) | undefined;
       for (const name of shortcodes) {
         const score = rank(name, needle);
         if (score < (best?.rank ?? Infinity))
           best = { emoji, name, rank: score };
       }
+      const [name] = shortcodes;
+      if (!best && name && keywords.includes(needle))
+        best = { emoji, name, rank: KEYWORD };
       return best ? [best] : [];
     })
     .sort((a, b) => a.rank - b.rank)

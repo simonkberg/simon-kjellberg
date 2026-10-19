@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { emojify, SHORTCODES } from "./shortcodes";
 
 it("gives each name to one emoji", () => {
-  const names = SHORTCODES.flatMap(([, ...names]) => names);
+  const names = SHORTCODES.flatMap(([, names]) => names);
 
   expect(new Set(names).size).toBe(names.length);
 });
