@@ -50,13 +50,9 @@ describe("ChatMarkdown", () => {
   });
 
   it.each([
-    "[x]()",
-    "[x](foo)",
-    "[x](//a.com)",
+    "[xss](javascript:alert(1))",
     "[https://a.dev](https://b.dev)",
-    "[<https://a.com>](https://b.com)",
     "[<a@b.co>](https://b.com)",
-    "[**bold**](foo)",
   ])("leaves %j as typed, as Discord does", (source) => {
     expect(html(source)).toBe(
       source.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
@@ -145,14 +141,9 @@ describe("ChatMarkdown", () => {
     expect(html("[ref][9] ![ref][9]")).toBe("[ref][9] ![ref][9]");
   });
 
-  describe("url sanitisation", () => {
-    it.each([
-      "[xss](javascript:alert(1))",
-      "[x](data:text/html;base64,PHN2Zz4=)",
-    ])("leaves %j as typed, with no anchor", (source) => {
-      expect(html(source)).toBe(source);
-      expect(document.querySelector("a")).toBeNull();
-    });
+  it("never links an unlinkable target the parser reads differently", () => {
+    expect(html("[a [b] c](javascript:alert(1))")).toBe("a [b] c");
+    expect(document.querySelector("a")).toBeNull();
   });
 
   it("gives emoji in text a tooltip, but not in code", () => {

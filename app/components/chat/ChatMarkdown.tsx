@@ -3,6 +3,7 @@ import {
   type InlineParseContext,
   type MarkdownExtension,
   parseInline,
+  type UrlTransform,
 } from "@tanstack/markdown";
 import type { ReactNode } from "react";
 
@@ -44,6 +45,7 @@ const literal = ([value]: RegExpExecArray): InlineNode => ({
 
 const bracketedEmail = /<(?:mailto:)?[^\s<>@:]+@[^\s<>@]+\.[^\s<>@]+>/;
 const linkInText = new RegExp(`https?://|${bracketedEmail.source}`, "i");
+const linkable = /^\s*<?(?:https?|mailto|tel):/i;
 
 const extensions = [
   // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
@@ -59,22 +61,20 @@ const extensions = [
   rule(
     "emphasis",
     "*",
-    /\*(?=\S)(?:\*\*|\\[\s\S]|\s+(?:\\[\s\S]|[^\s*\\]|\*\*)|[^\s*\\])+?\*(?!\*)|\*(?!\*)/y,
-    (match, context) =>
-      match[0].length === 1
-        ? literal(match)
-        : {
-            type: "emphasis",
-            children: context.parseInline(match[0].slice(1, -1)),
-          },
+    /\*(?=\S)(?:\*\*|\\[\s\S]|\s+(?:\\[\s\S]|[^\s*\\]|\*\*)|[^\s*\\])+?\*(?!\*)/y,
+    ([match], context) => ({
+      type: "emphasis",
+      children: context.parseInline(match.slice(1, -1)),
+    }),
   ),
+  rule("singleAsterisk", "*", /\*(?!\*)/y, literal),
   // CommonMark (GFM) strikes `~a~`; Discord only strikes `~~a~~`.
   rule("singleTilde", "~", /~(?!~)/y, literal),
   // Discord shows a link as typed unless it targets http(s), mailto or tel and its text, outside code, has no link.
   rule("unlinkable", "[", /\[([^\]]*)\]\(([^)]*)\)/y, (match) => {
     const [, text = "", target = ""] = match;
     return linkInText.test(text.replaceAll(/`[^`]*`/g, "")) ||
-      !/^\s*<?(?:https?|mailto|tel):/i.test(target)
+      !linkable.test(target)
       ? literal(match)
       : undefined;
   }),
@@ -139,10 +139,14 @@ const renderNode = (
   }
 };
 
+// Catches the links `unlinkable` doesn't match, though they lose their brackets.
+const urlTransform: UrlTransform = (url, kind, defaultUrl) =>
+  kind === "image" || linkable.test(url) ? defaultUrl : null;
+
 export interface ChatMarkdownProps {
   source: string;
 }
 
 export const ChatMarkdown = ({ source }: ChatMarkdownProps) => (
-  <>{renderNodes(parseInline(source, { extensions }))}</>
+  <>{renderNodes(parseInline(source, { extensions, urlTransform }))}</>
 );
