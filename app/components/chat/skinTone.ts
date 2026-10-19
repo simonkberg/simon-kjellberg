@@ -32,6 +32,9 @@ function subscribe(onChange: () => void) {
   return () => listeners.delete(onChange);
 }
 
+/** The visitor's skin tone, for handlers that only read it. */
+export const getSkinTone = read;
+
 /** The visitor's skin tone, one of SKIN_TONES. */
 export const useSkinTone = () =>
   useSyncExternalStore(subscribe, read, () => SKIN_TONES[0]);

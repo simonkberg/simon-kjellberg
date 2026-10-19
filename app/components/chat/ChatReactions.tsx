@@ -22,7 +22,7 @@ import {
 import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
 import { EmojiShortcode } from "./EmojiText";
-import { setSkinTone, useSkinTone } from "./skinTone";
+import { getSkinTone, setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -246,16 +246,11 @@ function groupByEmoji(reactions: Reaction[]): Map<string, Reaction[]> {
   return groups;
 }
 
-function describeReactors(variants: Reaction[]): string {
+function describeReactors(variants: Reaction[], count: number): string {
   const users = variants.flatMap((variant) => variant.users);
-  const named = new Set(
-    variants.some((variant) => variant.mine) ? ["you", ...users] : users,
-  );
-  const onDiscord = variants.reduce(
-    (sum, { count, users, mine }) =>
-      sum + count - users.length - (mine ? 1 : 0),
-    0,
-  );
+  const mine = variants.filter((variant) => variant.mine).length;
+  const named = new Set(mine > 0 ? ["you", ...users] : users);
+  const onDiscord = count - users.length - mine;
   return reactorList.format(
     onDiscord > 0 ? [...named, `${onDiscord} on Discord`] : named,
   );
@@ -269,12 +264,11 @@ export const ChatReactionList = ({
   reactions: Reaction[];
 }) => {
   const { reacting, react } = use(ChatReactionsContext);
-  const { modifier } = useSkinTone();
 
   return (
     <div className="reactions" role="group" aria-label="Reactions">
       {[...groupByEmoji(reactions)].map(([base, variants]) => {
-        const toned = withSkinTone(base, modifier);
+        const count = variants.reduce((sum, variant) => sum + variant.count, 0);
         const own = variants.find((variant) => variant.mine);
         return (
           <TooltipButton
@@ -285,19 +279,22 @@ export const ChatReactionList = ({
                 <WhenShown>
                   <EmojiShortcode emoji={base} />{" "}
                 </WhenShown>
-                reacted by {describeReactors(variants)}
+                reacted by {describeReactors(variants, count)}
               </>
             }
             describes
             aria-pressed={own !== undefined}
             disabled={reacting.has(messageId)}
             // Takes back the visitor's own in any tone, else adds theirs.
-            onClick={() => react(messageId, own?.emoji ?? toned)}
+            onClick={() =>
+              react(
+                messageId,
+                own?.emoji ?? withSkinTone(base, getSkinTone().modifier),
+              )
+            }
           >
             {variants.map((variant) => variant.emoji).join("")}{" "}
-            <span className="count">
-              {variants.reduce((sum, { count }) => sum + count, 0)}
-            </span>
+            <span className="count">{count}</span>
           </TooltipButton>
         );
       })}

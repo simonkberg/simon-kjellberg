@@ -332,14 +332,21 @@ describe("ChatReactionList", () => {
       { emoji: "👍🏻", count: 1, users: [] },
     ];
 
-    it("groups an emoji's tones into one pill, default first, named once", async () => {
-      renderWithContext(<ChatReactionList messageId="1" reactions={toned} />);
+    function renderToned(reactions = toned) {
+      const context = renderWithContext(
+        <ChatReactionList messageId="1" reactions={reactions} />,
+      );
+      return { ...context, thumbs: screen.getAllByRole("button")[0]! };
+    }
 
-      const [thumbs, tada] = screen.getAllByRole("button");
+    it("groups an emoji's tones into one pill, default first, named once", async () => {
+      const { thumbs } = renderToned();
+
+      const tada = screen.getAllByRole("button")[1];
       expect(thumbs).toHaveTextContent("👍👍🏻👍🏽 4");
       expect(thumbs).toHaveAttribute("aria-pressed", "true");
       expect(tada).toHaveTextContent("🎉 1");
-      await act(() => userEvent.hover(thumbs!));
+      await act(() => userEvent.hover(thumbs));
       await waitFor(() =>
         expect(thumbs).toHaveAccessibleDescription(
           ":thumbsup: reacted by you, alice, and 1 on Discord",
@@ -348,25 +355,20 @@ describe("ChatReactionList", () => {
     });
 
     it("takes back the visitor's own reaction in whichever tone it is", async () => {
-      const { react } = renderWithContext(
-        <ChatReactionList messageId="1" reactions={toned} />,
-      );
+      const { react, thumbs } = renderToned();
 
-      await userEvent.click(screen.getAllByRole("button")[0]!);
+      await userEvent.click(thumbs);
 
       expect(react).toHaveBeenCalledWith("1", "👍🏽");
     });
 
     it("adds the visitor's tone when they haven't reacted", async () => {
       setSkinTone(SKIN_TONES[5]);
-      const { react } = renderWithContext(
-        <ChatReactionList
-          messageId="1"
-          reactions={toned.map((reaction) => ({ ...reaction, mine: false }))}
-        />,
+      const { react, thumbs } = renderToned(
+        toned.map((reaction) => ({ ...reaction, mine: false })),
       );
 
-      await userEvent.click(screen.getAllByRole("button")[0]!);
+      await userEvent.click(thumbs);
 
       expect(react).toHaveBeenCalledWith("1", "👍🏿");
     });
