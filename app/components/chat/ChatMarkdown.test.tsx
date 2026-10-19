@@ -38,6 +38,7 @@ describe("ChatMarkdown", () => {
     ["*a *b*", "*a <em>b</em>"],
     ["x *a* * b*", "x <em>a</em> * b*"],
     ["*a **b** c*", "<em>a <strong>b</strong> c</em>"],
+    ["*a `*` b*", "<em>a `</em>` b*"],
   ])("pairs %j's asterisks as Discord does", (source, expected) => {
     expect(html(source)).toBe(expected);
   });

@@ -52,8 +52,7 @@ const extensions = [
   })),
   // Discord breaks every line; CommonMark only after two spaces.
   rule("break", "\n", /\n/y, () => ({ type: "break" })),
-  // CommonMark pairs any two `*`; Discord neither opens before a space nor closes after one,
-  // and leaves a `*` it can't pair as typed.
+  // Discord pairs `*` only around non-spaces and leaves an unpaired one as typed.
   rule(
     "emphasis",
     "*",
