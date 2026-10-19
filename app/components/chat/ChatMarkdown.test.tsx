@@ -56,7 +56,9 @@ describe("ChatMarkdown", () => {
     "[https://a.dev](https://b.dev)",
     "[<https://a.com>](https://b.com)",
   ])("leaves %j as typed, as Discord does", (source) => {
-    expect(html(source)).toBe(source.replace("<", "&lt;").replace(">", "&gt;"));
+    expect(html(source)).toBe(
+      source.replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+    );
     expect(document.querySelector("a")).toBeNull();
   });
 
