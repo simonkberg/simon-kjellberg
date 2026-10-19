@@ -234,15 +234,11 @@ export const ChatReactionPicker = ({
 const reactorList = new Intl.ListFormat("en", { type: "conjunction" });
 
 const toneOrder = (emoji: string) =>
-  SKIN_TONES.findIndex(({ modifier }) => modifier && emoji.includes(modifier));
+  SKIN_TONES.findLastIndex(({ modifier }) => emoji.includes(modifier));
 
 /** Reactions by emoji, each tone of one as a variant, as Slack shows them. */
 function groupByEmoji(reactions: Reaction[]): Map<string, Reaction[]> {
-  const groups = new Map<string, Reaction[]>();
-  for (const reaction of reactions) {
-    const base = withoutSkinTone(reaction.emoji);
-    groups.set(base, [...(groups.get(base) ?? []), reaction]);
-  }
+  const groups = Map.groupBy(reactions, ({ emoji }) => withoutSkinTone(emoji));
   for (const variants of groups.values()) {
     variants.sort((a, b) => toneOrder(a.emoji) - toneOrder(b.emoji));
   }
@@ -278,22 +274,16 @@ export const ChatReactionList = ({
     <div className="reactions" role="group" aria-label="Reactions">
       {[...groupByEmoji(reactions)].map(([base, variants]) => {
         const toned = withSkinTone(base, modifier);
-        const mine = variants.filter((variant) => variant.mine);
+        const own = variants.find((variant) => variant.mine);
         return (
           <TooltipButton
             key={base}
             tooltip={describeReactors(variants)}
             describes
-            aria-pressed={mine.length > 0}
+            aria-pressed={own !== undefined}
             disabled={reacting.has(messageId)}
             // Takes back the visitor's own in any tone, else adds theirs.
-            onClick={() =>
-              react(
-                messageId,
-                (mine.find((variant) => variant.emoji === toned) ?? mine[0])
-                  ?.emoji ?? toned,
-              )
-            }
+            onClick={() => react(messageId, own?.emoji ?? toned)}
           >
             {variants.map((variant) => variant.emoji).join("")}{" "}
             <span className="count">
