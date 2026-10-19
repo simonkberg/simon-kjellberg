@@ -52,8 +52,20 @@ const extensions = [
   })),
   // Discord breaks every line; CommonMark only after two spaces.
   rule("break", "\n", /\n/y, () => ({ type: "break" })),
-  // CommonMark opens `*` emphasis before a space; Discord doesn't (but closes after one).
-  rule("looseEmphasis", "*", /\*(?=\s)/y, literal),
+  // CommonMark pairs any two `*`; Discord neither opens before a space nor closes after one,
+  // and leaves a `*` it can't pair as typed.
+  rule(
+    "emphasis",
+    "*",
+    /\*(?=\S)(?:\*\*|\\[\s\S]|\s+(?:\\[\s\S]|[^\s*\\]|\*\*)|[^\s*\\])+?\*(?!\*)|\*(?!\*)/y,
+    (match, context) =>
+      match[0].length === 1
+        ? literal(match)
+        : {
+            type: "emphasis",
+            children: context.parseInline(match[0].slice(1, -1)),
+          },
+  ),
   // Discord leaves `[x]()` as typed.
   rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, literal),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.

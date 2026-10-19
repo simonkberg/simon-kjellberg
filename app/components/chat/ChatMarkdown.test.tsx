@@ -31,10 +31,15 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("opens emphasis only before a non-space, but closes it after one", () => {
-    expect(html("2 * 3 * 4 _ 5 _ and *a *")).toBe(
-      "2 * 3 * 4 _ 5 _ and <em>a </em>",
-    );
+  it.each([
+    ["2 * 3 * 4 _ 5 _", "2 * 3 * 4 _ 5 _"],
+    ["foo *bar *", "foo *bar *"],
+    ["*a * b*", "*a * b*"],
+    ["*a *b*", "*a <em>b</em>"],
+    ["x *a* * b*", "x <em>a</em> * b*"],
+    ["*a **b** c*", "<em>a <strong>b</strong> c</em>"],
+  ])("pairs %j's asterisks as Discord does", (source, expected) => {
+    expect(html(source)).toBe(expected);
   });
 
   it("leaves a link without a target as typed", () => {
