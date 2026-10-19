@@ -49,15 +49,25 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("leaves a link without a target as typed", () => {
-    expect(html("[x]()")).toBe("[x]()");
+  it.each([
+    "[x]()",
+    "[x](foo)",
+    "[x](//a.com)",
+    "[https://a.dev](https://b.dev)",
+    "[<https://a.com>](https://b.com)",
+  ])("leaves %j as typed, as Discord does", (source) => {
+    expect(html(source)).toBe(source.replace("<", "&lt;").replace(">", "&gt;"));
+    expect(document.querySelector("a")).toBeNull();
   });
 
   it("renders explicit links, with an optional title", () => {
     expect(
-      html('[link](https://simon.dev) and [t](https://x.dev "title")'),
+      html('[a.dev](https://simon.dev) and [t](HTTPS://x.dev "title")'),
     ).toBe(
-      '<a href="https://simon.dev">link</a> and <a href="https://x.dev" title="title">t</a>',
+      '<a href="https://simon.dev">a.dev</a> and <a href="HTTPS://x.dev" title="title">t</a>',
+    );
+    expect(html("[x](mailto:a@b.com) [y](tel:123)")).toBe(
+      '<a href="mailto:a@b.com">x</a> <a href="tel:123">y</a>',
     );
   });
 
@@ -74,9 +84,9 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("does not autolink a url that is already a link's text", () => {
-    expect(html("[https://a.dev](https://b.dev)")).toBe(
-      '<a href="https://b.dev">https://a.dev</a>',
+  it("never nests a link inside a link", () => {
+    expect(html("[a [https://a.dev] b](https://b.dev)")).toBe(
+      '<a href="https://b.dev">a [https://a.dev] b</a>',
     );
   });
 
@@ -90,6 +100,7 @@ describe("ChatMarkdown", () => {
     expect(html("<mailto:a@b.com>")).toBe(
       '<a href="mailto:a@b.com">mailto:a@b.com</a>',
     );
+    expect(html("<a@b> a@b.com")).toBe("&lt;a@b&gt; a@b.com");
   });
 
   it("does not embed images, keeping only the alt text", () => {
@@ -128,13 +139,11 @@ describe("ChatMarkdown", () => {
   });
 
   describe("url sanitisation", () => {
-    it("drops javascript: link targets, leaving no anchor", () => {
-      expect(html("[xss](javascript:alert(1))")).toBe("xss");
-      expect(document.querySelector("a")).toBeNull();
-    });
-
-    it("drops data: link targets, leaving no anchor", () => {
-      expect(html("[x](data:text/html;base64,PHN2Zz4=)")).toBe("x");
+    it.each([
+      "[xss](javascript:alert(1))",
+      "[x](data:text/html;base64,PHN2Zz4=)",
+    ])("leaves %j as typed, with no anchor", (source) => {
+      expect(html(source)).toBe(source);
       expect(document.querySelector("a")).toBeNull();
     });
   });

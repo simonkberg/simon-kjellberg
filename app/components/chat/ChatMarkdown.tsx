@@ -67,16 +67,26 @@ const extensions = [
   ),
   // CommonMark (GFM) strikes `~a~`; Discord only strikes `~~a~~`.
   rule("singleTilde", "~", /~(?!~)/y, literal),
-  // Discord leaves `[x]()` as typed.
-  rule("emptyLink", "[", /\[[^\]]*\]\(\s*\)/y, literal),
+  // Discord shows a link as typed unless it targets http(s), mailto or tel and its text has no url.
+  rule("unlinkable", "[", /\[[^\]]*\]\([^)]*\)/y, (match) =>
+    /^\[[^\]]*https?:\/\//i.test(match[0]) ||
+    !/\]\(\s*<?(?:https?|mailto|tel):/i.test(match[0])
+      ? literal(match)
+      : undefined,
+  ),
   // Only http(s) and mailto, so these never need the parser's URL sanitising.
   rule("autolink", "<", /<https?:\/\/[^\s<>]+>/iy, ([match]) =>
     link(match.slice(1, -1)),
   ),
-  rule("mailto", "<", /<(?:mailto:)?[^\s<>@:]+@[^\s<>]+>/iy, ([match]) => {
-    const text = match.slice(1, -1);
-    return link(`mailto:${text.replace(/^mailto:/i, "")}`, text);
-  }),
+  rule(
+    "mailto",
+    "<",
+    /<(?:mailto:)?[^\s<>@:]+@[^\s<>@]+\.[^\s<>@]+>/iy,
+    ([match]) => {
+      const text = match.slice(1, -1);
+      return link(`mailto:${text.replace(/^mailto:/i, "")}`, text);
+    },
+  ),
   rule(
     "url",
     "h",
