@@ -66,9 +66,10 @@ const extensions = [
   }),
   rule(
     "url",
-    "hH",
+    "h",
+    // Unlike `<…>`, Discord links a bare url only with a lowercase scheme.
     // Balanced parentheses stay in the url, as in Wikipedia's `Foo_(bar)`.
-    /https?:\/\/(?:\([^\s<()]*\)|[^\s<()])*(?:\([^\s<()]*\)|[^\s<().,:;"'\]])/iy,
+    /https?:\/\/(?:\([^\s<()]*\)|[^\s<()])*(?:\([^\s<()]*\)|[^\s<().,:;"'\]])/y,
     ([url], { inLink }) => (inLink ? undefined : link(url)),
   ),
 ] satisfies MarkdownExtension[];

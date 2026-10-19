@@ -49,13 +49,11 @@ describe("ChatMarkdown", () => {
     );
   });
 
-  it("autolinks bare urls, whatever the scheme's case", () => {
+  it("autolinks bare urls with a lowercase scheme, as Discord does", () => {
     expect(html("the source is here: https://github.com/example/repo")).toBe(
       'the source is here: <a href="https://github.com/example/repo">https://github.com/example/repo</a>',
     );
-    expect(html("HTTPS://a.dev")).toBe(
-      '<a href="HTTPS://a.dev">HTTPS://a.dev</a>',
-    );
+    expect(html("HTTPS://a.dev")).toBe("HTTPS://a.dev");
   });
 
   it("keeps balanced parentheses in a bare url", () => {
