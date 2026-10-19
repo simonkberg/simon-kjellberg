@@ -228,7 +228,7 @@ export const ChatReactionPicker = ({
 const reactorList = new Intl.ListFormat("en", { type: "conjunction" });
 
 function describeReactors({ count, users, mine }: Reaction): string {
-  const named = mine ? ["You", ...users] : users;
+  const named = mine ? ["you", ...users] : users;
   const onDiscord = count - named.length;
   return reactorList.format(
     onDiscord > 0 ? [...named, `${onDiscord} on Discord`] : named,

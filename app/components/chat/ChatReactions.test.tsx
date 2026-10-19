@@ -282,7 +282,7 @@ describe("ChatReactionList", () => {
     const [thumbs, tada, fire, add] = screen.getAllByRole("button");
     expect(thumbs).toHaveTextContent("👍 3");
     expect(thumbs).toHaveAccessibleDescription(
-      "reacted by You, alice, and 1 on Discord",
+      "reacted by you, alice, and 1 on Discord",
     );
     expect(tada).toHaveTextContent("🎉 1");
     expect(tada).toHaveAccessibleDescription("reacted by 1 on Discord");
@@ -299,7 +299,7 @@ describe("ChatReactionList", () => {
 
     await waitFor(() =>
       expect(thumbs).toHaveAccessibleDescription(
-        ":thumbsup: reacted by You, alice, and 1 on Discord",
+        ":thumbsup: reacted by you, alice, and 1 on Discord",
       ),
     );
     expect(fetched).toHaveBeenCalledOnce();

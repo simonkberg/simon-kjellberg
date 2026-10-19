@@ -157,7 +157,7 @@ describe("Chat", () => {
       const pill = screen.getByRole("button", { name: "👍 2" });
       expect(pill).toHaveAttribute("aria-pressed", "true");
       expect(pill).toHaveAccessibleDescription(
-        /reacted by You and 1 on Discord$/,
+        /reacted by you and 1 on Discord$/,
       );
       expect(screen.getByRole("button", { name: "🎉 1" })).toHaveAttribute(
         "aria-pressed",
