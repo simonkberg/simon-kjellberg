@@ -36,21 +36,20 @@ const unreact = (reaction: Reaction): Reaction => ({
 
 function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
-  if (existing?.mine) {
-    return reactions
-      .map((reaction) => (reaction === existing ? unreact(reaction) : reaction))
-      .filter((reaction) => reaction.count > 0);
-  }
-  // Adding a tone replaces the visitor's other tones of the emoji, as the server does.
+  const adding = !existing?.mine;
   const base = withoutSkinTone(emoji);
   const updated = reactions
-    .map((reaction) =>
-      reaction === existing
-        ? { ...reaction, count: reaction.count + 1, mine: true }
-        : reaction.mine && withoutSkinTone(reaction.emoji) === base
-          ? unreact(reaction)
-          : reaction,
-    )
+    .map((reaction) => {
+      if (reaction === existing) {
+        return adding
+          ? { ...reaction, count: reaction.count + 1, mine: true }
+          : unreact(reaction);
+      }
+      // Adding a tone replaces the visitor's other tones of the emoji, as the server does.
+      return adding && reaction.mine && withoutSkinTone(reaction.emoji) === base
+        ? unreact(reaction)
+        : reaction;
+    })
     .filter((reaction) => reaction.count > 0);
   return existing
     ? updated
