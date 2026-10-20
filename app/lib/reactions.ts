@@ -7,7 +7,7 @@ import {
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
-import { RGI_EMOJI } from "@/lib/emoji";
+import { RGI_EMOJI, withoutSkinTone } from "@/lib/emoji";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
@@ -26,6 +26,16 @@ export async function toggleReaction(
   emoji: string,
   username: Username,
 ): Promise<"added" | "removed"> {
+  if (await removeReaction(messageId, emoji, username)) return "removed";
+  await addReaction(messageId, emoji, username);
+  return "added";
+}
+
+async function removeReaction(
+  messageId: string,
+  emoji: string,
+  username: Username,
+): Promise<boolean> {
   // The count rides along when nothing was deleted too, saving a removal a round trip.
   const [{ rowsAffected }, { rows: remaining }] = await batch([
     { sql: DELETE_ROW, args: [messageId, emoji, username] },
@@ -34,22 +44,17 @@ export async function toggleReaction(
       args: [messageId, emoji],
     },
   ]);
-
-  if (rowsAffected > 0) {
-    if (remaining.length === 0) {
-      // The site counts from Turso, so a stale mirror only shows on Discord.
-      await removeBotReaction(messageId, emoji).catch((err: unknown) => {
-        log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-      });
-    }
-    return "removed";
+  if (rowsAffected === 0) return false;
+  if (remaining.length === 0) {
+    // The site counts from Turso, so a stale mirror only shows on Discord.
+    await removeBotReaction(messageId, emoji).catch((err: unknown) => {
+      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+    });
   }
-
-  await addReaction(messageId, emoji, username);
-  return "added";
+  return true;
 }
 
-/** Adds a reaction and mirrors it on Discord; adding one that's already there changes nothing. */
+/** Adds a reaction, in place of the user's other tones of it, and mirrors it on Discord; adding one that's already there changes nothing. */
 export async function addReaction(
   messageId: string,
   emoji: string,
@@ -74,6 +79,28 @@ export async function addReaction(
         ),
     );
     throw err;
+  }
+  // One tone per emoji, as the site shows them: a new tone replaces the old once it's in.
+  await removeOtherTones(messageId, emoji, username).catch((err: unknown) => {
+    log.warn({ err, messageId, emoji }, "Failed to replace other tones");
+  });
+}
+
+async function removeOtherTones(
+  messageId: string,
+  emoji: string,
+  username: Username,
+): Promise<void> {
+  const base = withoutSkinTone(emoji);
+  const { rows } = await query(
+    "SELECT emoji FROM reactions WHERE message_id = ? AND username = ? AND emoji != ?",
+    [messageId, username, emoji],
+  );
+  for (const row of rows) {
+    const other = String(row["emoji"]);
+    if (withoutSkinTone(other) === base) {
+      await removeReaction(messageId, other, username);
+    }
   }
 }
 

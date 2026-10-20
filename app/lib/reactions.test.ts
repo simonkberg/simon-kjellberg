@@ -73,6 +73,44 @@ describe("toggleReaction", () => {
     expect(removeBotReaction).not.toHaveBeenCalled();
   });
 
+  it("replaces the user's other tones of the emoji once the new one is in", async () => {
+    await addReaction("1", "👍🏽", alice);
+    await addReaction("1", "🎉", alice);
+    await addReaction("1", "👍🏽", bob);
+    await addReaction("1", "👍", alice);
+
+    await addReaction("1", "👍🏿", alice);
+
+    expect(
+      (await storedReactions()).map(({ emoji, username }) => [emoji, username]),
+    ).toEqual([
+      ["🎉", "alice"],
+      ["👍🏽", "bob"],
+      ["👍🏿", "alice"],
+    ]);
+    expect(removeBotReaction).toHaveBeenCalledExactlyOnceWith("1", "👍");
+  });
+
+  it("keeps the old tone when Discord turns the new one away", async () => {
+    await addReaction("1", "👍🏽", alice);
+    vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));
+
+    await expect(addReaction("1", "👍🏿", alice)).rejects.toThrow("404");
+    expect(await storedReactions()).toMatchObject([{ emoji: "👍🏽" }]);
+  });
+
+  it("still adds when replacing the other tones fails", async () => {
+    await addReaction("1", "👍🏽", alice);
+    vi.mocked(query).mockImplementation(
+      failQuery(sqlite(), "SELECT emoji", { error: new Error("blip") }),
+    );
+
+    await addReaction("1", "👍🏿", alice);
+
+    expect(await storedReactions()).toHaveLength(2);
+    expect(log.warn).toHaveBeenCalledOnce();
+  });
+
   it("keeps one reaction when the same one is added twice", async () => {
     await addReaction("1", "👍", alice);
     await addReaction("1", "👍", alice);

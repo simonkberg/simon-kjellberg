@@ -100,11 +100,9 @@ const ReactionEmoji = ({
         picker={picker}
         popoverTarget={picker}
         popoverTargetAction="hide"
-        // Only adds, as on Discord and Slack: the reaction's own pill takes it back, in any tone.
+        // Only adds, as on Discord and Slack: the reaction's own pill takes it back. Another tone replaces yours.
         onClick={() => {
-          if (
-            !reactions.some((r) => r.mine && withoutSkinTone(r.emoji) === emoji)
-          ) {
+          if (!reactions.some((r) => r.mine && r.emoji === toned)) {
             react(messageId, toned);
           }
         }}

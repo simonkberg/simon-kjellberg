@@ -182,6 +182,34 @@ describe("Chat", () => {
       await settle();
     });
 
+    it("swaps the visitor's tone at once when they pick another", async () => {
+      const settle = holdReaction();
+      await renderChat([
+        createMessage({
+          reactions: [
+            { emoji: "👍🏽", count: 1, users: [], mine: true },
+            ...thumbs,
+          ],
+        }),
+      ]);
+
+      const picker = screen.getByRole("toolbar", {
+        name: "Pick a reaction",
+        hidden: true,
+      });
+      sendToggle(picker, "beforetoggle", "open");
+      await userEvent.click(
+        within(picker).getByRole("button", { name: "thumbsup", hidden: true }),
+      );
+
+      expect(reactToChatMessage).toHaveBeenCalledWith("msg-1", "👍");
+      expect(screen.getByRole("button", { name: "👍 2" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await settle();
+    });
+
     it("shows a reply's new reaction at once", async () => {
       const settle = holdReaction();
       await renderChat([

@@ -123,16 +123,16 @@ describe("ChatReactionPicker", () => {
     expect(localStorage.getItem("skin-tone")).toBe("2");
   });
 
-  it("leaves a reaction the visitor already has, in any tone, to its pill", async () => {
+  it("leaves a reaction the visitor already has to its pill", async () => {
     const { react } = renderWithContext(
       <ChatReactionList
         messageId="1"
-        reactions={[{ emoji: "👍🏽", count: 1, users: [], mine: true }]}
+        reactions={[{ emoji: "🎉", count: 1, users: [], mine: true }]}
       />,
     );
     openPicker();
 
-    await userEvent.click(getEmoji("thumbsup"));
+    await userEvent.click(getEmoji("tada"));
 
     expect(react).not.toHaveBeenCalled();
   });
