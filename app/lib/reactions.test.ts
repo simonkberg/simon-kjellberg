@@ -91,6 +91,17 @@ describe("toggleReaction", () => {
     expect(removeBotReaction).toHaveBeenCalledExactlyOnceWith("1", "👍");
   });
 
+  it("drops a leftover tone when the user adds the one they already have", async () => {
+    await query(
+      "INSERT INTO reactions (message_id, emoji, username) VALUES ('1', '👍🏽', 'alice'), ('1', '👍🏿', 'alice')",
+    );
+
+    await addReaction("1", "👍🏿", alice);
+
+    expect(await storedReactions()).toMatchObject([{ emoji: "👍🏿" }]);
+    expect(addBotReaction).not.toHaveBeenCalled();
+  });
+
   it("keeps the old tone when Discord turns the new one away", async () => {
     await addReaction("1", "👍🏽", alice);
     vi.mocked(addBotReaction).mockRejectedValueOnce(new Error("404"));

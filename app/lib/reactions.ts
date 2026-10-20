@@ -54,7 +54,7 @@ async function removeReaction(
   return true;
 }
 
-/** Adds a reaction, in place of the user's other tones of it, and mirrors it on Discord; adding one that's already there changes nothing. */
+/** Adds a reaction in place of the user's other tones of it, mirroring it on Discord once. */
 export async function addReaction(
   messageId: string,
   emoji: string,
@@ -65,22 +65,23 @@ export async function addReaction(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
-  if (inserted.rowsAffected === 0) return;
-  try {
-    // Discord turns away a message or emoji it doesn't know.
-    await addBotReaction(messageId, emoji);
-  } catch (err) {
-    // Discord's error is the one the visitor needs, so a failed rollback only logs.
-    await query(DELETE_ROW, [messageId, emoji, username]).catch(
-      (rollbackErr: unknown) =>
-        log.warn(
-          { err: rollbackErr, messageId, emoji },
-          "Failed to roll back reaction",
-        ),
-    );
-    throw err;
+  if (inserted.rowsAffected > 0) {
+    try {
+      // Discord turns away a message or emoji it doesn't know.
+      await addBotReaction(messageId, emoji);
+    } catch (err) {
+      // Discord's error is the one the visitor needs, so a failed rollback only logs.
+      await query(DELETE_ROW, [messageId, emoji, username]).catch(
+        (rollbackErr: unknown) =>
+          log.warn(
+            { err: rollbackErr, messageId, emoji },
+            "Failed to roll back reaction",
+          ),
+      );
+      throw err;
+    }
   }
-  // One tone per emoji, as the site shows them: a new tone replaces the old once it's in.
+  // One tone per emoji, as the site shows them: a new tone replaces the old once it's in, and a repeat tidies up any left over.
   await removeOtherTones(messageId, emoji, username).catch((err: unknown) => {
     log.warn({ err, messageId, emoji }, "Failed to replace other tones");
   });
