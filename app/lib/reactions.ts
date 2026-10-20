@@ -54,7 +54,7 @@ async function removeReaction(
   return true;
 }
 
-/** Adds a reaction in place of the user's other tones of it, mirroring it on Discord once. */
+/** Adds a reaction, mirroring it on Discord once. */
 export async function addReaction(
   messageId: string,
   emoji: string,
@@ -81,7 +81,7 @@ export async function addReaction(
       throw err;
     }
   }
-  // One tone per emoji, as the site shows them: a new tone replaces the old once it's in, and a repeat tidies up any left over.
+  // One tone per emoji: drop the user's others once this one is in.
   await removeOtherTones(messageId, emoji, username).catch((err: unknown) => {
     log.warn({ err, messageId, emoji }, "Failed to replace other tones");
   });
