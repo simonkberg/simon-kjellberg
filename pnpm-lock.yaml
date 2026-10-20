@@ -245,6 +245,9 @@ importers:
       concurrently:
         specifier: 10.0.6
         version: 10.0.6
+      emojibase:
+        specifier: 18.0.0
+        version: 18.0.0
       happy-dom:
         specifier: 21.0.3
         version: 21.0.3
