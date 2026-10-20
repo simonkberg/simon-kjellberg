@@ -179,8 +179,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       emojibase-data:
-        specifier: 17.0.0
-        version: 17.0.0(emojibase@17.0.0)
+        specifier: 18.0.0
+        version: 18.0.0(emojibase@18.0.0)
       jose:
         specifier: 6.2.12
         version: 6.2.12
@@ -245,6 +245,9 @@ importers:
       concurrently:
         specifier: 10.0.6
         version: 10.0.6
+      emojibase:
+        specifier: 18.0.0
+        version: 18.0.0
       happy-dom:
         specifier: 21.0.3
         version: 21.0.3
@@ -1540,14 +1543,14 @@ packages:
   emoji-regex@10.6.0:
     resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
 
-  emojibase-data@17.0.0:
-    resolution: {integrity: sha512-Yvgb5AWoHViHV/gq1qr5ZAarcBip+B27/ZLRsUJkbgAEaLlZ/fof9g882LTpmEpyhBNEC0m2SEmItljHsTygjA==}
+  emojibase-data@18.0.0:
+    resolution: {integrity: sha512-TPPRRYv2zPd0jKI+pTpMquwWNZXYAsC3IVsCMeg2X8y8fEzKwOks4/5bz0YavF5r6d71aGPpb6oDnUEwSLLMoA==}
     peerDependencies:
       emojibase: '*'
 
-  emojibase@17.0.0:
-    resolution: {integrity: sha512-bXdpf4HPY3p41zK5swVKZdC/VynsMZ4LoLxdYDE+GucqkFwzcM1GVc4ODfYAlwoKaf2U2oNNUoOO78N96ovpBA==}
-    engines: {node: '>=18.12.0'}
+  emojibase@18.0.0:
+    resolution: {integrity: sha512-5PG+EEt5zQ9qvqdHZw61+T9iz96g+r621QS/w8jEzPg+3mjzAdjl8LPLc+e9ABv/yboNfMwEair7aK9qKnwAbQ==}
+    engines: {node: '>=20.0.0'}
 
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
@@ -3096,11 +3099,11 @@ snapshots:
 
   emoji-regex@10.6.0: {}
 
-  emojibase-data@17.0.0(emojibase@17.0.0):
+  emojibase-data@18.0.0(emojibase@18.0.0):
     dependencies:
-      emojibase: 17.0.0
+      emojibase: 18.0.0
 
-  emojibase@17.0.0: {}
+  emojibase@18.0.0: {}
 
   end-of-stream@1.4.5:
     dependencies:
