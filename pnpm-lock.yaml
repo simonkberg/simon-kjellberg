@@ -180,7 +180,7 @@ importers:
         version: 2.0.0
       emojibase-data:
         specifier: 18.0.0
-        version: 18.0.0(emojibase@17.0.0)
+        version: 18.0.0(emojibase@18.0.0)
       jose:
         specifier: 6.2.12
         version: 6.2.12
@@ -1545,9 +1545,9 @@ packages:
     peerDependencies:
       emojibase: '*'
 
-  emojibase@17.0.0:
-    resolution: {integrity: sha512-bXdpf4HPY3p41zK5swVKZdC/VynsMZ4LoLxdYDE+GucqkFwzcM1GVc4ODfYAlwoKaf2U2oNNUoOO78N96ovpBA==}
-    engines: {node: '>=18.12.0'}
+  emojibase@18.0.0:
+    resolution: {integrity: sha512-5PG+EEt5zQ9qvqdHZw61+T9iz96g+r621QS/w8jEzPg+3mjzAdjl8LPLc+e9ABv/yboNfMwEair7aK9qKnwAbQ==}
+    engines: {node: '>=20.0.0'}
 
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
@@ -3096,11 +3096,11 @@ snapshots:
 
   emoji-regex@10.6.0: {}
 
-  emojibase-data@18.0.0(emojibase@17.0.0):
+  emojibase-data@18.0.0(emojibase@18.0.0):
     dependencies:
-      emojibase: 17.0.0
+      emojibase: 18.0.0
 
-  emojibase@17.0.0: {}
+  emojibase@18.0.0: {}
 
   end-of-stream@1.4.5:
     dependencies:
