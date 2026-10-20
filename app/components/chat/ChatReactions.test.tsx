@@ -11,7 +11,7 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Reaction } from "@/lib/discord/api";
-import { REACTION_EMOJI } from "@/lib/emoji";
+import { REACTION_EMOJI, SKIN_TONES } from "@/lib/emoji";
 import { server } from "@/mocks/node";
 import { isOpen, sendToggle } from "@/mocks/popover";
 
@@ -21,6 +21,7 @@ import {
   ChatReactionsContext,
   type ChatReactionsContextValue,
 } from "./ChatReactions";
+import { setSkinTone } from "./skinTone";
 
 function renderWithContext(
   ui: React.ReactNode,
@@ -321,5 +322,55 @@ describe("ChatReactionList", () => {
     await userEvent.click(screen.getAllByRole("button")[1]!);
 
     expect(react).toHaveBeenCalledWith("1", "🎉");
+  });
+
+  describe("with skin tones", () => {
+    const toned: Reaction[] = [
+      { emoji: "👍🏽", count: 2, users: ["alice"], mine: true },
+      { emoji: "🎉", count: 1, users: [] },
+      { emoji: "👍", count: 1, users: ["alice"] },
+      { emoji: "👍🏻", count: 1, users: [] },
+    ];
+
+    function renderToned(reactions = toned) {
+      const context = renderWithContext(
+        <ChatReactionList messageId="1" reactions={reactions} />,
+      );
+      return { ...context, thumbs: screen.getAllByRole("button")[0]! };
+    }
+
+    it("groups an emoji's tones into one pill, default first, named once", async () => {
+      const { thumbs } = renderToned();
+
+      const tada = screen.getAllByRole("button")[1];
+      expect(thumbs).toHaveTextContent("👍👍🏻👍🏽 4");
+      expect(thumbs).toHaveAttribute("aria-pressed", "true");
+      expect(tada).toHaveTextContent("🎉 1");
+      await act(() => userEvent.hover(thumbs));
+      await waitFor(() =>
+        expect(thumbs).toHaveAccessibleDescription(
+          ":thumbsup: reacted by you, alice, and 1 on Discord",
+        ),
+      );
+    });
+
+    it("takes back the visitor's own reaction in whichever tone it is", async () => {
+      const { react, thumbs } = renderToned();
+
+      await userEvent.click(thumbs);
+
+      expect(react).toHaveBeenCalledWith("1", "👍🏽");
+    });
+
+    it("adds the visitor's tone when they haven't reacted", async () => {
+      setSkinTone(SKIN_TONES[5]);
+      const { react, thumbs } = renderToned(
+        toned.map((reaction) => ({ ...reaction, mine: false })),
+      );
+
+      await userEvent.click(thumbs);
+
+      expect(react).toHaveBeenCalledWith("1", "👍🏿");
+    });
   });
 });

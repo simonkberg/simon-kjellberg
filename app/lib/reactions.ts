@@ -7,7 +7,7 @@ import {
   type Reaction,
   removeBotReaction,
 } from "@/lib/discord/api";
-import { RGI_EMOJI } from "@/lib/emoji";
+import { RGI_EMOJI, withoutSkinTone } from "@/lib/emoji";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { batch, query } from "@/lib/turso";
@@ -26,6 +26,16 @@ export async function toggleReaction(
   emoji: string,
   username: Username,
 ): Promise<"added" | "removed"> {
+  if (await removeReaction(messageId, emoji, username)) return "removed";
+  await addReaction(messageId, emoji, username);
+  return "added";
+}
+
+async function removeReaction(
+  messageId: string,
+  emoji: string,
+  username: Username,
+): Promise<boolean> {
   // The count rides along when nothing was deleted too, saving a removal a round trip.
   const [{ rowsAffected }, { rows: remaining }] = await batch([
     { sql: DELETE_ROW, args: [messageId, emoji, username] },
@@ -34,22 +44,17 @@ export async function toggleReaction(
       args: [messageId, emoji],
     },
   ]);
-
-  if (rowsAffected > 0) {
-    if (remaining.length === 0) {
-      // The site counts from Turso, so a stale mirror only shows on Discord.
-      await removeBotReaction(messageId, emoji).catch((err: unknown) => {
-        log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
-      });
-    }
-    return "removed";
+  if (rowsAffected === 0) return false;
+  if (remaining.length === 0) {
+    // The site counts from Turso, so a stale mirror only shows on Discord.
+    await removeBotReaction(messageId, emoji).catch((err: unknown) => {
+      log.warn({ err, messageId, emoji }, "Failed to remove bot reaction");
+    });
   }
-
-  await addReaction(messageId, emoji, username);
-  return "added";
+  return true;
 }
 
-/** Adds a reaction and mirrors it on Discord; adding one that's already there changes nothing. */
+/** Adds a reaction, mirroring it on Discord once. */
 export async function addReaction(
   messageId: string,
   emoji: string,
@@ -60,20 +65,43 @@ export async function addReaction(
     "INSERT INTO reactions (message_id, emoji, username) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
     [messageId, emoji, username],
   );
-  if (inserted.rowsAffected === 0) return;
-  try {
-    // Discord turns away a message or emoji it doesn't know.
-    await addBotReaction(messageId, emoji);
-  } catch (err) {
-    // Discord's error is the one the visitor needs, so a failed rollback only logs.
-    await query(DELETE_ROW, [messageId, emoji, username]).catch(
-      (rollbackErr: unknown) =>
-        log.warn(
-          { err: rollbackErr, messageId, emoji },
-          "Failed to roll back reaction",
-        ),
-    );
-    throw err;
+  if (inserted.rowsAffected > 0) {
+    try {
+      // Discord turns away a message or emoji it doesn't know.
+      await addBotReaction(messageId, emoji);
+    } catch (err) {
+      // Discord's error is the one the visitor needs, so a failed rollback only logs.
+      await query(DELETE_ROW, [messageId, emoji, username]).catch(
+        (rollbackErr: unknown) =>
+          log.warn(
+            { err: rollbackErr, messageId, emoji },
+            "Failed to roll back reaction",
+          ),
+      );
+      throw err;
+    }
+  }
+  // One tone per emoji: drop the user's others once this one is in.
+  await removeOtherTones(messageId, emoji, username).catch((err: unknown) => {
+    log.warn({ err, messageId, emoji }, "Failed to replace other tones");
+  });
+}
+
+async function removeOtherTones(
+  messageId: string,
+  emoji: string,
+  username: Username,
+): Promise<void> {
+  const base = withoutSkinTone(emoji);
+  const { rows } = await query(
+    "SELECT emoji FROM reactions WHERE message_id = ? AND username = ? AND emoji != ?",
+    [messageId, username, emoji],
+  );
+  for (const row of rows) {
+    const other = String(row["emoji"]);
+    if (withoutSkinTone(other) === base) {
+      await removeReaction(messageId, other, username);
+    }
   }
 }
 

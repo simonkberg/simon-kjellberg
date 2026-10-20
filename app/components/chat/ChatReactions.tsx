@@ -12,12 +12,17 @@ import {
 
 import { TooltipButton, WhenShown } from "@/components/Tooltip";
 import type { Reaction } from "@/lib/discord/api";
-import { REACTION_EMOJI, SKIN_TONES, withSkinTone } from "@/lib/emoji";
+import {
+  REACTION_EMOJI,
+  SKIN_TONES,
+  withoutSkinTone,
+  withSkinTone,
+} from "@/lib/emoji";
 
 import { arrowFocus, arrowIndex, gridColumns } from "./arrowFocus";
 import { EmojiButton } from "./EmojiButton";
 import { EmojiShortcode } from "./EmojiText";
-import { setSkinTone, useSkinTone } from "./skinTone";
+import { getSkinTone, setSkinTone, useSkinTone } from "./skinTone";
 
 export interface ChatReactionsContextValue {
   reacting: ReadonlySet<string>;
@@ -95,7 +100,7 @@ const ReactionEmoji = ({
         picker={picker}
         popoverTarget={picker}
         popoverTargetAction="hide"
-        // Only adds, as on Discord and Slack: the reaction's own pill takes it back.
+        // Only adds: the pill takes it back, and another tone replaces yours.
         onClick={() => {
           if (!reactions.some((r) => r.mine && r.emoji === toned)) {
             react(messageId, toned);
@@ -227,9 +232,23 @@ export const ChatReactionPicker = ({
 
 const reactorList = new Intl.ListFormat("en", { type: "conjunction" });
 
-function describeReactors({ count, users, mine }: Reaction): string {
-  const named = mine ? ["you", ...users] : users;
-  const onDiscord = count - named.length;
+const toneOrder = (emoji: string) =>
+  SKIN_TONES.findLastIndex(({ modifier }) => emoji.includes(modifier));
+
+/** Reactions by emoji, each tone of one as a variant, as Slack shows them. */
+function groupByEmoji(reactions: Reaction[]): Map<string, Reaction[]> {
+  const groups = Map.groupBy(reactions, ({ emoji }) => withoutSkinTone(emoji));
+  for (const variants of groups.values()) {
+    variants.sort((a, b) => toneOrder(a.emoji) - toneOrder(b.emoji));
+  }
+  return groups;
+}
+
+function describeReactors(variants: Reaction[], count: number): string {
+  const users = variants.flatMap((variant) => variant.users);
+  const mine = variants.filter((variant) => variant.mine).length;
+  const named = new Set(mine > 0 ? ["you", ...users] : users);
+  const onDiscord = count - users.length - mine;
   return reactorList.format(
     onDiscord > 0 ? [...named, `${onDiscord} on Discord`] : named,
   );
@@ -246,26 +265,37 @@ export const ChatReactionList = ({
 
   return (
     <div className="reactions" role="group" aria-label="Reactions">
-      {reactions.map((reaction) => (
-        <TooltipButton
-          key={reaction.emoji}
-          // Discord's wording; the shortcode waits for the tooltip, so rendering pills fetches nothing.
-          tooltip={
-            <>
-              <WhenShown>
-                <EmojiShortcode emoji={reaction.emoji} />{" "}
-              </WhenShown>
-              reacted by {describeReactors(reaction)}
-            </>
-          }
-          describes
-          aria-pressed={reaction.mine === true}
-          disabled={reacting.has(messageId)}
-          onClick={() => react(messageId, reaction.emoji)}
-        >
-          {reaction.emoji} <span className="count">{reaction.count}</span>
-        </TooltipButton>
-      ))}
+      {[...groupByEmoji(reactions)].map(([base, variants]) => {
+        const count = variants.reduce((sum, variant) => sum + variant.count, 0);
+        const own = variants.find((variant) => variant.mine);
+        return (
+          <TooltipButton
+            key={base}
+            // Discord's wording; the shortcode waits for the tooltip, so rendering pills fetches nothing.
+            tooltip={
+              <>
+                <WhenShown>
+                  <EmojiShortcode emoji={base} />{" "}
+                </WhenShown>
+                reacted by {describeReactors(variants, count)}
+              </>
+            }
+            describes
+            aria-pressed={own !== undefined}
+            disabled={reacting.has(messageId)}
+            // Takes back the visitor's own in any tone, else adds theirs.
+            onClick={() =>
+              react(
+                messageId,
+                own?.emoji ?? withSkinTone(base, getSkinTone().modifier),
+              )
+            }
+          >
+            {variants.map((variant) => variant.emoji).join("")}{" "}
+            <span className="count">{count}</span>
+          </TooltipButton>
+        );
+      })}
       <ChatReactionPicker
         messageId={messageId}
         reactions={reactions}

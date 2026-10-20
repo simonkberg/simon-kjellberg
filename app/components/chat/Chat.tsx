@@ -7,6 +7,7 @@ import ChatMessage from "@/components/chat/ChatMessage";
 import { Subtitle } from "@/components/Subtitle";
 import { TooltipButton } from "@/components/Tooltip";
 import type { Message, Reaction } from "@/lib/discord/api";
+import { withoutSkinTone } from "@/lib/emoji";
 
 import { ChatHistory } from "./ChatHistory";
 import { ChatInput } from "./ChatInput";
@@ -27,19 +28,32 @@ const findMessageById = (messages: Message[], id: string): Message | null => {
   return null;
 };
 
+const unreact = (reaction: Reaction): Reaction => ({
+  ...reaction,
+  count: reaction.count - 1,
+  mine: false,
+});
+
 function toggleOwnReaction(reactions: Reaction[], emoji: string): Reaction[] {
   const existing = reactions.find((reaction) => reaction.emoji === emoji);
-  if (!existing) {
-    return [...reactions, { emoji, count: 1, users: [], mine: true }];
-  }
-  const updated = {
-    ...existing,
-    count: existing.count + (existing.mine ? -1 : 1),
-    mine: !existing.mine,
-  };
-  return reactions
-    .map((reaction) => (reaction === existing ? updated : reaction))
+  const adding = !existing?.mine;
+  const base = withoutSkinTone(emoji);
+  const updated = reactions
+    .map((reaction) => {
+      if (reaction === existing) {
+        return adding
+          ? { ...reaction, count: reaction.count + 1, mine: true }
+          : unreact(reaction);
+      }
+      // Adding a tone replaces the visitor's other tones of the emoji, as the server does.
+      return adding && reaction.mine && withoutSkinTone(reaction.emoji) === base
+        ? unreact(reaction)
+        : reaction;
+    })
     .filter((reaction) => reaction.count > 0);
+  return existing
+    ? updated
+    : [...updated, { emoji, count: 1, users: [], mine: true }];
 }
 
 function withReactionToggled(
