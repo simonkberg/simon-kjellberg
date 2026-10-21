@@ -231,6 +231,7 @@ export const TooltipText = ({
         onPointerEnter={(event) => {
           if (event.pointerType === "touch") return;
           const text = event.currentTarget;
+          clearTimeout(hover.current);
           hover.current = window.setTimeout(() => show(text), HOVER_DELAY_MS);
         }}
         onPointerLeave={() => clearTimeout(hover.current)}
