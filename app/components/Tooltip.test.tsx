@@ -2,9 +2,9 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { isOpen, tap } from "@/mocks/popover";
+import { dwell, isOpen, tap } from "@/mocks/popover";
 
-import { TooltipButton, TooltipText } from "./Tooltip";
+import { HOVER_DELAY_MS, TooltipButton, TooltipText } from "./Tooltip";
 
 const renderButton = () => {
   const onClick = vi.fn();
@@ -358,10 +358,29 @@ describe("TooltipText", () => {
     expect(isOpen()).toBe(true);
   });
 
-  it("hides on a mouse click, as on buttons", async () => {
+  it("shows on hover after a delay", async () => {
+    const { text } = renderText();
+
+    await dwell(text);
+
+    expect(isOpen()).toBe(true);
+  });
+
+  it("shows nothing when the pointer leaves before the delay", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const { text } = renderText();
 
     await userEvent.hover(text);
+    await userEvent.unhover(text);
+    await act(() => vi.advanceTimersByTimeAsync(HOVER_DELAY_MS));
+
+    expect(isOpen()).toBe(false);
+  });
+
+  it("hides on a mouse click, as on buttons", async () => {
+    const { text } = renderText();
+
+    await dwell(text);
     expect(isOpen()).toBe(true);
     await userEvent.click(text);
 

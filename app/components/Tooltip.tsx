@@ -16,6 +16,7 @@ import {
 } from "react";
 
 const LONG_PRESS_MS = 500;
+export const HOVER_DELAY_MS = 400;
 
 function useTooltip(anchorId?: string) {
   const tip = useRef<HTMLSpanElement>(null);
@@ -207,8 +208,9 @@ const selects = (node: Node) => {
 };
 
 /**
- * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. A tap shows it, since
- * tapping text does nothing else; a long press stays a text selection.
+ * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. Hover shows it after a
+ * delay, like a title, since the pointer crosses text while reading. A tap shows it at once, since tapping text does
+ * nothing else; a long press stays a text selection.
  */
 export const TooltipText = ({
   tooltip,
@@ -219,15 +221,22 @@ export const TooltipText = ({
 }) => {
   const { tip, shown, show, closedBy } = useTooltip();
   const closing = useRef(false);
+  const hover = useRef<number>(undefined);
+
+  useEffect(() => () => clearTimeout(hover.current), []);
 
   return (
     <>
       <span
         onPointerEnter={(event) => {
-          if (event.pointerType !== "touch") show(event.currentTarget);
+          if (event.pointerType === "touch") return;
+          const text = event.currentTarget;
+          hover.current = window.setTimeout(() => show(text), HOVER_DELAY_MS);
         }}
+        onPointerLeave={() => clearTimeout(hover.current)}
         // A tap on the open tooltip's text closes it, like a tap anywhere else.
         onPointerDown={(event) => {
+          clearTimeout(hover.current);
           closing.current = closedBy(event.currentTarget);
         }}
         onPointerUp={(event) => {

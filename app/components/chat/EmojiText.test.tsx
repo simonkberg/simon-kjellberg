@@ -1,11 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EmojiShortcodes } from "@/lib/emoji";
 import { server } from "@/mocks/node";
-import { tap } from "@/mocks/popover";
+import { dwell, tap } from "@/mocks/popover";
 
 import { EmojiText } from "./EmojiText";
 
@@ -48,7 +47,7 @@ describe("EmojiText", () => {
     render(<EmojiText text="nice 👍🏽" />);
     expect(fetched).not.toHaveBeenCalled();
 
-    await act(() => userEvent.hover(screen.getByText("👍🏽")));
+    await dwell(screen.getByText("👍🏽"));
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(":thumbsup:");
     expect(fetched).toHaveBeenCalledOnce();
@@ -65,7 +64,7 @@ describe("EmojiText", () => {
   it("names toned emoji whose base has a text style", async () => {
     render(<EmojiText text="🏌🏽‍♂️" />);
 
-    await act(() => userEvent.hover(screen.getByText("🏌🏽‍♂️")));
+    await dwell(screen.getByText("🏌🏽‍♂️"));
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       ":golfer_man:",
@@ -75,7 +74,7 @@ describe("EmojiText", () => {
   it("leaves the tooltip empty for an emoji the set doesn't name", async () => {
     render(<EmojiText text="🫩" />);
 
-    await act(() => userEvent.hover(screen.getByText("🫩")));
+    await dwell(screen.getByText("🫩"));
 
     await vi.waitFor(() =>
       expect(
