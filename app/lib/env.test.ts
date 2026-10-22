@@ -21,6 +21,7 @@ describe("env", () => {
 
       expectTypeOf<Env>(env).toEqualTypeOf<{
         SESSION_SECRET: string;
+        SESSION_SECRET_PREVIOUS?: string | undefined;
         DISCORD_BOT_TOKEN: string;
         DISCORD_GUILD_ID: string;
         DISCORD_CHANNEL_ID: string;

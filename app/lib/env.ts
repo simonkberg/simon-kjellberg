@@ -8,6 +8,8 @@ export const env = parseAndValidateEnv({
         : value,
     z.string().min(1, "SESSION_SECRET is required"),
   ),
+  // Still accepted on read while sessions move to a rotated SESSION_SECRET.
+  SESSION_SECRET_PREVIOUS: z.string().optional(),
   DISCORD_BOT_TOKEN: z.string().min(1, "DISCORD_BOT_TOKEN is required"),
   DISCORD_GUILD_ID: z.string().min(1, "DISCORD_GUILD_ID is required"),
   DISCORD_CHANNEL_ID: z.string().min(1, "DISCORD_CHANNEL_ID is required"),

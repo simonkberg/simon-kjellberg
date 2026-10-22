@@ -7,6 +7,16 @@ import { mockCookieJar } from "@/mocks/headers";
 import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
+vi.mock(import("@/lib/env"), async (importOriginal) => {
+  const { env } = await importOriginal();
+  return { env: { ...env, SESSION_SECRET_PREVIOUS: "previous_secret" } };
+});
+
+function signWith(secret: string) {
+  return new SignJWT({ username: "testuser" })
+    .setProtectedHeader({ alg: "HS256" })
+    .sign(new TextEncoder().encode(secret));
+}
 
 describe("session", () => {
   describe("encrypt", () => {
@@ -49,12 +59,14 @@ describe("session", () => {
       expect(log.warn).toHaveBeenCalledOnce();
     });
 
-    it("logs a token signed with another secret as an error", async () => {
-      const token = await new SignJWT({ username: "testuser" })
-        .setProtectedHeader({ alg: "HS256" })
-        .sign(new TextEncoder().encode("another_secret"));
+    it("accepts a token signed with the previous secret", async () => {
+      expect(await decrypt(await signWith("previous_secret"))).toEqual({
+        username: "testuser",
+      });
+    });
 
-      expect(await decrypt(token)).toBeUndefined();
+    it("logs a token signed with another secret as an error", async () => {
+      expect(await decrypt(await signWith("another_secret"))).toBeUndefined();
       expect(log.error).toHaveBeenCalledOnce();
       expect(log.warn).not.toHaveBeenCalled();
     });
