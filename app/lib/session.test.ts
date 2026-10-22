@@ -1,6 +1,7 @@
 import { SignJWT } from "jose";
 import { describe, expect, it, vi } from "vitest";
 
+import { env } from "@/lib/env";
 import { log } from "@/lib/log";
 import { mockCookieJar } from "@/mocks/headers";
 
@@ -9,7 +10,14 @@ import { decrypt, encrypt, getSession, SessionSchema } from "./session";
 vi.mock(import("next/headers"), () => ({ cookies: vi.fn() }));
 vi.mock(import("@/lib/env"), async (importOriginal) => {
   const { env } = await importOriginal();
-  return { env: { ...env, SESSION_SECRET_PREVIOUS: "previous_secret" } };
+  return {
+    env: {
+      ...env,
+      get SESSION_SECRET_PREVIOUS(): string | undefined {
+        return "previous_secret";
+      },
+    },
+  };
 });
 
 function signWith(secret: string) {
@@ -66,11 +74,19 @@ describe("session", () => {
       expect(log.info).toHaveBeenCalledOnce();
     });
 
-    it("logs a token signed with another secret as an error", async () => {
-      expect(await decrypt(await signWith("another_secret"))).toBeUndefined();
-      expect(log.error).toHaveBeenCalledOnce();
-      expect(log.warn).not.toHaveBeenCalled();
-    });
+    it.each(["previous_secret", undefined])(
+      "logs a token signed with another secret as an error when the previous secret is %j",
+      async (previous) => {
+        vi.spyOn(env, "SESSION_SECRET_PREVIOUS", "get").mockReturnValue(
+          previous,
+        );
+
+        expect(await decrypt(await signWith("another_secret"))).toBeUndefined();
+        expect(log.error).toHaveBeenCalledOnce();
+        expect(log.warn).not.toHaveBeenCalled();
+        expect(log.info).not.toHaveBeenCalled();
+      },
+    );
 
     it("should validate session schema and reject invalid payload", async () => {
       // @ts-expect-error -- 'name' instead of 'username' fails the schema
