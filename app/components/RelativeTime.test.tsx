@@ -1,6 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { tap } from "@/mocks/popover";
+
 import { RelativeTime } from "./RelativeTime";
 
 const MINUTE = 60 * 1000;
@@ -15,14 +17,20 @@ describe("RelativeTime", () => {
     now = Date.now();
   });
 
-  it("renders semantic time element with correct attributes", async () => {
+  it("renders a time element with the full date in a tooltip", async () => {
     const testDate = new Date(now - 5 * MINUTE);
 
     await act(() => render(<RelativeTime date={testDate} />));
+    const timeElement = screen.getByText(/5 minutes ago/);
+    await tap(timeElement);
 
-    const timeElement = screen.getByText(/5 minutes ago/).closest("time");
     expect(timeElement).toHaveAttribute("dateTime", testDate.toISOString());
-    expect(timeElement).toHaveAttribute("title", testDate.toLocaleString());
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      testDate.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    );
   });
 
   it.each([

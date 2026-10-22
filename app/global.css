@@ -692,6 +692,9 @@ button {
   background: none;
   color: var(--ink);
   font-size: var(--meta-size);
+  /* It sits inside the text it describes, so don't inherit that text's layout. */
+  text-indent: 0;
+  white-space: normal;
   overflow: visible;
 
   > span {

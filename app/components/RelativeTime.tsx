@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 
+import { TooltipText } from "@/components/Tooltip";
+
 const second = 1000;
 const minute = 60 * second;
 const hour = 60 * minute;
 const day = 24 * hour;
 const month = 30 * day;
 const year = 365 * day;
+
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
 const createRtf = (options: Intl.RelativeTimeFormatOptions) =>
   new Intl.RelativeTimeFormat("en", { numeric: "auto", ...options });
@@ -58,8 +65,8 @@ export const RelativeTime = ({ date, style = "long" }: RelativeTimeProps) => {
   }
 
   return (
-    <time dateTime={date.toISOString()} title={date.toLocaleString()}>
-      {string}
-    </time>
+    <TooltipText tooltip={dateTimeFormat.format(date)}>
+      <time dateTime={date.toISOString()}>{string}</time>
+    </TooltipText>
   );
 };

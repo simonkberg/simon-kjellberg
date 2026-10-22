@@ -1,5 +1,8 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
+
+import { HOVER_DELAY_MS } from "@/components/Tooltip";
 
 export const isOpen = (
   popover = screen.getByRole("tooltip", { hidden: true }),
@@ -14,3 +17,10 @@ export const sendToggle = (
 
 export const tap = (target: Element) =>
   act(() => userEvent.pointer({ keys: "[TouchA]", target }));
+
+// Hovers text long enough for its tooltip to show.
+export const dwell = async (target: Element) => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  await act(() => userEvent.hover(target));
+  await act(() => vi.advanceTimersByTimeAsync(HOVER_DELAY_MS));
+};
