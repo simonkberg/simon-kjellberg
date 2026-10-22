@@ -63,6 +63,7 @@ describe("session", () => {
       expect(await decrypt(await signWith("previous_secret"))).toEqual({
         username: "testuser",
       });
+      expect(log.info).toHaveBeenCalledOnce();
     });
 
     it("logs a token signed with another secret as an error", async () => {

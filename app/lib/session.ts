@@ -14,8 +14,9 @@ export type Session = z.infer<typeof SessionSchema>;
 
 const encoder = new TextEncoder();
 const encodedKey = encoder.encode(env.SESSION_SECRET);
-const previousKey =
-  env.SESSION_SECRET_PREVIOUS && encoder.encode(env.SESSION_SECRET_PREVIOUS);
+const previousKey = env.SESSION_SECRET_PREVIOUS
+  ? encoder.encode(env.SESSION_SECRET_PREVIOUS)
+  : undefined;
 
 export async function encrypt(payload: Session) {
   return new SignJWT(payload satisfies JWTPayload)
@@ -48,7 +49,12 @@ async function verify(session: string) {
   } catch (err) {
     if (!previousKey || !(err instanceof errors.JWSSignatureVerificationFailed))
       throw err;
-    return jwtVerify(session, previousKey, { algorithms: ["HS256"] });
+    const result = await jwtVerify(session, previousKey, {
+      algorithms: ["HS256"],
+    });
+    // Until these stop, unsetting SESSION_SECRET_PREVIOUS renames someone.
+    log.info("Session verified with SESSION_SECRET_PREVIOUS");
+    return result;
   }
 }
 
