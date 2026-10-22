@@ -128,6 +128,10 @@ Validation via Zod in `app/lib/env.ts`. Required variables:
 
 Set `SKIP_ENV_VALIDATION=true` to skip validation (used in CI/Docker).
 
+To rotate `SESSION_SECRET`, move its value to the optional `SESSION_SECRET_PREVIOUS` and set a
+new one: sessions signed with either verify, and `proxy.ts` re-signs each visitor's with the
+new one. Unset the previous once "Session verified with SESSION_SECRET_PREVIOUS" stops logging.
+
 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` is a Docker build arg, not validated by Zod: pin it in
 Railway so server action references stay valid across redeploys.
 

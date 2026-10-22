@@ -22,6 +22,7 @@ export default defineRailway((ctx) => {
       LAST_FM_API_KEY: preserve(),
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: preserve(),
       SESSION_SECRET: preserve(),
+      SESSION_SECRET_PREVIOUS: preserve(),
       TURSO_AUTH_TOKEN: preserve(),
       TURSO_DATABASE_URL: preserve(),
     },
