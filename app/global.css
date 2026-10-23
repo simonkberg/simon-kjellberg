@@ -1106,9 +1106,10 @@ ul {
   }
 
   @supports (position-area: top) {
-    /* Over the column's date label, so it never sits under the pointer. */
+    /* Over the column's date label and level with its text, so it never sits under the pointer. */
     .tooltip {
       position-area: block-end;
+      margin-block-start: calc(var(--stems-zero) - 0.5em - 0.75lh - 1px);
     }
   }
 
