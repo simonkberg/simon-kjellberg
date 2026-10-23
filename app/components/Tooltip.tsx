@@ -208,15 +208,17 @@ const selects = (node: Node) => {
 };
 
 /**
- * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. Hover shows it after a
- * delay, like a title, since the pointer crosses text while reading. A tap shows it at once, since tapping text does
+ * Inline text with a tooltip, rendered on first show and hidden while empty. Not a tab stop. Hover shows it after
+ * `delay`, like a title, since the pointer crosses text while reading. A tap shows it at once, since tapping text does
  * nothing else; a long press stays a text selection.
  */
 export const TooltipText = ({
   tooltip,
+  delay = HOVER_DELAY_MS,
   children,
 }: {
   tooltip: ReactNode;
+  delay?: number;
   children: ReactNode;
 }) => {
   const { tip, shown, show, closedBy } = useTooltip();
@@ -232,7 +234,7 @@ export const TooltipText = ({
           if (event.pointerType === "touch") return;
           const text = event.currentTarget;
           clearTimeout(hover.current);
-          hover.current = window.setTimeout(() => show(text), HOVER_DELAY_MS);
+          hover.current = window.setTimeout(() => show(text), delay);
         }}
         onPointerLeave={() => clearTimeout(hover.current)}
         // A tap on the open tooltip's text closes it, like a tap anywhere else.

@@ -295,11 +295,13 @@ describe("TooltipButton", () => {
 });
 
 describe("TooltipText", () => {
-  const renderText = () => {
+  const renderText = (delay?: number) => {
     render(
       <>
         <p>elsewhere</p>
-        <TooltipText tooltip="tip">text</TooltipText>
+        <TooltipText tooltip="tip" delay={delay}>
+          text
+        </TooltipText>
       </>,
     );
     return {
@@ -362,6 +364,16 @@ describe("TooltipText", () => {
     const { text } = renderText();
 
     await dwell(text);
+
+    expect(isOpen()).toBe(true);
+  });
+
+  it("waits the delay it is given", async () => {
+    const { text } = renderText(HOVER_DELAY_MS * 2);
+
+    await dwell(text);
+    expect(isOpen()).toBe(false);
+    await act(() => vi.advanceTimersByTimeAsync(HOVER_DELAY_MS));
 
     expect(isOpen()).toBe(true);
   });

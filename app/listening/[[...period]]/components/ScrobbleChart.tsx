@@ -72,7 +72,8 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
               data-current={current || undefined}
               data-tick={tick}
             >
-              <TooltipText tooltip={text}>
+              {/* A chart is pointed at on purpose, unlike text read past. */}
+              <TooltipText tooltip={text} delay={0}>
                 <span className="stem">
                   <span className="visually-hidden">{text}</span>
                 </span>
