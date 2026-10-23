@@ -174,6 +174,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   (`app/components/chat/skinTone.ts`), kept in localStorage rather than a cookie since it never
   changes the server render.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
+- **Scrobble charts:** Last.fm has no stats endpoint, so the listening page counts each
+  Stockholm calendar day, week, month or year with `user.getRecentTracks`'s `total` (one track per
+  page): a request per bar, each hour the chart is cached.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
   Railway polls it at deploy time, so a replica that cannot reach Turso or Discord never
@@ -268,8 +271,9 @@ their own markup so each variant styles it; chat keeps `Loader`.
 
 Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
 its button that opens on hover, keyboard focus or a long press on touch. `TooltipText` is the
-inline-text kind, used for emoji in messages and timestamps: hover (after a delay, like `title`) or
-tap, never a tab stop. Tooltip content that loads goes in `WhenShown`, so it waits for the first show.
+inline-text kind, used for emoji in messages and timestamps: hover (after `delay`, by default like
+`title`; the scrobble chart's is 0) or tap, never a tab stop. Tooltip content that loads goes in
+`WhenShown`, so it waits for the first show.
 
 ### Server-Only Code
 
@@ -279,7 +283,7 @@ Files that must not run on client import `"server-only"` at top (e.g., `app/lib/
 
 - **Environment:** happy-dom
 - **Location:** Co-located with source files (`*.test.ts`, `*.test.tsx`)
-- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema; mock `@/lib/turso` with `mockTurso()` so `batch` runs through `query`); happy-dom has no popover API, so `vitest.setup.ts` stubs `showPopover`/`hidePopover` to toggle `data-popover-open`; it also spies every `log` level before each test, so logs never print and tests assert with `expect(log.warn)` without their own spy
+- **Mocking:** MSW in `mocks/node.ts` (configured in `vitest.setup.ts`), env vars in `mocks/env.ts`, cookies in `mocks/headers.ts`, reduced motion in `mocks/matchMedia.ts`, Turso in `mocks/sqlite.ts` (in-memory `node:sqlite`; pass it `MIGRATIONS` for the schema; mock `@/lib/turso` with `mockTurso()` so `batch` runs through `query`); happy-dom has no popover API, so `vitest.setup.ts` stubs `showPopover`/`hidePopover` to toggle `data-popover-open`; it also spies every `log` level before each test, so logs never print and tests assert with `expect(log.warn)` without their own spy
 - **React Compiler:** enabled in `vitest.config.ts` via `react({ compiler: true })`, so tests exercise auto-memoized components like production does
 
 > The Vitest setup uses the **native** (Rust) React Compiler from `oxc-transform-react`, an experimental optional peer of `@vitejs/plugin-react`. Next.js runs the same native compiler inside Turbopack (`reactCompiler` + `experimental.turbopackRustReactCompiler` in `next.config.ts`), so `babel-plugin-react-compiler` is not needed. The two are still configured independently.

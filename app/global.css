@@ -109,6 +109,15 @@
   --stats-fill: var(--stats-bar);
   --stats-value-color: var(--muted);
 
+  --stems-glyph: "│\A";
+  --stems-glyph-current: "┊\A";
+  --stems-marker: "●";
+  --stems-marker-current: "○";
+  --stems-color: var(--muted);
+  --stems-base-color: var(--muted);
+  --stems-hover: var(--accent);
+  --stems-hover-bg: transparent;
+
   --tracks-max: none;
   --track-display: block;
   --track-indent: 0;
@@ -302,6 +311,7 @@
   --stats-row-padding: 0 1ch;
   --stats-row-bleed: -1ch;
   --stats-heat: var(--heat);
+  --stems-hover-bg: var(--heat);
 
   --track-padding: 0 0 0 2.5ch;
   --track-marker: "›";
@@ -425,6 +435,13 @@
   --stats-gap: 0.15rem 2ch;
   --stats-max: 44rem;
   --stats-bar: block;
+  --stems-glyph: "╎\A";
+  --stems-glyph-current: "┆\A";
+  --stems-marker: "◆";
+  --stems-marker-current: "◇";
+  --stems-color: var(--accent);
+  --stems-base-color: var(--rule);
+  --stems-hover: var(--ink);
   --tracks-max: 44rem;
   --track-display: flow-root;
   --track-padding: 0.2rem 0;
@@ -545,6 +562,11 @@
 
   --stats-columns: 18ch 8ch;
   --stats-value-color: var(--ink);
+  --stems-marker: "■";
+  --stems-marker-current: "□";
+  --stems-color: var(--ink);
+  --stems-base-color: var(--ink);
+  --stems-hover: var(--muted);
   --track-padding: 0 0 0 2ch;
   --track-indent: -2ch;
   --links-display: flex;
@@ -693,6 +715,7 @@ button {
   color: var(--ink);
   font-size: var(--meta-size);
   /* It sits inside the text it describes, so don't inherit that text's layout. */
+  line-height: var(--leading);
   text-indent: 0;
   white-space: normal;
   overflow: visible;
@@ -955,6 +978,216 @@ ul {
   list-style: none;
   margin-block: 0 var(--list-gap);
   padding: 0;
+}
+
+/* Charts */
+
+.stems {
+  --stems-height: 8.5rem;
+  --stems-row: 1rem;
+  --stems-head: 1.75rem;
+  --stems-columns: minmax(0, 1fr) 7ch;
+  --stems-zero: calc(var(--stems-row) * 1.5);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--stems-columns);
+  /* Inline start is the section indent. */
+  margin-block: 0;
+  margin-inline-end: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  container-type: inline-size;
+
+  &::before {
+    content: "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────";
+    position: absolute;
+    inset: auto 1ch var(--stems-row) 0;
+    height: var(--stems-row);
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--stems-base-color);
+  }
+
+  > ol {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    height: calc(
+      var(--stems-head) + var(--stems-height) + var(--stems-row) * 2
+    );
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    --stems-top: calc(
+      var(--value) / var(--max) * var(--grow, 1) * var(--stems-height)
+    );
+    position: relative;
+    min-width: 0;
+
+    &::before {
+      content: "┴";
+      position: absolute;
+      bottom: var(--stems-row);
+      left: 50%;
+      translate: -50% 0;
+      color: var(--stems-base-color);
+    }
+
+    &[data-tick]::before {
+      content: "┼";
+    }
+
+    &[data-current] {
+      --stems-glyph: var(--stems-glyph-current);
+      --stems-marker: var(--stems-marker-current);
+    }
+  }
+
+  /* TooltipText's span: the stem's box, so its tooltip sits on the marker. */
+  li > span:has(> .stem) {
+    position: absolute;
+    inset: auto 0 var(--stems-zero);
+    height: var(--stems-top);
+
+    /* Hovering anywhere up the column counts. */
+    &::before {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: calc(var(--stems-height) + var(--stems-head));
+    }
+
+    &:hover {
+      &::before {
+        background: var(--stems-hover-bg);
+      }
+
+      .stem::before,
+      .stem::after {
+        color: var(--stems-hover);
+      }
+    }
+  }
+
+  .stem {
+    --stems-glyphs: var(--stems-glyph) var(--stems-glyph) var(--stems-glyph)
+      var(--stems-glyph);
+    position: absolute;
+    inset: 0;
+
+    &::before {
+      content: var(--stems-glyphs) var(--stems-glyphs) var(--stems-glyphs)
+        var(--stems-glyphs);
+      position: absolute;
+      inset: 0 auto 0 50%;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      translate: -50% 0;
+      color: var(--stems-color);
+      white-space: pre;
+      line-height: 0.6;
+    }
+
+    &::after {
+      content: var(--stems-marker);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      translate: -50% 50%;
+      color: var(--accent);
+      font-size: min(1em, 100cqi / var(--count) * 1.5);
+    }
+  }
+
+  @supports (position-area: top) {
+    /* Over the column's date label and level with its text, so it never sits under the pointer. */
+    .tooltip {
+      position-area: block-end;
+      /* The label's line box too, so every browser rounds both texts alike. */
+      line-height: 1;
+      margin-block-start: calc(var(--stems-zero) - 1.5em - 1px);
+
+      > span {
+        padding-block: 0.25em;
+      }
+    }
+  }
+
+  .peak,
+  .tick {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    font-size: var(--meta-size);
+    white-space: nowrap;
+  }
+
+  .peak {
+    bottom: calc(var(--stems-zero) + var(--stems-top) + 0.6rem);
+    color: var(--accent);
+  }
+
+  .tick {
+    bottom: 0;
+    color: var(--muted);
+  }
+
+  /* The first bucket's label would hang past the chart's start. */
+  li:first-child > .tick {
+    translate: -0.5ch 0;
+  }
+
+  > .average {
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(
+      var(--stems-zero) + var(--average) / var(--max) * var(--stems-height)
+    );
+    display: grid;
+    grid-template-columns: var(--stems-columns);
+    align-items: center;
+    translate: 0 50%;
+    color: var(--muted);
+    pointer-events: none;
+
+    &::before {
+      content: "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    > span {
+      position: relative;
+      padding-left: 1ch;
+      font-size: var(--meta-size);
+    }
+
+    /* Below the number, so the number sits on the line. */
+    > span > span {
+      position: absolute;
+      top: 100%;
+      left: 1ch;
+      padding-top: 0.15rem;
+    }
+  }
+
+  @container (width < 34rem) {
+    li[data-tick="wide"] {
+      &::before {
+        content: "┴";
+      }
+
+      > .tick {
+        display: none;
+      }
+    }
+  }
 }
 
 /* Lists */

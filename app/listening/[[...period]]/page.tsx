@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense, use } from "react";
 
-import { getTopAlbums, getTopArtists, getTopTracks } from "@/actions/lastfm";
+import {
+  getScrobbles,
+  getTopAlbums,
+  getTopArtists,
+  getTopTracks,
+} from "@/actions/lastfm";
 import { ExternalLink } from "@/components/ExternalLink";
 import { Heading } from "@/components/Heading";
 import { Page } from "@/components/Page";
@@ -13,8 +18,13 @@ import {
   periodLabels,
   periods,
 } from "@/lib/lastfm";
+import { bucketUnits } from "@/lib/scrobbleBuckets";
 
 import { PeriodSelector } from "./components/PeriodSelector";
+import {
+  ScrobbleChart,
+  ScrobbleChartSkeleton,
+} from "./components/ScrobbleChart";
 import { TopTable, TopTableSkeleton } from "./components/TopTable";
 
 export const prefetch = "partial";
@@ -67,6 +77,9 @@ export function generateStaticParams(): Awaited<
 
 export default function ListeningPage({ params }: ListeningPageProps) {
   const period = toPeriod(use(params).period);
+  const scrobbles = getScrobbles(period).then((result) =>
+    result.status === "ok" ? result.scrobbles : undefined,
+  );
   const topTracks = getTopTracks(period).then((result) =>
     result.status === "ok" ? result.tracks : undefined,
   );
@@ -90,6 +103,16 @@ export default function ListeningPage({ params }: ListeningPageProps) {
       </section>
 
       <PeriodSelector current={period} />
+
+      <section>
+        <Heading level={2}>
+          Scrobbles <Subtitle>(per {bucketUnits[period]})</Subtitle>
+        </Heading>
+        <Suspense fallback={<ScrobbleChartSkeleton />}>
+          {/* Keyed so a new period mounts fresh stems that grow in. */}
+          <ScrobbleChart key={period} scrobbles={scrobbles} />
+        </Suspense>
+      </section>
 
       <section>
         <Heading level={2}>

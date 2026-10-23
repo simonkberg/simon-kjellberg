@@ -6,6 +6,7 @@ import { config } from "@/config";
 import {
   type Period,
   userGetRecentTracks,
+  userGetScrobbleCount,
   type UserGetRecentTracksResponse,
   userGetTopAlbums,
   type UserGetTopAlbumsResponse,
@@ -15,6 +16,7 @@ import {
   type UserGetTopTracksResponse,
 } from "@/lib/lastfm";
 import { log } from "@/lib/log";
+import { scrobbleBuckets, yearBuckets } from "@/lib/scrobbleBuckets";
 
 export type RecentTrack = UserGetRecentTracksResponse[number];
 
@@ -117,5 +119,43 @@ export async function getTopAlbums(
     cacheLife("seconds");
     log.error({ err, action: "getTopAlbums" }, "Error fetching top albums");
     return { status: "error", error: "Failed to fetch top albums" };
+  }
+}
+
+export interface ScrobbleCount {
+  label: string;
+  count: number;
+  // Still under way, so its count is partial.
+  current: boolean;
+}
+
+export type GetScrobblesResult =
+  | { status: "ok"; scrobbles: ScrobbleCount[] }
+  | { status: "error"; error: string };
+
+export async function getScrobbles(
+  period: Period,
+): Promise<GetScrobblesResult> {
+  "use cache";
+
+  try {
+    const now = new Date();
+    const buckets =
+      period === "overall"
+        ? yearBuckets(config.lastfmSince, now)
+        : scrobbleBuckets(period, now);
+    const scrobbles = await Promise.all(
+      buckets.map(async ({ label, from, to }) => ({
+        label,
+        count: await userGetScrobbleCount(config.lastfmUsername, { from, to }),
+        current: to > now,
+      })),
+    );
+    cacheLife("hours");
+    return { status: "ok", scrobbles };
+  } catch (err) {
+    cacheLife("seconds");
+    log.error({ err, action: "getScrobbles" }, "Error fetching scrobbles");
+    return { status: "error", error: "Failed to fetch scrobbles" };
   }
 }

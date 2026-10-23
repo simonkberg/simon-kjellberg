@@ -2,6 +2,8 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  getScrobbles,
+  type GetScrobblesResult,
   getTopAlbums,
   type GetTopAlbumsResult,
   getTopArtists,
@@ -20,6 +22,9 @@ vi.mock(import("next/navigation"), () => ({
 }));
 
 vi.mock(import("@/actions/lastfm"), () => ({
+  getScrobbles: vi.fn(() =>
+    Promise.resolve<GetScrobblesResult>({ status: "ok", scrobbles: [] }),
+  ),
   getTopTracks: vi.fn(() =>
     Promise.resolve<GetTopTracksResult>({ status: "ok", tracks: [] }),
   ),
@@ -98,6 +103,21 @@ describe("ListeningPage", () => {
     );
   });
 
+  it("should render the scrobbles per bucket of the period", async () => {
+    vi.mocked(getScrobbles).mockResolvedValue({
+      status: "ok",
+      scrobbles: [{ label: "2026", count: 42, current: true }],
+    });
+
+    await renderPage();
+
+    expect(getScrobbles).toHaveBeenCalledWith("overall");
+    expect(
+      screen.getByRole("heading", { name: "Scrobbles (per year)" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2026: 42 so far")).toBeInTheDocument();
+  });
+
   it("should render table sections with headings", async () => {
     await renderPage();
 
@@ -117,9 +137,13 @@ describe("ListeningPage", () => {
     vi.mocked(getTopTracks).mockResolvedValue(error);
     vi.mocked(getTopArtists).mockResolvedValue(error);
     vi.mocked(getTopAlbums).mockResolvedValue(error);
+    vi.mocked(getScrobbles).mockResolvedValue(error);
 
     await renderPage();
 
+    expect(
+      screen.getByText("Scrobbles are temporarily unavailable :("),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     for (const noun of ["tracks", "artists", "albums"]) {
       expect(
