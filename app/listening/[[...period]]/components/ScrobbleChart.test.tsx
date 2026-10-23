@@ -40,12 +40,12 @@ describe("ScrobbleChart", () => {
     expect(document.querySelector(".average")).toHaveTextContent("200 avg");
   });
 
-  it("scales a lone empty bucket without dividing by zero", async () => {
+  it("scales a lone empty bucket with no average to show", async () => {
     await renderChart([{ label: "2026", count: 0, current: true }]);
 
     const figure = document.querySelector<HTMLElement>(".stems");
     expect(figure?.style.getPropertyValue("--max")).toBe("1");
-    expect(figure?.querySelector(".average")).toHaveTextContent("0 avg");
+    expect(figure?.querySelector(".average")).not.toBeInTheDocument();
   });
 
   it("labels every other few buckets from the current one", async () => {

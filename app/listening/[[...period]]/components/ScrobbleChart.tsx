@@ -38,9 +38,12 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
   const peak = counts.indexOf(max);
   // The current bucket is still filling up, so it would drag the average down.
   const settled = items.filter(({ current }) => !current);
-  const average = Math.round(
-    settled.reduce((sum, { count }) => sum + count, 0) / (settled.length || 1),
-  );
+  const average =
+    settled.length > 0
+      ? Math.round(
+          settled.reduce((sum, { count }) => sum + count, 0) / settled.length,
+        )
+      : undefined;
   const step = labelStep(items.length);
 
   return (
@@ -89,12 +92,14 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
           );
         })}
       </ol>
-      <span className="average" aria-hidden="true">
-        <span>
-          {average}
-          <span> avg</span>
+      {average !== undefined && (
+        <span className="average" aria-hidden="true">
+          <span>
+            {average}
+            <span> avg</span>
+          </span>
         </span>
-      </span>
+      )}
     </figure>
   );
 };
