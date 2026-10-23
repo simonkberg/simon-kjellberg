@@ -7,6 +7,7 @@ import type { ScrobbleCount } from "@/actions/lastfm";
 import { SkeletonStatus } from "@/components/Skeleton";
 import { TooltipText } from "@/components/Tooltip";
 import { useMotion } from "@/components/useMotion";
+import { formatNumber } from "@/lib/formatNumber";
 
 export interface ScrobbleChartProps {
   // Undefined when the counts failed to load.
@@ -58,7 +59,7 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
     >
       <ol>
         {items.map(({ label, count, current }, index) => {
-          const text = `${label}: ${count}${current ? " so far" : ""}`;
+          const text = `${label}: ${formatNumber(count)}${current ? " so far" : ""}`;
           const tick = labelTick(items.length - 1 - index, step);
           return (
             <animated.li
@@ -80,7 +81,7 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
               </TooltipText>
               {index === peak && (
                 <span className="peak" aria-hidden="true">
-                  {count}
+                  {formatNumber(count)}
                 </span>
               )}
               {tick && (
@@ -95,7 +96,7 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
       {average !== undefined && (
         <span className="average" aria-hidden="true">
           <span>
-            {average}
+            {formatNumber(average)}
             <span> avg</span>
           </span>
         </span>

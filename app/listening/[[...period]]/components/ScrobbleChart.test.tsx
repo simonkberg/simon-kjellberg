@@ -9,7 +9,7 @@ import { ScrobbleChart } from "./ScrobbleChart";
 
 const scrobbles: ScrobbleCount[] = [
   { label: "Oct 20", count: 100, current: false },
-  { label: "Oct 21", count: 300, current: false },
+  { label: "Oct 21", count: 3000, current: false },
   { label: "Oct 22", count: 200, current: false },
   { label: "Oct 23", count: 10, current: true },
 ];
@@ -28,7 +28,7 @@ describe("ScrobbleChart", () => {
       screen.getAllByRole("listitem").map((item) => item.textContent),
     ).toEqual([
       "Oct 20: 100Oct 20",
-      "Oct 21: 300300Oct 21",
+      "Oct 21: 3,0003,000Oct 21",
       "Oct 22: 200Oct 22",
       "Oct 23: 10 so farOct 23",
     ]);
@@ -37,7 +37,7 @@ describe("ScrobbleChart", () => {
   it("averages the settled buckets only", async () => {
     await renderChart(scrobbles);
 
-    expect(document.querySelector(".average")).toHaveTextContent("200 avg");
+    expect(document.querySelector(".average")).toHaveTextContent("1,100 avg");
   });
 
   it("scales a lone empty bucket with no average to show", async () => {

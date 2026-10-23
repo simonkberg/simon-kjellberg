@@ -14,8 +14,8 @@ beforeEach(() => {
 
 describe("AnimatedNumber", () => {
   it("renders the value in server markup", () => {
-    expect(renderToString(<AnimatedNumber value={42.5} decimals={2} />)).toBe(
-      "<span>42.50</span>",
+    expect(renderToString(<AnimatedNumber value={1234.5} decimals={2} />)).toBe(
+      "<span>1,234.50</span>",
     );
   });
 

@@ -3,6 +3,8 @@
 import { animated, useSpring } from "@react-spring/web";
 import { useState } from "react";
 
+import { formatNumber } from "@/lib/formatNumber";
+
 import { useMotion } from "./useMotion";
 
 export interface AnimatedNumberProps {
@@ -24,7 +26,7 @@ export const AnimatedNumber = ({
 
   return (
     <animated.span>
-      {spring.value.to((val) => val.toFixed(decimals))}
+      {spring.value.to((val) => formatNumber(val, decimals))}
     </animated.span>
   );
 };
