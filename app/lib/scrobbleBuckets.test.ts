@@ -73,8 +73,8 @@ describe("scrobbleBuckets", () => {
 });
 
 describe("yearBuckets", () => {
-  it("should run from the year of `since` to this one", () => {
-    const buckets = yearBuckets(new Date("2024-06-01T00:00:00Z"), now);
+  it("should run from `since` to this year", () => {
+    const buckets = yearBuckets(2024, now);
 
     expect(buckets).toEqual([
       {

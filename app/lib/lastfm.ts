@@ -53,10 +53,6 @@ async function call<T extends z.ZodType>(
   return schema.parse(json);
 }
 
-const unixTime = z
-  .string()
-  .transform((seconds) => new Date(Number(seconds) * 1000));
-
 const userGetRecentTracksResponseSchema = z
   .object({
     recenttracks: z.object({
@@ -76,9 +72,11 @@ const userGetRecentTracksResponseSchema = z
               .object({ "#text": z.string() })
               .transform((album) => album["#text"]),
             date: z
-              .object({ uts: unixTime })
+              .object({ uts: z.string() })
               .optional()
-              .transform((data) => data?.uts),
+              .transform((data) =>
+                data ? new Date(Number(data.uts) * 1000) : undefined,
+              ),
             loved: z
               .union([z.literal("0"), z.literal("1")])
               .optional()
@@ -248,14 +246,4 @@ export async function userGetScrobbleCount(
     // `to` is inclusive, and the next range starts on this second.
     to: toUnixTime(params.to) - 1,
   });
-}
-
-const userGetInfoResponseSchema = z
-  .object({ user: z.object({ registered: z.object({ unixtime: unixTime }) }) })
-  .transform((data) => ({ registered: data.user.registered.unixtime }));
-
-export type UserGetInfoResponse = z.infer<typeof userGetInfoResponseSchema>;
-
-export async function userGetInfo(user: string): Promise<UserGetInfoResponse> {
-  return call("user.getinfo", userGetInfoResponseSchema, { user });
 }

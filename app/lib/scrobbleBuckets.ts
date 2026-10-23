@@ -123,9 +123,9 @@ export function scrobbleBuckets(
   return buckets(bucketUnits[period], bucketCounts[period], localDate(now));
 }
 
-/** Calendar years in Stockholm, from the one `since` falls in to the current one. */
-export function yearBuckets(since: Date, now: Date): ScrobbleBucket[] {
+/** Calendar years in Stockholm, from `since` to the current one. */
+export function yearBuckets(since: number, now: Date): ScrobbleBucket[] {
   const today = localDate(now);
-  const count = today.getUTCFullYear() - localDate(since).getUTCFullYear() + 1;
+  const count = today.getUTCFullYear() - since + 1;
   return buckets("year", count, today);
 }

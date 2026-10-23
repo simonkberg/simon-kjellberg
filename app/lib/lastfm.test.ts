@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 import { server } from "@/mocks/node";
 
 import {
-  userGetInfo,
   userGetRecentTracks,
   userGetScrobbleCount,
   userGetTopAlbums,
@@ -295,21 +294,5 @@ describe("userGetScrobbleCount", () => {
       to: "1609545599",
     });
     expect(count).toBe(1234);
-  });
-});
-
-describe("userGetInfo", () => {
-  it("should parse the registration date", async () => {
-    const params = lastfmReturns({
-      user: { registered: { unixtime: "1037793040", "#text": 1037793040 } },
-    });
-
-    const info = await userGetInfo("testuser");
-
-    expect(params()).toMatchObject({
-      method: "user.getinfo",
-      user: "testuser",
-    });
-    expect(info).toEqual({ registered: new Date("2002-11-20T11:50:40Z") });
   });
 });

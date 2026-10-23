@@ -2,7 +2,6 @@ import { cacheLife, refresh } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  userGetInfo,
   userGetRecentTracks,
   userGetScrobbleCount,
   type UserGetRecentTracksResponse,
@@ -25,7 +24,6 @@ import {
 } from "./lastfm";
 
 vi.mock(import("@/lib/lastfm"), () => ({
-  userGetInfo: vi.fn(),
   userGetRecentTracks: vi.fn(),
   userGetScrobbleCount: vi.fn(),
   userGetTopTracks: vi.fn(),
@@ -230,20 +228,16 @@ describe("getScrobbles", () => {
     });
   });
 
-  it("should count all time per year since registering", async () => {
-    vi.mocked(userGetInfo).mockResolvedValue({
-      registered: new Date("2024-06-01T00:00:00Z"),
-    });
-
+  it("should count all time per year since the account began", async () => {
     const result = await getScrobbles("overall");
 
-    expect(result).toEqual({
+    expect(userGetScrobbleCount).toHaveBeenCalledTimes(2026 - 2006 + 1);
+    expect(result).toMatchObject({
       status: "ok",
-      scrobbles: [
-        { label: "2024", count: 42, current: false },
-        { label: "2025", count: 42, current: false },
+      scrobbles: expect.arrayContaining([
+        { label: "2006", count: 42, current: false },
         { label: "2026", count: 42, current: true },
-      ],
+      ]),
     });
   });
 

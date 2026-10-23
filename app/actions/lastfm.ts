@@ -5,7 +5,6 @@ import { cacheLife, refresh } from "next/cache";
 import { config } from "@/config";
 import {
   type Period,
-  userGetInfo,
   userGetRecentTracks,
   userGetScrobbleCount,
   type UserGetRecentTracksResponse,
@@ -143,10 +142,7 @@ export async function getScrobbles(
     const now = new Date();
     const buckets =
       period === "overall"
-        ? yearBuckets(
-            (await userGetInfo(config.lastfmUsername)).registered,
-            now,
-          )
+        ? yearBuckets(config.lastfmSince, now)
         : scrobbleBuckets(period, now);
     const scrobbles = await Promise.all(
       buckets.map(async ({ label, from, to }) => ({
