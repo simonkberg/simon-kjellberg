@@ -5,7 +5,9 @@ import { cacheLife, refresh } from "next/cache";
 import { config } from "@/config";
 import {
   type Period,
+  userGetInfo,
   userGetRecentTracks,
+  userGetScrobbleCount,
   type UserGetRecentTracksResponse,
   userGetTopAlbums,
   type UserGetTopAlbumsResponse,
@@ -15,6 +17,7 @@ import {
   type UserGetTopTracksResponse,
 } from "@/lib/lastfm";
 import { log } from "@/lib/log";
+import { scrobbleBuckets, yearBuckets } from "@/lib/scrobbleBuckets";
 
 export type RecentTrack = UserGetRecentTracksResponse[number];
 
@@ -117,5 +120,58 @@ export async function getTopAlbums(
     cacheLife("seconds");
     log.error({ err, action: "getTopAlbums" }, "Error fetching top albums");
     return { status: "error", error: "Failed to fetch top albums" };
+  }
+}
+
+async function getRegistered(): Promise<Date> {
+  "use cache";
+  cacheLife("max");
+  const { registered } = await userGetInfo(config.lastfmUsername);
+  return registered;
+}
+
+async function getScrobbleCount(from: Date, to: Date): Promise<number> {
+  "use cache";
+  // A past range is final, so only the current one is fetched again.
+  if (to.getTime() > Date.now()) {
+    cacheLife("hours");
+  } else {
+    cacheLife("max");
+  }
+  return userGetScrobbleCount(config.lastfmUsername, { from, to });
+}
+
+export interface ScrobbleCount {
+  label: string;
+  count: number;
+}
+
+export type GetScrobblesResult =
+  | { status: "ok"; scrobbles: ScrobbleCount[] }
+  | { status: "error"; error: string };
+
+export async function getScrobbles(
+  period: Period,
+): Promise<GetScrobblesResult> {
+  "use cache";
+
+  try {
+    const now = new Date();
+    const buckets =
+      period === "overall"
+        ? yearBuckets(await getRegistered(), now)
+        : scrobbleBuckets(period, now);
+    const scrobbles = await Promise.all(
+      buckets.map(async ({ label, from, to }) => ({
+        label,
+        count: await getScrobbleCount(from, to),
+      })),
+    );
+    cacheLife("hours");
+    return { status: "ok", scrobbles };
+  } catch (err) {
+    cacheLife("seconds");
+    log.error({ err, action: "getScrobbles" }, "Error fetching scrobbles");
+    return { status: "error", error: "Failed to fetch scrobbles" };
   }
 }

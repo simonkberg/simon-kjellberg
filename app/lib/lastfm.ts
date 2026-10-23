@@ -223,3 +223,43 @@ export async function userGetTopAlbums(
     ...params,
   });
 }
+
+const userGetScrobbleCountResponseSchema = z
+  .object({
+    recenttracks: z.object({
+      "@attr": z.object({ total: z.string().transform(Number) }),
+    }),
+  })
+  .transform((data) => data.recenttracks["@attr"].total);
+
+const toUnixTime = (date: Date) => Math.floor(date.getTime() / 1000);
+
+// Only the response's total is read, so one track per page is enough.
+export async function userGetScrobbleCount(
+  user: string,
+  params: { from: Date; to: Date },
+): Promise<number> {
+  return call("user.getrecenttracks", userGetScrobbleCountResponseSchema, {
+    user,
+    limit: 1,
+    from: toUnixTime(params.from),
+    // `to` is inclusive, and the next range starts on this second.
+    to: toUnixTime(params.to) - 1,
+  });
+}
+
+const userGetInfoResponseSchema = z
+  .object({
+    user: z.object({
+      registered: z.object({ unixtime: z.string().transform(Number) }),
+    }),
+  })
+  .transform((data) => ({
+    registered: new Date(data.user.registered.unixtime * 1000),
+  }));
+
+export type UserGetInfoResponse = z.infer<typeof userGetInfoResponseSchema>;
+
+export async function userGetInfo(user: string): Promise<UserGetInfoResponse> {
+  return call("user.getinfo", userGetInfoResponseSchema, { user });
+}

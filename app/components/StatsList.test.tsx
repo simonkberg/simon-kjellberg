@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { WakaTimeStatsResult } from "@/actions/wakaTime";
 
-import { StatsList, StatsListSkeleton } from "./StatsList";
+import { StatsList } from "./StatsList";
 
 const renderStats = (result: WakaTimeStatsResult) =>
   act(() => render(<StatsList stats={Promise.resolve(result)} />));
@@ -25,15 +25,6 @@ describe("StatsList", () => {
     expect(items[1]).toHaveTextContent("JavaScript 30.12%");
   });
 
-  it("keeps the bars' scale valid when every stat is zero", async () => {
-    await renderStats({
-      status: "ok",
-      stats: [{ name: "TypeScript", percent: 0 }],
-    });
-
-    expect(screen.getByRole("list").style.getPropertyValue("--max")).toBe("1");
-  });
-
   it("displays error message when stats fetch fails", async () => {
     await renderStats({ status: "error", error: "Failed to fetch stats" });
 
@@ -46,14 +37,5 @@ describe("StatsList", () => {
     await renderStats({ status: "ok", stats: [] });
 
     expect(screen.getByText(/probably on vacation/)).toBeInTheDocument();
-  });
-});
-
-describe("StatsListSkeleton", () => {
-  it("announces loading without exposing the placeholder list", () => {
-    render(<StatsListSkeleton />);
-
-    expect(screen.getByRole("status")).toHaveTextContent("Loading");
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 });

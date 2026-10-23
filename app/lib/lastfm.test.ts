@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { server } from "@/mocks/node";
 
 import {
+  userGetInfo,
   userGetRecentTracks,
+  userGetScrobbleCount,
   userGetTopAlbums,
   userGetTopArtists,
   userGetTopTracks,
@@ -268,5 +270,46 @@ describe("userGetTopAlbums", () => {
         rank: 2,
       },
     ]);
+  });
+});
+
+describe("userGetScrobbleCount", () => {
+  it("should read the range's total from one recent track", async () => {
+    const params = lastfmReturns({
+      recenttracks: {
+        track: [recentTrack("Test", playedAt("1609459200"))],
+        "@attr": { total: "1234" },
+      },
+    });
+
+    const count = await userGetScrobbleCount("testuser", {
+      from: new Date("2021-01-01T00:00:00Z"),
+      to: new Date("2021-01-02T00:00:00Z"),
+    });
+
+    expect(params()).toMatchObject({
+      method: "user.getrecenttracks",
+      user: "testuser",
+      limit: "1",
+      from: "1609459200",
+      to: "1609545599",
+    });
+    expect(count).toBe(1234);
+  });
+});
+
+describe("userGetInfo", () => {
+  it("should parse the registration date", async () => {
+    const params = lastfmReturns({
+      user: { registered: { unixtime: "1037793040", "#text": 1037793040 } },
+    });
+
+    const info = await userGetInfo("testuser");
+
+    expect(params()).toMatchObject({
+      method: "user.getinfo",
+      user: "testuser",
+    });
+    expect(info).toEqual({ registered: new Date("2002-11-20T11:50:40Z") });
   });
 });

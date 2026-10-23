@@ -174,6 +174,9 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   (`app/components/chat/skinTone.ts`), kept in localStorage rather than a cookie since it never
   changes the server render.
 - **WakaTime:** reads a public share URL, so there is no API key. 3s timeout; Last.fm 10s.
+- **Scrobble charts:** Last.fm has no stats endpoint, so the listening page counts each
+  Stockholm calendar day, month or year with `user.getRecentTracks`'s `total` (one track per
+  page). Each bucket caches on its own: past ones for good, the current one for hours.
 - **Readiness:** `/health` answers 503 with the pending stages until `instrumentation.ts`
   has marked both in `app/lib/readiness.ts`: migrations applied and the bot on the gateway.
   Railway polls it at deploy time, so a replica that cannot reach Turso or Discord never
