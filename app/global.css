@@ -1109,7 +1109,13 @@ ul {
     /* Over the column's date label and level with its text, so it never sits under the pointer. */
     .tooltip {
       position-area: block-end;
-      margin-block-start: calc(var(--stems-zero) - 0.5em - 0.75lh - 1px);
+      /* The label's line box too, so every browser rounds both texts alike. */
+      line-height: 1;
+      margin-block-start: calc(var(--stems-zero) - 1.5em - 1px);
+
+      > span {
+        padding-block: 0.25em;
+      }
     }
   }
 
