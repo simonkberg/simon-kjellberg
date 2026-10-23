@@ -109,6 +109,16 @@
   --stats-fill: var(--stats-bar);
   --stats-value-color: var(--muted);
 
+  --stems-glyph: "│\A";
+  --stems-glyph-current: "┊\A";
+  --stems-marker: "●";
+  --stems-marker-current: "○";
+  --stems-color: var(--muted);
+  --stems-marker-color: var(--accent);
+  --stems-base-color: var(--muted);
+  --stems-hover: var(--accent);
+  --stems-hover-bg: transparent;
+
   --tracks-max: none;
   --track-display: block;
   --track-indent: 0;
@@ -302,6 +312,7 @@
   --stats-row-padding: 0 1ch;
   --stats-row-bleed: -1ch;
   --stats-heat: var(--heat);
+  --stems-hover-bg: var(--heat);
 
   --track-padding: 0 0 0 2.5ch;
   --track-marker: "›";
@@ -425,6 +436,13 @@
   --stats-gap: 0.15rem 2ch;
   --stats-max: 44rem;
   --stats-bar: block;
+  --stems-glyph: "╎\A";
+  --stems-glyph-current: "┆\A";
+  --stems-marker: "◆";
+  --stems-marker-current: "◇";
+  --stems-color: var(--accent);
+  --stems-base-color: var(--rule);
+  --stems-hover: var(--ink);
   --tracks-max: 44rem;
   --track-display: flow-root;
   --track-padding: 0.2rem 0;
@@ -545,6 +563,11 @@
 
   --stats-columns: 18ch 8ch;
   --stats-value-color: var(--ink);
+  --stems-marker: "■";
+  --stems-marker-current: "□";
+  --stems-color: var(--ink);
+  --stems-base-color: var(--ink);
+  --stems-hover: var(--muted);
   --track-padding: 0 0 0 2ch;
   --track-indent: -2ch;
   --links-display: flex;
@@ -959,68 +982,176 @@ ul {
 
 /* Charts */
 
-.columns {
+.stems {
+  --stems-height: 8.5rem;
+  --stems-row: 1rem;
+  --stems-zero: calc(var(--stems-row) * 1.5);
+  position: relative;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  grid-template-rows: 10rem auto;
-  column-gap: 1ch;
-  max-width: var(--stats-max);
+  grid-template-columns: minmax(0, 1fr) 7ch;
   margin: 0;
-  color: var(--muted);
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  container-type: inline-size;
+
+  &::before {
+    content: "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────";
+    position: absolute;
+    inset: auto 1ch var(--stems-row) 0;
+    height: var(--stems-row);
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--stems-base-color);
+  }
 
   > ol {
-    display: flex;
-    grid-column: 2;
-    gap: 3px;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    height: calc(1.75rem + var(--stems-height) + var(--stems-row) * 2);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   li {
-    position: relative;
-    flex: 1;
-    background: repeating-linear-gradient(
-      0deg,
-      var(--rule) 0 3px,
-      transparent 3px 6px
+    --stems-top: calc(
+      var(--value) / var(--max) * var(--grow, 1) * var(--stems-height)
     );
+    position: relative;
+    min-width: 0;
+
+    &::before {
+      content: "┴";
+      position: absolute;
+      bottom: var(--stems-row);
+      left: 50%;
+      translate: -50% 0;
+      color: var(--stems-base-color);
+    }
+
+    &[data-tick]::before {
+      content: "┼";
+    }
+
+    &[data-current] {
+      --stems-glyph: var(--stems-glyph-current);
+      --stems-marker: var(--stems-marker-current);
+    }
+  }
+
+  .stem {
+    --stems-glyphs: var(--stems-glyph) var(--stems-glyph) var(--stems-glyph)
+      var(--stems-glyph);
+    position: absolute;
+    inset: 0 0 var(--stems-zero);
+
+    &::before {
+      content: var(--stems-glyphs) var(--stems-glyphs) var(--stems-glyphs)
+        var(--stems-glyphs);
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      display: flex;
+      align-items: flex-end;
+      height: var(--stems-top);
+      overflow: hidden;
+      translate: -50% 0;
+      color: var(--stems-color);
+      white-space: pre;
+      line-height: 0.6;
+    }
 
     &::after {
-      content: "";
-      display: var(--columns-fill, block);
+      content: var(--stems-marker);
       position: absolute;
-      inset: auto 0 0;
-      height: max(
-        3px,
-        round(calc(var(--value, 0) / var(--max, 1) * 100%), 6px)
-      );
-      background: repeating-linear-gradient(
-        0deg,
-        var(--accent) 0 3px,
-        transparent 3px 6px
-      );
-      pointer-events: none;
+      bottom: var(--stems-top);
+      left: 50%;
+      translate: -50% 50%;
+      color: var(--stems-marker-color);
+      font-size: min(1em, 100cqi / var(--count) * 1.5);
     }
 
-    > span {
-      display: block;
-      height: 100%;
+    &:hover {
+      background: var(--stems-hover-bg);
+
+      &::before,
+      &::after {
+        color: var(--stems-hover);
+      }
     }
+  }
+
+  .peak,
+  .tick {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    font-size: var(--meta-size);
+    white-space: nowrap;
   }
 
   .peak {
-    grid-row: 1;
-    grid-column: 1;
-    margin-top: -0.5lh;
+    bottom: calc(var(--stems-zero) + var(--stems-top) + 0.6rem);
+    color: var(--stems-marker-color);
   }
 
-  .axis {
-    display: flex;
-    grid-row: 2;
-    grid-column: 2;
-    justify-content: space-between;
+  .tick {
+    bottom: 0;
+    color: var(--muted);
+  }
+
+  /* The first bucket's label would hang past the chart's start. */
+  li:first-child > .tick {
+    translate: -0.5ch 0;
+  }
+
+  @container (width < 34rem) {
+    li[data-tick="wide"] {
+      &::before {
+        content: "┴";
+      }
+
+      > .tick {
+        display: none;
+      }
+    }
+  }
+}
+
+.stems > .average {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(
+    var(--stems-zero) + var(--average) / var(--max) * var(--stems-height)
+  );
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7ch;
+  align-items: center;
+  translate: 0 50%;
+  color: var(--muted);
+  pointer-events: none;
+
+  &::before {
+    content: "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  > span {
+    position: relative;
+    padding-left: 1ch;
+    font-size: var(--meta-size);
+  }
+
+  /* Below the number, so the number sits on the line. */
+  > span > span {
+    position: absolute;
+    top: 100%;
+    left: 1ch;
+    padding-top: 0.15rem;
   }
 }
 
@@ -1271,7 +1402,6 @@ ul {
 
 .placeholder {
   --stats-fill: none;
-  --columns-fill: none;
   --row-hover: transparent;
   user-select: none;
 

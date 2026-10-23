@@ -108,8 +108,9 @@ export default function ListeningPage({ params }: ListeningPageProps) {
         <Heading level={2}>
           Scrobbles <Subtitle>(per {bucketUnits[period]})</Subtitle>
         </Heading>
-        <Suspense fallback={<ScrobbleChartSkeleton period={period} />}>
-          <ScrobbleChart scrobbles={scrobbles} />
+        <Suspense fallback={<ScrobbleChartSkeleton />}>
+          {/* Keyed so a new period mounts fresh stems that grow in. */}
+          <ScrobbleChart key={period} scrobbles={scrobbles} />
         </Suspense>
       </section>
 

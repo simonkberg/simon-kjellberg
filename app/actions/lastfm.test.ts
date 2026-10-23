@@ -224,7 +224,9 @@ describe("getScrobbles", () => {
     expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
     expect(result).toEqual({
       status: "ok",
-      scrobbles: expect.arrayContaining([{ label: "Oct 23", count: 42 }]),
+      scrobbles: expect.arrayContaining([
+        { label: "Oct 23", count: 42, current: true },
+      ]),
     });
   });
 
@@ -238,9 +240,9 @@ describe("getScrobbles", () => {
     expect(result).toEqual({
       status: "ok",
       scrobbles: [
-        { label: "2024", count: 42 },
-        { label: "2025", count: 42 },
-        { label: "2026", count: 42 },
+        { label: "2024", count: 42, current: false },
+        { label: "2025", count: 42, current: false },
+        { label: "2026", count: 42, current: true },
       ],
     });
   });

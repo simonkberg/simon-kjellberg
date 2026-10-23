@@ -106,7 +106,7 @@ describe("ListeningPage", () => {
   it("should render the scrobbles per bucket of the period", async () => {
     vi.mocked(getScrobbles).mockResolvedValue({
       status: "ok",
-      scrobbles: [{ label: "2026", count: 42 }],
+      scrobbles: [{ label: "2026", count: 42, current: true }],
     });
 
     await renderPage();
@@ -115,7 +115,7 @@ describe("ListeningPage", () => {
     expect(
       screen.getByRole("heading", { name: "Scrobbles (per year)" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("2026: 42")).toBeInTheDocument();
+    expect(screen.getByText("2026: 42 so far")).toBeInTheDocument();
   });
 
   it("should render table sections with headings", async () => {

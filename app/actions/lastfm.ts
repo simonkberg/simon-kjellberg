@@ -126,6 +126,8 @@ export async function getTopAlbums(
 export interface ScrobbleCount {
   label: string;
   count: number;
+  // Still under way, so its count is partial.
+  current: boolean;
 }
 
 export type GetScrobblesResult =
@@ -150,6 +152,7 @@ export async function getScrobbles(
       buckets.map(async ({ label, from, to }) => ({
         label,
         count: await userGetScrobbleCount(config.lastfmUsername, { from, to }),
+        current: to > now,
       })),
     );
     cacheLife("hours");

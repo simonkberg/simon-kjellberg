@@ -1,15 +1,103 @@
-import { type CSSProperties, use } from "react";
+"use client";
+
+import { animated, useSprings } from "@react-spring/web";
+import { type CSSProperties, use, useState } from "react";
 
 import type { ScrobbleCount } from "@/actions/lastfm";
 import { SkeletonStatus } from "@/components/Skeleton";
 import { TooltipText } from "@/components/Tooltip";
-import type { Period } from "@/lib/lastfm";
-import { bucketCounts } from "@/lib/scrobbleBuckets";
+import { useMotion } from "@/components/useMotion";
 
 export interface ScrobbleChartProps {
   // Undefined when the counts failed to load.
   scrobbles: Promise<readonly ScrobbleCount[] | undefined>;
 }
+
+// Labels count back from the current bucket. Narrow charts show every other one.
+const labelStep = (count: number) => (count <= 8 ? 1 : Math.ceil(count / 6));
+
+const labelTick = (fromEnd: number, step: number) => {
+  if (fromEnd % (step * 2) === 0) return "narrow";
+  if (fromEnd % step === 0) return "wide";
+  return undefined;
+};
+
+const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
+  const animate = useMotion();
+  const [from] = useState(animate ? 0 : 1);
+  const [springs] = useSprings(items.length, (index) => ({
+    from: { grow: from },
+    to: { grow: 1 },
+    delay: index * 15,
+    immediate: !animate,
+  }));
+
+  const counts = items.map(({ count }) => count);
+  // All-zero counts would make the stems' `--value / --max` a 0/0.
+  const max = Math.max(0, ...counts) || 1;
+  const peak = counts.indexOf(max);
+  // The current bucket is still filling up, so it would drag the average down.
+  const settled = items.filter(({ current }) => !current);
+  const average = Math.round(
+    settled.reduce((sum, { count }) => sum + count, 0) / (settled.length || 1),
+  );
+  const step = labelStep(items.length);
+
+  return (
+    <figure
+      className="stems"
+      style={
+        {
+          "--max": max,
+          "--average": average,
+          "--count": items.length,
+        } as CSSProperties
+      }
+    >
+      <ol>
+        {items.map(({ label, count, current }, index) => {
+          const text = `${label}: ${count}${current ? " so far" : ""}`;
+          const tick = labelTick(items.length - 1 - index, step);
+          return (
+            <animated.li
+              key={label}
+              style={
+                {
+                  "--value": count,
+                  "--grow": springs[index]?.grow,
+                } as CSSProperties
+              }
+              data-current={current || undefined}
+              data-tick={tick}
+            >
+              <TooltipText tooltip={text}>
+                <span className="stem">
+                  <span className="visually-hidden">{text}</span>
+                </span>
+              </TooltipText>
+              {index === peak && (
+                <span className="peak" aria-hidden="true">
+                  {count}
+                </span>
+              )}
+              {tick && (
+                <span className="tick" aria-hidden="true">
+                  {label}
+                </span>
+              )}
+            </animated.li>
+          );
+        })}
+      </ol>
+      <span className="average" aria-hidden="true">
+        <span>
+          {average}
+          <span> avg</span>
+        </span>
+      </span>
+    </figure>
+  );
+};
 
 export const ScrobbleChart = ({ scrobbles }: ScrobbleChartProps) => {
   const items = use(scrobbles);
@@ -18,47 +106,13 @@ export const ScrobbleChart = ({ scrobbles }: ScrobbleChartProps) => {
     return <p>Scrobbles are temporarily unavailable :(</p>;
   }
 
-  // All-zero counts would make the columns' `--value / --max` a 0/0.
-  const max = Math.max(0, ...items.map(({ count }) => count)) || 1;
-
-  return (
-    <figure className="columns" style={{ "--max": max } as CSSProperties}>
-      <span className="peak" aria-hidden="true">
-        {max}
-      </span>
-      <ol>
-        {items.map(({ label, count }) => (
-          <li key={label} style={{ "--value": count } as CSSProperties}>
-            <TooltipText tooltip={`${label}: ${count}`}>
-              <span className="visually-hidden">
-                {label}: {count}
-              </span>
-            </TooltipText>
-          </li>
-        ))}
-      </ol>
-      <span className="axis" aria-hidden="true">
-        <span>{items.at(0)?.label}</span>
-        <span>{items.at(-1)?.label}</span>
-      </span>
-    </figure>
-  );
+  return <Stems items={items} />;
 };
 
-// All time has a column per year, unknown until it loads.
-const skeletonColumns = (period: Period) =>
-  period === "overall" ? 10 : bucketCounts[period];
-
-export const ScrobbleChartSkeleton = ({ period }: { period: Period }) => (
+export const ScrobbleChartSkeleton = () => (
   <SkeletonStatus>
-    <figure className="columns placeholder" aria-hidden="true">
-      <span className="peak" />
-      <ol>
-        {Array.from({ length: skeletonColumns(period) }, (_, index) => (
-          <li key={index} />
-        ))}
-      </ol>
-      <span className="axis" />
+    <figure className="stems" aria-hidden="true">
+      <ol />
     </figure>
   </SkeletonStatus>
 );

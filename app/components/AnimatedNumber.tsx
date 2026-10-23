@@ -1,15 +1,9 @@
 "use client";
 
 import { animated, useSpring } from "@react-spring/web";
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
-const reducedMotion = "(prefers-reduced-motion: reduce)";
-
-function subscribe(onChange: () => void) {
-  const query = matchMedia(reducedMotion);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
+import { useMotion } from "./useMotion";
 
 export interface AnimatedNumberProps {
   value: number;
@@ -20,12 +14,7 @@ export const AnimatedNumber = ({
   value,
   decimals = 0,
 }: AnimatedNumberProps) => {
-  // False while hydrating too: the server markup already shows the value.
-  const animate = useSyncExternalStore(
-    subscribe,
-    () => !matchMedia(reducedMotion).matches,
-    () => false,
-  );
+  const animate = useMotion();
   const [from] = useState(animate ? 0 : value);
   const spring = useSpring({
     from: { value: from },
