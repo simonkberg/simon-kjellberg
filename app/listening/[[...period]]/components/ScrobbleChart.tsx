@@ -1,9 +1,10 @@
-import { use } from "react";
+import { type CSSProperties, use } from "react";
 
 import type { ScrobbleCount } from "@/actions/lastfm";
-import { BarList, BarListSkeleton } from "@/components/BarList";
+import { SkeletonStatus } from "@/components/Skeleton";
+import { TooltipText } from "@/components/Tooltip";
 import type { Period } from "@/lib/lastfm";
-import { bucketCounts, bucketUnits } from "@/lib/scrobbleBuckets";
+import { bucketCounts } from "@/lib/scrobbleBuckets";
 
 export interface ScrobbleChartProps {
   // Undefined when the counts failed to load.
@@ -17,21 +18,47 @@ export const ScrobbleChart = ({ scrobbles }: ScrobbleChartProps) => {
     return <p>Scrobbles are temporarily unavailable :(</p>;
   }
 
+  // All-zero counts would make the columns' `--value / --max` a 0/0.
+  const max = Math.max(0, ...items.map(({ count }) => count)) || 1;
+
   return (
-    <BarList
-      bars={items.map(({ label, count }) => ({ label, value: count }))}
-    />
+    <figure className="columns" style={{ "--max": max } as CSSProperties}>
+      <span className="peak" aria-hidden="true">
+        {max}
+      </span>
+      <ol>
+        {items.map(({ label, count }) => (
+          <li key={label} style={{ "--value": count } as CSSProperties}>
+            <TooltipText tooltip={`${label}: ${count}`}>
+              <span className="visually-hidden">
+                {label}: {count}
+              </span>
+            </TooltipText>
+          </li>
+        ))}
+      </ol>
+      <span className="axis" aria-hidden="true">
+        <span>{items.at(0)?.label}</span>
+        <span>{items.at(-1)?.label}</span>
+      </span>
+    </figure>
   );
 };
 
-const labelWidths = { day: 6, month: 8, year: 4 } as const;
+// All time has a column per year, unknown until it loads.
+const skeletonColumns = (period: Period) =>
+  period === "overall" ? 10 : bucketCounts[period];
 
 export const ScrobbleChartSkeleton = ({ period }: { period: Period }) => (
-  <BarListSkeleton
-    labelWidths={Array.from(
-      { length: period === "overall" ? 10 : bucketCounts[period] },
-      () => labelWidths[bucketUnits[period]],
-    )}
-    valueWidth={4}
-  />
+  <SkeletonStatus>
+    <figure className="columns placeholder" aria-hidden="true">
+      <span className="peak" />
+      <ol>
+        {Array.from({ length: skeletonColumns(period) }, (_, index) => (
+          <li key={index} />
+        ))}
+      </ol>
+      <span className="axis" />
+    </figure>
+  </SkeletonStatus>
 );

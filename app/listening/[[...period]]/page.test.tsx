@@ -115,7 +115,7 @@ describe("ListeningPage", () => {
     expect(
       screen.getByRole("heading", { name: "Scrobbles (per year)" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("2026").closest("li")).toHaveTextContent("2026 42");
+    expect(screen.getByText("2026: 42")).toBeInTheDocument();
   });
 
   it("should render table sections with headings", async () => {

@@ -8,15 +8,31 @@ export interface ScrobbleBucket {
 
 const timeZone = "Europe/Stockholm";
 
-// sv-SE formats as "2026-10-23 09:15:00", which parses as ISO once given a T and a Z.
-const wallClock = new Intl.DateTimeFormat("sv-SE", {
+const wallClock = new Intl.DateTimeFormat("en-US", {
   timeZone,
-  dateStyle: "short",
-  timeStyle: "medium",
+  hourCycle: "h23",
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
 });
 
-const localTime = (instant: number) =>
-  Date.parse(`${wallClock.format(instant).replace(" ", "T")}Z`);
+// The instant whose UTC reading matches Stockholm's wall clock at `instant`.
+function localTime(instant: number): number {
+  const parts = wallClock.formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+  return Date.UTC(
+    part("year"),
+    part("month") - 1,
+    part("day"),
+    part("hour"),
+    part("minute"),
+    part("second"),
+  );
+}
 
 // Date.UTC normalizes overflowing days and months, so callers can step by subtracting.
 function midnight(year: number, month: number, day: number): Date {
@@ -25,12 +41,15 @@ function midnight(year: number, month: number, day: number): Date {
   return new Date(utc - (localTime(guess) - guess));
 }
 
+const dayLabel = new Intl.DateTimeFormat("en-US", {
+  timeZone,
+  month: "short",
+  day: "numeric",
+});
+
 const labels = {
-  day: new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    month: "short",
-    day: "numeric",
-  }),
+  day: dayLabel,
+  week: dayLabel,
   month: new Intl.DateTimeFormat("en-US", {
     timeZone,
     month: "short",
@@ -44,8 +63,8 @@ export type BucketUnit = keyof typeof labels;
 export const bucketUnits = {
   "7day": "day",
   "1month": "day",
-  "3month": "month",
-  "6month": "month",
+  "3month": "week",
+  "6month": "week",
   "12month": "month",
   overall: "year",
 } as const satisfies Record<Period, BucketUnit>;
@@ -53,8 +72,8 @@ export const bucketUnits = {
 export const bucketCounts = {
   "7day": 7,
   "1month": 30,
-  "3month": 3,
-  "6month": 6,
+  "3month": 13,
+  "6month": 26,
   "12month": 12,
 } as const satisfies Record<Exclude<Period, "overall">, number>;
 
@@ -65,6 +84,13 @@ function start(unit: BucketUnit, today: Date, offset: number): Date {
   switch (unit) {
     case "day":
       return midnight(year, month, day - offset);
+    case "week":
+      // Weeks start on Monday.
+      return midnight(
+        year,
+        month,
+        day - ((today.getUTCDay() + 6) % 7) - offset * 7,
+      );
     case "month":
       return midnight(year, month - offset, 1);
     case "year":
@@ -90,7 +116,7 @@ function buckets(
 
 const localDate = (instant: Date) => new Date(localTime(instant.getTime()));
 
-/** Calendar days or months in Stockholm, oldest first, ending with the current one. */
+/** Calendar days, weeks or months in Stockholm, oldest first, ending with the current one. */
 export function scrobbleBuckets(
   period: Exclude<Period, "overall">,
   now: Date,

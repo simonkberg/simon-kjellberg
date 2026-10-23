@@ -37,6 +37,17 @@ describe("scrobbleBuckets", () => {
     });
   });
 
+  it("should split weeks at Monday", () => {
+    const buckets = scrobbleBuckets("3month", now);
+
+    expect(buckets).toHaveLength(13);
+    expect(buckets.at(-1)).toEqual({
+      label: "Oct 19",
+      from: new Date("2026-10-18T22:00:00Z"),
+      to: new Date("2026-10-25T23:00:00Z"),
+    });
+  });
+
   it("should step back through months across a year", () => {
     const buckets = scrobbleBuckets("12month", now);
 
