@@ -272,7 +272,8 @@ their own markup so each variant styles it; chat keeps `Loader`.
 Use `TooltipButton` from `app/components/Tooltip.tsx`, not `title`: a manual popover anchored to
 its button that opens on hover, keyboard focus or a long press on touch. `TooltipText` is the
 inline-text kind, used for emoji in messages and timestamps: hover (after `delay`, by default like
-`title`; the scrobble chart's is 0) or tap, never a tab stop. Tooltip content that loads goes in `WhenShown`, so it waits for the first show.
+`title`; the scrobble chart's is 0) or tap, never a tab stop. Tooltip content that loads goes in
+`WhenShown`, so it waits for the first show.
 
 ### Server-Only Code
 
