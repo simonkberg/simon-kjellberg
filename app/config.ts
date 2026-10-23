@@ -9,5 +9,5 @@ export const config = {
   ],
   gtmId: "GTM-P3HX5HW",
   lastfmUsername: "magijo",
-  lastfmSince: 2006,
+  lastfmSince: 2007,
 } as const;

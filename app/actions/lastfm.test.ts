@@ -228,14 +228,14 @@ describe("getScrobbles", () => {
     });
   });
 
-  it("should count all time per year since the account began", async () => {
+  it("should count all time per year since the first scrobbles", async () => {
     const result = await getScrobbles("overall");
 
-    expect(userGetScrobbleCount).toHaveBeenCalledTimes(2026 - 2006 + 1);
+    expect(userGetScrobbleCount).toHaveBeenCalledTimes(2026 - 2007 + 1);
     expect(result).toMatchObject({
       status: "ok",
       scrobbles: expect.arrayContaining([
-        { label: "2006", count: 42, current: false },
+        { label: "2007", count: 42, current: false },
         { label: "2026", count: 42, current: true },
       ]),
     });
