@@ -123,24 +123,6 @@ export async function getTopAlbums(
   }
 }
 
-async function getRegistered(): Promise<Date> {
-  "use cache";
-  cacheLife("max");
-  const { registered } = await userGetInfo(config.lastfmUsername);
-  return registered;
-}
-
-async function getScrobbleCount(from: Date, to: Date): Promise<number> {
-  "use cache";
-  // A past range is final, so only the current one is fetched again.
-  if (to.getTime() > Date.now()) {
-    cacheLife("hours");
-  } else {
-    cacheLife("max");
-  }
-  return userGetScrobbleCount(config.lastfmUsername, { from, to });
-}
-
 export interface ScrobbleCount {
   label: string;
   count: number;
@@ -159,12 +141,15 @@ export async function getScrobbles(
     const now = new Date();
     const buckets =
       period === "overall"
-        ? yearBuckets(await getRegistered(), now)
+        ? yearBuckets(
+            (await userGetInfo(config.lastfmUsername)).registered,
+            now,
+          )
         : scrobbleBuckets(period, now);
     const scrobbles = await Promise.all(
       buckets.map(async ({ label, from, to }) => ({
         label,
-        count: await getScrobbleCount(from, to),
+        count: await userGetScrobbleCount(config.lastfmUsername, { from, to }),
       })),
     );
     cacheLife("hours");

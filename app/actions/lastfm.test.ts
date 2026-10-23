@@ -213,7 +213,7 @@ describe("getScrobbles", () => {
     vi.mocked(userGetScrobbleCount).mockResolvedValue(42);
   });
 
-  it("should count each bucket, caching only the current one briefly", async () => {
+  it("should count each bucket", async () => {
     const result = await getScrobbles("7day");
 
     expect(userGetScrobbleCount).toHaveBeenCalledTimes(7);
@@ -221,11 +221,7 @@ describe("getScrobbles", () => {
       from: new Date("2026-10-22T22:00:00Z"),
       to: new Date("2026-10-23T22:00:00Z"),
     });
-    expect(vi.mocked(cacheLife).mock.calls).toEqual([
-      ...Array.from({ length: 6 }, () => ["max"]),
-      ["hours"],
-      ["hours"],
-    ]);
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("hours");
     expect(result).toEqual({
       status: "ok",
       scrobbles: expect.arrayContaining([{ label: "Oct 23", count: 42 }]),
@@ -259,7 +255,7 @@ describe("getScrobbles", () => {
       status: "error",
       error: "Failed to fetch scrobbles",
     });
-    expect(cacheLife).toHaveBeenLastCalledWith("seconds");
+    expect(cacheLife).toHaveBeenCalledExactlyOnceWith("seconds");
     expect(log.error).toHaveBeenCalledWith(
       { err: mockError, action: "getScrobbles" },
       "Error fetching scrobbles",
