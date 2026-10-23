@@ -991,7 +991,9 @@ ul {
   position: relative;
   display: grid;
   grid-template-columns: var(--stems-columns);
-  margin: 0;
+  /* Inline start is the section indent. */
+  margin-block: 0;
+  margin-inline-end: 0;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   container-type: inline-size;
