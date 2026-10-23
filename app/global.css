@@ -715,6 +715,7 @@ button {
   color: var(--ink);
   font-size: var(--meta-size);
   /* It sits inside the text it describes, so don't inherit that text's layout. */
+  line-height: var(--leading);
   text-indent: 0;
   white-space: normal;
   overflow: visible;
