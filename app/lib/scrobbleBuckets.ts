@@ -1,6 +1,6 @@
 import type { Period } from "@/lib/lastfm";
 
-export interface ScrobbleBucket {
+interface ScrobbleBucket {
   label: string;
   from: Date;
   to: Date;
@@ -58,7 +58,7 @@ const labels = {
   year: new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric" }),
 };
 
-export type BucketUnit = keyof typeof labels;
+type BucketUnit = keyof typeof labels;
 
 export const bucketUnits = {
   "7day": "day",
@@ -69,7 +69,7 @@ export const bucketUnits = {
   overall: "year",
 } as const satisfies Record<Period, BucketUnit>;
 
-export const bucketCounts = {
+const bucketCounts = {
   "7day": 7,
   "1month": 30,
   "3month": 13,
@@ -103,14 +103,13 @@ function buckets(
   count: number,
   today: Date,
 ): ScrobbleBucket[] {
+  // Each bucket starts where the previous one ended, so every edge is computed once.
+  let from = start(unit, today, count - 1);
   return Array.from({ length: count }, (_, index) => {
-    const offset = count - 1 - index;
-    const from = start(unit, today, offset);
-    return {
-      label: labels[unit].format(from),
-      from,
-      to: start(unit, today, offset - 1),
-    };
+    const to = start(unit, today, count - 2 - index);
+    const bucket = { label: labels[unit].format(from), from, to };
+    from = to;
+    return bucket;
   });
 }
 

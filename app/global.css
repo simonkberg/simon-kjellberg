@@ -114,7 +114,6 @@
   --stems-marker: "●";
   --stems-marker-current: "○";
   --stems-color: var(--muted);
-  --stems-marker-color: var(--accent);
   --stems-base-color: var(--muted);
   --stems-hover: var(--accent);
   --stems-hover-bg: transparent;
@@ -985,10 +984,12 @@ ul {
 .stems {
   --stems-height: 8.5rem;
   --stems-row: 1rem;
+  --stems-head: 1.75rem;
+  --stems-columns: minmax(0, 1fr) 7ch;
   --stems-zero: calc(var(--stems-row) * 1.5);
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 7ch;
+  grid-template-columns: var(--stems-columns);
   margin: 0;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1010,7 +1011,9 @@ ul {
     display: grid;
     grid-auto-columns: minmax(0, 1fr);
     grid-auto-flow: column;
-    height: calc(1.75rem + var(--stems-height) + var(--stems-row) * 2);
+    height: calc(
+      var(--stems-head) + var(--stems-height) + var(--stems-row) * 2
+    );
     margin: 0;
     padding: 0;
     list-style: none;
@@ -1070,7 +1073,7 @@ ul {
       bottom: var(--stems-top);
       left: 50%;
       translate: -50% 50%;
-      color: var(--stems-marker-color);
+      color: var(--accent);
       font-size: min(1em, 100cqi / var(--count) * 1.5);
     }
 
@@ -1095,7 +1098,7 @@ ul {
 
   .peak {
     bottom: calc(var(--stems-zero) + var(--stems-top) + 0.6rem);
-    color: var(--stems-marker-color);
+    color: var(--accent);
   }
 
   .tick {
@@ -1108,6 +1111,40 @@ ul {
     translate: -0.5ch 0;
   }
 
+  > .average {
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(
+      var(--stems-zero) + var(--average) / var(--max) * var(--stems-height)
+    );
+    display: grid;
+    grid-template-columns: var(--stems-columns);
+    align-items: center;
+    translate: 0 50%;
+    color: var(--muted);
+    pointer-events: none;
+
+    &::before {
+      content: "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    > span {
+      position: relative;
+      padding-left: 1ch;
+      font-size: var(--meta-size);
+    }
+
+    /* Below the number, so the number sits on the line. */
+    > span > span {
+      position: absolute;
+      top: 100%;
+      left: 1ch;
+      padding-top: 0.15rem;
+    }
+  }
+
   @container (width < 34rem) {
     li[data-tick="wide"] {
       &::before {
@@ -1118,40 +1155,6 @@ ul {
         display: none;
       }
     }
-  }
-}
-
-.stems > .average {
-  position: absolute;
-  inset-inline: 0;
-  bottom: calc(
-    var(--stems-zero) + var(--average) / var(--max) * var(--stems-height)
-  );
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 7ch;
-  align-items: center;
-  translate: 0 50%;
-  color: var(--muted);
-  pointer-events: none;
-
-  &::before {
-    content: "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄";
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  > span {
-    position: relative;
-    padding-left: 1ch;
-    font-size: var(--meta-size);
-  }
-
-  /* Below the number, so the number sits on the line. */
-  > span > span {
-    position: absolute;
-    top: 100%;
-    left: 1ch;
-    padding-top: 0.15rem;
   }
 }
 

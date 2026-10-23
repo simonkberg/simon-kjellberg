@@ -1,30 +1,17 @@
 import { act, renderHook } from "@testing-library/react";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import { mockReducedMotion } from "@/mocks/matchMedia";
 
 import { useMotion } from "./useMotion";
 
-function mockReducedMotion(matches: boolean) {
-  const query = matchMedia("(prefers-reduced-motion: reduce)");
-  const get = vi.spyOn(query, "matches", "get").mockReturnValue(matches);
-  vi.spyOn(window, "matchMedia").mockReturnValue(query);
-  return (next: boolean) => {
-    get.mockReturnValue(next);
-    query.dispatchEvent(new Event("change"));
-  };
-}
-
 describe("useMotion", () => {
-  it("animates without a reduced motion preference", () => {
-    mockReducedMotion(false);
-
-    expect(renderHook(useMotion).result.current).toBe(true);
-  });
-
-  it("follows the preference when it changes", () => {
+  it("follows the reduced motion preference", () => {
     const change = mockReducedMotion(false);
     const { result } = renderHook(useMotion);
+    expect(result.current).toBe(true);
 
     act(() => change(true));
 

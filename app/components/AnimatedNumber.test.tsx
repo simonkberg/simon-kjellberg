@@ -2,15 +2,11 @@ import { Globals } from "@react-spring/web";
 import { act, render, screen } from "@testing-library/react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished } from "vitest";
+
+import { mockReducedMotion } from "@/mocks/matchMedia";
 
 import { AnimatedNumber } from "./AnimatedNumber";
-
-function preferReducedMotion() {
-  const query = matchMedia("(prefers-reduced-motion: reduce)");
-  vi.spyOn(query, "matches", "get").mockReturnValue(true);
-  vi.spyOn(window, "matchMedia").mockReturnValue(query);
-}
 
 beforeEach(() => {
   Globals.assign({ skipAnimation: false });
@@ -45,7 +41,7 @@ describe("AnimatedNumber", () => {
   });
 
   it("shows the value at once with reduced motion", () => {
-    preferReducedMotion();
+    mockReducedMotion(true);
 
     render(<AnimatedNumber value={50} decimals={2} />);
 

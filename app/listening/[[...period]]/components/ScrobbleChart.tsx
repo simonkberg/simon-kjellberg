@@ -29,7 +29,6 @@ const Stems = ({ items }: { items: readonly ScrobbleCount[] }) => {
     from: { grow: from },
     to: { grow: 1 },
     delay: index * 15,
-    immediate: !animate,
   }));
 
   const counts = items.map(({ count }) => count);
