@@ -1,4 +1,6 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
+
 import { comparing, stringComparator } from "comparator.ts";
 import { z } from "zod";
 
@@ -580,6 +582,18 @@ export async function searchChannelMessages(params: {
 
 const PostChannelMessageResponseSchema = z.object({ id: z.string() });
 
+// Every environment's site posts as the bot, and previews share one channel, so a
+// nonce tells this process's posts apart. Not enforced, so Discord never dedupes on it.
+function postNonce(): string {
+  return getGlobal("discord/post-nonce", () =>
+    randomBytes(12).toString("base64url"),
+  );
+}
+
+export function isOwnPost(message: DiscordMessage): boolean {
+  return message.nonce === postNonce();
+}
+
 export async function postChannelMessage(
   text: string,
   username: Username,
@@ -589,6 +603,7 @@ export async function postChannelMessage(
   const { emojify } = await import("@/lib/shortcodes");
   const body = {
     content: `${username}: ${emojify(text)}`,
+    nonce: postNonce(),
     // A reply to a message deleted meanwhile goes out as a plain message.
     message_reference: replyToMessageId
       ? { message_id: replyToMessageId, fail_if_not_exists: false }

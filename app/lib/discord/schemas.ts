@@ -36,6 +36,8 @@ export const DiscordMessageSchema = z.object({
   channel_id: z.string().optional(), // Present in gateway events, not in API single-message fetch
   author: DiscordUserSchema,
   content: z.string(),
+  // Echoed only on the gateway's MESSAGE_CREATE; other clients may send integers.
+  nonce: z.union([z.string(), z.number()]).optional(),
   timestamp: z.string(),
   edited_timestamp: z.string().nullable().optional(),
   message_reference: z

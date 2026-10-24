@@ -12,6 +12,7 @@ import {
   addBotReaction,
   getChannelMessages,
   getMessageChain,
+  isOwnPost,
   postChannelMessage,
   removeBotReaction,
   searchChannelMessages,
@@ -593,7 +594,7 @@ describe("postChannelMessage", () => {
 
     expect(messageId).toBe("message-123");
     expect(requests).toHaveBeenCalledExactlyOnceWith(
-      { content: "TestUser: Hello 📖" },
+      { content: "TestUser: Hello 📖", nonce: expect.any(String) },
       "Bot test-discord-bot-token",
     );
   });
@@ -616,11 +617,33 @@ describe("postChannelMessage", () => {
     expect(messageId).toBe("reply-456");
     expect(requests).toHaveBeenCalledExactlyOnceWith({
       content: "simon-bot: This is a reply",
+      nonce: expect.any(String),
       message_reference: {
         message_id: "original-123",
         fail_if_not_exists: false,
       },
     });
+  });
+});
+
+describe("isOwnPost", () => {
+  it("should recognise only messages carrying this process's post nonce", async () => {
+    let nonce: unknown;
+    server.use(
+      http.post(MESSAGES_URL, async ({ request }) => {
+        ({ nonce } = (await request.json()) as { nonce: unknown });
+        return HttpResponse.json({ id: "message-123" });
+      }),
+    );
+
+    await postChannelMessage("Hello", "TestUser" as Username);
+
+    expect(isOwnPost(message("message-123", { nonce: String(nonce) }))).toBe(
+      true,
+    );
+    expect(isOwnPost(message("message-456", { nonce: "elsewhere" }))).toBe(
+      false,
+    );
   });
 });
 
