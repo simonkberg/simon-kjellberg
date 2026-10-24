@@ -1,5 +1,5 @@
 import "server-only";
-import { randomBytes } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { comparing, stringComparator } from "comparator.ts";
 import { z } from "zod";
@@ -583,10 +583,15 @@ export async function searchChannelMessages(params: {
 const PostChannelMessageResponseSchema = z.object({ id: z.string() });
 
 // Every environment's site posts as the bot, and previews share one channel, so a
-// nonce tells this process's posts apart. Not enforced, so Discord never dedupes on it.
+// nonce tells this environment's posts apart. Shared by its replicas so any can answer,
+// with markSeen picking one; random where Railway sets no environment, as in local dev.
+// Not enforced, so Discord never dedupes on it; hashed to fit its 25 characters.
 function postNonce(): string {
   return getGlobal("discord/post-nonce", () =>
-    randomBytes(12).toString("base64url"),
+    createHash("sha256")
+      .update(process.env["RAILWAY_ENVIRONMENT_ID"] ?? randomUUID())
+      .digest("base64url")
+      .slice(0, 25),
   );
 }
 

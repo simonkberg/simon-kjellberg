@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
+import { resetGlobals } from "@/lib/global";
 import { log } from "@/lib/log";
 import type { Username } from "@/lib/session";
 import { message, reaction } from "@/mocks/discord";
@@ -627,23 +628,37 @@ describe("postChannelMessage", () => {
 });
 
 describe("isOwnPost", () => {
-  it("should recognise only messages carrying this process's post nonce", async () => {
-    let nonce: unknown;
+  async function postedNonce(): Promise<string> {
+    let nonce = "";
     server.use(
       http.post(MESSAGES_URL, async ({ request }) => {
-        ({ nonce } = (await request.json()) as { nonce: unknown });
+        ({ nonce } = (await request.json()) as { nonce: string });
         return HttpResponse.json({ id: "message-123" });
       }),
     );
-
     await postChannelMessage("Hello", "TestUser" as Username);
+    return nonce;
+  }
 
-    expect(isOwnPost(message("message-123", { nonce: String(nonce) }))).toBe(
-      true,
-    );
+  it("should recognise only messages carrying this process's post nonce", async () => {
+    const nonce = await postedNonce();
+
+    expect(isOwnPost(message("message-123", { nonce }))).toBe(true);
     expect(isOwnPost(message("message-456", { nonce: "elsewhere" }))).toBe(
       false,
     );
+  });
+
+  it("should share the nonce between processes of one Railway environment", async () => {
+    vi.stubEnv(
+      "RAILWAY_ENVIRONMENT_ID",
+      "aaf0d6d1-c4a2-4826-a849-5c35f7cd334c",
+    );
+    const nonce = await postedNonce();
+    resetGlobals();
+
+    expect(isOwnPost(message("message-123", { nonce }))).toBe(true);
+    expect(nonce).toHaveLength(25);
   });
 });
 
