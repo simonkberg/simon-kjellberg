@@ -115,21 +115,34 @@ describe("handleMessage", () => {
     expect(postChannelMessage).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { name: "answer its own site post", own: true, replies: 1 },
-    { name: "leave another environment's site post", own: false, replies: 0 },
-  ])("should $name", async ({ own, replies }) => {
-    vi.mocked(isOwnPost).mockReturnValue(own);
+  const sitePost = message("msg-1", {
+    author: { id: "bot-user-id", bot: true },
+    content: "User1: hey simon-bot",
+  });
+
+  it("should answer its own site post", async () => {
+    vi.mocked(isOwnPost).mockReturnValue(true);
     replyWith("hello there!");
 
-    await handleMessage(
-      message("msg-1", {
-        author: { id: "bot-user-id", bot: true },
-        content: "User1: hey simon-bot",
-      }),
-    );
+    await handleMessage(sitePost);
 
-    expect(postChannelMessage).toHaveBeenCalledTimes(replies);
+    expect(postChannelMessage).toHaveBeenCalledExactlyOnceWith(
+      "hello there!",
+      "simon-bot",
+      "msg-1",
+    );
+  });
+
+  it("should leave another environment's site post", async () => {
+    vi.mocked(isOwnPost).mockReturnValue(false);
+
+    await handleMessage(sitePost);
+
+    expect(postChannelMessage).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledExactlyOnceWith(
+      { messageId: "msg-1" },
+      "Site post from another environment",
+    );
   });
 
   it("should not treat a forward as a reply", async () => {
