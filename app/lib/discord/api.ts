@@ -582,10 +582,7 @@ export async function searchChannelMessages(params: {
 
 const PostChannelMessageResponseSchema = z.object({ id: z.string() });
 
-// Every environment's site posts as the bot, and previews share one channel, so a
-// nonce tells this environment's posts apart. Shared by its replicas so any can answer,
-// with markSeen picking one; random where Railway sets no environment, as in local dev.
-// Not enforced, so Discord never dedupes on it; hashed to fit its 25 characters.
+// Previews share one channel, so this tells an environment's site posts apart.
 function postNonce(): string {
   return getGlobal("discord/post-nonce", () =>
     createHash("sha256")
