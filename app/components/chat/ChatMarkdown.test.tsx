@@ -25,6 +25,12 @@ describe("ChatMarkdown", () => {
     );
   });
 
+  it("hides spoilers, with markdown inside, as Discord does", () => {
+    expect(html("a ||**b** c|| d ||||")).toBe(
+      'a <span class="spoiler" role="button" tabindex="0" aria-label="Spoiler"><span inert=""><strong>b</strong> c</span></span> d ||||',
+    );
+  });
+
   it("renders line breaks", () => {
     expect(html("line one\nline two  \nline three")).toBe(
       "line one<br>line two  <br>line three",
