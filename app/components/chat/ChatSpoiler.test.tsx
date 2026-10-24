@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -35,6 +35,19 @@ describe("ChatSpoiler", () => {
     await userEvent.click(screen.getByRole("button", { name: "Spoiler" }));
 
     expect(screen.getByRole("link", { name: "link" })).toBe(link);
+  });
+
+  it("only reveals when it's a link's text", () => {
+    render(
+      <a href="https://simon.dev">
+        <ChatSpoiler>secret</ChatSpoiler>
+      </a>,
+    );
+
+    expect(
+      fireEvent.click(screen.getByRole("button", { name: "Spoiler" })),
+    ).toBe(false);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   it.each(["{Enter}", " "])("reveals on %j", async (key) => {

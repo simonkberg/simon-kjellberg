@@ -14,7 +14,11 @@ export const ChatSpoiler = ({ children }: { children: ReactNode }) => {
       role="button"
       tabIndex={0}
       aria-label="Spoiler"
-      onClick={() => setHidden(false)}
+      onClick={(event) => {
+        // In a link's text, the first click only reveals.
+        event.preventDefault();
+        setHidden(false);
+      }}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
