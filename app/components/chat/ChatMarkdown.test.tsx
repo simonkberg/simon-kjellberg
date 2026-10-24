@@ -47,6 +47,19 @@ describe("ChatMarkdown", () => {
     expect(container.textContent).toBe("|||a|a || btwolines||");
   });
 
+  it.each([
+    ["||||", "||||"],
+    ["|||a|||", "[|a]|"],
+    ["||a `||` b||", "[a `]` b||"],
+    ["||two\nlines||", "[two<br>lines]"],
+  ])("pairs %j's spoiler bars as Discord does", (source, expected) => {
+    expect(
+      html(source)
+        .replaceAll(/<span class="spoiler"[^>]*><span inert="">/g, "[")
+        .replaceAll("</span></span>", "]"),
+    ).toBe(expected);
+  });
+
   it("renders line breaks", () => {
     expect(html("line one\nline two  \nline three")).toBe(
       "line one<br>line two  <br>line three",
