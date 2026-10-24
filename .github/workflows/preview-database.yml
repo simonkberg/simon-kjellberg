@@ -1,0 +1,49 @@
+name: Preview database
+
+permissions: {}
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, closed]
+
+# A PR closed right after opening deletes its fork only once the create has finished.
+concurrency:
+  group: preview-database-${{ github.event.number }}
+
+env:
+  # Railway names a PR's environment simon.dev-pr-<N>; env.ts drops the dot.
+  DATABASE: simondev-pr-${{ github.event.number }}
+  DATABASES_URL: https://api.turso.tech/v1/organizations/${{ vars.TURSO_ORGANIZATION }}/databases
+
+jobs:
+  create:
+    name: Fork the testing database
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      # A reopened PR whose fork survived gets 409, which is fine.
+      - run: |
+          body=$(jq -n --arg name "$DATABASE" --arg group "$GROUP" --arg source "$SOURCE" \
+            '{name: $name, group: $group, seed: {type: "database", name: $source}}')
+          status=$(curl -sS --retry 3 -o response.json -w '%{http_code}' -X POST "$DATABASES_URL" \
+            -H "Authorization: Bearer $TURSO_API_TOKEN" -H "Content-Type: application/json" -d "$body")
+          cat response.json
+          [[ $status == 200 || $status == 409 ]]
+        env:
+          GROUP: ${{ vars.TURSO_GROUP }}
+          SOURCE: ${{ vars.TURSO_TESTING_DATABASE }}
+          TURSO_API_TOKEN: ${{ secrets.TURSO_API_TOKEN }}
+
+  delete:
+    name: Delete the fork
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          status=$(curl -sS --retry 3 -o response.json -w '%{http_code}' -X DELETE "$DATABASES_URL/$DATABASE" \
+            -H "Authorization: Bearer $TURSO_API_TOKEN")
+          cat response.json
+          [[ $status == 200 || $status == 404 ]]
+        env:
+          TURSO_API_TOKEN: ${{ secrets.TURSO_API_TOKEN }}

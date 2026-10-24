@@ -63,6 +63,17 @@ describe("env", () => {
       expect(env).toEqual(mockEnv);
     });
 
+    it("should fill {environment} in TURSO_DATABASE_URL with the Railway environment's database name", async () => {
+      vi.stubEnv("TURSO_DATABASE_URL", "libsql://{environment}-org.turso.io");
+      vi.stubEnv("RAILWAY_ENVIRONMENT_NAME", "simon.dev-pr-2285");
+
+      const { env } = await import("./env");
+
+      expect(env.TURSO_DATABASE_URL).toBe(
+        "libsql://simondev-pr-2285-org.turso.io",
+      );
+    });
+
     it("should treat empty values as unset when SKIP_ENV_VALIDATION is true", async () => {
       vi.stubEnv("SKIP_ENV_VALIDATION", "true");
       vi.stubEnv("ANTHROPIC_API_KEY", "");
@@ -103,6 +114,17 @@ describe("env", () => {
 
       await expect(import("./env")).rejects.toThrow(
         "Invalid environment variables",
+      );
+    });
+
+    it("should throw when TURSO_DATABASE_URL keeps {environment} outside Railway", async () => {
+      vi.stubEnv("TURSO_DATABASE_URL", "libsql://{environment}-org.turso.io");
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining("RAILWAY_ENVIRONMENT_NAME is unset"),
       );
     });
 

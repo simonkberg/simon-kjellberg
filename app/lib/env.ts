@@ -15,11 +15,27 @@ export const env = parseAndValidateEnv({
   DISCORD_CHANNEL_ID: z.string().min(1, "DISCORD_CHANNEL_ID is required"),
   LAST_FM_API_KEY: z.string().min(1, "LAST_FM_API_KEY is required"),
   ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
-  TURSO_DATABASE_URL: z.url("TURSO_DATABASE_URL must be a valid URL"),
+  TURSO_DATABASE_URL: z.preprocess(
+    withEnvironmentDatabase,
+    z
+      .url("TURSO_DATABASE_URL must be a valid URL")
+      .refine(
+        (url) => !url.includes("{environment}"),
+        "TURSO_DATABASE_URL has {environment} but RAILWAY_ENVIRONMENT_NAME is unset",
+      ),
+  ),
   TURSO_AUTH_TOKEN: z.string().min(1, "TURSO_AUTH_TOKEN is required"),
 });
 
 export type Env = typeof env;
+
+// PR previews each reach their own fork, which preview-database.yml names the same way.
+function withEnvironmentDatabase(value: unknown): unknown {
+  const environment = process.env["RAILWAY_ENVIRONMENT_NAME"];
+  if (typeof value !== "string" || !environment) return value;
+  const database = environment.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  return value.replace("{environment}", database);
+}
 
 function parseAndValidateEnv<T extends Record<string, z.ZodTypeAny>>(
   schema: T,
