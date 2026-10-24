@@ -28,6 +28,15 @@ describe("ChatSpoiler", () => {
     expect(screen.getByRole("link", { name: "link" })).toBeDefined();
   });
 
+  it("keeps its content mounted as it reveals", async () => {
+    renderSpoiler();
+    const link = screen.getByText("link");
+
+    await userEvent.click(screen.getByRole("button", { name: "Spoiler" }));
+
+    expect(screen.getByRole("link", { name: "link" })).toBe(link);
+  });
+
   it.each(["{Enter}", " "])("reveals on %j", async (key) => {
     renderSpoiler();
 
