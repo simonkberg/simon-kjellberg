@@ -117,6 +117,17 @@ describe("env", () => {
       );
     });
 
+    it("should throw when TURSO_DATABASE_URL keeps {environment} outside Railway", async () => {
+      vi.stubEnv("TURSO_DATABASE_URL", "libsql://{environment}-org.turso.io");
+
+      await expect(import("./env")).rejects.toThrow(
+        "Invalid environment variables",
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining("RAILWAY_ENVIRONMENT_NAME is unset"),
+      );
+    });
+
     it("should throw when ANTHROPIC_API_KEY is empty", async () => {
       vi.stubEnv("ANTHROPIC_API_KEY", "");
 

@@ -17,7 +17,12 @@ export const env = parseAndValidateEnv({
   ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
   TURSO_DATABASE_URL: z.preprocess(
     withEnvironmentDatabase,
-    z.url("TURSO_DATABASE_URL must be a valid URL"),
+    z
+      .url("TURSO_DATABASE_URL must be a valid URL")
+      .refine(
+        (url) => !url.includes("{environment}"),
+        "TURSO_DATABASE_URL has {environment} but RAILWAY_ENVIRONMENT_NAME is unset",
+      ),
   ),
   TURSO_AUTH_TOKEN: z.string().min(1, "TURSO_AUTH_TOKEN is required"),
 });
