@@ -383,14 +383,8 @@
     0 50% / 1ch 100% repeat-x;
   --skeleton-height: 1lh;
   --skeleton-align: top;
-  --spoiler-bg: radial-gradient(circle, var(--muted) 0 1px, transparent 1.5px) 0
-    0 / 0.5ch 0.25lh var(--wash);
-  --spoiler-hover-bg: radial-gradient(
-      circle,
-      var(--accent) 0 1px,
-      transparent 1.5px
-    )
-    0 0 / 0.5ch 0.25lh var(--heat);
+  --spoiler-bg: var(--rule);
+  --spoiler-hover-bg: var(--muted);
 }
 
 /* Ledger: a typographic grid. Section names in a label column, content in
