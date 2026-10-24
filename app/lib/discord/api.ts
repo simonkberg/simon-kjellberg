@@ -1,4 +1,6 @@
 import "server-only";
+import { createHash, randomUUID } from "node:crypto";
+
 import { comparing, stringComparator } from "comparator.ts";
 import { z } from "zod";
 
@@ -580,6 +582,20 @@ export async function searchChannelMessages(params: {
 
 const PostChannelMessageResponseSchema = z.object({ id: z.string() });
 
+// Previews share one channel, so this tells an environment's site posts apart.
+function postNonce(): string {
+  return getGlobal("discord/post-nonce", () =>
+    createHash("sha256")
+      .update(process.env["RAILWAY_ENVIRONMENT_ID"] ?? randomUUID())
+      .digest("base64url")
+      .slice(0, 25),
+  );
+}
+
+export function isOwnPost(message: DiscordMessage): boolean {
+  return message.nonce === postNonce();
+}
+
 export async function postChannelMessage(
   text: string,
   username: Username,
@@ -589,6 +605,7 @@ export async function postChannelMessage(
   const { emojify } = await import("@/lib/shortcodes");
   const body = {
     content: `${username}: ${emojify(text)}`,
+    nonce: postNonce(),
     // A reply to a message deleted meanwhile goes out as a plain message.
     message_reference: replyToMessageId
       ? { message_id: replyToMessageId, fail_if_not_exists: false }

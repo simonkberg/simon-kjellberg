@@ -191,6 +191,8 @@ from `app/api/chat/sse/`), WakaTime, Last.fm and Anthropic. The non-obvious part
   server boot from `instrumentation.ts` — one long-lived Gateway subscription, not
   per-request — and dedupes replies and mentions through Turso's `seen_messages` (kept an hour) so multiple
   instances don't double-reply. Without Turso it doesn't reply at all, rather than twice.
+  Every environment's site posts as the bot, and PR previews share a channel, so each post
+  carries a per-environment `nonce` and the bot answers a site post only where it was sent.
   The reply chain reaches it as one user turn of escaped `<message>` elements, its own
   included, so ids, authors and reactions sit outside the text people can type.
   A reply's last round rules out tools, so it ends in text rather than running out of rounds.

@@ -10,7 +10,12 @@ import { query } from "@/lib/turso";
 import { message } from "@/mocks/discord";
 import { failQuery, sqliteBeforeEach } from "@/mocks/sqlite";
 
-import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
+import {
+  type ChainMessage,
+  getMessageChain,
+  isOwnPost,
+  postChannelMessage,
+} from "./api";
 import { handleMessage, startBotSubscription } from "./bot";
 import { subscribe } from "./gateway";
 
@@ -20,7 +25,12 @@ vi.mock(import("@/lib/reflection"), () => ({ reflect: vi.fn() }));
 
 vi.mock(import("./api"), async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, getMessageChain: vi.fn(), postChannelMessage: vi.fn() };
+  return {
+    ...actual,
+    getMessageChain: vi.fn(),
+    isOwnPost: vi.fn(),
+    postChannelMessage: vi.fn(),
+  };
 });
 
 vi.mock(import("@/lib/anthropic"), async (importOriginal) => {
@@ -103,6 +113,36 @@ describe("handleMessage", () => {
     expect(query).not.toHaveBeenCalled();
     expect(getMessageChain).not.toHaveBeenCalled();
     expect(postChannelMessage).not.toHaveBeenCalled();
+  });
+
+  const sitePost = message("msg-1", {
+    author: { id: "bot-user-id", bot: true },
+    content: "User1: hey simon-bot",
+  });
+
+  it("should answer its own site post", async () => {
+    vi.mocked(isOwnPost).mockReturnValue(true);
+    replyWith("hello there!");
+
+    await handleMessage(sitePost);
+
+    expect(postChannelMessage).toHaveBeenCalledExactlyOnceWith(
+      "hello there!",
+      "simon-bot",
+      "msg-1",
+    );
+  });
+
+  it("should leave another environment's site post", async () => {
+    vi.mocked(isOwnPost).mockReturnValue(false);
+
+    await handleMessage(sitePost);
+
+    expect(postChannelMessage).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledExactlyOnceWith(
+      { messageId: "msg-1" },
+      "Site post from another environment",
+    );
   });
 
   it("should not treat a forward as a reply", async () => {

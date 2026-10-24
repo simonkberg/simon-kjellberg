@@ -5,7 +5,12 @@ import { withSiteReactions } from "@/lib/reactions";
 import { reflect } from "@/lib/reflection";
 import { query } from "@/lib/turso";
 
-import { type ChainMessage, getMessageChain, postChannelMessage } from "./api";
+import {
+  type ChainMessage,
+  getMessageChain,
+  isOwnPost,
+  postChannelMessage,
+} from "./api";
 import { subscribe } from "./gateway";
 import { type DiscordMessage, isShown, parentId } from "./schemas";
 
@@ -65,6 +70,12 @@ export async function handleMessage(message: DiscordMessage): Promise<void> {
 
     // A message that isn't a reply can only involve the bot by mentioning it
     if (!parentId(message) && !mentionsBot(message.content)) return;
+
+    // Site posts come from every environment on the channel; each answers its own.
+    if (message.author.bot && !isOwnPost(message)) {
+      log.info({ messageId }, "Site post from another environment");
+      return;
+    }
 
     const isNew = await markSeen(messageId);
     if (!isNew) {

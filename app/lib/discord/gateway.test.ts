@@ -701,7 +701,7 @@ describe("subscribe", () => {
 
       await dispatch("MESSAGE_CREATE", {
         ...message("msg-123"),
-        nonce: "ignored",
+        pinned: false,
       });
 
       expect(callback).toHaveBeenCalledExactlyOnceWith({
