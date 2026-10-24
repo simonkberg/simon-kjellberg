@@ -7,6 +7,7 @@ import {
 } from "@tanstack/markdown";
 import type { ReactNode } from "react";
 
+import { ChatSpoiler } from "./ChatSpoiler";
 import { EmojiText } from "./EmojiText";
 
 const link = (href: string, text = href): InlineNode => ({
@@ -47,14 +48,19 @@ const bracketedEmail = /<(?:mailto:)?[^\s<>@:]+@[^\s<>@]+\.[^\s<>@]+>/;
 const linkInText = new RegExp(`https?://|${bracketedEmail.source}`, "i");
 const linkable = /^\s*<?(?:https?|mailto|tel):/i;
 
-const extensions = [
-  // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
-  rule("underline", "_", /__[\s\S]+?__(?!_)/y, ([match], context) => ({
+const component =
+  (name: string) =>
+  ([match]: RegExpExecArray, context: InlineParseContext): InlineNode => ({
     type: "inlineComponent",
-    name: "u",
+    name,
     attributes: {},
     children: context.parseInline(match.slice(2, -2)),
-  })),
+  });
+
+const extensions = [
+  // CommonMark reads `__` as strong; Discord underlines. Only we make this node.
+  rule("underline", "_", /__[\s\S]+?__(?!_)/y, component("u")),
+  rule("spoiler", "|", /\|\|[\s\S]+?\|\|/y, component("spoiler")),
   // Discord breaks every line; CommonMark only after two spaces.
   rule("break", "\n", /\n/y, () => ({ type: "break" })),
   // Discord pairs `*` only around non-spaces and leaves an unpaired one as typed.
@@ -114,7 +120,11 @@ const renderNode = (
     case "strong":
       return <strong key={key}>{renderNodes(node.children)}</strong>;
     case "inlineComponent":
-      return <u key={key}>{renderNodes(node.children)}</u>;
+      return node.name === "spoiler" ? (
+        <ChatSpoiler key={key}>{renderNodes(node.children)}</ChatSpoiler>
+      ) : (
+        <u key={key}>{renderNodes(node.children)}</u>
+      );
     case "strike":
       return <del key={key}>{renderNodes(node.children)}</del>;
     case "inlineCode":

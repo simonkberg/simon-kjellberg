@@ -183,6 +183,7 @@
   --pill-radius: 0;
   --code-size: inherit;
   --meta-size: inherit;
+  --spoiler-revealed-bg: var(--wash);
 
   --replying-gap: 0.5rem;
   --replying-padding: 0.25rem 3ch 0.25rem 1ch;
@@ -382,6 +383,8 @@
     0 50% / 1ch 100% repeat-x;
   --skeleton-height: 1lh;
   --skeleton-align: top;
+  --spoiler-bg: var(--rule);
+  --spoiler-hover-bg: var(--muted);
 }
 
 /* Ledger: a typographic grid. Section names in a label column, content in
@@ -481,6 +484,8 @@
   --pill-radius: 1lh;
   --code-size: 0.925em;
   --meta-size: 0.8rem;
+  --spoiler-bg: var(--muted);
+  --spoiler-hover-bg: var(--accent);
   --replying-padding: 0.35rem 3ch 0.35rem 1ch;
   --replying-rule: 2px solid var(--accent);
   --replying-clear-top: 0.35rem;
@@ -621,6 +626,8 @@
   --skeleton-height: 0.9em;
   --skeleton-align: -0.1em;
   --skeleton-animation: type 2.55s linear infinite;
+  --spoiler-bg: var(--ink);
+  --spoiler-hover-bg: var(--muted);
 }
 
 @media (width < 46rem) {
@@ -1658,6 +1665,26 @@ ul {
       border-radius: var(--code-radius);
       background: var(--wash);
       font-size: var(--code-size);
+    }
+
+    .spoiler {
+      border-radius: var(--code-radius);
+      background: var(--spoiler-revealed-bg);
+      box-decoration-break: clone;
+
+      &[role="button"] {
+        cursor: pointer;
+        background: var(--spoiler-bg);
+
+        &:hover {
+          background: var(--spoiler-hover-bg);
+        }
+
+        /* Hides emoji too, which a transparent colour would leave showing. */
+        > [inert] {
+          visibility: hidden;
+        }
+      }
     }
   }
 

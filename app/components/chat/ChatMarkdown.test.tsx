@@ -25,6 +25,41 @@ describe("ChatMarkdown", () => {
     );
   });
 
+  it("hides spoilers, with markdown inside", () => {
+    expect(html("a ||**b** c|| d")).toBe(
+      'a <span class="spoiler" role="button" tabindex="0" aria-label="Spoiler"><span inert=""><strong>b</strong> c</span></span> d',
+    );
+  });
+
+  it("pairs spoiler bars across lines, as Discord does", () => {
+    const { container } = render(
+      <ChatMarkdown
+        source={"||||\n\n|||a|||\n\n||a `||` b||\n\n||two\nlines||"}
+      />,
+    );
+    const spoilers = [...container.querySelectorAll(".spoiler")];
+
+    expect(spoilers.map((spoiler) => spoiler.innerHTML)).toEqual([
+      '<span inert="">||<br><br></span>',
+      '<span inert="">|<br><br></span>',
+      '<span inert=""><br><br></span>',
+    ]);
+    expect(container.textContent).toBe("|||a|a || btwolines||");
+  });
+
+  it.each([
+    ["||||", "||||"],
+    ["|||a|||", "[|a]|"],
+    ["||a `||` b||", "[a `]` b||"],
+    ["||two\nlines||", "[two<br>lines]"],
+  ])("pairs %j's spoiler bars as Discord does", (source, expected) => {
+    expect(
+      html(source)
+        .replaceAll(/<span class="spoiler"[^>]*><span inert="">/g, "[")
+        .replaceAll("</span></span>", "]"),
+    ).toBe(expected);
+  });
+
   it("renders line breaks", () => {
     expect(html("line one\nline two  \nline three")).toBe(
       "line one<br>line two  <br>line three",
