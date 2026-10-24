@@ -41,9 +41,13 @@ describe("ChatSpoiler", () => {
     renderSpoiler();
 
     await userEvent.tab();
+    const spoiler = document.activeElement;
     await userEvent.keyboard(key);
 
     expect(screen.queryByRole("button")).toBeNull();
+    // Browsers drop focus from an element that stops being focusable; happy-dom doesn't.
+    expect(document.activeElement).toBe(spoiler);
+    expect(spoiler?.getAttribute("tabindex")).toBe("-1");
   });
 
   it("ignores other keys", async () => {

@@ -24,7 +24,8 @@ export const ChatSpoiler = ({ children }: { children: ReactNode }) => {
       <span inert>{children}</span>
     </span>
   ) : (
-    <span className="spoiler">
+    // Focusable still, so revealing by keyboard keeps focus where it was.
+    <span className="spoiler" tabIndex={-1}>
       <span>{children}</span>
     </span>
   );
