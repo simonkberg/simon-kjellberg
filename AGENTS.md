@@ -62,6 +62,11 @@ there and needs a hand `pnpm exec railway config apply --environment <env>`. `te
 it's the template PR previews copy when a PR opens, so previews of a PR that changes the
 config still run the old one.
 
+Each preview gets its own Turso database: `.github/workflows/preview-database.yml` forks
+testing's as `simondev-pr-<N>` when a PR opens and deletes it on close. Testing's
+`TURSO_DATABASE_URL` holds `{environment}`, which `env.ts` fills from `RAILWAY_ENVIRONMENT_NAME`,
+and its `TURSO_AUTH_TOKEN` is a group token, so it reaches every fork.
+
 Variables are `managed`, so a new env var must be added there too or apply deletes it. Don't
 set `builder`: Railway doesn't store it, so the plan never settles.
 
