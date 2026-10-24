@@ -26,7 +26,7 @@ jobs:
       - run: |
           body=$(jq -n --arg name "$DATABASE" --arg group "$GROUP" --arg source "$SOURCE" \
             '{name: $name, group: $group, seed: {type: "database", name: $source}}')
-          status=$(curl -sS -o response.json -w '%{http_code}' -X POST "$DATABASES_URL" \
+          status=$(curl -sS --retry 3 -o response.json -w '%{http_code}' -X POST "$DATABASES_URL" \
             -H "Authorization: Bearer $TURSO_API_TOKEN" -H "Content-Type: application/json" -d "$body")
           cat response.json
           [[ $status == 200 || $status == 409 ]]
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          status=$(curl -sS -o response.json -w '%{http_code}' -X DELETE "$DATABASES_URL/$DATABASE" \
+          status=$(curl -sS --retry 3 -o response.json -w '%{http_code}' -X DELETE "$DATABASES_URL/$DATABASE" \
             -H "Authorization: Bearer $TURSO_API_TOKEN")
           cat response.json
           [[ $status == 200 || $status == 404 ]]
